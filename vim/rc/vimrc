@@ -1,4 +1,2 @@
-echo "Hello! Vim!"
-
 runtime! rc/*.vim
 runtime! rc/*.lua
