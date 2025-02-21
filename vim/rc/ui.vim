@@ -58,4 +58,6 @@ set wildmode=longest:full,list
 set signcolumn=yes:2
 
 " 24-bitカラーを有効
-set termguicolors
+if has('nvim') || has('termguicolors')
+    set termguicolors
+endif
