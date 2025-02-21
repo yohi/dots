@@ -103,7 +103,7 @@ set synmaxcol=200
 nnoremap x "_x
 xnoremap x "_x
 nnoremap X "_X
-xnoremap X "_X"
+xnoremap X "_X
 
 " コマンドモードに戻る時IMEをOFFにする
 set imdisable
