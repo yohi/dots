@@ -106,7 +106,9 @@ nnoremap X "_X
 xnoremap X "_X
 
 " コマンドモードに戻る時IMEをOFFにする
-set imdisable
+if has('imdisable')
+  set imdisable
+endif
 
 " ファイルタイプによってインデントの設定を変更する TODO プラグインを使いたい
 " augroup fileTypeIndent
@@ -118,7 +120,7 @@ set imdisable
 " 1000行以上のJSONファイルはシンタックスハイライトを無効にする
 augroup vimrc-highlight
   au!
-  au Syntax json if 1000 < col('$') | syntax off | endif
+  au Syntax json if 1000 < line('$') | syntax off | endif
 augroup END
 
 " 自動実行コマンド設定
