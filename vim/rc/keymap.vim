@@ -20,7 +20,7 @@ nnoremap <ESC><ESC> :nohlsearch<CR>
 nnoremap <LEADER>v :vsp<CR>:ls<CR>:buf
 
 " 横分割
-nnoremap <LEADER>s :split<CR>:ls<CR>buf
+nnoremap <LEADER>s :split<CR>:ls<CR>:buf
 
 " ファイラ表示切替
 nnoremap <LEADER>f :<C-u>NERDTreeToggle<CR>
@@ -42,12 +42,6 @@ nnoremap <F7> :bp<CR>
 
 " F8: 次のバッファに移動
 nnoremap <F8> :bn<CR>
-
-" F9: gvimrcの変更を適用
-nnoremap <F9> :source ~/_gvimrc<CR>
-
-" F10: ホームディレクトリに保存（ファイル名入力待ち）
-nnoremap <F10> :w ~/
 
 """ Insert Mode"""
 
