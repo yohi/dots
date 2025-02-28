@@ -22,9 +22,6 @@ nnoremap <LEADER>v :vsp<CR>:ls<CR>:buf
 " 横分割
 nnoremap <LEADER>s :split<CR>:ls<CR>:buf
 
-" ファイラ表示切替
-nnoremap <LEADER>f :<C-u>NERDTreeToggle<CR>
-
 " すべて選択
 nnoremap <C-a> ggVG
 
