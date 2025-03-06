@@ -23,63 +23,6 @@ local diagnostics = {
     -- "selene",
 }
 
-local opts = {
-    noremap = true,
-    silent = true,
-}
-
-local on_attach = function(_, bufnr)
-    -- カーソル下の変数情報表示
-    vim.api.nvim_buf_set_keymap(bufnr, 'n', 'K',  '<cmd>lua vim.lsp.buf.hover()<CR>', opts)
-    -- 改行やインデントのフォーマティング
-    vim.api.nvim_buf_set_keymap(bufnr, 'n', 'gf', '<cmd>lua vim.lsp.buf.formatting()<CR>', opts)
-    -- 
-    vim.api.nvim_buf_set_keymap(bufnr, 'n', 'gr', '<cmd>lua vim.lsp.buf.references()<CR>', opts)
-    --定義ジャンプ
-    vim.api.nvim_buf_set_keymap(bufnr, 'n', '<F12>', '<cmd>lua vim.lsp.buf.definition()<CR>', opts)
-    -- 
-    vim.api.nvim_buf_set_keymap(bufnr, 'n', 'gd', '<cmd>lua vim.lsp.buf.declaration()<CR>', opts)
-    -- 
-    vim.api.nvim_buf_set_keymap(bufnr, 'n', 'gi', '<cmd>lua vim.lsp.buf.implementation()<CR>', opts)
-    -- 
-    vim.api.nvim_buf_set_keymap(bufnr, 'n', 'gt', '<cmd>lua vim.lsp.buf.type_definition()<CR>', opts)
-    -- カーソル下の変数参照元一覧表示
-    vim.api.nvim_buf_set_keymap(bufnr, 'n', 'gn', '<cmd>lua vim.lsp.buf.rename()<CR>', opts)
-    -- 変数名リネーム
-    vim.api.nvim_buf_set_keymap(bufnr, 'n', 'ga', '<cmd>lua vim.lsp.buf.code_action()<CR>', opts)
-    -- 
-    vim.api.nvim_buf_set_keymap(bufnr, 'n', 'ge', '<cmd>lua vim.diagnostic.open_float()<CR>', opts)
-    -- 
-    vim.api.nvim_buf_set_keymap(bufnr, 'n', 'g]', '<cmd>lua vim.diagnostic.goto_next()<CR>', opts)
-    -- 
-    vim.api.nvim_buf_set_keymap(bufnr, 'n', 'g[', '<cmd>lua vim.diagnostic.goto_prev()<CR>', opts)
-end
-
-local function on_cursor_hold()
-    vim.diagnostic.open_float()
-end
-
-local diagnostic_hover_augroup_name = "lspconfig-diagnostic"
-
-vim.api.nvim_set_option('updatetime', 500)
-
-vim.api.nvim_create_augroup(
-    diagnostic_hover_augroup_name,
-    {
-        clear = true,
-    }
-)
-
-vim.api.nvim_create_autocmd(
-    {
-        "CursorHold",
-    },
-    {
-        group = diagnostic_hover_augroup_name,
-        callback = on_cursor_hold,
-    }
-)
-
 vim.api.nvim_create_autocmd(
     {
         "WinScrolled", -- or WinResized on NVIM-v0.9 and higher
@@ -96,30 +39,6 @@ vim.api.nvim_create_autocmd(
         end,
     }
 )
-
-vim.api.nvim_create_autocmd(
-    {
-    'LspAttach',
-    },
-    {
-        group = diagnostic_hover_augroup_name,
-        callback = function(args)
-            local bufnr = args.buf
-            local client = vim.lsp.get_client_by_id(args.data.client_id)
-        end,
-    }
-)
-
-vim.lsp.handlers["textDocument/hover"] = vim.lsp.with(
-    vim.lsp.handlers.hover, {
-        border = "rounded",
-    }
-)
-
-vim.lsp.handlers["textDocument/signatureHelp"] = vim.lsp.with(vim.lsp.handlers.signature_help, {
-    border = "rounded",
-})
-
 
 return {
     -- mason / mason-lspconfig / lspconfig
