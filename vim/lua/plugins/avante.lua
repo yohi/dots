@@ -9,7 +9,10 @@ return {
         provider = "copilot",
         auto_suggestions_provider = "copilot",
         copilot = {
-            model = "gpt-4o-2024-05-13",
+            endpoint = "https://api.githubcopilot.com",
+            -- model = "claude-3.7-sonnet",
+            model = "claude-3.5-sonnet",
+            -- model = "gpt-4o-2024-05-13",
             -- model = "gpt-4o-mini",
             max_tokens = 4096,
         },
