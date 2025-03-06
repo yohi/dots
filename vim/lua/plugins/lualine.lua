@@ -2,6 +2,7 @@ return {
     'nvim-lualine/lualine.nvim',
     dependencies = {
         'nvim-tree/nvim-web-devicons',
+        'AndreM222/copilot-lualine',
     },
     config = function()
         -- Eviline config for lualine
@@ -235,6 +236,12 @@ return {
             end,
             icon = '  LSP:',
             color = { fg = '#ffffff', gui = 'bold' },
+            component_separators = '|',
+        }
+
+        ins_right {
+            'copilot',
+            show_colors = true,
         }
 
         ins_right {
