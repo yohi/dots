@@ -68,6 +68,105 @@ return {
                     end,
                 })
             end
+
+            -- vim.cmd("let g:python3_host_prog = system('echo -n $(which python3)')")
+
+            -- local bufnr = vim.api.nvim_get_current_buf()
+            -- print("bufnr")
+            -- print(bufnr)
+            -- local filepath = vim.api.nvim_buf_get_name(bufnr)
+            -- print('filepath')
+            -- print(filepath)
+            -- local venv_path = lsp_config.util.root_pattern('.venv')
+            -- print('venv_path')
+            -- print(venv_path)
+            -- local python_path = nil
+            -- python_path = vim.g.python3_host_prog
+            -- -- if (venv_path == nil) then
+            -- --     print('a')
+            -- --     python_path = vim.g.python3_host_prog
+            -- -- else
+            -- --     print('b')
+            -- --     python_path = util.path.join(
+            -- --         venv_path,
+            -- --         '.venv',
+            -- --         'bin',
+            -- --         'python'
+            -- --     )
+            -- -- end
+            -- print('python_path')
+            -- print(python_path)
+            -- print('venv_path')
+            -- print(venv_path(filepath))
+
+            lsp_config.basedpyright.setup({
+                root_dir = function(fname)
+                    return lsp_config.util.find_git_ancestor(fname) or vim.fn.getcwd()
+                end,
+                settings = {
+                    basedpyright = {
+                        analysis = {
+                            --
+                            -- inlayHints = {
+                            --     functionReturnTypes = true,
+                            --     variableTypes = true,
+                            -- },
+
+                            --
+                            -- autoImportCompletions = true,
+
+                            -- 事前定義された名前にもどついて検索パスを自動的に追加するか
+                            autoSearchPaths = true,
+
+                            -- [openFilesOnly, workspace]
+                            diagnosticMode = "openFilesOnly",
+
+                            -- 診断のレベルを上書きする
+                            -- https://github.com/microsoft/pylance-release/blob/main/DIAGNOSTIC_SEVERITY_RULES.md
+                            diagnosticSeverityOverrides = {
+                                reportGeneralTypeIssues = "none",
+                                reportMissingTypeArgument = "none",
+                                reportUnknownMemberType = "none",
+                                reportUnknownVariableType = "none",
+                                reportUnknownArgumentType = "none",
+                            },
+
+                            -- インポート解決のための追加検索パス指定
+                            extraPaths = {
+                            },
+
+                            -- default: Information [Error, Warning, Information, Trace]
+                            -- logLevel = 'Warning',
+                            logLevel = 'Trace',
+
+                            -- カスタムタイプのstubファイルを含むディレクトリ指定 default: ./typings
+                            -- stubPath = '',
+
+                            -- 型チェックの分析レベル default: off [off, basic, strict]
+                            typeCheckingMode = 'off',
+                            reportMissingImports = 'none',
+                            reportMissingModuleSource = 'none',
+                            reportUnusedImport = 'none',
+                            reportUnusedVariable = 'none',
+                            reportUnboundVariable = 'none',
+                            reportUndefinedVariable = 'none',
+                            reportGeneralTypeIssues = 'none',
+                            reportMissingTypeArgument = 'none',
+                            reportOptionalSubscript = 'none',
+                            reportOptionalMemberAccess = 'none',
+
+                            --
+                            -- typeshedPaths = '',
+
+                            -- default: false
+                            useLibraryCodeForTypes = true,
+
+                            pylintPath = {
+                            },
+                        },
+                    },
+                }
+            })
         end,
         cmd = "Mason",
     },
