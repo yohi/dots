@@ -8,13 +8,21 @@ return {
         -- for example
         provider = "copilot",
         auto_suggestions_provider = "copilot",
+        behaviour = {
+            auto_suggestions = false,
+            auto_set_highlight_group = false,
+            auto_set_keymaps = false,
+            auto_apply_diff_after_generation = false,
+            support_paste_from_clipboard = false,
+            enable_cursor_planning_mode = true, -- Whether to enable Cursor Planning Mode. Default to false.
+        },
         copilot = {
             endpoint = "https://api.githubcopilot.com",
             model = "claude-3.7-sonnet",
             -- model = "claude-3.5-sonnet",
             -- model = "gpt-4o-2024-05-13",
             -- model = "gpt-4o-mini",
-            max_tokens = 4096,
+            -- max_tokens = 4096,
         },
         openai = {
             endpoint = "https://api.openai.com/v1",

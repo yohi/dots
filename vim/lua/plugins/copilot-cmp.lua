@@ -1,4 +1,4 @@
 return {
-    "zbirenbaum/copilot-cmp",
-    config = true,
+    -- "zbirenbaum/copilot-cmp",
+    -- config = true,
 }
