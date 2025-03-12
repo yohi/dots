@@ -49,13 +49,13 @@ return {
                 ['<C-k>'] = cmp.mapping.select_prev_item(),
                 ["<C-e>"] = cmp.mapping.abort(),
                 ["<CR>"] = cmp.mapping.confirm({ select = true }),
-                ["<Tab>"] = vim.schedule_wrap(function(fallback)
-                    if cmp.visible() and has_words_before() then
-                        cmp.select_next_item({ behavior = cmp.SelectBehavior.Select })
-                    else
-                        fallback()
-                    end
-                end),
+                -- ["<Tab>"] = vim.schedule_wrap(function(fallback)
+                --     if cmp.visible() and has_words_before() then
+                --         cmp.select_next_item({ behavior = cmp.SelectBehavior.Select })
+                --     else
+                --         fallback()
+                --     end
+                -- end),
             }),
             sources = cmp.config.sources({
                 { name = "nvim_lsp" },
