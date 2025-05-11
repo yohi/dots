@@ -1,5 +1,5 @@
 local lsp_servers = {
-    "basedpyright",
+    -- "basedpyright",
     -- "ruff",
     "bashls",
     "lua_ls",
@@ -55,10 +55,10 @@ return {
             local lsp_config = require("lspconfig")
 
             require("mason").setup()
-            require("mason-lspconfig").setup({
-                -- lsp_servers table Install
-                ensure_installed = lsp_servers,
-            })
+            -- require("mason-lspconfig").setup({
+            --     -- lsp_servers table Install
+            --     ensure_installed = lsp_servers,
+            -- })
 
             -- lsp_servers table setup
             for _, lsp_server in ipairs(lsp_servers) do
@@ -101,7 +101,8 @@ return {
 
             lsp_config.basedpyright.setup({
                 root_dir = function(fname)
-                    return lsp_config.util.find_git_ancestor(fname) or vim.fn.getcwd()
+                    -- return lsp_config.util.find_git_ancestor(fname) or vim.fn.getcwd()
+                    return lsp_config.util.root_pattern(".venv")(fname)
                 end,
                 settings = {
                     basedpyright = {
@@ -251,6 +252,7 @@ return {
             handlers = {},
         },
     },
+
 }
 
 
