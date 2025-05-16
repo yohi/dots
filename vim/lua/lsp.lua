@@ -140,7 +140,7 @@
 vim.diagnostic.config(
     {
         virtual_text = false,
-        update_in_insert = false,
+        update_in_insert = true,
         underline = true,
         severity_sort = true,
         float = {
@@ -192,7 +192,7 @@ vim.lsp.handlers["textDocument/signatureHelp"] = vim.lsp.with(vim.lsp.handlers.s
 
 local diagnostic_hover_augroup_name = "lspconfig-diagnostic"
 
-vim.api.nvim_set_option('updatetime', 500)
+vim.api.nvim_set_option('updatetime', 300)
 
 vim.api.nvim_create_augroup(
     diagnostic_hover_augroup_name,
