@@ -97,7 +97,7 @@ set tabstop=4
 set softtabstop=4
 
 " シンタックスハイライト最大文字数
-set synmaxcol=200
+" set synmaxcol=200
 
 " xで削除した時はヤンクしない TODO
 nnoremap x "_x
