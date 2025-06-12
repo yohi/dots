@@ -16,21 +16,25 @@ return {
             support_paste_from_clipboard = false,
             enable_cursor_planning_mode = true, -- Whether to enable Cursor Planning Mode. Default to false.
         },
-        copilot = {
-            endpoint = "https://api.githubcopilot.com",
-            model = "claude-3.7-sonnet",
-            -- model = "claude-3.5-sonnet",
-            -- model = "gpt-4o-2024-05-13",
-            -- model = "gpt-4o-mini",
-            -- max_tokens = 4096,
-        },
-        openai = {
-            endpoint = "https://api.openai.com/v1",
-            model = "gpt-4o", -- your desired model (or use gpt-4o, etc.)
-            timeout = 30000, -- timeout in milliseconds
-            temperature = 0, -- adjust if needed
-            max_tokens = 4096,
-            -- reasoning_effort = "high" -- only supported for reasoning models (o1, etc.)
+        providers = {
+            copilot = {
+                endpoint = "https://api.githubcopilot.com",
+                model = "claude-3.7-sonnet",
+                -- model = "claude-3.5-sonnet",
+                -- model = "gpt-4o-2024-05-13",
+                -- model = "gpt-4o-mini",
+                -- max_tokens = 4096,
+            },
+            openai = {
+                endpoint = "https://api.openai.com/v1",
+                model = "gpt-4o", -- your desired model (or use gpt-4o, etc.)
+                timeout = 30000, -- timeout in milliseconds
+                extra_request_body = {
+                    temperature = 0, -- adjust if needed
+                    max_tokens = 4096,
+                }
+                -- reasoning_effort = "high" -- only supported for reasoning models (o1, etc.)
+            },
         },
     },
     -- if you want to build from source then do `make BUILD_FROM_SOURCE=true`
