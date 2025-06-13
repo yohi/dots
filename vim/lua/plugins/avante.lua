@@ -6,8 +6,10 @@ return {
     opts = {
         -- add any opts here
         -- for example
-        provider = "copilot",
-        auto_suggestions_provider = "copilot",
+        provider = "gemini",
+        -- mode = "agentic",
+        mode = "legacy",
+        auto_suggestions_provider = "gemini",
         behaviour = {
             auto_suggestions = false,
             auto_set_highlight_group = false,
@@ -36,6 +38,33 @@ return {
                 }
                 -- reasoning_effort = "high" -- only supported for reasoning models (o1, etc.)
             },
+            claude = {
+                endpoint = "https://api.anthropic.com",
+                model = "claude-4-sonnet-20250514",
+                timeout = 30000,
+                extra_request_body = {
+                    temperature = 0,
+                    max_tokens = 4096,
+                },
+            },
+            bedrock = {
+                model = "us.anthropic.claude-sonnet-4-20250514-v1:0",
+                aws_region = "us-east-1",
+                aws_profile = 'poc',
+                timeout = 30000,
+                extra_request_body = {
+                    temperature = 0,
+                    max_tokens = 4096,
+                },
+            },
+            gemini = {
+                model = 'gemini-2.0-flash',
+                timeout = 30000,
+                extra_request_body = {
+                    temperature = 0,
+                    max_tokens = 4096,
+                },
+            }
         },
     },
     -- if you want to build from source then do `make BUILD_FROM_SOURCE=true`
