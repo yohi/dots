@@ -4,7 +4,7 @@
 
 .PHONY: all help system-setup install-homebrew install-apps install-deb-packages install-flatpak-packages \
         setup-vim setup-zsh setup-wezterm setup-vscode setup-cursor setup-git setup-docker setup-development setup-shortcuts \
-        setup-all clean system-config
+        setup-all clean system-config clean-repos
 
 # デフォルトターゲット
 all: help
@@ -30,6 +30,7 @@ help:
 	@echo "  make setup-shortcuts   - キーボードショートカットの設定をセットアップ"
 	@echo "  make setup-all         - すべての設定をセットアップ"
 	@echo "  make clean             - シンボリックリンクを削除"
+	@echo "  make clean-repos       - リポジトリとGPGキーをクリーンアップ"
 	@echo "  make help              - このヘルプメッセージを表示"
 	@echo ""
 	@echo "📦 推奨実行順序:"
@@ -220,9 +221,17 @@ install-deb:
 	
 	# Visual Studio Codeリポジトリの追加
 	@echo "💻 Visual Studio Codeリポジトリを追加中..."
+	
+	# 既存のMicrosoft GPGキーをクリーンアップ
+	@sudo rm -f /etc/apt/trusted.gpg.d/packages.microsoft.gpg 2>/dev/null || true
+	@sudo rm -f /usr/share/keyrings/microsoft.gpg 2>/dev/null || true
+	@sudo rm -f /etc/apt/sources.list.d/vscode.list 2>/dev/null || true
+	
+	# 新しいGPGキーを追加
 	@wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > /tmp/packages.microsoft.gpg 2>/dev/null || true
 	@sudo install -o root -g root -m 644 /tmp/packages.microsoft.gpg /etc/apt/trusted.gpg.d/ 2>/dev/null || true
 	@sudo sh -c 'echo "deb [arch=amd64,arm64,armhf signed-by=/etc/apt/trusted.gpg.d/packages.microsoft.gpg] https://packages.microsoft.com/repos/code stable main" > /etc/apt/sources.list.d/vscode.list' 2>/dev/null || true
+	@rm -f /tmp/packages.microsoft.gpg 2>/dev/null || true
 	
 	# TablePlusリポジトリの追加
 	@echo "🗃️  TablePlusリポジトリを追加中..."
@@ -234,11 +243,22 @@ install-deb:
 	@curl -fsS https://www.pgadmin.org/static/packages_pgadmin_org.pub | sudo gpg --dearmor -o /usr/share/keyrings/packages-pgadmin-org.gpg 2>/dev/null || true
 	@sudo sh -c 'echo "deb [signed-by=/usr/share/keyrings/packages-pgadmin-org.gpg] https://ftp.postgresql.org/pub/pgadmin/pgadmin4/apt/$$(lsb_release -cs) pgadmin4 main" > /etc/apt/sources.list.d/pgadmin4.list' 2>/dev/null || true
 	
+	# MySQL公式リポジトリの追加
+	@echo "🐬 MySQL公式リポジトリを追加中..."
+	@cd /tmp && \
+	wget -q https://dev.mysql.com/get/mysql-apt-config_0.8.29-1_all.deb 2>/dev/null && \
+	echo "mysql-apt-config mysql-apt-config/select-server select mysql-8.0" | sudo debconf-set-selections && \
+	echo "mysql-apt-config mysql-apt-config/select-tools select Enabled" | sudo debconf-set-selections && \
+	sudo DEBIAN_FRONTEND=noninteractive dpkg -i mysql-apt-config_0.8.29-1_all.deb 2>/dev/null || \
+	echo "⚠️  MySQL APT設定パッケージのインストールに失敗しました"
+	
 	# パッケージリストの更新（エラーを無視）
 	@echo "🔄 パッケージリストを更新中..."
 	
 	# Slackリポジトリの追加
 	@echo "💼 Slackリポジトリを追加中..."
+	@sudo rm -f /usr/share/keyrings/slack-keyring.gpg 2>/dev/null || true
+	@sudo rm -f /etc/apt/sources.list.d/slack.list 2>/dev/null || true
 	@wget -qO- https://packagecloud.io/slacktechnologies/slack/gpgkey | sudo gpg --dearmor -o /usr/share/keyrings/slack-keyring.gpg 2>/dev/null || true
 	@sudo sh -c 'echo "deb [arch=amd64 signed-by=/usr/share/keyrings/slack-keyring.gpg] https://packagecloud.io/slacktechnologies/slack/debian/ jessie main" > /etc/apt/sources.list.d/slack.list' 2>/dev/null || true
 	
@@ -264,6 +284,12 @@ install-deb:
 	@sudo DEBIAN_FRONTEND=noninteractive apt install -y tableplus pgadmin4-desktop || \
 	echo "⚠️  データベースツールのインストールに失敗しました"
 	
+	# MySQL Workbench（APTリポジトリから）
+	@echo "🐬 MySQL Workbenchをインストール中（APT）..."
+	@sudo DEBIAN_FRONTEND=noninteractive apt install -y mysql-workbench-community 2>/dev/null || \
+	sudo DEBIAN_FRONTEND=noninteractive apt install -y mysql-workbench 2>/dev/null || \
+	echo "⚠️  MySQL Workbenchのインストールに失敗しました"
+	
 	@sudo DEBIAN_FRONTEND=noninteractive apt install -y slack-desktop || \
 	echo "⚠️  チャットアプリのインストールに失敗しました"
 	
@@ -280,17 +306,6 @@ install-deb:
 	wget -q https://dbeaver.io/files/dbeaver-ce_latest_amd64.deb 2>/dev/null && \
 	sudo gdebi -n dbeaver-ce_latest_amd64.deb 2>/dev/null || \
 	echo "⚠️  DBeaverのインストールに失敗しました"
-	
-	# MySQL Workbench（Snapパッケージを使用）
-	@echo "🐬 MySQL Workbenchをインストール中..."
-	@if command -v snap >/dev/null 2>&1; then \
-		sudo snap install mysql-workbench-community 2>/dev/null && \
-		echo "✅ MySQL Workbench（Snap版）のインストールが完了しました" || \
-		echo "⚠️  MySQL Workbench（Snap版）のインストールに失敗しました"; \
-	else \
-		echo "⚠️  Snapがインストールされていません。MySQL Workbenchはスキップされます。"; \
-		echo "ℹ️  手動でインストールする場合：sudo snap install mysql-workbench-community"; \
-	fi
 	
 	@cd /tmp && \
 	wget -q https://github.com/Kong/insomnia/releases/download/core%402020.3.3/Insomnia.Core-2020.3.3.deb 2>/dev/null && \
@@ -752,6 +767,40 @@ setup-all: install-apps setup-vim setup-zsh setup-wezterm setup-vscode setup-git
 	@echo "🔧 追加のパッケージが必要な場合:"
 	@echo "  make install-deb       - DEBパッケージをインストール"
 	@echo "  make install-flatpak   - Flatpakパッケージをインストール"
+
+# リポジトリとGPGキーのクリーンアップ
+clean-repos:
+	@echo "🧹 リポジトリとGPGキーをクリーンアップ中..."
+	
+	# Microsoft VS Code関連
+	@sudo rm -f /etc/apt/trusted.gpg.d/packages.microsoft.gpg 2>/dev/null || true
+	@sudo rm -f /usr/share/keyrings/microsoft.gpg 2>/dev/null || true
+	@sudo rm -f /etc/apt/sources.list.d/vscode.list 2>/dev/null || true
+	
+	# Slack関連
+	@sudo rm -f /usr/share/keyrings/slack-keyring.gpg 2>/dev/null || true
+	@sudo rm -f /etc/apt/sources.list.d/slack.list 2>/dev/null || true
+	
+	# Google Chrome関連
+	@sudo rm -f /usr/share/keyrings/google-chrome-keyring.gpg 2>/dev/null || true
+	@sudo rm -f /etc/apt/sources.list.d/google-chrome.list 2>/dev/null || true
+	
+	# TablePlus関連
+	@sudo rm -f /etc/apt/trusted.gpg.d/tableplus-archive.gpg 2>/dev/null || true
+	@sudo rm -f /etc/apt/sources.list.d/archive_uri-https_deb_tableplus_com_debian_22-*.list 2>/dev/null || true
+	
+	# pgAdmin関連
+	@sudo rm -f /usr/share/keyrings/packages-pgadmin-org.gpg 2>/dev/null || true
+	@sudo rm -f /etc/apt/sources.list.d/pgadmin4.list 2>/dev/null || true
+	
+	# MySQL関連
+	@sudo rm -f /etc/apt/sources.list.d/mysql.list 2>/dev/null || true
+	
+	# APTキャッシュをクリアして更新
+	@sudo apt-get clean 2>/dev/null || true
+	@sudo apt-get update 2>/dev/null || true
+	
+	@echo "✅ リポジトリとGPGキーのクリーンアップが完了しました。"
 
 # クリーンアップ（シンボリックリンクを削除）
 clean:
