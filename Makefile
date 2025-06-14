@@ -220,18 +220,14 @@ install-deb:
 	@sudo sh -c 'echo "deb [arch=amd64 signed-by=/usr/share/keyrings/google-chrome-keyring.gpg] https://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google-chrome.list' 2>/dev/null || true
 	
 	# Visual Studio Codeリポジトリの追加
-	@echo "💻 Visual Studio Codeリポジトリを追加中..."
+	@echo "💻 Visual Studio Code（DEBファイル直接ダウンロード）をスキップ中..."
+	@echo "ℹ️  VS CodeはDEBファイルから直接インストールされます"
 	
-	# 既存のMicrosoft GPGキーをクリーンアップ
+	# 既存のMicrosoft GPGキーをクリーンアップ（念のため）
 	@sudo rm -f /etc/apt/trusted.gpg.d/packages.microsoft.gpg 2>/dev/null || true
 	@sudo rm -f /usr/share/keyrings/microsoft.gpg 2>/dev/null || true
 	@sudo rm -f /etc/apt/sources.list.d/vscode.list 2>/dev/null || true
-	
-	# 新しいGPGキーを追加
-	@wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > /tmp/packages.microsoft.gpg 2>/dev/null || true
-	@sudo install -o root -g root -m 644 /tmp/packages.microsoft.gpg /etc/apt/trusted.gpg.d/ 2>/dev/null || true
-	@sudo sh -c 'echo "deb [arch=amd64,arm64,armhf signed-by=/etc/apt/trusted.gpg.d/packages.microsoft.gpg] https://packages.microsoft.com/repos/code stable main" > /etc/apt/sources.list.d/vscode.list' 2>/dev/null || true
-	@rm -f /tmp/packages.microsoft.gpg 2>/dev/null || true
+	@sudo rm -f /etc/apt/sources.list.d/vscode.* 2>/dev/null || true
 	
 	# TablePlusリポジトリの追加
 	@echo "🗃️  TablePlusリポジトリを追加中..."
@@ -272,9 +268,9 @@ install-deb:
 	@sudo DEBIAN_FRONTEND=noninteractive apt install -y google-chrome-stable google-chrome-beta || \
 	echo "⚠️  Google Chromeのインストールに失敗しました"
 	
-	@sudo DEBIAN_FRONTEND=noninteractive apt install -y code || \
-	echo "⚠️  VS Codeのインストールに失敗しました"
-	
+	# VS Codeはリポジトリからではなく、DEBファイルから直接インストール
+	@echo "ℹ️  VS CodeはDEBファイルから直接インストールされます（下記参照）"
+
 	@sudo DEBIAN_FRONTEND=noninteractive apt install -y copyq meld gnome-tweaks synaptic || \
 	echo "⚠️  一部のユーティリティのインストールに失敗しました"
 	
@@ -302,6 +298,16 @@ install-deb:
 	
 	# DEBファイルのダウンロードとインストール
 	@echo "📥 追加のアプリケーションをインストール中..."
+	
+	# Visual Studio Code（公式DEBファイル直接ダウンロード）
+	@cd /tmp && \
+	echo "💻 Visual Studio Codeをインストール中（公式DEBファイル）..." && \
+	wget -O code.deb "https://code.visualstudio.com/sha/download?build=stable&os=linux-deb-x64" 2>/dev/null && \
+	sudo dpkg -i code.deb 2>/dev/null && \
+	sudo apt-get install -f -y 2>/dev/null && \
+	echo "✅ Visual Studio Codeのインストールが完了しました" || \
+	echo "⚠️  Visual Studio Codeのインストールに失敗しました"
+	
 	@cd /tmp && \
 	wget -q https://dbeaver.io/files/dbeaver-ce_latest_amd64.deb 2>/dev/null && \
 	sudo gdebi -n dbeaver-ce_latest_amd64.deb 2>/dev/null || \
