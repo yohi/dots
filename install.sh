@@ -60,24 +60,52 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-# 前提条件のチェック
+# 前提条件のチェックとインストール
 check_prerequisites() {
     log_info "前提条件をチェック中..."
     
+    local packages_to_install=()
+    
     # gitの存在確認
     if ! command -v git &> /dev/null; then
-        log_error "gitがインストールされていません"
-        log_info "以下のコマンドでインストールしてください:"
-        log_info "sudo apt update && sudo apt install -y git"
-        exit 1
+        log_warn "gitがインストールされていません"
+        packages_to_install+=("git")
+    else
+        log_success "git は既にインストールされています"
     fi
     
     # makeの存在確認
     if ! command -v make &> /dev/null; then
-        log_error "makeがインストールされていません"
-        log_info "以下のコマンドでインストールしてください:"
-        log_info "sudo apt update && sudo apt install -y build-essential"
-        exit 1
+        log_warn "makeがインストールされていません"
+        packages_to_install+=("build-essential")
+    else
+        log_success "make は既にインストールされています"
+    fi
+    
+    # 必要なパッケージをインストール
+    if [ ${#packages_to_install[@]} -gt 0 ]; then
+        log_info "必要なパッケージをインストール中: ${packages_to_install[*]}"
+        
+        # パッケージリストを更新
+        log_info "パッケージリストを更新中..."
+        sudo apt update
+        
+        # パッケージをインストール
+        log_info "パッケージをインストール中..."
+        sudo apt install -y "${packages_to_install[@]}"
+        
+        log_success "必要なパッケージのインストールが完了しました"
+        
+        # インストール後の確認
+        if ! command -v git &> /dev/null; then
+            log_error "gitのインストールに失敗しました"
+            exit 1
+        fi
+        
+        if ! command -v make &> /dev/null; then
+            log_error "makeのインストールに失敗しました"
+            exit 1
+        fi
     fi
     
     log_success "前提条件のチェック完了"
