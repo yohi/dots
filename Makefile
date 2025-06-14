@@ -195,11 +195,7 @@ install-deb:
 	echo "🔍 検出されたUbuntuバージョン: $$UBUNTU_CODENAME"
 	
 	# 必要なリポジトリを追加（エラーハンドリング強化）
-	@echo "📦 リポジトリを追加中..."
-	
-	# Terminator（Ubuntuのデフォルトリポジトリにあるので、PPAは必須ではない）
-	@sudo add-apt-repository -y ppa:mattrose/terminator 2>/dev/null || \
-	echo "⚠️  Terminator PPAが利用できません。デフォルトリポジトリからインストールします。"
+	@echo "🔍 リポジトリを追加中..."
 	
 	# CopyQ（Ubuntuのデフォルトリポジトリにあるので、PPAは必須ではない）
 	@sudo add-apt-repository -y ppa:hluk/copyq 2>/dev/null || \
@@ -238,24 +234,20 @@ install-deb:
 	@curl -fsS https://www.pgadmin.org/static/packages_pgadmin_org.pub | sudo gpg --dearmor -o /usr/share/keyrings/packages-pgadmin-org.gpg 2>/dev/null || true
 	@sudo sh -c 'echo "deb [signed-by=/usr/share/keyrings/packages-pgadmin-org.gpg] https://ftp.postgresql.org/pub/pgadmin/pgadmin4/apt/$$(lsb_release -cs) pgadmin4 main" > /etc/apt/sources.list.d/pgadmin4.list' 2>/dev/null || true
 	
-	# Mattermostリポジトリの追加
-	@echo "💬 Mattermostリポジトリを追加中..."
-	@curl -o- https://deb.packages.mattermost.com/setup-repo.sh | sudo bash 2>/dev/null || \
-	echo "⚠️  Mattermostリポジトリが追加できませんでした。"
+	# パッケージリストの更新（エラーを無視）
+	@echo "🔄 パッケージリストを更新中..."
 	
 	# Slackリポジトリの追加
 	@echo "💼 Slackリポジトリを追加中..."
 	@wget -qO- https://packagecloud.io/slacktechnologies/slack/gpgkey | sudo gpg --dearmor -o /usr/share/keyrings/slack-keyring.gpg 2>/dev/null || true
 	@sudo sh -c 'echo "deb [arch=amd64 signed-by=/usr/share/keyrings/slack-keyring.gpg] https://packagecloud.io/slacktechnologies/slack/debian/ jessie main" > /etc/apt/sources.list.d/slack.list' 2>/dev/null || true
 	
-	# パッケージリストの更新（エラーを無視）
-	@echo "🔄 パッケージリストを更新中..."
 	@sudo apt update 2>/dev/null || echo "⚠️  一部のリポジトリでエラーがありましたが、処理を続行します。"
 	
 	# APTパッケージのインストール（個別にエラーハンドリング）
 	@echo "📦 基本パッケージをインストール中..."
-	@sudo DEBIAN_FRONTEND=noninteractive apt install -y tilix terminator || \
-	echo "⚠️  一部のターミナルエミュレータのインストールに失敗しました"
+	@sudo DEBIAN_FRONTEND=noninteractive apt install -y tilix || \
+	echo "⚠️  ターミナルエミュレータのインストールに失敗しました"
 	
 	@sudo DEBIAN_FRONTEND=noninteractive apt install -y google-chrome-stable google-chrome-beta || \
 	echo "⚠️  Google Chromeのインストールに失敗しました"
@@ -272,7 +264,7 @@ install-deb:
 	@sudo DEBIAN_FRONTEND=noninteractive apt install -y tableplus pgadmin4-desktop || \
 	echo "⚠️  データベースツールのインストールに失敗しました"
 	
-	@sudo DEBIAN_FRONTEND=noninteractive apt install -y mattermost-desktop slack-desktop || \
+	@sudo DEBIAN_FRONTEND=noninteractive apt install -y slack-desktop || \
 	echo "⚠️  チャットアプリのインストールに失敗しました"
 	
 	@sudo DEBIAN_FRONTEND=noninteractive apt install -y mainline || \
@@ -289,10 +281,16 @@ install-deb:
 	sudo gdebi -n dbeaver-ce_latest_amd64.deb 2>/dev/null || \
 	echo "⚠️  DBeaverのインストールに失敗しました"
 	
-	@cd /tmp && \
-	wget -q https://dev.mysql.com/get/Downloads/MySQLGUITools/mysql-workbench-community_8.0.31-1ubuntu22.04_amd64.deb 2>/dev/null && \
-	sudo gdebi -n mysql-workbench-community_8.0.31-1ubuntu22.04_amd64.deb 2>/dev/null || \
-	echo "⚠️  MySQL Workbenchのインストールに失敗しました"
+	# MySQL Workbench（Snapパッケージを使用）
+	@echo "🐬 MySQL Workbenchをインストール中..."
+	@if command -v snap >/dev/null 2>&1; then \
+		sudo snap install mysql-workbench-community 2>/dev/null && \
+		echo "✅ MySQL Workbench（Snap版）のインストールが完了しました" || \
+		echo "⚠️  MySQL Workbench（Snap版）のインストールに失敗しました"; \
+	else \
+		echo "⚠️  Snapがインストールされていません。MySQL Workbenchはスキップされます。"; \
+		echo "ℹ️  手動でインストールする場合：sudo snap install mysql-workbench-community"; \
+	fi
 	
 	@cd /tmp && \
 	wget -q https://github.com/Kong/insomnia/releases/download/core%402020.3.3/Insomnia.Core-2020.3.3.deb 2>/dev/null && \
@@ -382,7 +380,7 @@ install-deb:
 
 # Flatpakパッケージのインストール（将来用）
 install-flatpak:
-	@echo "📦 Flatpakパッケージをインストール中..."
+	@echo "🍺 Flatpakパッケージをインストール中..."
 	@echo "ℹ️  現在Flatpakパッケージの設定はありません。必要に応じて追加してください。"
 
 # VIMの設定をセットアップ
