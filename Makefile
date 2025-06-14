@@ -57,9 +57,6 @@ endif
 system-setup:
 	@echo "🔧 システムレベルの基本設定を開始..."
 	
-	# ホームディレクトリを英語名にする
-	@LANG=C xdg-user-dirs-gtk-update
-	
 	# システムアップデート
 	@sudo apt update && sudo apt -y upgrade
 	
@@ -69,6 +66,12 @@ system-setup:
 	
 	# 基本開発ツール
 	@sudo apt -y install build-essential curl file wget software-properties-common
+	
+	# ユーザーディレクトリ管理パッケージをインストール
+	@sudo apt -y install xdg-user-dirs-gtk
+	
+	# ホームディレクトリを英語名にする
+	@LANG=C xdg-user-dirs-gtk-update
 	
 	# Ubuntu Japanese
 	@sudo wget https://www.ubuntulinux.jp/ubuntu-jp-ppa-keyring.gpg -P /etc/apt/trusted.gpg.d/ || true
