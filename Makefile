@@ -136,12 +136,39 @@ system-setup:
 install-homebrew:
 	@echo "🍺 Homebrewをインストール中..."
 	@if ! command -v brew >/dev/null 2>&1; then \
+		echo "📥 Homebrewをダウンロード・インストール..."; \
 		/bin/bash -c "$$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"; \
-		echo 'export PATH="/home/linuxbrew/.linuxbrew/bin:$$PATH"' >> $(HOME_DIR)/.bashrc; \
+		\
+		echo "🔧 Homebrew環境設定を追加中..."; \
+		echo '' >> $(HOME_DIR)/.bashrc; \
+		echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"' >> $(HOME_DIR)/.bashrc; \
+		\
+		if [ -f "$(HOME_DIR)/.zshrc" ] || command -v zsh >/dev/null 2>&1; then \
+			echo '' >> $(HOME_DIR)/.zshrc 2>/dev/null || touch $(HOME_DIR)/.zshrc; \
+			echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"' >> $(HOME_DIR)/.zshrc; \
+		fi; \
+		\
+		echo "🚀 現在のセッションでHomebrewを有効化..."; \
 		eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"; \
+		\
+		echo "📦 Homebrew依存関係の確認・インストール..."; \
+		if command -v apt-get >/dev/null 2>&1; then \
+			sudo DEBIAN_FRONTEND=noninteractive apt-get install -y build-essential || true; \
+		fi; \
+		\
+		echo "🔨 GCCをインストール中（推奨）..."; \
+		brew install gcc || true; \
+		\
+		echo "✅ Homebrewのセットアップが完了しました"; \
 	else \
 		echo "✅ Homebrewは既にインストールされています。"; \
+		echo "🔧 環境変数を確認中..."; \
+		eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)" || true; \
 	fi
+	
+	@echo "📋 Homebrewの状態確認:"
+	@echo "   バージョン: $$(brew --version | head -1 2>/dev/null || echo '取得できませんでした')"
+	@echo "   インストール先: $$(brew --prefix 2>/dev/null || echo '取得できませんでした')"
 	@echo "✅ Homebrewのインストールが完了しました。"
 
 # Brewfileを使用してアプリケーションをインストール
@@ -149,7 +176,9 @@ install-apps:
 	@echo "📦 アプリケーションをインストール中..."
 	@if command -v brew >/dev/null 2>&1; then \
 		eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"; \
-		brew bundle --file=$(DOTFILES_DIR)/Brewfile; \
+		echo "🍺 Brewパッケージをインストール中..."; \
+		brew bundle --file=$(DOTFILES_DIR)/Brewfile --no-upgrade || true; \
+		echo "⚠️  一部のパッケージでエラーが発生した可能性がありますが、処理を続行します"; \
 	else \
 		echo "❌ Homebrewがインストールされていません。先に 'make install-homebrew' を実行してください。"; \
 		exit 1; \
@@ -277,6 +306,13 @@ install-deb:
 	@cd /tmp && \
 	curl -q "https://s3.amazonaws.com/session-manager-downloads/plugin/latest/ubuntu_64bit/session-manager-plugin.deb" -o "session-manager-plugin.deb" && \
 	sudo gdebi -n session-manager-plugin.deb || true
+	
+	# WezTerm
+	@cd /tmp && \
+	echo "🖥️  WezTermをインストール中..." && \
+	wget -q https://github.com/wez/wezterm/releases/download/20240203-110809-5046fc22/wezterm-20240203-110809-5046fc22.Ubuntu22.04.deb && \
+	sudo gdebi -n wezterm-20240203-110809-5046fc22.Ubuntu22.04.deb || true && \
+	echo "✅ WezTermのインストールが完了しました" || true
 	
 	@update-apt-xapian-index -vf || true
 	
