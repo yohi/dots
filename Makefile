@@ -63,12 +63,18 @@ USER := $(shell whoami)
 system-setup:
 	@echo "🔧 システムレベルの基本設定を開始..."
 	
+	# tzdataの入力を省略するための設定
+	@echo "🕐 tzdataの自動設定を行います..."
+	@echo "tzdata tzdata/Areas select Asia" | sudo debconf-set-selections
+	@echo "tzdata tzdata/Zones/Asia select Tokyo" | sudo debconf-set-selections
+	@export DEBIAN_FRONTEND=noninteractive
+	
 	# システムアップデート
-	@sudo apt update && sudo apt -y upgrade
+	@sudo DEBIAN_FRONTEND=noninteractive apt update && sudo DEBIAN_FRONTEND=noninteractive apt -y upgrade
 	
 	# 日本語環境の設定
 	@echo "🌏 日本語環境を設定中..."
-	@sudo apt -y install language-pack-ja language-pack-ja-base
+	@sudo DEBIAN_FRONTEND=noninteractive apt -y install language-pack-ja language-pack-ja-base
 	
 	# タイムゾーンを日本/東京に設定
 	@echo "🕐 タイムゾーンをAsia/Tokyoに設定中..."
@@ -81,13 +87,13 @@ system-setup:
 	
 	# 日本語フォントのインストール
 	@echo "🔤 日本語フォントをインストール中..."
-	@sudo apt -y install fonts-noto-cjk fonts-noto-cjk-extra fonts-takao-gothic fonts-takao-mincho || true
+	@sudo DEBIAN_FRONTEND=noninteractive apt -y install fonts-noto-cjk fonts-noto-cjk-extra fonts-takao-gothic fonts-takao-mincho || true
 	
 	# 基本開発ツール
-	@sudo apt -y install build-essential curl file wget software-properties-common
+	@sudo DEBIAN_FRONTEND=noninteractive apt -y install build-essential curl file wget software-properties-common
 	
 	# ユーザーディレクトリ管理パッケージをインストール
-	@sudo apt -y install xdg-user-dirs-gtk
+	@sudo DEBIAN_FRONTEND=noninteractive apt -y install xdg-user-dirs-gtk
 	
 	# ホームディレクトリを英語名にする
 	@LANG=C xdg-user-dirs-gtk-update
@@ -96,14 +102,30 @@ system-setup:
 	@sudo wget https://www.ubuntulinux.jp/ubuntu-jp-ppa-keyring.gpg -P /etc/apt/trusted.gpg.d/ || true
 	@sudo wget https://www.ubuntulinux.jp/ubuntu-ja-archive-keyring.gpg -P /etc/apt/trusted.gpg.d/ || true
 	@sudo wget https://www.ubuntulinux.jp/sources.list.d/$$(lsb_release -cs).list -O /etc/apt/sources.list.d/ubuntu-ja.list || true
-	@sudo apt update && sudo apt install -y ubuntu-defaults-ja || true
+	@sudo DEBIAN_FRONTEND=noninteractive apt update && sudo DEBIAN_FRONTEND=noninteractive apt install -y ubuntu-defaults-ja || true
+	
+	# キーボード設定
+	@echo "⌨️  キーボードレイアウトを設定中..."
+	
+	# キーボードレイアウトを英語（US）に設定
+	@setxkbmap us || true
+	@sudo localectl set-keymap us || true
+	@sudo localectl set-x11-keymap us || true
+	
+	# GNOME環境の場合、入力ソースを英語（US）に設定
+	@if command -v gsettings >/dev/null 2>&1; then \
+		gsettings set org.gnome.desktop.input-sources sources "[('xkb', 'us')]" || true; \
+		echo "✅ GNOME入力ソースを英語（US）に設定しました"; \
+	fi
 	
 	# CapsLock -> Ctrl
 	@setxkbmap -option "ctrl:nocaps" || true
 	@sudo update-initramfs -u || true
 	
+	@echo "✅ キーボードレイアウトが英語（US）に設定されました"
+	
 	# 基本パッケージ
-	@sudo apt install -y flatpak gdebi chrome-gnome-shell xclip xsel
+	@sudo DEBIAN_FRONTEND=noninteractive apt install -y flatpak gdebi chrome-gnome-shell xclip xsel
 	
 	@echo "✅ システムレベルの基本設定が完了しました。"
 	@echo "🌏 タイムゾーン: $$(timedatectl show --property=Timezone --value)"
@@ -174,7 +196,7 @@ install-deb:
 	@sudo apt update
 	
 	# APTパッケージのインストール
-	@sudo apt install -y tilix terminator google-chrome-stable google-chrome-beta \
+	@sudo DEBIAN_FRONTEND=noninteractive apt install -y tilix terminator google-chrome-stable google-chrome-beta \
 		code kcachegrind blueman copyq mattermost-desktop meld \
 		gnome-shell-extension-manager conky-all synaptic apt-xapian-index \
 		gnome-tweaks gir1.2-gtop-2.0 gir1.2-nm-1.0 gir1.2-clutter-1.0 \
@@ -506,7 +528,7 @@ setup-docker:
 	@dockerd-rootless-setuptool.sh install || true
 	
 	# 必要なパッケージをインストール
-	@sudo apt-get install -y uidmap || true
+	@sudo DEBIAN_FRONTEND=noninteractive apt-get install -y uidmap || true
 	
 	# サービスの設定
 	@systemctl --user enable docker.service || true
@@ -538,7 +560,7 @@ setup-development:
 	# logiopsの設定（設定ファイルが存在する場合）
 	@if [ -f "$(DOTFILES_DIR)/logid/logid.cfg" ]; then \
 		echo "🖱️  logiops設定をセットアップ中..."; \
-		sudo apt install -y cmake libevdev-dev libudev-dev libconfig++-dev || true; \
+		sudo DEBIAN_FRONTEND=noninteractive apt install -y cmake libevdev-dev libudev-dev libconfig++-dev || true; \
 		if [ ! -L "/etc/logid.cfg" ]; then \
 			if [ -f "/etc/logid.cfg" ]; then \
 				echo "⚠️  既存のlogid設定をバックアップ中..."; \
