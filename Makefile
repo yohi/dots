@@ -211,18 +211,16 @@ install-deb:
 	wget -q https://dl.pstmn.io/download/latest/linux64 -O postman-linux-x64.tar.gz && \
 	sudo tar -xzf postman-linux-x64.tar.gz -C /opt/ && \
 	sudo mv /opt/Postman /opt/postman || true && \
-	sudo tee /usr/share/applications/postman.desktop > /dev/null <<EOF
-[Desktop Entry]
-Name=Postman
-Comment=API Development Environment
-Exec=/opt/postman/Postman
-Icon=/opt/postman/app/resources/app/assets/icon.png
-Terminal=false
-Type=Application
-Categories=Development;
-EOF
-	@echo "✅ Postmanのインストールが完了しました" || true
-	
+	echo "[Desktop Entry]" | sudo tee /usr/share/applications/postman.desktop > /dev/null && \
+	echo "Name=Postman" | sudo tee -a /usr/share/applications/postman.desktop > /dev/null && \
+	echo "Comment=API Development Environment" | sudo tee -a /usr/share/applications/postman.desktop > /dev/null && \
+	echo "Exec=/opt/postman/Postman" | sudo tee -a /usr/share/applications/postman.desktop > /dev/null && \
+	echo "Icon=/opt/postman/app/resources/app/assets/icon.png" | sudo tee -a /usr/share/applications/postman.desktop > /dev/null && \
+	echo "Terminal=false" | sudo tee -a /usr/share/applications/postman.desktop > /dev/null && \
+	echo "Type=Application" | sudo tee -a /usr/share/applications/postman.desktop > /dev/null && \
+	echo "Categories=Development;" | sudo tee -a /usr/share/applications/postman.desktop > /dev/null && \
+	echo "✅ Postmanのインストールが完了しました" || true
+
 	# Cursor IDE
 	@cd /tmp && \
 	echo "📝 Cursor IDEをダウンロード中..." && \
@@ -230,7 +228,6 @@ EOF
 	chmod +x cursor-latest.AppImage && \
 	sudo mkdir -p /opt/cursor && \
 	sudo mv cursor-latest.AppImage /opt/cursor/cursor.AppImage && \
-	# アイコンファイルの抽出を試行
 	cd /tmp && \
 	/opt/cursor/cursor.AppImage --appimage-extract > /dev/null 2>&1 && \
 	if [ -f squashfs-root/cursor.png ]; then \
@@ -244,17 +241,15 @@ EOF
 		ICON_PATH="applications-development"; \
 	fi && \
 	rm -rf squashfs-root && \
-	sudo tee /usr/share/applications/cursor.desktop > /dev/null <<EOF
-[Desktop Entry]
-Name=Cursor
-Comment=The AI-first code editor
-Exec=/opt/cursor/cursor.AppImage --no-sandbox
-Icon=$$ICON_PATH
-Terminal=false
-Type=Application
-Categories=Development;IDE;
-EOF
-	@echo "✅ Cursor IDEのインストールが完了しました" || true
+	echo "[Desktop Entry]" | sudo tee /usr/share/applications/cursor.desktop > /dev/null && \
+	echo "Name=Cursor" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
+	echo "Comment=The AI-first code editor" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
+	echo "Exec=/opt/cursor/cursor.AppImage --no-sandbox" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
+	echo "Icon=$$ICON_PATH" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
+	echo "Terminal=false" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
+	echo "Type=Application" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
+	echo "Categories=Development;IDE;" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
+	echo "✅ Cursor IDEのインストールが完了しました" || true
 	
 	# AWS Session Manager Plugin
 	@cd /tmp && \
