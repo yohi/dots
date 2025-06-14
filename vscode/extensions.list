@@ -16,6 +16,7 @@ bigonesystems.django
 thebarkman.vscode-djaneiro
 
 # Docker
+docker.docker
 ms-vscode-remote.remote-containers
 ms-azuretools.vscode-docker
 
