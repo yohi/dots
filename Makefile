@@ -560,27 +560,46 @@ setup-docker:
 	@sudo DEBIAN_FRONTEND=noninteractive apt-get update || true
 	@sudo DEBIAN_FRONTEND=noninteractive apt-get install -y uidmap || true
 	
+	# 必要なカーネルモジュールをロード
+	@echo "🔧 必要なカーネルモジュールをロード中..."
+	@sudo modprobe nf_tables || true
+	@sudo modprobe iptable_nat || true
+	@sudo modprobe ip6table_nat || true
+	
 	# Rootless Dockerのセットアップ
 	@if ! command -v dockerd-rootless-setuptool.sh >/dev/null 2>&1; then \
 		echo "📦 Rootless Dockerをインストール中..."; \
 		curl -fsSL https://get.docker.com/rootless | sh; \
 	fi
 	
-	@dockerd-rootless-setuptool.sh install || true
+	# rootless setuptoolの実行（エラーが発生してもスキップするオプション付き）
+	@echo "⚙️  Rootless Dockerをセットアップ中..."
+	@dockerd-rootless-setuptool.sh install --skip-iptables || \
+	dockerd-rootless-setuptool.sh install || \
+	echo "⚠️  Rootless Docker setup completed with warnings (this is often normal)"
 	
 	# サービスの設定
+	@echo "🚀 Dockerサービスの設定中..."
 	@systemctl --user enable docker.service || true
 	@systemctl --user start docker.service || true
 	@sudo loginctl enable-linger $(USER) || true
 	
 	# Docker Composeのセットアップ
+	@echo "🐙 Docker Composeの設定中..."
 	@mkdir -p $(HOME_DIR)/.docker/cli-plugins
 	@if command -v brew >/dev/null 2>&1; then \
 		eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"; \
 		ln -sfn $$(brew --prefix)/opt/docker-compose/bin/docker-compose $(HOME_DIR)/.docker/cli-plugins/docker-compose || true; \
 	fi
 	
+	# 環境変数の設定確認
+	@echo "🔍 Docker環境の確認中..."
+	@if ! grep -q "DOCKER_HOST" $(HOME_DIR)/.zshrc 2>/dev/null; then \
+		echo "export DOCKER_HOST=unix:///run/user/$$(id -u)/docker.sock" >> $(HOME_DIR)/.zshrc || true; \
+	fi
+	
 	@echo "✅ Docker設定が完了しました。"
+	@echo "ℹ️  ターミナルを再起動してからDockerを使用してください。"
 
 # 追加の開発環境設定
 setup-development:
