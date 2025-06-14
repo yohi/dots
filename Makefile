@@ -240,13 +240,8 @@ install-deb:
 	@sudo sh -c 'echo "deb [signed-by=/usr/share/keyrings/packages-pgadmin-org.gpg] https://ftp.postgresql.org/pub/pgadmin/pgadmin4/apt/$$(lsb_release -cs) pgadmin4 main" > /etc/apt/sources.list.d/pgadmin4.list' 2>/dev/null || true
 	
 	# MySQL公式リポジトリの追加
-	@echo "🐬 MySQL公式リポジトリを追加中..."
-	@cd /tmp && \
-	wget -q https://dev.mysql.com/get/mysql-apt-config_0.8.29-1_all.deb 2>/dev/null && \
-	echo "mysql-apt-config mysql-apt-config/select-server select mysql-8.0" | sudo debconf-set-selections && \
-	echo "mysql-apt-config mysql-apt-config/select-tools select Enabled" | sudo debconf-set-selections && \
-	sudo DEBIAN_FRONTEND=noninteractive dpkg -i mysql-apt-config_0.8.29-1_all.deb 2>/dev/null || \
-	echo "⚠️  MySQL APT設定パッケージのインストールに失敗しました"
+	@echo "🐬 MySQL Workbench（DEBファイル直接ダウンロード）をスキップ中..."
+	@echo "ℹ️  MySQL WorkbenchはDEBファイルから直接インストールされます"
 	
 	# パッケージリストの更新（エラーを無視）
 	@echo "🔄 パッケージリストを更新中..."
@@ -280,11 +275,8 @@ install-deb:
 	@sudo DEBIAN_FRONTEND=noninteractive apt install -y tableplus pgadmin4-desktop || \
 	echo "⚠️  データベースツールのインストールに失敗しました"
 	
-	# MySQL Workbench（APTリポジトリから）
-	@echo "🐬 MySQL Workbenchをインストール中（APT）..."
-	@sudo DEBIAN_FRONTEND=noninteractive apt install -y mysql-workbench-community 2>/dev/null || \
-	sudo DEBIAN_FRONTEND=noninteractive apt install -y mysql-workbench 2>/dev/null || \
-	echo "⚠️  MySQL Workbenchのインストールに失敗しました"
+	# MySQL Workbench（DEBファイル直接ダウンロード）
+	@echo "ℹ️  MySQL WorkbenchはDEBファイルから直接インストールされます（下記参照）"
 	
 	@sudo DEBIAN_FRONTEND=noninteractive apt install -y slack-desktop || \
 	echo "⚠️  チャットアプリのインストールに失敗しました"
@@ -307,6 +299,15 @@ install-deb:
 	sudo apt-get install -f -y 2>/dev/null && \
 	echo "✅ Visual Studio Codeのインストールが完了しました" || \
 	echo "⚠️  Visual Studio Codeのインストールに失敗しました"
+	
+	# MySQL Workbench（公式DEBファイル直接ダウンロード）
+	@cd /tmp && \
+	echo "🐬 MySQL Workbenchをインストール中（公式DEBファイル）..." && \
+	wget -O mysql-workbench.deb "https://dev.mysql.com/get/Downloads/MySQLGUITools/mysql-workbench-community_8.0.38-1ubuntu22.04_amd64.deb" 2>/dev/null && \
+	sudo dpkg -i mysql-workbench.deb 2>/dev/null && \
+	sudo apt-get install -f -y 2>/dev/null && \
+	echo "✅ MySQL Workbenchのインストールが完了しました" || \
+	echo "⚠️  MySQL Workbenchのインストールに失敗しました"
 	
 	@cd /tmp && \
 	wget -q https://dbeaver.io/files/dbeaver-ce_latest_amd64.deb 2>/dev/null && \
@@ -349,35 +350,49 @@ install-deb:
 	echo "⚠️  Postmanのインストールに失敗しました"
 
 	# Cursor IDE
+	@echo "📝 Cursor IDEをダウンロード中..."
 	@cd /tmp && \
-	echo "📝 Cursor IDEをダウンロード中..." && \
-	wget -q https://downloader.cursor.sh/linux/appImage/x64 -O cursor-latest.AppImage 2>/dev/null && \
-	chmod +x cursor-latest.AppImage && \
-	sudo mkdir -p /opt/cursor && \
-	sudo mv cursor-latest.AppImage /opt/cursor/cursor.AppImage && \
-	cd /tmp && \
-	/opt/cursor/cursor.AppImage --appimage-extract > /dev/null 2>&1 && \
-	if [ -f squashfs-root/cursor.png ]; then \
-		sudo cp squashfs-root/cursor.png /opt/cursor/cursor.png; \
-		ICON_PATH="/opt/cursor/cursor.png"; \
-	elif [ -f squashfs-root/resources/app/assets/icon.png ]; then \
-		sudo cp squashfs-root/resources/app/assets/icon.png /opt/cursor/cursor.png; \
-		ICON_PATH="/opt/cursor/cursor.png"; \
+	if wget -O cursor-latest.AppImage "https://downloader.cursor.sh/linux/appImage/x64" 2>/dev/null; then \
+		echo "✅ Cursor IDEのダウンロードが完了しました"; \
+		chmod +x cursor-latest.AppImage && \
+		sudo mkdir -p /opt/cursor && \
+		sudo mv cursor-latest.AppImage /opt/cursor/cursor.AppImage && \
+		echo "[Desktop Entry]" | sudo tee /usr/share/applications/cursor.desktop > /dev/null && \
+		echo "Name=Cursor" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
+		echo "Comment=The AI-first code editor" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
+		echo "Exec=/opt/cursor/cursor.AppImage --no-sandbox" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
+		echo "Icon=applications-development" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
+		echo "Terminal=false" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
+		echo "Type=Application" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
+		echo "Categories=Development;IDE;" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
+		sudo chmod +x /usr/share/applications/cursor.desktop && \
+		echo "✅ Cursor IDEのインストールが完了しました"; \
 	else \
-		echo "⚠️  アイコンファイルが見つかりません。デフォルトアイコンを使用します。"; \
-		ICON_PATH="applications-development"; \
-	fi && \
-	rm -rf squashfs-root && \
-	echo "[Desktop Entry]" | sudo tee /usr/share/applications/cursor.desktop > /dev/null && \
-	echo "Name=Cursor" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
-	echo "Comment=The AI-first code editor" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
-	echo "Exec=/opt/cursor/cursor.AppImage --no-sandbox" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
-	echo "Icon=$$ICON_PATH" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
-	echo "Terminal=false" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
-	echo "Type=Application" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
-	echo "Categories=Development;IDE;" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
-	echo "✅ Cursor IDEのインストールが完了しました" || \
-	echo "⚠️  Cursor IDEのインストールに失敗しました"
+		echo "❌ Cursor IDEのダウンロードに失敗しました"; \
+		echo "🔄 別のダウンロード方法を試行中..."; \
+		if curl -L -o cursor-latest.AppImage "https://downloader.cursor.sh/linux/appImage/x64" 2>/dev/null; then \
+			echo "✅ curlでのダウンロードが成功しました"; \
+			chmod +x cursor-latest.AppImage && \
+			sudo mkdir -p /opt/cursor && \
+			sudo mv cursor-latest.AppImage /opt/cursor/cursor.AppImage && \
+			echo "[Desktop Entry]" | sudo tee /usr/share/applications/cursor.desktop > /dev/null && \
+			echo "Name=Cursor" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
+			echo "Comment=The AI-first code editor" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
+			echo "Exec=/opt/cursor/cursor.AppImage --no-sandbox" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
+			echo "Icon=applications-development" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
+			echo "Terminal=false" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
+			echo "Type=Application" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
+			echo "Categories=Development;IDE;" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
+			sudo chmod +x /usr/share/applications/cursor.desktop && \
+			echo "✅ Cursor IDEのインストールが完了しました"; \
+		else \
+			echo "⚠️  Cursor IDEのインストールに失敗しました"; \
+			echo "💡 手動でインストールする方法:"; \
+			echo "   1. https://cursor.sh/ にアクセス"; \
+			echo "   2. Linux版をダウンロード"; \
+			echo "   3. AppImageファイルを /opt/cursor/ に置く"; \
+		fi; \
+	fi
 	
 	# AWS Session Manager Plugin
 	@cd /tmp && \
