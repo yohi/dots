@@ -190,78 +190,134 @@ install-deb:
 	@echo "📦 DEBパッケージをインストール中..."
 	@cd /tmp
 	
-	# 必要なリポジトリを追加
-	@sudo add-apt-repository -y ppa:mattrose/terminator || true
-	@sudo add-apt-repository -y ppa:hluk/copyq || true
-	@sudo add-apt-repository -y ppa:remmina-ppa-team/remmina-next || true
-	@sudo add-apt-repository -y ppa:boltgolt/howdy || true
-	@sudo add-apt-repository -y ppa:cappelikan/ppa || true
+	# Ubuntu バージョンの確認
+	@UBUNTU_CODENAME=$$(lsb_release -cs); \
+	echo "🔍 検出されたUbuntuバージョン: $$UBUNTU_CODENAME"
+	
+	# 必要なリポジトリを追加（エラーハンドリング強化）
+	@echo "📦 リポジトリを追加中..."
+	
+	# Terminator（Ubuntuのデフォルトリポジトリにあるので、PPAは必須ではない）
+	@sudo add-apt-repository -y ppa:mattrose/terminator 2>/dev/null || \
+	echo "⚠️  Terminator PPAが利用できません。デフォルトリポジトリからインストールします。"
+	
+	# CopyQ（Ubuntuのデフォルトリポジトリにあるので、PPAは必須ではない）
+	@sudo add-apt-repository -y ppa:hluk/copyq 2>/dev/null || \
+	echo "⚠️  CopyQ PPAが利用できません。デフォルトリポジトリからインストールします。"
+	
+	# Remmina（デフォルトリポジトリからでもインストール可能）
+	@sudo add-apt-repository -y ppa:remmina-ppa-team/remmina-next 2>/dev/null || \
+	echo "⚠️  Remmina PPAが利用できません。デフォルトリポジトリからインストールします。"
+	
+	# Howdy（顔認証、オプション）
+	@sudo add-apt-repository -y ppa:boltgolt/howdy 2>/dev/null || \
+	echo "ℹ️  Howdy PPAが利用できません（顔認証機能は省略されます）。"
+	
+	# Mainline Kernel（カーネル管理、重要）
+	@sudo add-apt-repository -y ppa:cappelikan/ppa 2>/dev/null || \
+	echo "⚠️  Mainline PPA（カーネル管理）が利用できません。"
 	
 	# Google Chromeリポジトリの追加
-	@wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | sudo gpg --dearmor -o /usr/share/keyrings/google-chrome-keyring.gpg || true
-	@sudo sh -c 'echo "deb [arch=amd64 signed-by=/usr/share/keyrings/google-chrome-keyring.gpg] https://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google-chrome.list' || true
+	@echo "🌐 Google Chromeリポジトリを追加中..."
+	@wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | sudo gpg --dearmor -o /usr/share/keyrings/google-chrome-keyring.gpg 2>/dev/null || true
+	@sudo sh -c 'echo "deb [arch=amd64 signed-by=/usr/share/keyrings/google-chrome-keyring.gpg] https://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google-chrome.list' 2>/dev/null || true
 	
 	# Visual Studio Codeリポジトリの追加
-	@wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > /tmp/packages.microsoft.gpg || true
-	@sudo install -o root -g root -m 644 /tmp/packages.microsoft.gpg /etc/apt/trusted.gpg.d/ || true
-	@sudo sh -c 'echo "deb [arch=amd64,arm64,armhf signed-by=/etc/apt/trusted.gpg.d/packages.microsoft.gpg] https://packages.microsoft.com/repos/code stable main" > /etc/apt/sources.list.d/vscode.list' || true
+	@echo "💻 Visual Studio Codeリポジトリを追加中..."
+	@wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > /tmp/packages.microsoft.gpg 2>/dev/null || true
+	@sudo install -o root -g root -m 644 /tmp/packages.microsoft.gpg /etc/apt/trusted.gpg.d/ 2>/dev/null || true
+	@sudo sh -c 'echo "deb [arch=amd64,arm64,armhf signed-by=/etc/apt/trusted.gpg.d/packages.microsoft.gpg] https://packages.microsoft.com/repos/code stable main" > /etc/apt/sources.list.d/vscode.list' 2>/dev/null || true
 	
-	# Postmanリポジトリの追加
-	@wget -qO- https://dl.pstmn.io/download/latest/linux64 -O /tmp/postman-linux-x64.tar.gz || true
+	# TablePlusリポジトリの追加
+	@echo "🗃️  TablePlusリポジトリを追加中..."
+	@wget -qO - https://deb.tableplus.com/apt.tableplus.com.gpg.key | gpg --dearmor | sudo tee /etc/apt/trusted.gpg.d/tableplus-archive.gpg >/dev/null 2>&1 || true
+	@sudo add-apt-repository -y "deb [arch=amd64] https://deb.tableplus.com/debian/22 tableplus main" 2>/dev/null || true
 	
-	# GPGキーとリポジトリの追加
-	@wget -qO - https://deb.tableplus.com/apt.tableplus.com.gpg.key | gpg --dearmor | sudo tee /etc/apt/trusted.gpg.d/tableplus-archive.gpg || true
-	@sudo add-apt-repository -y "deb [arch=amd64] https://deb.tableplus.com/debian/22 tableplus main" || true
+	# pgAdminリポジトリの追加
+	@echo "🐘 pgAdminリポジトリを追加中..."
+	@curl -fsS https://www.pgadmin.org/static/packages_pgadmin_org.pub | sudo gpg --dearmor -o /usr/share/keyrings/packages-pgadmin-org.gpg 2>/dev/null || true
+	@sudo sh -c 'echo "deb [signed-by=/usr/share/keyrings/packages-pgadmin-org.gpg] https://ftp.postgresql.org/pub/pgadmin/pgadmin4/apt/$$(lsb_release -cs) pgadmin4 main" > /etc/apt/sources.list.d/pgadmin4.list' 2>/dev/null || true
 	
-	@curl -fsS https://www.pgadmin.org/static/packages_pgadmin_org.pub | sudo gpg --dearmor -o /usr/share/keyrings/packages-pgadmin-org.gpg || true
-	@sudo sh -c 'echo "deb [signed-by=/usr/share/keyrings/packages-pgadmin-org.gpg] https://ftp.postgresql.org/pub/pgadmin/pgadmin4/apt/$$(lsb_release -cs) pgadmin4 main" > /etc/apt/sources.list.d/pgadmin4.list' || true
-	
-	@curl -o- https://deb.packages.mattermost.com/setup-repo.sh | sudo bash || true
+	# Mattermostリポジトリの追加
+	@echo "💬 Mattermostリポジトリを追加中..."
+	@curl -o- https://deb.packages.mattermost.com/setup-repo.sh | sudo bash 2>/dev/null || \
+	echo "⚠️  Mattermostリポジトリが追加できませんでした。"
 	
 	# Slackリポジトリの追加
-	@wget -qO- https://packagecloud.io/slacktechnologies/slack/gpgkey | sudo gpg --dearmor -o /usr/share/keyrings/slack-keyring.gpg || true
-	@sudo sh -c 'echo "deb [arch=amd64 signed-by=/usr/share/keyrings/slack-keyring.gpg] https://packagecloud.io/slacktechnologies/slack/debian/ jessie main" > /etc/apt/sources.list.d/slack.list' || true
+	@echo "💼 Slackリポジトリを追加中..."
+	@wget -qO- https://packagecloud.io/slacktechnologies/slack/gpgkey | sudo gpg --dearmor -o /usr/share/keyrings/slack-keyring.gpg 2>/dev/null || true
+	@sudo sh -c 'echo "deb [arch=amd64 signed-by=/usr/share/keyrings/slack-keyring.gpg] https://packagecloud.io/slacktechnologies/slack/debian/ jessie main" > /etc/apt/sources.list.d/slack.list' 2>/dev/null || true
 	
-	@sudo apt update
+	# パッケージリストの更新（エラーを無視）
+	@echo "🔄 パッケージリストを更新中..."
+	@sudo apt update 2>/dev/null || echo "⚠️  一部のリポジトリでエラーがありましたが、処理を続行します。"
 	
-	# APTパッケージのインストール
-	@sudo DEBIAN_FRONTEND=noninteractive apt install -y tilix terminator google-chrome-stable google-chrome-beta \
-		code kcachegrind blueman copyq mattermost-desktop meld \
-		gnome-shell-extension-manager conky-all synaptic apt-xapian-index \
-		gnome-tweaks gir1.2-gtop-2.0 gir1.2-nm-1.0 gir1.2-clutter-1.0 \
-		remmina remmina-plugin-rdp remmina-plugin-secret \
-		tableplus pgadmin4-desktop mainline slack-desktop || true
+	# APTパッケージのインストール（個別にエラーハンドリング）
+	@echo "📦 基本パッケージをインストール中..."
+	@sudo DEBIAN_FRONTEND=noninteractive apt install -y tilix terminator || \
+	echo "⚠️  一部のターミナルエミュレータのインストールに失敗しました"
+	
+	@sudo DEBIAN_FRONTEND=noninteractive apt install -y google-chrome-stable google-chrome-beta || \
+	echo "⚠️  Google Chromeのインストールに失敗しました"
+	
+	@sudo DEBIAN_FRONTEND=noninteractive apt install -y code || \
+	echo "⚠️  VS Codeのインストールに失敗しました"
+	
+	@sudo DEBIAN_FRONTEND=noninteractive apt install -y copyq meld gnome-tweaks synaptic || \
+	echo "⚠️  一部のユーティリティのインストールに失敗しました"
+	
+	@sudo DEBIAN_FRONTEND=noninteractive apt install -y remmina remmina-plugin-rdp remmina-plugin-secret || \
+	echo "⚠️  Remminaのインストールに失敗しました"
+	
+	@sudo DEBIAN_FRONTEND=noninteractive apt install -y tableplus pgadmin4-desktop || \
+	echo "⚠️  データベースツールのインストールに失敗しました"
+	
+	@sudo DEBIAN_FRONTEND=noninteractive apt install -y mattermost-desktop slack-desktop || \
+	echo "⚠️  チャットアプリのインストールに失敗しました"
+	
+	@sudo DEBIAN_FRONTEND=noninteractive apt install -y mainline || \
+	echo "⚠️  Mainlineカーネル管理ツールのインストールに失敗しました"
+	
+	@sudo DEBIAN_FRONTEND=noninteractive apt install -y kcachegrind blueman gnome-shell-extension-manager \
+		conky-all apt-xapian-index gir1.2-gtop-2.0 gir1.2-nm-1.0 gir1.2-clutter-1.0 || \
+	echo "⚠️  一部のシステムツールのインストールに失敗しました"
 	
 	# DEBファイルのダウンロードとインストール
+	@echo "📥 追加のアプリケーションをインストール中..."
 	@cd /tmp && \
-	wget -q https://dbeaver.io/files/dbeaver-ce_latest_amd64.deb && \
-	sudo gdebi -n dbeaver-ce_latest_amd64.deb || true
+	wget -q https://dbeaver.io/files/dbeaver-ce_latest_amd64.deb 2>/dev/null && \
+	sudo gdebi -n dbeaver-ce_latest_amd64.deb 2>/dev/null || \
+	echo "⚠️  DBeaverのインストールに失敗しました"
 	
 	@cd /tmp && \
-	wget -q https://dev.mysql.com/get/Downloads/MySQLGUITools/mysql-workbench-community_8.0.31-1ubuntu22.04_amd64.deb && \
-	sudo gdebi -n mysql-workbench-community_8.0.31-1ubuntu22.04_amd64.deb || true
+	wget -q https://dev.mysql.com/get/Downloads/MySQLGUITools/mysql-workbench-community_8.0.31-1ubuntu22.04_amd64.deb 2>/dev/null && \
+	sudo gdebi -n mysql-workbench-community_8.0.31-1ubuntu22.04_amd64.deb 2>/dev/null || \
+	echo "⚠️  MySQL Workbenchのインストールに失敗しました"
 	
 	@cd /tmp && \
-	wget -q https://github.com/Kong/insomnia/releases/download/core%402020.3.3/Insomnia.Core-2020.3.3.deb && \
-	sudo gdebi -n Insomnia.Core-2020.3.3.deb || true
+	wget -q https://github.com/Kong/insomnia/releases/download/core%402020.3.3/Insomnia.Core-2020.3.3.deb 2>/dev/null && \
+	sudo gdebi -n Insomnia.Core-2020.3.3.deb 2>/dev/null || \
+	echo "⚠️  Insomniaのインストールに失敗しました"
 	
 	@cd /tmp && \
-	wget -q https://wdl1.pcfg.cache.wpscdn.com/wpsdl/wpsoffice/download/linux/11664/wps-office_11.1.0.11664.XA_amd64.deb && \
-	sudo gdebi -n wps-office_11.1.0.11664.XA_amd64.deb || true
+	wget -q https://wdl1.pcfg.cache.wpscdn.com/wpsdl/wpsoffice/download/linux/11664/wps-office_11.1.0.11664.XA_amd64.deb 2>/dev/null && \
+	sudo gdebi -n wps-office_11.1.0.11664.XA_amd64.deb 2>/dev/null || \
+	echo "⚠️  WPS Officeのインストールに失敗しました"
 	
 	# Discord
 	@cd /tmp && \
 	echo "🎮 Discordをインストール中..." && \
-	wget -q "https://discord.com/api/download?platform=linux&format=deb" -O discord.deb && \
-	sudo gdebi -n discord.deb || true && \
-	echo "✅ Discordのインストールが完了しました" || true
+	wget -q "https://discord.com/api/download?platform=linux&format=deb" -O discord.deb 2>/dev/null && \
+	sudo gdebi -n discord.deb 2>/dev/null && \
+	echo "✅ Discordのインストールが完了しました" || \
+	echo "⚠️  Discordのインストールに失敗しました"
 	
 	# Postman
 	@cd /tmp && \
 	echo "📮 Postmanをインストール中..." && \
-	wget -q https://dl.pstmn.io/download/latest/linux64 -O postman-linux-x64.tar.gz && \
-	sudo tar -xzf postman-linux-x64.tar.gz -C /opt/ && \
-	sudo mv /opt/Postman /opt/postman || true && \
+	wget -q https://dl.pstmn.io/download/latest/linux64 -O postman-linux-x64.tar.gz 2>/dev/null && \
+	sudo tar -xzf postman-linux-x64.tar.gz -C /opt/ 2>/dev/null && \
+	sudo mv /opt/Postman /opt/postman 2>/dev/null || true && \
 	echo "[Desktop Entry]" | sudo tee /usr/share/applications/postman.desktop > /dev/null && \
 	echo "Name=Postman" | sudo tee -a /usr/share/applications/postman.desktop > /dev/null && \
 	echo "Comment=API Development Environment" | sudo tee -a /usr/share/applications/postman.desktop > /dev/null && \
@@ -270,12 +326,13 @@ install-deb:
 	echo "Terminal=false" | sudo tee -a /usr/share/applications/postman.desktop > /dev/null && \
 	echo "Type=Application" | sudo tee -a /usr/share/applications/postman.desktop > /dev/null && \
 	echo "Categories=Development;" | sudo tee -a /usr/share/applications/postman.desktop > /dev/null && \
-	echo "✅ Postmanのインストールが完了しました" || true
+	echo "✅ Postmanのインストールが完了しました" || \
+	echo "⚠️  Postmanのインストールに失敗しました"
 
 	# Cursor IDE
 	@cd /tmp && \
 	echo "📝 Cursor IDEをダウンロード中..." && \
-	wget -q https://downloader.cursor.sh/linux/appImage/x64 -O cursor-latest.AppImage && \
+	wget -q https://downloader.cursor.sh/linux/appImage/x64 -O cursor-latest.AppImage 2>/dev/null && \
 	chmod +x cursor-latest.AppImage && \
 	sudo mkdir -p /opt/cursor && \
 	sudo mv cursor-latest.AppImage /opt/cursor/cursor.AppImage && \
@@ -300,23 +357,28 @@ install-deb:
 	echo "Terminal=false" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
 	echo "Type=Application" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
 	echo "Categories=Development;IDE;" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
-	echo "✅ Cursor IDEのインストールが完了しました" || true
+	echo "✅ Cursor IDEのインストールが完了しました" || \
+	echo "⚠️  Cursor IDEのインストールに失敗しました"
 	
 	# AWS Session Manager Plugin
 	@cd /tmp && \
-	curl -q "https://s3.amazonaws.com/session-manager-downloads/plugin/latest/ubuntu_64bit/session-manager-plugin.deb" -o "session-manager-plugin.deb" && \
-	sudo gdebi -n session-manager-plugin.deb || true
+	curl -q "https://s3.amazonaws.com/session-manager-downloads/plugin/latest/ubuntu_64bit/session-manager-plugin.deb" -o "session-manager-plugin.deb" 2>/dev/null && \
+	sudo gdebi -n session-manager-plugin.deb 2>/dev/null || \
+	echo "⚠️  AWS Session Manager Pluginのインストールに失敗しました"
 	
 	# WezTerm
 	@cd /tmp && \
 	echo "🖥️  WezTermをインストール中..." && \
-	wget -q https://github.com/wez/wezterm/releases/download/20240203-110809-5046fc22/wezterm-20240203-110809-5046fc22.Ubuntu22.04.deb && \
-	sudo gdebi -n wezterm-20240203-110809-5046fc22.Ubuntu22.04.deb || true && \
-	echo "✅ WezTermのインストールが完了しました" || true
+	wget -q https://github.com/wez/wezterm/releases/download/20240203-110809-5046fc22/wezterm-20240203-110809-5046fc22.Ubuntu22.04.deb 2>/dev/null && \
+	sudo gdebi -n wezterm-20240203-110809-5046fc22.Ubuntu22.04.deb 2>/dev/null && \
+	echo "✅ WezTermのインストールが完了しました" || \
+	echo "⚠️  WezTermのインストールに失敗しました"
 	
-	@update-apt-xapian-index -vf || true
+	@update-apt-xapian-index -vf 2>/dev/null || true
 	
 	@echo "✅ DEBパッケージのインストールが完了しました。"
+	@echo "⚠️  一部のパッケージでインストールエラーが発生した可能性がありますが、"
+	@echo "    大部分のアプリケーションは正常にインストールされました。"
 
 # Flatpakパッケージのインストール（将来用）
 install-flatpak:
