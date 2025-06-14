@@ -555,6 +555,11 @@ setup-git:
 setup-docker:
 	@echo "🐳 Docker設定をセットアップ中..."
 	
+	# 必要なパッケージを先にインストール
+	@echo "📦 Docker rootless用の必要パッケージをインストール中..."
+	@sudo DEBIAN_FRONTEND=noninteractive apt-get update || true
+	@sudo DEBIAN_FRONTEND=noninteractive apt-get install -y uidmap || true
+	
 	# Rootless Dockerのセットアップ
 	@if ! command -v dockerd-rootless-setuptool.sh >/dev/null 2>&1; then \
 		echo "📦 Rootless Dockerをインストール中..."; \
@@ -562,9 +567,6 @@ setup-docker:
 	fi
 	
 	@dockerd-rootless-setuptool.sh install || true
-	
-	# 必要なパッケージをインストール
-	@sudo DEBIAN_FRONTEND=noninteractive apt-get install -y uidmap || true
 	
 	# サービスの設定
 	@systemctl --user enable docker.service || true
