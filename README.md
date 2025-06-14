@@ -54,19 +54,123 @@ make setup-all
 - **開発環境**: Vim/Neovim、Zsh、Git、Docker設定
 - **アプリケーション**: 開発用ツール、GUI アプリケーション
 
-## 📦 インストールされるもの
+## 📦 インストールされるアプリケーション
 
-### 開発ツール
-- Homebrew + Brewfile からのパッケージ
-- Vim/Neovim 設定
-- Zsh + Oh My Zsh 設定
-- Git 設定
-- Docker 設定
+### 🏗️ システムレベル（APT）
+- **基本ツール**: build-essential, curl, file, wget, software-properties-common
+- **日本語環境**: language-pack-ja, ubuntu-defaults-ja
+- **システムユーティリティ**: xdg-user-dirs-gtk, flatpak, gdebi, chrome-gnome-shell, xclip, xsel
 
-### アプリケーション
-- ターミナルエミュレータ（Tilix、Wezterm）
-- 開発用GUI ツール（DBeaver、MySQL Workbench、Insomnia）
-- システムユーティリティ
+### 🍺 Homebrew パッケージ（Brewfile）
+
+#### 開発ツール・言語
+- **バージョン管理**: git-lfs, asdf, direnv, nodenv, node-build
+- **プログラミング言語**: 
+  - go, rust, lua, luajit, luarocks
+  - php, composer, python-tk@3.9, python-yq, cython
+  - node, deno, yarn
+  - ruby, perl
+- **Python関連**: flake8, mypy, pipenv, uv, pygobject3
+- **コンパイラ・ビルドツール**: gcc, cmake, clang-format, tree-sitter
+
+#### コマンドラインツール
+- **ファイル操作**: fd, ripgrep, tree, pv, peco, fzf, p7zip
+- **監視・管理**: ctop, lazydocker, lazygit, watchman
+- **ネットワーク**: awscli, nghttp2, newrelic-cli
+- **その他**: jq, xclip, srt, neo-cowsay, utern
+
+#### データベース・開発サーバー
+- **データベース**: mysql, postgresql@14
+- **コンテナ**: docker, docker-compose
+- **テスト**: jmeter
+- **インフラ**: flux, dagger, mmctl
+
+#### ユーティリティ・ライブラリ
+- **フォント**: font-cica, font-noto-sans-cjk-jp
+- **システムライブラリ**: ncurses, libedit, openssl@3, unzip, glib
+- **GUI関連**: at-spi2-core, pkgconf, cairo, mesa, freeglut, gtk+, gtk+3, pango, librsvg, vte3
+- **その他**: mercurial, netpbm, gobject-introspection, dlib
+
+#### エディタ・ターミナル
+- **エディタ**: neovim
+- **ターミナル**: terminator, wezterm, zsh, zsh-autosuggestions, powerlevel10k
+- **セキュリティ**: bitwarden-cli
+
+### 💻 GUI アプリケーション（DEBパッケージ）
+
+#### ブラウザ
+- Google Chrome Stable
+- Google Chrome Beta
+
+#### 開発環境・IDE
+- Visual Studio Code
+- Cursor IDE (AppImage)
+
+#### データベース・開発ツール
+- DBeaver Community Edition
+- MySQL Workbench
+- TablePlus
+- pgAdmin4 Desktop
+- Insomnia (API Client)
+- Postman (API Development Environment)
+
+#### ターミナルエミュレータ
+- Tilix
+- Terminator
+
+#### システム管理・ユーティリティ
+- Synaptic Package Manager
+- GNOME Tweaks
+- GNOME Shell Extension Manager
+- Conky
+- Mainline (Kernel管理)
+- Meld (差分比較)
+- CopyQ (クリップボード管理)
+- Blueman (Bluetooth管理)
+
+#### リモート・ネットワーク
+- Remmina (リモートデスクトップ)
+  - RDPプラグイン
+  - Secret プラグイン
+
+#### 生産性・オフィス
+- WPS Office
+- Mattermost Desktop
+- Slack Desktop
+- Discord
+
+#### 開発・デバッグ
+- KCachegrind (プロファイリング)
+- AWS Session Manager Plugin
+
+### 🔧 Visual Studio Code 拡張機能
+- **Python開発**: ms-python.python, ms-python.vscode-pylance, ms-python.debugpy
+- **Django**: batisteo.vscode-django, bigonesystems.django, thebarkman.vscode-djaneiro
+- **Docker**: docker.docker, ms-azuretools.vscode-docker, ms-vscode-remote.remote-containers
+- **AI・補完**: github.copilot, github.copilot-chat
+- **Git**: eamodio.gitlens
+- **Jupyter**: ms-toolsai.jupyter (関連パッケージ含む)
+- **コード品質**: ms-python.flake8, ms-python.mypy-type-checker
+- **ユーティリティ**: kevinrose.vsc-python-indent, njpwerner.autodocstring, njqdev.vscode-python-typehint
+- **言語パック**: ms-ceintl.vscode-language-pack-ja
+
+### ⚙️ 設定・dotfiles
+- **Vim/Neovim**: カスタム設定、プラグイン管理
+- **Zsh**: Oh My Zsh, Powerlevel10k テーマ、自動補完
+- **Wezterm**: ターミナルエミュレータ設定
+- **Git**: ユーザー設定、SSH鍵生成
+- **Docker**: Rootless Docker設定
+- **Tilix**: ターミナル設定（dconf）
+- **キーボードショートカット**: GNOME環境のカスタムショートカット設定
+- **Logiops**: Logicoolマウス設定（設定ファイルがある場合）
+
+### 📝 セットアップされる環境
+- **日本語環境**: 完全な日本語サポート
+- **開発環境**: Python, Node.js, Go, Rust, PHP, Ruby
+- **コンテナ環境**: Docker + Docker Compose (Rootless)
+- **シェル環境**: Zsh + Powerlevel10k + 便利なプラグイン
+- **エディタ環境**: Neovim + カスタム設定
+- **ターミナル環境**: Wezterm + Tilix の設定
 
 ## 🔧 カスタマイズ
 

@@ -3,7 +3,7 @@
 # Description: Comprehensive Ubuntu setup with applications and dotfiles configuration
 
 .PHONY: all help system-setup install-homebrew install-apps install-deb-packages install-flatpak-packages \
-        setup-vim setup-zsh setup-wezterm setup-git setup-docker setup-development \
+        setup-vim setup-zsh setup-wezterm setup-vscode setup-cursor setup-git setup-docker setup-development setup-shortcuts \
         setup-all clean system-config
 
 # デフォルトターゲット
@@ -17,14 +17,17 @@ help:
 	@echo "  make system-setup      - システムレベルの基本設定"
 	@echo "  make install-homebrew  - Homebrewをインストール"
 	@echo "  make install-apps      - Brewfileを使用してアプリケーションをインストール"
-	@echo "  make install-deb       - DEBパッケージをインストール"
+	@echo "  make install-deb       - DEBパッケージをインストール（IDE・ブラウザ含む）"
 	@echo "  make install-flatpak   - Flatpakパッケージをインストール"
 	@echo "  make setup-vim         - VIMの設定をセットアップ"
 	@echo "  make setup-zsh         - ZSHの設定をセットアップ"
 	@echo "  make setup-wezterm     - WEZTERMの設定をセットアップ"
+	@echo "  make setup-vscode      - VS Codeの設定をセットアップ"
+	@echo "  make setup-cursor      - Cursorの設定をセットアップ"
 	@echo "  make setup-git         - Git設定をセットアップ"
 	@echo "  make setup-docker      - Dockerの設定をセットアップ"
 	@echo "  make setup-development - 開発環境の設定をセットアップ"
+	@echo "  make setup-shortcuts   - キーボードショートカットの設定をセットアップ"
 	@echo "  make setup-all         - すべての設定をセットアップ"
 	@echo "  make clean             - シンボリックリンクを削除"
 	@echo "  make help              - このヘルプメッセージを表示"
@@ -33,6 +36,14 @@ help:
 	@echo "  1. make system-setup"
 	@echo "  2. make install-homebrew"
 	@echo "  3. make setup-all"
+	@echo ""
+	@echo "🌐 Google Chrome/Chromeベータについて:"
+	@echo "  'make install-deb' でGoogle Chrome StableとBetaの両方がインストールされます"
+	@echo ""
+	@echo "👨‍💻 開発環境IDEについて:"
+	@echo "  'make install-deb' で以下のIDEがインストールされます:"
+	@echo "    - Visual Studio Code (公式リポジトリから)"
+	@echo "    - Cursor IDE (AppImageとして /opt/cursor にインストール)"
 	@echo ""
 	@echo "📧 Eメールアドレスの設定:"
 	@echo "  環境変数で指定: EMAIL=your@email.com make setup-git"
@@ -48,11 +59,6 @@ HOME_DIR := $(HOME)
 CONFIG_DIR := $(HOME_DIR)/.config
 USER := $(shell whoami)
 
-# Eメールアドレスの設定（環境変数、または実行時入力）
-ifndef EMAIL
-EMAIL := $(shell bash -c 'read -p "📧 Gitで使用するEメールアドレスを入力してください: " email && echo $$email')
-endif
-
 # システムレベルの基本設定
 system-setup:
 	@echo "🔧 システムレベルの基本設定を開始..."
@@ -61,8 +67,21 @@ system-setup:
 	@sudo apt update && sudo apt -y upgrade
 	
 	# 日本語環境の設定
-	@sudo apt -y install language-pack-ja
-	@sudo update-locale LANG=ja_JP.UTF8
+	@echo "🌏 日本語環境を設定中..."
+	@sudo apt -y install language-pack-ja language-pack-ja-base
+	
+	# タイムゾーンを日本/東京に設定
+	@echo "🕐 タイムゾーンをAsia/Tokyoに設定中..."
+	@sudo timedatectl set-timezone Asia/Tokyo || true
+	
+	# ロケールの設定
+	@echo "🌐 ロケールを設定中..."
+	@sudo locale-gen ja_JP.UTF-8 || true
+	@sudo update-locale LANG=ja_JP.UTF-8 LANGUAGE=ja_JP:ja LC_ALL=ja_JP.UTF-8 || true
+	
+	# 日本語フォントのインストール
+	@echo "🔤 日本語フォントをインストール中..."
+	@sudo apt -y install fonts-noto-cjk fonts-noto-cjk-extra fonts-takao-gothic fonts-takao-mincho || true
 	
 	# 基本開発ツール
 	@sudo apt -y install build-essential curl file wget software-properties-common
@@ -76,7 +95,7 @@ system-setup:
 	# Ubuntu Japanese
 	@sudo wget https://www.ubuntulinux.jp/ubuntu-jp-ppa-keyring.gpg -P /etc/apt/trusted.gpg.d/ || true
 	@sudo wget https://www.ubuntulinux.jp/ubuntu-ja-archive-keyring.gpg -P /etc/apt/trusted.gpg.d/ || true
-	@sudo wget https://www.ubuntulinux.jp/sources.list.d/jammy.list -O /etc/apt/sources.list.d/ubuntu-ja.list || true
+	@sudo wget https://www.ubuntulinux.jp/sources.list.d/$$(lsb_release -cs).list -O /etc/apt/sources.list.d/ubuntu-ja.list || true
 	@sudo apt update && sudo apt install -y ubuntu-defaults-ja || true
 	
 	# CapsLock -> Ctrl
@@ -87,6 +106,8 @@ system-setup:
 	@sudo apt install -y flatpak gdebi chrome-gnome-shell xclip xsel
 	
 	@echo "✅ システムレベルの基本設定が完了しました。"
+	@echo "🌏 タイムゾーン: $$(timedatectl show --property=Timezone --value)"
+	@echo "🌐 ロケール: $$(locale | grep LANG)"
 	@echo "⚠️  言語設定を反映するため、システムの再起動を推奨します。"
 
 # Homebrewのインストール
@@ -121,10 +142,21 @@ install-deb:
 	# 必要なリポジトリを追加
 	@sudo add-apt-repository -y ppa:mattrose/terminator || true
 	@sudo add-apt-repository -y ppa:hluk/copyq || true
-	@sudo add-apt-repository -y ppa:appimagelauncher-team/stable || true
 	@sudo add-apt-repository -y ppa:remmina-ppa-team/remmina-next || true
 	@sudo add-apt-repository -y ppa:boltgolt/howdy || true
 	@sudo add-apt-repository -y ppa:cappelikan/ppa || true
+	
+	# Google Chromeリポジトリの追加
+	@wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | sudo gpg --dearmor -o /usr/share/keyrings/google-chrome-keyring.gpg || true
+	@sudo sh -c 'echo "deb [arch=amd64 signed-by=/usr/share/keyrings/google-chrome-keyring.gpg] https://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google-chrome.list' || true
+	
+	# Visual Studio Codeリポジトリの追加
+	@wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > /tmp/packages.microsoft.gpg || true
+	@sudo install -o root -g root -m 644 /tmp/packages.microsoft.gpg /etc/apt/trusted.gpg.d/ || true
+	@sudo sh -c 'echo "deb [arch=amd64,arm64,armhf signed-by=/etc/apt/trusted.gpg.d/packages.microsoft.gpg] https://packages.microsoft.com/repos/code stable main" > /etc/apt/sources.list.d/vscode.list' || true
+	
+	# Postmanリポジトリの追加
+	@wget -qO- https://dl.pstmn.io/download/latest/linux64 -O /tmp/postman-linux-x64.tar.gz || true
 	
 	# GPGキーとリポジトリの追加
 	@wget -qO - https://deb.tableplus.com/apt.tableplus.com.gpg.key | gpg --dearmor | sudo tee /etc/apt/trusted.gpg.d/tableplus-archive.gpg || true
@@ -135,15 +167,19 @@ install-deb:
 	
 	@curl -o- https://deb.packages.mattermost.com/setup-repo.sh | sudo bash || true
 	
+	# Slackリポジトリの追加
+	@wget -qO- https://packagecloud.io/slacktechnologies/slack/gpgkey | sudo gpg --dearmor -o /usr/share/keyrings/slack-keyring.gpg || true
+	@sudo sh -c 'echo "deb [arch=amd64 signed-by=/usr/share/keyrings/slack-keyring.gpg] https://packagecloud.io/slacktechnologies/slack/debian/ jessie main" > /etc/apt/sources.list.d/slack.list' || true
+	
 	@sudo apt update
 	
 	# APTパッケージのインストール
 	@sudo apt install -y tilix terminator google-chrome-stable google-chrome-beta \
-		kcachegrind blueman copyq mattermost-desktop appimagelauncher meld \
+		code kcachegrind blueman copyq mattermost-desktop meld \
 		gnome-shell-extension-manager conky-all synaptic apt-xapian-index \
 		gnome-tweaks gir1.2-gtop-2.0 gir1.2-nm-1.0 gir1.2-clutter-1.0 \
 		remmina remmina-plugin-rdp remmina-plugin-secret \
-		tableplus pgadmin4-desktop mainline || true
+		tableplus pgadmin4-desktop mainline slack-desktop || true
 	
 	# DEBファイルのダウンロードとインストール
 	@cd /tmp && \
@@ -161,6 +197,64 @@ install-deb:
 	@cd /tmp && \
 	wget -q https://wdl1.pcfg.cache.wpscdn.com/wpsdl/wpsoffice/download/linux/11664/wps-office_11.1.0.11664.XA_amd64.deb && \
 	sudo gdebi -n wps-office_11.1.0.11664.XA_amd64.deb || true
+	
+	# Discord
+	@cd /tmp && \
+	echo "🎮 Discordをインストール中..." && \
+	wget -q "https://discord.com/api/download?platform=linux&format=deb" -O discord.deb && \
+	sudo gdebi -n discord.deb || true && \
+	echo "✅ Discordのインストールが完了しました" || true
+	
+	# Postman
+	@cd /tmp && \
+	echo "📮 Postmanをインストール中..." && \
+	wget -q https://dl.pstmn.io/download/latest/linux64 -O postman-linux-x64.tar.gz && \
+	sudo tar -xzf postman-linux-x64.tar.gz -C /opt/ && \
+	sudo mv /opt/Postman /opt/postman || true && \
+	sudo tee /usr/share/applications/postman.desktop > /dev/null <<EOF
+[Desktop Entry]
+Name=Postman
+Comment=API Development Environment
+Exec=/opt/postman/Postman
+Icon=/opt/postman/app/resources/app/assets/icon.png
+Terminal=false
+Type=Application
+Categories=Development;
+EOF
+	@echo "✅ Postmanのインストールが完了しました" || true
+	
+	# Cursor IDE
+	@cd /tmp && \
+	echo "📝 Cursor IDEをダウンロード中..." && \
+	wget -q https://downloader.cursor.sh/linux/appImage/x64 -O cursor-latest.AppImage && \
+	chmod +x cursor-latest.AppImage && \
+	sudo mkdir -p /opt/cursor && \
+	sudo mv cursor-latest.AppImage /opt/cursor/cursor.AppImage && \
+	# アイコンファイルの抽出を試行
+	cd /tmp && \
+	/opt/cursor/cursor.AppImage --appimage-extract > /dev/null 2>&1 && \
+	if [ -f squashfs-root/cursor.png ]; then \
+		sudo cp squashfs-root/cursor.png /opt/cursor/cursor.png; \
+		ICON_PATH="/opt/cursor/cursor.png"; \
+	elif [ -f squashfs-root/resources/app/assets/icon.png ]; then \
+		sudo cp squashfs-root/resources/app/assets/icon.png /opt/cursor/cursor.png; \
+		ICON_PATH="/opt/cursor/cursor.png"; \
+	else \
+		echo "⚠️  アイコンファイルが見つかりません。デフォルトアイコンを使用します。"; \
+		ICON_PATH="applications-development"; \
+	fi && \
+	rm -rf squashfs-root && \
+	sudo tee /usr/share/applications/cursor.desktop > /dev/null <<EOF
+[Desktop Entry]
+Name=Cursor
+Comment=The AI-first code editor
+Exec=/opt/cursor/cursor.AppImage --no-sandbox
+Icon=$$ICON_PATH
+Terminal=false
+Type=Application
+Categories=Development;IDE;
+EOF
+	@echo "✅ Cursor IDEのインストールが完了しました" || true
 	
 	# AWS Session Manager Plugin
 	@cd /tmp && \
@@ -305,31 +399,95 @@ setup-wezterm:
 	
 	@echo "✅ WEZTERMの設定が完了しました。"
 
+# VS Codeの設定をセットアップ
+setup-vscode:
+	@echo "💻 VS Codeの設定をセットアップ中..."
+	@mkdir -p $(CONFIG_DIR)/Code/User
+	
+	# 既存設定のバックアップ
+	@if [ -f "$(CONFIG_DIR)/Code/User/settings.json" ] && [ ! -L "$(CONFIG_DIR)/Code/User/settings.json" ]; then \
+		echo "⚠️  既存のVS Code settings.jsonをバックアップ中..."; \
+		mv $(CONFIG_DIR)/Code/User/settings.json $(CONFIG_DIR)/Code/User/settings.json.backup.$$(date +%Y%m%d_%H%M%S); \
+	fi
+	@if [ -f "$(CONFIG_DIR)/Code/User/keybindings.json" ] && [ ! -L "$(CONFIG_DIR)/Code/User/keybindings.json" ]; then \
+		echo "⚠️  既存のVS Code keybindings.jsonをバックアップ中..."; \
+		mv $(CONFIG_DIR)/Code/User/keybindings.json $(CONFIG_DIR)/Code/User/keybindings.json.backup.$$(date +%Y%m%d_%H%M%S); \
+	fi
+	
+	# シンボリックリンクを作成
+	@ln -sfn $(DOTFILES_DIR)/vscode/settings.json $(CONFIG_DIR)/Code/User/settings.json
+	@ln -sfn $(DOTFILES_DIR)/vscode/keybindings.json $(CONFIG_DIR)/Code/User/keybindings.json
+	
+	# 拡張機能のインストール
+	@if command -v code >/dev/null 2>&1; then \
+		echo "📦 VS Code拡張機能をインストール中..."; \
+		if [ -f "$(DOTFILES_DIR)/vscode/extensions.list" ]; then \
+			grep -v '^#' $(DOTFILES_DIR)/vscode/extensions.list | grep -v '^$$' | xargs -L 1 code --install-extension || true; \
+		fi; \
+		echo "✅ VS Code拡張機能のインストールが完了しました"; \
+	else \
+		echo "⚠️  VS Codeがインストールされていません。拡張機能のインストールをスキップします"; \
+	fi
+	
+	@echo "✅ VS Codeの設定が完了しました。"
+
+# Cursorの設定をセットアップ
+setup-cursor:
+	@echo "🖱️  Cursorの設定をセットアップ中..."
+	@mkdir -p $(CONFIG_DIR)/Cursor/User
+	
+	# 既存設定のバックアップ
+	@if [ -f "$(CONFIG_DIR)/Cursor/User/settings.json" ] && [ ! -L "$(CONFIG_DIR)/Cursor/User/settings.json" ]; then \
+		echo "⚠️  既存のCursor settings.jsonをバックアップ中..."; \
+		mv $(CONFIG_DIR)/Cursor/User/settings.json $(CONFIG_DIR)/Cursor/User/settings.json.backup.$$(date +%Y%m%d_%H%M%S); \
+	fi
+	@if [ -f "$(CONFIG_DIR)/Cursor/User/keybindings.json" ] && [ ! -L "$(CONFIG_DIR)/Cursor/User/keybindings.json" ]; then \
+		echo "⚠️  既存のCursor keybindings.jsonをバックアップ中..."; \
+		mv $(CONFIG_DIR)/Cursor/User/keybindings.json $(CONFIG_DIR)/Cursor/User/keybindings.json.backup.$$(date +%Y%m%d_%H%M%S); \
+	fi
+	
+	# シンボリックリンクを作成
+	@ln -sfn $(DOTFILES_DIR)/cursor/settings.json $(CONFIG_DIR)/Cursor/User/settings.json
+	@ln -sfn $(DOTFILES_DIR)/cursor/keybindings.json $(CONFIG_DIR)/Cursor/User/keybindings.json
+	
+	@echo "✅ Cursorの設定が完了しました。"
+
 # Git設定のセットアップ
 setup-git:
 	@echo "🖥️  Git設定をセットアップ中..."
 	
-	# Eメールアドレスの確認・入力
-	@if [ -z "$(EMAIL)" ]; then \
-		echo "📧 Eメールアドレスが設定されていません。"; \
-		read -p "Gitで使用するEメールアドレスを入力してください: " EMAIL_INPUT; \
-		git config --global user.name 'Yusuke Ohi'; \
-		git config --global user.email "$$EMAIL_INPUT"; \
-		echo "✅ Git設定完了 - Email: $$EMAIL_INPUT"; \
+	# 既存のGit設定をチェック
+	@CURRENT_EMAIL=$$(git config --global user.email 2>/dev/null || echo ""); \
+	CURRENT_NAME=$$(git config --global user.name 2>/dev/null || echo ""); \
+	if [ -n "$$CURRENT_EMAIL" ] && [ -n "$$CURRENT_NAME" ]; then \
+		echo "✅ Git設定は既に存在します:"; \
+		echo "   Name: $$CURRENT_NAME"; \
+		echo "   Email: $$CURRENT_EMAIL"; \
 	else \
-		git config --global user.name 'Yusuke Ohi'; \
-		git config --global user.email '$(EMAIL)'; \
-		echo "✅ Git設定完了 - Email: $(EMAIL)"; \
+		echo "📧 Git設定をセットアップします。"; \
+		if [ -n "$(EMAIL)" ]; then \
+			git config --global user.name 'Yusuke Ohi'; \
+			git config --global user.email '$(EMAIL)'; \
+			echo "✅ Git設定完了 - Email: $(EMAIL)"; \
+		else \
+			read -p "Gitで使用するEメールアドレスを入力してください: " EMAIL_INPUT; \
+			git config --global user.name 'Yusuke Ohi'; \
+			git config --global user.email "$$EMAIL_INPUT"; \
+			echo "✅ Git設定完了 - Email: $$EMAIL_INPUT"; \
+		fi; \
 	fi
 	
 	# SSH鍵の生成
 	@if [ ! -f "$(HOME_DIR)/.ssh/id_ed25519" ]; then \
 		echo "🔑 SSH鍵を生成中..."; \
-		if [ -z "$(EMAIL)" ]; then \
+		CURRENT_EMAIL=$$(git config --global user.email 2>/dev/null || echo ""); \
+		if [ -n "$(EMAIL)" ]; then \
+			ssh-keygen -t ed25519 -C '$(EMAIL)' -f $(HOME_DIR)/.ssh/id_ed25519 -N ''; \
+		elif [ -n "$$CURRENT_EMAIL" ]; then \
+			ssh-keygen -t ed25519 -C "$$CURRENT_EMAIL" -f $(HOME_DIR)/.ssh/id_ed25519 -N ''; \
+		else \
 			read -p "SSH鍵用のEメールアドレスを入力してください: " SSH_EMAIL; \
 			ssh-keygen -t ed25519 -C "$$SSH_EMAIL" -f $(HOME_DIR)/.ssh/id_ed25519 -N ''; \
-		else \
-			ssh-keygen -t ed25519 -C '$(EMAIL)' -f $(HOME_DIR)/.ssh/id_ed25519 -N ''; \
 		fi; \
 		echo "✅ SSH鍵が生成されました: $(HOME_DIR)/.ssh/id_ed25519.pub"; \
 		echo "📋 公開鍵の内容:"; \
@@ -402,8 +560,51 @@ setup-development:
 	
 	@echo "✅ 追加の開発環境設定が完了しました。"
 
+# キーボードショートカットの設定
+setup-shortcuts:
+	@echo "⌨️  キーボードショートカットの設定を実行中..."
+	
+	# ウィンドウマネージャのキーバインド設定
+	@if [ -f "$(DOTFILES_DIR)/gnome-shortcuts/wm-keybindings.dconf" ]; then \
+		echo "🪟 ウィンドウマネージャのキーバインド設定を読み込み中..."; \
+		dconf load /org/gnome/desktop/wm/keybindings/ < $(DOTFILES_DIR)/gnome-shortcuts/wm-keybindings.dconf || true; \
+		echo "✅ ウィンドウマネージャのキーバインド設定が読み込まれました"; \
+	else \
+		echo "ℹ️  ウィンドウマネージャのキーバインド設定ファイルが見つかりません: $(DOTFILES_DIR)/gnome-shortcuts/wm-keybindings.dconf"; \
+	fi
+	
+	# メディアキーのキーバインド設定
+	@if [ -f "$(DOTFILES_DIR)/gnome-shortcuts/media-keybindings.dconf" ]; then \
+		echo "🎵 メディアキーのキーバインド設定を読み込み中..."; \
+		dconf load /org/gnome/settings-daemon/plugins/media-keys/ < $(DOTFILES_DIR)/gnome-shortcuts/media-keybindings.dconf || true; \
+		echo "✅ メディアキーのキーバインド設定が読み込まれました"; \
+	else \
+		echo "ℹ️  メディアキーのキーバインド設定ファイルが見つかりません: $(DOTFILES_DIR)/gnome-shortcuts/media-keybindings.dconf"; \
+	fi
+	
+	# カスタムキーバインド設定
+	@if [ -f "$(DOTFILES_DIR)/gnome-shortcuts/custom-keybindings.dconf" ]; then \
+		echo "🔧 カスタムキーバインド設定を読み込み中..."; \
+		dconf load /org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/ < $(DOTFILES_DIR)/gnome-shortcuts/custom-keybindings.dconf || true; \
+		echo "✅ カスタムキーバインド設定が読み込まれました"; \
+	else \
+		echo "ℹ️  カスタムキーバインド設定ファイルが見つかりません: $(DOTFILES_DIR)/gnome-shortcuts/custom-keybindings.dconf"; \
+	fi
+	
+	# ターミナルキーバインド設定（GNOME Terminal）
+	@if [ -f "$(DOTFILES_DIR)/gnome-shortcuts/terminal-keybindings.dconf" ]; then \
+		echo "🖥️  ターミナルキーバインド設定を読み込み中..."; \
+		dconf load /org/gnome/terminal/legacy/keybindings/ < $(DOTFILES_DIR)/gnome-shortcuts/terminal-keybindings.dconf || true; \
+		echo "✅ ターミナルキーバインド設定が読み込まれました"; \
+	else \
+		echo "ℹ️  ターミナルキーバインド設定ファイルが見つかりません: $(DOTFILES_DIR)/gnome-shortcuts/terminal-keybindings.dconf"; \
+	fi
+	
+	@echo "✅ キーボードショートカットの設定が完了しました。"
+	@echo "⚠️  設定を反映するため、一度ログアウト・ログインすることを推奨します。"
+
 # すべての設定をセットアップ
-setup-all: install-apps setup-vim setup-zsh setup-wezterm setup-git setup-docker setup-development
+setup-all: install-apps setup-vim setup-zsh setup-wezterm setup-vscode setup-git setup-docker setup-development setup-shortcuts
 	@echo ""
 	@echo "🎉 すべてのセットアップが完了しました！"
 	@echo ""
@@ -435,6 +636,14 @@ clean:
 	
 	# WEZTERM関連のリンクを削除
 	@if [ -L "$(CONFIG_DIR)/wezterm/wezterm.lua" ]; then rm -f $(CONFIG_DIR)/wezterm/wezterm.lua; fi
+	
+	# VS Code関連のリンクを削除
+	@if [ -L "$(CONFIG_DIR)/Code/User/settings.json" ]; then rm -f $(CONFIG_DIR)/Code/User/settings.json; fi
+	@if [ -L "$(CONFIG_DIR)/Code/User/keybindings.json" ]; then rm -f $(CONFIG_DIR)/Code/User/keybindings.json; fi
+	
+	# Cursor関連のリンクを削除
+	@if [ -L "$(CONFIG_DIR)/Cursor/User/settings.json" ]; then rm -f $(CONFIG_DIR)/Cursor/User/settings.json; fi
+	@if [ -L "$(CONFIG_DIR)/Cursor/User/keybindings.json" ]; then rm -f $(CONFIG_DIR)/Cursor/User/keybindings.json; fi
 	
 	# その他の設定ファイル
 	@if [ -L "/etc/logid.cfg" ]; then \
