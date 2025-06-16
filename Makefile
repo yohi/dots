@@ -53,7 +53,7 @@ help:
 	@echo "  'make install-deb' で以下のIDEがインストールされます:"
 	@echo "    - Visual Studio Code (公式リポジトリから)"
 	@echo "    - Cursor IDE (AppImageとして /opt/cursor にインストール)"
-	@echo "  'make install-cursor-manual' でCursor IDEを手動インストール"
+	@echo "  'make install-cursor' でCursor IDEをインストール"
 	@echo ""
 	@echo "📧 Eメールアドレスの設定:"
 	@echo "  環境変数で指定: EMAIL=your@email.com make setup-git"
@@ -1200,53 +1200,57 @@ debug:
 	@echo "🔑 SSH鍵の状況:"
 	@echo "SSH鍵存在: $(shell [ -f $(HOME_DIR)/.ssh/id_ed25519 ] && echo 'Yes' || echo 'No')" 
 
-# Cursor IDEの手動インストール
-install-cursor-manual:
-	@echo "📝 Cursor IDEの手動インストールを開始します..."
-	@echo "💡 ブラウザで https://cursor.sh/ を開いてください"
-	@echo "⏳ ダウンロードファイルをDownloadsディレクトリで確認しています..."
-	@cd $(HOME_DIR)/Downloads || cd $(HOME_DIR)/Desktop || cd /tmp
-	@if ls cursor*.AppImage 2>/dev/null; then \
-		echo "✅ Cursor AppImageファイルが見つかりました"; \
-		CURSOR_FILE=$$(ls cursor*.AppImage | head -1); \
-		echo "📦 インストール対象: $$CURSOR_FILE"; \
-		chmod +x "$$CURSOR_FILE" && \
-		sudo mkdir -p /opt/cursor && \
-		sudo cp "$$CURSOR_FILE" /opt/cursor/cursor.AppImage && \
-		\
-		echo "🖼️ Cursorアイコンを抽出中..."; \
-		ICON_EXTRACTED=false; \
+# Cursor IDEのインストール（統合版）
+install-cursor:
+	@echo "📝 Cursor IDEのインストールを開始します..."
+	@CURSOR_INSTALLED=false && \
+	\
+	echo "🔍 既存のCursor IDEを確認中..." && \
+	if [ -f /opt/cursor/cursor.AppImage ]; then \
+		echo "✅ Cursor IDEは既にインストールされています"; \
+		CURSOR_INSTALLED=true; \
+	fi && \
+	\
+	if [ "$$CURSOR_INSTALLED" = "false" ]; then \
+		echo "📦 方法1: 自動ダウンロードを試行中..." && \
 		cd /tmp && \
-		if /opt/cursor/cursor.AppImage --appimage-extract usr/share/icons/hicolor/*/apps/cursor.png 2>/dev/null || \
-		   /opt/cursor/cursor.AppImage --appimage-extract usr/share/pixmaps/cursor.png 2>/dev/null; then \
-			for size in 256x256 128x128 64x64 48x48 32x32; do \
-				if [ -f "squashfs-root/usr/share/icons/hicolor/$$size/apps/cursor.png" ]; then \
-					sudo cp "squashfs-root/usr/share/icons/hicolor/$$size/apps/cursor.png" /opt/cursor/cursor.png && \
-					ICON_EXTRACTED=true && \
-					echo "✅ Cursorアイコン ($$size) を抽出しました" && \
-					break; \
-				fi; \
-			done; \
-			if [ "$$ICON_EXTRACTED" = "false" ] && find squashfs-root -name "cursor.png" -type f | head -1 | xargs -I {} sudo cp {} /opt/cursor/cursor.png 2>/dev/null; then \
-				ICON_EXTRACTED=true && \
-				echo "✅ Cursorアイコンを抽出しました"; \
+		if curl -L --user-agent "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36" \
+			--max-time 60 --retry 2 --retry-delay 3 \
+			-o cursor.AppImage "https://downloader.cursor.sh/linux/appImage/x64" 2>/dev/null; then \
+			FILE_SIZE=$$(stat -c%s cursor.AppImage 2>/dev/null || echo "0"); \
+			if [ "$$FILE_SIZE" -gt 10000000 ]; then \
+				echo "✅ 自動ダウンロードが成功しました"; \
+				chmod +x cursor.AppImage && \
+				sudo mkdir -p /opt/cursor && \
+				sudo mv cursor.AppImage /opt/cursor/cursor.AppImage && \
+				CURSOR_INSTALLED=true; \
+			else \
+				echo "❌ ダウンロードファイルが不完全です"; \
+				rm -f cursor.AppImage; \
 			fi; \
-			rm -rf squashfs-root 2>/dev/null || true; \
 		fi; \
-		\
-		if [ "$$ICON_EXTRACTED" = "true" ]; then \
-			ICON_PATH="/opt/cursor/cursor.png"; \
-		else \
-			echo "⚠️  Cursorアイコンの抽出に失敗、デフォルトアイコンを使用します"; \
-			ICON_PATH="applications-development"; \
+	fi && \
+	\
+	if [ "$$CURSOR_INSTALLED" = "false" ]; then \
+		echo "📦 方法2: ダウンロードフォルダから検索中..." && \
+		cd $(HOME_DIR)/Downloads 2>/dev/null || cd $(HOME_DIR)/Desktop 2>/dev/null || cd /tmp && \
+		if ls cursor*.AppImage 2>/dev/null; then \
+			CURSOR_FILE=$$(ls cursor*.AppImage | head -1); \
+			echo "✅ $$CURSOR_FILE が見つかりました"; \
+			chmod +x "$$CURSOR_FILE" && \
+			sudo mkdir -p /opt/cursor && \
+			sudo cp "$$CURSOR_FILE" /opt/cursor/cursor.AppImage && \
+			CURSOR_INSTALLED=true; \
 		fi; \
-		\
+	fi && \
+	\
+	if [ "$$CURSOR_INSTALLED" = "true" ]; then \
 		echo "📝 デスクトップエントリーを作成中..." && \
 		echo "[Desktop Entry]" | sudo tee /usr/share/applications/cursor.desktop > /dev/null && \
 		echo "Name=Cursor" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
 		echo "Comment=The AI-first code editor" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
 		echo "Exec=/opt/cursor/cursor.AppImage --no-sandbox %F" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
-		echo "Icon=$$ICON_PATH" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
+		echo "Icon=applications-development" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
 		echo "Terminal=false" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
 		echo "Type=Application" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
 		echo "Categories=Development;IDE;TextEditor;" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
@@ -1254,133 +1258,12 @@ install-cursor-manual:
 		echo "StartupWMClass=cursor" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
 		sudo chmod +x /usr/share/applications/cursor.desktop && \
 		sudo update-desktop-database 2>/dev/null || true && \
-		\
-		echo "🔧 AppImageの権限を設定中..." && \
-		sudo chmod +x /opt/cursor/cursor.AppImage && \
-		echo "✅ Cursor IDEの手動インストールが完了しました"; \
+		echo "✅ Cursor IDEのインストールが完了しました"; \
 	else \
-		echo "❌ Cursor AppImageファイルが見つかりません"; \
+		echo "❌ Cursor IDEのインストールに失敗しました"; \
 		echo ""; \
-		echo "📥 以下の手順でファイルをダウンロードしてください:"; \
+		echo "📥 手動インストール手順:"; \
 		echo "1. ブラウザで https://cursor.sh/ を開く"; \
 		echo "2. 'Download for Linux' をクリック"; \
-		echo "3. ダウンロードが完了したら、再度このコマンドを実行"; \
-		echo ""; \
-		echo "💡 または、ダウンロードしたファイルを手動で配置:"; \
-		echo "   sudo mkdir -p /opt/cursor"; \
-		echo "   sudo mv ~/Downloads/cursor*.AppImage /opt/cursor/cursor.AppImage"; \
-		echo "   sudo chmod +x /opt/cursor/cursor.AppImage"; \
-	fi
-
-# Cursor IDEのSnap代替インストール
-install-cursor-snap:
-	@echo "📦 Cursor IDEをSnapからインストール中..."
-	@if command -v snap >/dev/null 2>&1; then \
-		echo "🔍 Snap経由でCursor IDEを検索中..."; \
-		sudo snap install cursor 2>/dev/null && \
-		echo "✅ Cursor IDEのSnapインストールが完了しました" || \
-		echo "❌ Cursor IDEのSnapパッケージが見つかりません"; \
-	else \
-		echo "❌ Snapが利用できません"; \
-		echo "💡 Snapをインストールする場合: sudo apt install snapd"; \
-	fi
-
-# Cursor IDEの代替インストール（より確実な方法）
-install-cursor-alternative:
-	@echo "📝 Cursor IDEの代替インストールを試行中..."
-	@cd /tmp && \
-	echo "🔧 詳細なダウンロード処理を開始します..." && \
-	\
-	CURSOR_DOWNLOADED=false && \
-	\
-	echo "📥 方法1: User-Agent付きでのダウンロードを試行..." && \
-	if curl -L --user-agent "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36" \
-		--max-time 120 --retry 3 --retry-delay 5 \
-		-o cursor-alt.AppImage "https://downloader.cursor.sh/linux/appImage/x64" 2>/dev/null; then \
-		FILE_SIZE=$$(stat -c%s cursor-alt.AppImage 2>/dev/null || echo "0"); \
-		if [ "$$FILE_SIZE" -gt 10000000 ]; then \
-			echo "✅ User-Agent付きダウンロードが成功しました（サイズ: $$FILE_SIZE bytes）"; \
-			CURSOR_DOWNLOADED=true; \
-		else \
-			echo "❌ ダウンロードファイルが小さすぎます（サイズ: $$FILE_SIZE bytes）"; \
-			rm -f cursor-alt.AppImage; \
-		fi; \
-	else \
-		echo "❌ User-Agent付きダウンロードに失敗しました"; \
-	fi && \
-	\
-	if [ "$$CURSOR_DOWNLOADED" = "false" ]; then \
-		echo "📥 方法2: wgetでUser-Agent付きダウンロードを試行..."; \
-		if wget --user-agent="Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36" \
-			--timeout=120 --tries=3 --wait=5 \
-			-O cursor-alt.AppImage "https://downloader.cursor.sh/linux/appImage/x64" 2>/dev/null; then \
-			FILE_SIZE=$$(stat -c%s cursor-alt.AppImage 2>/dev/null || echo "0"); \
-			if [ "$$FILE_SIZE" -gt 10000000 ]; then \
-				echo "✅ wgetでのダウンロードが成功しました（サイズ: $$FILE_SIZE bytes）"; \
-				CURSOR_DOWNLOADED=true; \
-			else \
-				echo "❌ ダウンロードファイルが小さすぎます（サイズ: $$FILE_SIZE bytes）"; \
-				rm -f cursor-alt.AppImage; \
-			fi; \
-		else \
-			echo "❌ wgetでのダウンロードに失敗しました"; \
-		fi; \
-	fi && \
-	\
-	if [ "$$CURSOR_DOWNLOADED" = "true" ]; then \
-		echo "🔧 Cursor IDEのインストールを実行中..."; \
-		chmod +x cursor-alt.AppImage && \
-		sudo mkdir -p /opt/cursor && \
-		sudo mv cursor-alt.AppImage /opt/cursor/cursor.AppImage && \
-		\
-		echo "🖼️ Cursorアイコンを抽出中..."; \
-		ICON_EXTRACTED=false; \
-		if /opt/cursor/cursor.AppImage --appimage-extract usr/share/icons/hicolor/*/apps/cursor.png 2>/dev/null || \
-		   /opt/cursor/cursor.AppImage --appimage-extract usr/share/pixmaps/cursor.png 2>/dev/null; then \
-			for size in 256x256 128x128 64x64 48x48 32x32; do \
-				if [ -f "squashfs-root/usr/share/icons/hicolor/$$size/apps/cursor.png" ]; then \
-					sudo cp "squashfs-root/usr/share/icons/hicolor/$$size/apps/cursor.png" /opt/cursor/cursor.png && \
-					ICON_EXTRACTED=true && \
-					echo "✅ Cursorアイコン ($$size) を抽出しました" && \
-					break; \
-				fi; \
-			done; \
-			if [ "$$ICON_EXTRACTED" = "false" ] && find squashfs-root -name "cursor.png" -type f | head -1 | xargs -I {} sudo cp {} /opt/cursor/cursor.png 2>/dev/null; then \
-				ICON_EXTRACTED=true && \
-				echo "✅ Cursorアイコンを抽出しました"; \
-			fi; \
-			rm -rf squashfs-root 2>/dev/null || true; \
-		fi; \
-		\
-		if [ "$$ICON_EXTRACTED" = "true" ]; then \
-			ICON_PATH="/opt/cursor/cursor.png"; \
-		else \
-			echo "⚠️  Cursorアイコンの抽出に失敗、デフォルトアイコンを使用します"; \
-			ICON_PATH="applications-development"; \
-		fi; \
-		\
-		echo "📝 デスクトップエントリーを作成中..." && \
-		echo "[Desktop Entry]" | sudo tee /usr/share/applications/cursor.desktop > /dev/null && \
-		echo "Name=Cursor" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
-		echo "Comment=The AI-first code editor" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
-		echo "Exec=/opt/cursor/cursor.AppImage --no-sandbox %F" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
-		echo "Icon=$$ICON_PATH" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
-		echo "Terminal=false" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
-		echo "Type=Application" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
-		echo "Categories=Development;IDE;TextEditor;" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
-		echo "MimeType=text/plain;inode/directory;" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
-		echo "StartupWMClass=cursor" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
-		sudo chmod +x /usr/share/applications/cursor.desktop && \
-		sudo update-desktop-database 2>/dev/null || true && \
-		\
-		echo "🔧 AppImageの権限を設定中..." && \
-		sudo chmod +x /opt/cursor/cursor.AppImage && \
-		echo "✅ Cursor IDEの代替インストールが完了しました"; \
-	else \
-		echo "⚠️  すべてのダウンロード方法が失敗しました"; \
-		echo ""; \
-		echo "🔧 追加のインストール方法:"; \
-		echo "1. Snapパッケージ: make install-cursor-snap"; \
-		echo "2. 手動ダウンロード: make install-cursor-manual"; \
-		echo "3. ブラウザで https://cursor.sh/ からダウンロード"; \
+		echo "3. ダウンロード後、再度このコマンドを実行"; \
 	fi
