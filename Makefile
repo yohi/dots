@@ -436,12 +436,40 @@ install-deb:
 		chmod +x cursor-latest.AppImage && \
 		sudo mkdir -p /opt/cursor && \
 		sudo mv cursor-latest.AppImage /opt/cursor/cursor.AppImage && \
+		\
+		echo "🖼️ Cursorアイコンを抽出中..."; \
+		ICON_EXTRACTED=false; \
+		cd /tmp && \
+		if /opt/cursor/cursor.AppImage --appimage-extract usr/share/icons/hicolor/*/apps/cursor.png 2>/dev/null || \
+		   /opt/cursor/cursor.AppImage --appimage-extract usr/share/pixmaps/cursor.png 2>/dev/null; then \
+			for size in 256x256 128x128 64x64 48x48 32x32; do \
+				if [ -f "squashfs-root/usr/share/icons/hicolor/$$size/apps/cursor.png" ]; then \
+					sudo cp "squashfs-root/usr/share/icons/hicolor/$$size/apps/cursor.png" /opt/cursor/cursor.png && \
+					ICON_EXTRACTED=true && \
+					echo "✅ Cursorアイコン ($$size) を抽出しました" && \
+					break; \
+				fi; \
+			done; \
+			if [ "$$ICON_EXTRACTED" = "false" ] && find squashfs-root -name "cursor.png" -type f | head -1 | xargs -I {} sudo cp {} /opt/cursor/cursor.png 2>/dev/null; then \
+				ICON_EXTRACTED=true && \
+				echo "✅ Cursorアイコンを抽出しました"; \
+			fi; \
+			rm -rf squashfs-root 2>/dev/null || true; \
+		fi; \
+		\
+		if [ "$$ICON_EXTRACTED" = "true" ]; then \
+			ICON_PATH="/opt/cursor/cursor.png"; \
+		else \
+			echo "⚠️  Cursorアイコンの抽出に失敗、デフォルトアイコンを使用します"; \
+			ICON_PATH="applications-development"; \
+		fi; \
+		\
 		echo "📝 デスクトップエントリーを作成中..." && \
 		echo "[Desktop Entry]" | sudo tee /usr/share/applications/cursor.desktop > /dev/null && \
 		echo "Name=Cursor" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
 		echo "Comment=The AI-first code editor" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
 		echo "Exec=/opt/cursor/cursor.AppImage --no-sandbox %F" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
-		echo "Icon=applications-development" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
+		echo "Icon=$$ICON_PATH" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
 		echo "Terminal=false" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
 		echo "Type=Application" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
 		echo "Categories=Development;IDE;TextEditor;" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
@@ -968,12 +996,40 @@ install-cursor-manual:
 		chmod +x "$$CURSOR_FILE" && \
 		sudo mkdir -p /opt/cursor && \
 		sudo cp "$$CURSOR_FILE" /opt/cursor/cursor.AppImage && \
+		\
+		echo "🖼️ Cursorアイコンを抽出中..."; \
+		ICON_EXTRACTED=false; \
+		cd /tmp && \
+		if /opt/cursor/cursor.AppImage --appimage-extract usr/share/icons/hicolor/*/apps/cursor.png 2>/dev/null || \
+		   /opt/cursor/cursor.AppImage --appimage-extract usr/share/pixmaps/cursor.png 2>/dev/null; then \
+			for size in 256x256 128x128 64x64 48x48 32x32; do \
+				if [ -f "squashfs-root/usr/share/icons/hicolor/$$size/apps/cursor.png" ]; then \
+					sudo cp "squashfs-root/usr/share/icons/hicolor/$$size/apps/cursor.png" /opt/cursor/cursor.png && \
+					ICON_EXTRACTED=true && \
+					echo "✅ Cursorアイコン ($$size) を抽出しました" && \
+					break; \
+				fi; \
+			done; \
+			if [ "$$ICON_EXTRACTED" = "false" ] && find squashfs-root -name "cursor.png" -type f | head -1 | xargs -I {} sudo cp {} /opt/cursor/cursor.png 2>/dev/null; then \
+				ICON_EXTRACTED=true && \
+				echo "✅ Cursorアイコンを抽出しました"; \
+			fi; \
+			rm -rf squashfs-root 2>/dev/null || true; \
+		fi; \
+		\
+		if [ "$$ICON_EXTRACTED" = "true" ]; then \
+			ICON_PATH="/opt/cursor/cursor.png"; \
+		else \
+			echo "⚠️  Cursorアイコンの抽出に失敗、デフォルトアイコンを使用します"; \
+			ICON_PATH="applications-development"; \
+		fi; \
+		\
 		echo "📝 デスクトップエントリーを作成中..." && \
 		echo "[Desktop Entry]" | sudo tee /usr/share/applications/cursor.desktop > /dev/null && \
 		echo "Name=Cursor" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
 		echo "Comment=The AI-first code editor" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
 		echo "Exec=/opt/cursor/cursor.AppImage --no-sandbox %F" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
-		echo "Icon=applications-development" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
+		echo "Icon=$$ICON_PATH" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
 		echo "Terminal=false" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
 		echo "Type=Application" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
 		echo "Categories=Development;IDE;TextEditor;" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
@@ -1056,12 +1112,39 @@ install-cursor-alternative:
 		chmod +x cursor-alt.AppImage && \
 		sudo mkdir -p /opt/cursor && \
 		sudo mv cursor-alt.AppImage /opt/cursor/cursor.AppImage && \
+		\
+		echo "🖼️ Cursorアイコンを抽出中..."; \
+		ICON_EXTRACTED=false; \
+		if /opt/cursor/cursor.AppImage --appimage-extract usr/share/icons/hicolor/*/apps/cursor.png 2>/dev/null || \
+		   /opt/cursor/cursor.AppImage --appimage-extract usr/share/pixmaps/cursor.png 2>/dev/null; then \
+			for size in 256x256 128x128 64x64 48x48 32x32; do \
+				if [ -f "squashfs-root/usr/share/icons/hicolor/$$size/apps/cursor.png" ]; then \
+					sudo cp "squashfs-root/usr/share/icons/hicolor/$$size/apps/cursor.png" /opt/cursor/cursor.png && \
+					ICON_EXTRACTED=true && \
+					echo "✅ Cursorアイコン ($$size) を抽出しました" && \
+					break; \
+				fi; \
+			done; \
+			if [ "$$ICON_EXTRACTED" = "false" ] && find squashfs-root -name "cursor.png" -type f | head -1 | xargs -I {} sudo cp {} /opt/cursor/cursor.png 2>/dev/null; then \
+				ICON_EXTRACTED=true && \
+				echo "✅ Cursorアイコンを抽出しました"; \
+			fi; \
+			rm -rf squashfs-root 2>/dev/null || true; \
+		fi; \
+		\
+		if [ "$$ICON_EXTRACTED" = "true" ]; then \
+			ICON_PATH="/opt/cursor/cursor.png"; \
+		else \
+			echo "⚠️  Cursorアイコンの抽出に失敗、デフォルトアイコンを使用します"; \
+			ICON_PATH="applications-development"; \
+		fi; \
+		\
 		echo "📝 デスクトップエントリーを作成中..." && \
 		echo "[Desktop Entry]" | sudo tee /usr/share/applications/cursor.desktop > /dev/null && \
 		echo "Name=Cursor" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
 		echo "Comment=The AI-first code editor" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
 		echo "Exec=/opt/cursor/cursor.AppImage --no-sandbox %F" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
-		echo "Icon=applications-development" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
+		echo "Icon=$$ICON_PATH" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
 		echo "Terminal=false" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
 		echo "Type=Application" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
 		echo "Categories=Development;IDE;TextEditor;" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
