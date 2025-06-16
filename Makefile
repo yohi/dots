@@ -55,6 +55,10 @@ help:
 	@echo "💡 使用例:"
 	@echo "  EMAIL=user@example.com make setup-all    # Eメール指定で全設定"
 	@echo "  make setup-git                           # 実行時にEメール入力"
+	@echo ""
+	@echo "🆕 Ubuntu 25.04 (Plucky Puffin) 対応:"
+	@echo "  新しいパッケージ名に対応しています（libfuse2t64など）"
+	@echo "  一部のPPAが利用できない場合があります"
 
 # 変数定義
 DOTFILES_DIR := $(shell pwd)
@@ -153,7 +157,9 @@ system-setup:
 	
 	# AppImage実行に必要なFUSEパッケージ
 	@echo "📦 AppImage実行用のFUSEパッケージをインストール中..."
-	@sudo DEBIAN_FRONTEND=noninteractive apt install -y fuse libfuse2 libfuse2-dev fuse3 libfuse3-dev
+	@sudo DEBIAN_FRONTEND=noninteractive apt install -y fuse libfuse2t64 libfuse3-3 fuse3 2>/dev/null || \
+	sudo DEBIAN_FRONTEND=noninteractive apt install -y fuse libfuse2 fuse3 2>/dev/null || \
+	sudo DEBIAN_FRONTEND=noninteractive apt install -y fuse fuse3 || true
 	
 	# FUSEの設定
 	@echo "🔧 FUSEユーザー権限を設定中..."
@@ -239,13 +245,46 @@ install-fuse:
 	@echo "📦 AppImage実行用のFUSEパッケージをインストール中..."
 	@echo "ℹ️  これによりCursor、PostmanなどのAppImageアプリケーションが実行可能になります"
 	
-	# システムパッケージの更新
-	@sudo apt update || true
+	# 問題のあるリポジトリの一時的な無効化
+	@echo "🔧 問題のあるリポジトリの確認と修正..."
+	@if [ -f /etc/apt/sources.list.d/google-chrome-beta.list ]; then \
+		echo "ℹ️  重複するGoogle Chromeリポジトリを修正中..."; \
+		sudo rm -f /etc/apt/sources.list.d/google-chrome-beta.list 2>/dev/null || true; \
+	fi
+	
+	# Ubuntu 25.04で利用できないPPAの無効化
+	@echo "🔧 Ubuntu 25.04で利用できないPPAを一時的に無効化中..."
+	@if [ -f /etc/apt/sources.list.d/hluk-ubuntu-copyq-plucky.list ]; then \
+		sudo mv /etc/apt/sources.list.d/hluk-ubuntu-copyq-plucky.list /etc/apt/sources.list.d/hluk-ubuntu-copyq-plucky.list.disabled 2>/dev/null || true; \
+	fi
+	@if [ -f /etc/apt/sources.list.d/remmina-ppa-team-ubuntu-remmina-next-plucky.list ]; then \
+		sudo mv /etc/apt/sources.list.d/remmina-ppa-team-ubuntu-remmina-next-plucky.list /etc/apt/sources.list.d/remmina-ppa-team-ubuntu-remmina-next-plucky.list.disabled 2>/dev/null || true; \
+	fi
+	
+	# システムパッケージの更新（エラーを抑制）
+	@echo "📦 パッケージリストを更新中..."
+	@sudo apt update -q 2>/dev/null || echo "⚠️  一部のリポジトリで問題がありますが、処理を続行します"
 	
 	# FUSEパッケージのインストール
 	@echo "🔧 FUSEライブラリをインストール中..."
-	@sudo DEBIAN_FRONTEND=noninteractive apt install -y fuse libfuse2 libfuse2-dev fuse3 libfuse3-dev || \
-	echo "⚠️  一部のFUSEパッケージのインストールに失敗しました"
+	@echo "ℹ️  Ubuntu 25.04対応: 新しいパッケージ名でインストールを試行中..."
+	
+	# Ubuntu 25.04以降の新しいパッケージ名でインストール
+	@sudo DEBIAN_FRONTEND=noninteractive apt install -y fuse libfuse2t64 libfuse3-3 libfuse3-dev fuse3 2>/dev/null || \
+	echo "⚠️  新しいパッケージ名でのインストールに失敗、従来名を試行中..."
+	
+	# 従来のパッケージ名でのフォールバック
+	@sudo DEBIAN_FRONTEND=noninteractive apt install -y fuse libfuse2 libfuse2-dev fuse3 libfuse3-dev 2>/dev/null || \
+	echo "⚠️  従来のパッケージ名でもインストールに失敗"
+	
+	# 最低限必要なパッケージのみを確実にインストール
+	@echo "🔧 最低限必要なFUSEパッケージをインストール中..."
+	@sudo DEBIAN_FRONTEND=noninteractive apt install -y fuse fuse3 || \
+	echo "⚠️  基本FUSEパッケージのインストールに失敗しました"
+	
+	# インストール済みFUSEパッケージの確認
+	@echo "📋 インストール済みFUSEパッケージの確認:"
+	@apt list --installed 2>/dev/null | grep -i fuse || echo "ℹ️  FUSEパッケージが見つかりません"
 	
 	# FUSEユーザー権限の設定
 	@echo "👤 FUSEユーザー権限を設定中..."
@@ -275,6 +314,16 @@ install-fuse:
 		echo "    sudo usermod -a -G fuse $(USER)"; \
 	fi
 	
+	# Chrome Sandboxの問題を事前に回避するための設定
+	@echo "🔒 Chrome Sandboxの設定を確認中..."
+	@if [ -f /opt/cursor/cursor.AppImage ]; then \
+		echo "ℹ️  Cursor IDEが見つかりました。権限を再設定します..."; \
+		sudo chmod +x /opt/cursor/cursor.AppImage || true; \
+		echo "✅ Cursor AppImageの実行権限を設定しました"; \
+	else \
+		echo "ℹ️  Cursor IDEがまだインストールされていません"; \
+	fi
+	
 	@echo "✅ FUSEパッケージのインストールが完了しました。"
 	@echo ""
 	@echo "🚀 Cursor IDEを起動するには:"
@@ -283,9 +332,18 @@ install-fuse:
 	@echo "3. または一度ログアウト・ログインしてください"
 	@echo "4. その後、Cursorを起動してください"
 	@echo ""
-	@echo "💡 もしまだエラーが発生する場合は:"
-	@echo "   /opt/cursor/cursor.AppImage --appimage-extract-and-run"
-	@echo "   でCursorを起動してください"
+	@echo "💡 推奨起動方法（サンドボックスエラーを回避）:"
+	@echo "   /opt/cursor/cursor.AppImage --no-sandbox"
+	@echo ""
+	@echo "🔧 まだエラーが発生する場合の代替手段："
+	@echo "   /opt/cursor/cursor.AppImage --appimage-extract-and-run --no-sandbox"
+	@echo ""
+	@echo "⚠️  chrome-sandboxのSUIDエラーが発生した場合："
+	@echo "   1. --no-sandboxオプション付きで起動（推奨）"
+	@echo "   2. または以下のコマンドで権限を修正："
+	@echo "      sudo chown root:root /tmp/appimage_extracted_*/usr/share/cursor/chrome-sandbox"
+	@echo "      sudo chmod 4755 /tmp/appimage_extracted_*/usr/share/cursor/chrome-sandbox"
+	@echo "   ただし、セキュリティ上--no-sandboxオプションの使用を推奨します"
 
 # Brewfileを使用してアプリケーションをインストール
 install-apps:
@@ -375,7 +433,9 @@ install-deb:
 	
 	# AppImage実行に必要なFUSEパッケージ（重要）
 	@echo "📦 AppImage実行用のFUSEパッケージをインストール中..."
-	@sudo DEBIAN_FRONTEND=noninteractive apt install -y fuse libfuse2 libfuse2-dev fuse3 libfuse3-dev || \
+	@sudo DEBIAN_FRONTEND=noninteractive apt install -y fuse libfuse2t64 libfuse3-3 fuse3 2>/dev/null || \
+	sudo DEBIAN_FRONTEND=noninteractive apt install -y fuse libfuse2 fuse3 2>/dev/null || \
+	sudo DEBIAN_FRONTEND=noninteractive apt install -y fuse fuse3 || \
 	echo "⚠️  FUSEパッケージのインストールに失敗しました（AppImageが実行できない可能性があります）"
 	
 	@sudo DEBIAN_FRONTEND=noninteractive apt install -y tilix || \
@@ -568,6 +628,9 @@ install-deb:
 		echo "StartupWMClass=cursor" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
 		sudo chmod +x /usr/share/applications/cursor.desktop && \
 		sudo update-desktop-database 2>/dev/null || true && \
+		\
+		echo "🔧 AppImageの権限を設定中..." && \
+		sudo chmod +x /opt/cursor/cursor.AppImage && \
 		echo "✅ Cursor IDEのインストールが完了しました"; \
 	else \
 		echo "⚠️  Cursor IDEの自動インストールに失敗しました"; \
@@ -1128,6 +1191,9 @@ install-cursor-manual:
 		echo "StartupWMClass=cursor" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
 		sudo chmod +x /usr/share/applications/cursor.desktop && \
 		sudo update-desktop-database 2>/dev/null || true && \
+		\
+		echo "🔧 AppImageの権限を設定中..." && \
+		sudo chmod +x /opt/cursor/cursor.AppImage && \
 		echo "✅ Cursor IDEの手動インストールが完了しました"; \
 	else \
 		echo "❌ Cursor AppImageファイルが見つかりません"; \
@@ -1243,6 +1309,9 @@ install-cursor-alternative:
 		echo "StartupWMClass=cursor" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
 		sudo chmod +x /usr/share/applications/cursor.desktop && \
 		sudo update-desktop-database 2>/dev/null || true && \
+		\
+		echo "🔧 AppImageの権限を設定中..." && \
+		sudo chmod +x /opt/cursor/cursor.AppImage && \
 		echo "✅ Cursor IDEの代替インストールが完了しました"; \
 	else \
 		echo "⚠️  すべてのダウンロード方法が失敗しました"; \
