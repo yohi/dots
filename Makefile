@@ -4,7 +4,7 @@
 
 .PHONY: all help system-setup install-homebrew install-apps install-deb-packages install-flatpak-packages \
         setup-vim setup-zsh setup-wezterm setup-vscode setup-cursor setup-git setup-docker setup-development setup-shortcuts \
-        setup-gnome-extensions setup-gnome-tweaks backup-gnome-tweaks export-gnome-tweaks setup-all clean system-config clean-repos install-cursor-manual install-cursor-snap install-cursor-alternative install-fuse
+        setup-gnome-extensions setup-gnome-tweaks backup-gnome-tweaks export-gnome-tweaks setup-all clean system-config clean-repos install-cursor-manual install-cursor-snap install-cursor-alternative install-fuse install-cica-fonts
 
 # デフォルトターゲット
 all: help
@@ -34,6 +34,7 @@ help:
 	@echo "  make export-gnome-tweaks   - Gnome Tweaks の設定をエクスポート"
 	@echo "  make setup-all             - すべての設定をセットアップ"
 	@echo "  make install-fuse      - AppImage実行用のFUSEパッケージをインストール"
+	@echo "  make install-cica-fonts - Cica Nerd Fontsをインストール"
 	@echo "  make clean             - シンボリックリンクを削除"
 	@echo "  make clean-repos       - リポジトリとGPGキーをクリーンアップ"
 	@echo "  make help              - このヘルプメッセージを表示"
@@ -45,6 +46,10 @@ help:
 	@echo ""
 	@echo "🌏 日本語環境について:"
 	@echo "  'make system-setup' で日本語フォント・ロケール・mozc（日本語入力）がインストールされます"
+	@echo ""
+	@echo "🔤 フォントについて:"
+	@echo "  'make system-setup' でIBM Plex Sans、日本語フォント（Noto CJK）がインストールされます"
+	@echo "  'make install-cica-fonts' でCica Nerd Fonts（プログラミング用）がインストールされます"
 	@echo ""
 	@echo "🌐 ブラウザについて:"
 	@echo "  'make install-deb' でGoogle Chrome Stable/Beta、Chromiumがインストールされます"
@@ -310,6 +315,65 @@ install-ibm-plex-fonts:
 		echo "❌ IBM Plex フォントのダウンロードに失敗しました"; \
 		echo "ℹ️  インターネット接続を確認してください"; \
 		rm -rf plex-fonts.zip 2>/dev/null; \
+	fi
+
+# Cica Nerd Fonts のインストール（単独実行用）
+install-cica-fonts:
+	@echo "🔤 Cica Nerd Fonts のインストールを開始..."
+	@mkdir -p $(HOME_DIR)/.local/share/fonts/cica
+	@cd /tmp && \
+	EXISTING_FONTS=$$(fc-list | grep -i "Cica" | wc -l 2>/dev/null || echo "0"); \
+	echo "🔍 現在認識されているCicaフォント数: $$EXISTING_FONTS"; \
+	if [ "$$EXISTING_FONTS" -lt 4 ]; then \
+		echo "📥 Cica フォントをダウンロード中..."; \
+		rm -rf cica-fonts.zip Cica_* 2>/dev/null; \
+		CICA_VERSION=$$(curl -s https://api.github.com/repos/miiton/Cica/releases/latest | grep -o '"tag_name": "[^"]*' | grep -o '[^"]*$$' 2>/dev/null || echo "v5.0.3"); \
+		echo "📦 Cica バージョン: $$CICA_VERSION"; \
+		DOWNLOAD_URL="https://github.com/miiton/Cica/releases/download/$$CICA_VERSION/Cica_$${CICA_VERSION#v}.zip"; \
+		echo "🔗 ダウンロードURL: $$DOWNLOAD_URL"; \
+		if wget --timeout=30 "$$DOWNLOAD_URL" -O cica-fonts.zip 2>/dev/null; then \
+			echo "✅ ダウンロード完了 ($$(ls -lh cica-fonts.zip | awk '{print $$5}'))"; \
+			if [ -f cica-fonts.zip ] && [ -s cica-fonts.zip ]; then \
+				echo "📂 ZIPファイルを展開中..."; \
+				if unzip -q cica-fonts.zip; then \
+					FONT_COUNT=$$(find . -maxdepth 1 -name "Cica*.ttf" | wc -l); \
+					echo "📊 展開されたフォントファイル数: $$FONT_COUNT"; \
+					if [ "$$FONT_COUNT" -gt 0 ]; then \
+						echo "📋 フォントファイルをコピー中..."; \
+						cp Cica*.ttf $(HOME_DIR)/.local/share/fonts/cica/ 2>/dev/null && \
+						COPIED_COUNT=$$(ls -1 $(HOME_DIR)/.local/share/fonts/cica/Cica*.ttf | wc -l 2>/dev/null || echo "0"); \
+						echo "✅ コピー完了: $$COPIED_COUNT 個のフォントファイル"; \
+						rm -rf cica-fonts.zip Cica*.ttf 2>/dev/null; \
+						echo "🔄 フォントキャッシュを更新中..."; \
+						(fc-cache -f 2>/dev/null && echo "✅ フォントキャッシュ更新完了") || echo "⚠️  フォントキャッシュの更新をスキップ（システムが自動更新します）"; \
+						FINAL_COUNT=$$(fc-list | grep -i "Cica" | wc -l 2>/dev/null || echo "0"); \
+						echo "🎉 インストール完了: $$FINAL_COUNT 個のCicaフォントが認識されています"; \
+						echo ""; \
+						echo "📋 インストールされたフォント一覧:"; \
+						fc-list | grep -i "Cica" | sed 's/^/  /' || echo "  (フォント一覧の取得に失敗)"; \
+					else \
+						echo "❌ TTFファイルが見つかりません"; \
+						rm -rf cica-fonts.zip Cica*.ttf 2>/dev/null; \
+					fi; \
+				else \
+					echo "❌ ZIPファイルの展開に失敗しました"; \
+					rm -rf cica-fonts.zip 2>/dev/null; \
+				fi; \
+			else \
+				echo "❌ ダウンロードされたファイルが空または見つかりません"; \
+				rm -rf cica-fonts.zip 2>/dev/null; \
+			fi; \
+		else \
+			echo "❌ Cica フォントのダウンロードに失敗しました"; \
+			echo "ℹ️  インターネット接続を確認してください"; \
+			echo "💡 手動インストール方法:"; \
+			echo "    1. https://github.com/miiton/Cica/releases にアクセス"; \
+			echo "    2. 最新版のCica_*.zipをダウンロード"; \
+			echo "    3. ダウンロード後、再度このコマンドを実行"; \
+			rm -rf cica-fonts.zip 2>/dev/null; \
+		fi; \
+	else \
+		echo "✅ Cica フォントは既に十分にインストールされています ($$EXISTING_FONTS 個)"; \
 	fi
 
 # Homebrewのインストール
