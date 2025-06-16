@@ -89,16 +89,16 @@ system-setup:
 	
 	# 日本語フォントのインストール
 	@echo "🔤 日本語フォントをインストール中..."
-	@sudo DEBIAN_FRONTEND=noninteractive apt -y install fonts-noto-cjk fonts-noto-cjk-extra fonts-takao-gothic fonts-takao-mincho || true
+	@sudo DEBIAN_FRONTEND=noninteractive apt -y install fonts-noto-cjk fonts-noto-cjk-extra || true
 	
 	# 基本開発ツール
 	@sudo DEBIAN_FRONTEND=noninteractive apt -y install build-essential curl file wget software-properties-common
 	
 	# ユーザーディレクトリ管理パッケージをインストール
-	@sudo DEBIAN_FRONTEND=noninteractive apt -y install xdg-user-dirs-gtk
+	@sudo DEBIAN_FRONTEND=noninteractive apt -y install xdg-user-dirs
 	
-	# ホームディレクトリを英語名にする
-	@LANG=C xdg-user-dirs-gtk-update
+	# ホームディレクトリを英語名にする（非対話的）
+	@LANG=C xdg-user-dirs-update --force
 	
 	# Ubuntu Japanese
 	@sudo wget https://www.ubuntulinux.jp/ubuntu-jp-ppa-keyring.gpg -P /etc/apt/trusted.gpg.d/ || true
@@ -142,12 +142,22 @@ install-homebrew:
 		/bin/bash -c "$$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"; \
 		\
 		echo "🔧 Homebrew環境設定を追加中..."; \
-		echo '' >> $(HOME_DIR)/.bashrc; \
-		echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"' >> $(HOME_DIR)/.bashrc; \
+		if ! grep -q 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"' $(HOME_DIR)/.bashrc 2>/dev/null; then \
+			echo "📝 .bashrcにHomebrew設定を追加中..."; \
+			echo '' >> $(HOME_DIR)/.bashrc; \
+			echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"' >> $(HOME_DIR)/.bashrc; \
+		else \
+			echo "✅ .bashrcには既にHomebrew設定が存在します"; \
+		fi; \
 		\
 		if [ -f "$(HOME_DIR)/.zshrc" ] || command -v zsh >/dev/null 2>&1; then \
-			echo '' >> $(HOME_DIR)/.zshrc 2>/dev/null || touch $(HOME_DIR)/.zshrc; \
-			echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"' >> $(HOME_DIR)/.zshrc; \
+			if ! grep -q 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"' $(HOME_DIR)/.zshrc 2>/dev/null; then \
+				echo "📝 .zshrcにHomebrew設定を追加中..."; \
+				echo '' >> $(HOME_DIR)/.zshrc 2>/dev/null || touch $(HOME_DIR)/.zshrc; \
+				echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"' >> $(HOME_DIR)/.zshrc; \
+			else \
+				echo "✅ .zshrcには既にHomebrew設定が存在します"; \
+			fi; \
 		fi; \
 		\
 		echo "🚀 現在のセッションでHomebrewを有効化..."; \
@@ -166,6 +176,25 @@ install-homebrew:
 		echo "✅ Homebrewは既にインストールされています。"; \
 		echo "🔧 環境変数を確認中..."; \
 		eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)" || true; \
+		\
+		echo "🔍 Homebrew設定を確認中..."; \
+		if ! grep -q 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"' $(HOME_DIR)/.bashrc 2>/dev/null; then \
+			echo "📝 .bashrcにHomebrew設定を追加中..."; \
+			echo '' >> $(HOME_DIR)/.bashrc; \
+			echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"' >> $(HOME_DIR)/.bashrc; \
+		else \
+			echo "✅ .bashrcには既にHomebrew設定が存在します"; \
+		fi; \
+		\
+		if [ -f "$(HOME_DIR)/.zshrc" ] || command -v zsh >/dev/null 2>&1; then \
+			if ! grep -q 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"' $(HOME_DIR)/.zshrc 2>/dev/null; then \
+				echo "📝 .zshrcにHomebrew設定を追加中..."; \
+				echo '' >> $(HOME_DIR)/.zshrc 2>/dev/null || touch $(HOME_DIR)/.zshrc; \
+				echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"' >> $(HOME_DIR)/.zshrc; \
+			else \
+				echo "✅ .zshrcには既にHomebrew設定が存在します"; \
+			fi; \
+		fi; \
 	fi
 	
 	@echo "📋 Homebrewの状態確認:"
