@@ -91,8 +91,29 @@ system-setup:
 	@echo "🔤 日本語フォントをインストール中..."
 	@sudo DEBIAN_FRONTEND=noninteractive apt -y install fonts-noto-cjk fonts-noto-cjk-extra || true
 	
+	# IBM Plex Sans JPフォントのインストール
+	@echo "🔤 IBM Plex Sans JPフォントをインストール中..."
+	@mkdir -p $(HOME_DIR)/.local/share/fonts/ibm-plex
+	@cd /tmp && \
+	if ! fc-list | grep -i "IBM Plex Sans JP" >/dev/null 2>&1; then \
+		echo "📥 IBM Plex フォントをダウンロード中..."; \
+		PLEX_VERSION=$$(curl -s https://api.github.com/repos/IBM/plex/releases/latest | grep -o '"tag_name": "[^"]*' | grep -o '[^"]*$$' 2>/dev/null || echo "v6.4.0"); \
+		echo "📦 IBM Plex バージョン: $$PLEX_VERSION"; \
+		if wget -q "https://github.com/IBM/plex/releases/download/$$PLEX_VERSION/TrueType.zip" -O plex-fonts.zip 2>/dev/null; then \
+			unzip -q plex-fonts.zip "TrueType/IBM-Plex-Sans-JP/*" 2>/dev/null && \
+			cp TrueType/IBM-Plex-Sans-JP/*.ttf $(HOME_DIR)/.local/share/fonts/ibm-plex/ 2>/dev/null && \
+			rm -rf TrueType plex-fonts.zip 2>/dev/null && \
+			fc-cache -f -v 2>/dev/null && \
+			echo "✅ IBM Plex Sans JPフォントのインストールが完了しました"; \
+		else \
+			echo "⚠️  IBM Plex フォントのダウンロードに失敗しました（インターネット接続を確認してください）"; \
+		fi; \
+	else \
+		echo "✅ IBM Plex Sans JPフォントは既にインストールされています"; \
+	fi
+	
 	# 基本開発ツール
-	@sudo DEBIAN_FRONTEND=noninteractive apt -y install build-essential curl file wget software-properties-common
+	@sudo DEBIAN_FRONTEND=noninteractive apt -y install build-essential curl file wget software-properties-common unzip
 	
 	# ユーザーディレクトリ管理パッケージをインストール
 	@sudo DEBIAN_FRONTEND=noninteractive apt -y install xdg-user-dirs

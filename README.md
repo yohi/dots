@@ -101,6 +101,7 @@ make setup-all
 #### ブラウザ
 - Google Chrome Stable
 - Google Chrome Beta
+- Chromium Browser
 
 #### 開発環境・IDE
 - Visual Studio Code
