@@ -4,7 +4,7 @@
 
 .PHONY: all help system-setup install-homebrew install-apps install-deb-packages install-flatpak-packages \
         setup-vim setup-zsh setup-wezterm setup-vscode setup-cursor setup-git setup-docker setup-development setup-shortcuts \
-        setup-all clean system-config clean-repos install-cursor-manual install-cursor-snap install-cursor-alternative
+        setup-all clean system-config clean-repos install-cursor-manual install-cursor-snap install-cursor-alternative install-fuse
 
 # デフォルトターゲット
 all: help
@@ -29,6 +29,7 @@ help:
 	@echo "  make setup-development - 開発環境の設定をセットアップ"
 	@echo "  make setup-shortcuts   - キーボードショートカットの設定をセットアップ"
 	@echo "  make setup-all         - すべての設定をセットアップ"
+	@echo "  make install-fuse      - AppImage実行用のFUSEパッケージをインストール"
 	@echo "  make clean             - シンボリックリンクを削除"
 	@echo "  make clean-repos       - リポジトリとGPGキーをクリーンアップ"
 	@echo "  make help              - このヘルプメッセージを表示"
@@ -150,6 +151,16 @@ system-setup:
 	# 基本パッケージ
 	@sudo DEBIAN_FRONTEND=noninteractive apt install -y flatpak gdebi chrome-gnome-shell xclip xsel
 	
+	# AppImage実行に必要なFUSEパッケージ
+	@echo "📦 AppImage実行用のFUSEパッケージをインストール中..."
+	@sudo DEBIAN_FRONTEND=noninteractive apt install -y fuse libfuse2 libfuse2-dev fuse3 libfuse3-dev
+	
+	# FUSEの設定
+	@echo "🔧 FUSEユーザー権限を設定中..."
+	@sudo usermod -a -G fuse $(USER) || true
+	@sudo chmod +x /usr/bin/fusermount || true
+	@sudo chmod u+s /usr/bin/fusermount || true
+	
 	@echo "✅ システムレベルの基本設定が完了しました。"
 	@echo "🌏 タイムゾーン: $$(timedatectl show --property=Timezone --value)"
 	@echo "🌐 ロケール: $$(locale | grep LANG)"
@@ -222,6 +233,59 @@ install-homebrew:
 	@echo "   バージョン: $$(brew --version | head -1 2>/dev/null || echo '取得できませんでした')"
 	@echo "   インストール先: $$(brew --prefix 2>/dev/null || echo '取得できませんでした')"
 	@echo "✅ Homebrewのインストールが完了しました。"
+
+# AppImage実行用のFUSEパッケージをインストール
+install-fuse:
+	@echo "📦 AppImage実行用のFUSEパッケージをインストール中..."
+	@echo "ℹ️  これによりCursor、PostmanなどのAppImageアプリケーションが実行可能になります"
+	
+	# システムパッケージの更新
+	@sudo apt update || true
+	
+	# FUSEパッケージのインストール
+	@echo "🔧 FUSEライブラリをインストール中..."
+	@sudo DEBIAN_FRONTEND=noninteractive apt install -y fuse libfuse2 libfuse2-dev fuse3 libfuse3-dev || \
+	echo "⚠️  一部のFUSEパッケージのインストールに失敗しました"
+	
+	# FUSEユーザー権限の設定
+	@echo "👤 FUSEユーザー権限を設定中..."
+	@sudo usermod -a -G fuse $(USER) || true
+	@sudo chmod +x /usr/bin/fusermount 2>/dev/null || true
+	@sudo chmod u+s /usr/bin/fusermount 2>/dev/null || true
+	@sudo chmod +x /usr/bin/fusermount3 2>/dev/null || true
+	@sudo chmod u+s /usr/bin/fusermount3 2>/dev/null || true
+	
+	# FUSEモジュールのロード
+	@echo "⚙️  FUSEモジュールをロード中..."
+	@sudo modprobe fuse || true
+	
+	# FUSEの設定確認
+	@echo "🔍 FUSE設定の確認中..."
+	@if [ -c /dev/fuse ]; then \
+		echo "✅ FUSE デバイス (/dev/fuse) が存在します"; \
+	else \
+		echo "⚠️  FUSE デバイス (/dev/fuse) が見つかりません"; \
+	fi
+	
+	@if groups $(USER) | grep -q fuse; then \
+		echo "✅ ユーザー $(USER) がfuseグループに所属しています"; \
+	else \
+		echo "⚠️  ユーザー $(USER) がfuseグループに所属していません"; \
+		echo "ℹ️  以下のコマンドを実行してからログアウト・ログインしてください:"; \
+		echo "    sudo usermod -a -G fuse $(USER)"; \
+	fi
+	
+	@echo "✅ FUSEパッケージのインストールが完了しました。"
+	@echo ""
+	@echo "🚀 Cursor IDEを起動するには:"
+	@echo "1. 現在のターミナルを終了してください"
+	@echo "2. 新しいターミナルを開いてください"
+	@echo "3. または一度ログアウト・ログインしてください"
+	@echo "4. その後、Cursorを起動してください"
+	@echo ""
+	@echo "💡 もしまだエラーが発生する場合は:"
+	@echo "   /opt/cursor/cursor.AppImage --appimage-extract-and-run"
+	@echo "   でCursorを起動してください"
 
 # Brewfileを使用してアプリケーションをインストール
 install-apps:
@@ -308,6 +372,12 @@ install-deb:
 	
 	# APTパッケージのインストール（個別にエラーハンドリング）
 	@echo "📦 基本パッケージをインストール中..."
+	
+	# AppImage実行に必要なFUSEパッケージ（重要）
+	@echo "📦 AppImage実行用のFUSEパッケージをインストール中..."
+	@sudo DEBIAN_FRONTEND=noninteractive apt install -y fuse libfuse2 libfuse2-dev fuse3 libfuse3-dev || \
+	echo "⚠️  FUSEパッケージのインストールに失敗しました（AppImageが実行できない可能性があります）"
+	
 	@sudo DEBIAN_FRONTEND=noninteractive apt install -y tilix || \
 	echo "⚠️  ターミナルエミュレータのインストールに失敗しました"
 	
