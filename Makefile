@@ -4,7 +4,7 @@
 
 .PHONY: all help system-setup install-homebrew install-apps install-deb-packages install-flatpak-packages \
         setup-vim setup-zsh setup-wezterm setup-vscode setup-cursor setup-git setup-docker setup-development setup-shortcuts \
-        setup-all clean system-config clean-repos install-cursor-manual install-cursor-snap install-cursor-alternative install-fuse
+        setup-gnome-extensions setup-gnome-tweaks backup-gnome-tweaks export-gnome-tweaks setup-all clean system-config clean-repos install-cursor-manual install-cursor-snap install-cursor-alternative install-fuse
 
 # デフォルトターゲット
 all: help
@@ -26,9 +26,13 @@ help:
 	@echo "  make setup-cursor      - Cursorの設定をセットアップ"
 	@echo "  make setup-git         - Git設定をセットアップ"
 	@echo "  make setup-docker      - Dockerの設定をセットアップ"
-	@echo "  make setup-development - 開発環境の設定をセットアップ"
-	@echo "  make setup-shortcuts   - キーボードショートカットの設定をセットアップ"
-	@echo "  make setup-all         - すべての設定をセットアップ"
+	@echo "  make setup-development     - 開発環境の設定をセットアップ"
+	@echo "  make setup-shortcuts       - キーボードショートカットの設定をセットアップ"
+	@echo "  make setup-gnome-extensions- Gnome Extensions の設定をセットアップ"
+	@echo "  make setup-gnome-tweaks    - Gnome Tweaks の設定をセットアップ"
+	@echo "  make backup-gnome-tweaks   - Gnome Tweaks の設定をバックアップ"
+	@echo "  make export-gnome-tweaks   - Gnome Tweaks の設定をエクスポート"
+	@echo "  make setup-all             - すべての設定をセットアップ"
 	@echo "  make install-fuse      - AppImage実行用のFUSEパッケージをインストール"
 	@echo "  make clean             - シンボリックリンクを削除"
 	@echo "  make clean-repos       - リポジトリとGPGキーをクリーンアップ"
@@ -38,6 +42,9 @@ help:
 	@echo "  1. make system-setup"
 	@echo "  2. make install-homebrew"
 	@echo "  3. make setup-all"
+	@echo ""
+	@echo "🌏 日本語環境について:"
+	@echo "  'make system-setup' で日本語フォント・ロケール・mozc（日本語入力）がインストールされます"
 	@echo ""
 	@echo "🌐 ブラウザについて:"
 	@echo "  'make install-deb' でGoogle Chrome Stable/Beta、Chromiumがインストールされます"
@@ -96,6 +103,19 @@ system-setup:
 	@echo "🔤 日本語フォントをインストール中..."
 	@sudo DEBIAN_FRONTEND=noninteractive apt -y install fonts-noto-cjk fonts-noto-cjk-extra || true
 	
+	# 日本語入力メソッド（mozc）のインストール
+	@echo "🇯🇵 日本語入力メソッド（mozc）をインストール中..."
+	@sudo DEBIAN_FRONTEND=noninteractive apt -y install ibus-mozc mozc-utils-gui || true
+	
+	# IBusの設定
+	@echo "⌨️  IBus入力メソッドを設定中..."
+	@gsettings set org.gnome.desktop.input-sources sources "[('xkb', 'us'), ('ibus', 'mozc-jp')]" 2>/dev/null || true
+	@gsettings set org.gnome.desktop.input-sources xkb-options "['ctrl:nocaps']" 2>/dev/null || true
+	
+	# IBusサービスの有効化
+	@systemctl --user enable ibus-daemon || true
+	@systemctl --user start ibus-daemon || true
+	
 	# IBM Plex Sans JPフォントのインストール
 	@echo "🔤 IBM Plex Sans JPフォントをインストール中..."
 	@mkdir -p $(HOME_DIR)/.local/share/fonts/ibm-plex
@@ -140,11 +160,8 @@ system-setup:
 	@sudo localectl set-keymap us || true
 	@sudo localectl set-x11-keymap us || true
 	
-	# GNOME環境の場合、入力ソースを英語（US）に設定
-	@if command -v gsettings >/dev/null 2>&1; then \
-		gsettings set org.gnome.desktop.input-sources sources "[('xkb', 'us')]" || true; \
-		echo "✅ GNOME入力ソースを英語（US）に設定しました"; \
-	fi
+	# GNOME環境の場合、入力ソースは既にmozc設定で行われているためスキップ
+	@echo "✅ GNOME入力ソースはmozc設定で設定されています"
 	
 	# CapsLock -> Ctrl
 	@setxkbmap -option "ctrl:nocaps" || true
@@ -170,7 +187,11 @@ system-setup:
 	@echo "✅ システムレベルの基本設定が完了しました。"
 	@echo "🌏 タイムゾーン: $$(timedatectl show --property=Timezone --value)"
 	@echo "🌐 ロケール: $$(locale | grep LANG)"
-	@echo "⚠️  言語設定を反映するため、システムの再起動を推奨します。"
+	@echo "🇯🇵 日本語入力: mozc（IBus）がインストールされました"
+	@echo ""
+	@echo "⚠️  重要：設定を反映するため、システムの再起動を推奨します。"
+	@echo "🔄 再起動後は Super+Space または Alt+` で日本語⇔英語切り替えが可能です"
+	@echo "⚙️  mozc設定は「設定」→「地域と言語」→「入力ソース」から変更できます"
 
 # Homebrewのインストール
 install-homebrew:
@@ -1032,8 +1053,50 @@ setup-shortcuts:
 	@echo "✅ キーボードショートカットの設定が完了しました。"
 	@echo "⚠️  設定を反映するため、一度ログアウト・ログインすることを推奨します。"
 
+# Gnome Extensions の設定をセットアップ
+setup-gnome-extensions:
+	@echo "🔧 Gnome Extensions の設定をセットアップ中..."
+	@if [ -d "$(DOTFILES_DIR)/gnome-extensions" ]; then \
+		echo "📦 Gnome Extensions のインストールと設定を実行中..."; \
+		cd $(DOTFILES_DIR)/gnome-extensions && ./install-extensions.sh install; \
+		echo "✅ Gnome Extensions の設定が完了しました"; \
+	else \
+		echo "⚠️  Gnome Extensions ディレクトリが見つかりません: $(DOTFILES_DIR)/gnome-extensions"; \
+	fi
+
+# Gnome Tweaks の設定をセットアップ
+setup-gnome-tweaks:
+	@echo "🎨 Gnome Tweaks の設定をセットアップ中..."
+	@if [ -f "$(DOTFILES_DIR)/gnome-settings/setup-gnome-tweaks.sh" ]; then \
+		echo "🔧 Gnome Tweaks 設定スクリプトを実行中..."; \
+		cd $(DOTFILES_DIR)/gnome-settings && chmod +x setup-gnome-tweaks.sh && ./setup-gnome-tweaks.sh --no-restart; \
+		echo "✅ Gnome Tweaks の設定が完了しました"; \
+	else \
+		echo "⚠️  Gnome Tweaks 設定スクリプトが見つかりません: $(DOTFILES_DIR)/gnome-settings/setup-gnome-tweaks.sh"; \
+	fi
+
+# Gnome Tweaks の設定をバックアップ
+backup-gnome-tweaks:
+	@echo "💾 Gnome Tweaks の設定をバックアップ中..."
+	@if [ -f "$(DOTFILES_DIR)/gnome-settings/setup-gnome-tweaks.sh" ]; then \
+		cd $(DOTFILES_DIR)/gnome-settings && ./setup-gnome-tweaks.sh --backup; \
+		echo "✅ Gnome Tweaks の設定バックアップが完了しました"; \
+	else \
+		echo "⚠️  Gnome Tweaks 設定スクリプトが見つかりません"; \
+	fi
+
+# Gnome Tweaks の設定をエクスポート
+export-gnome-tweaks:
+	@echo "📤 Gnome Tweaks の設定をエクスポート中..."
+	@if [ -f "$(DOTFILES_DIR)/gnome-settings/setup-gnome-tweaks.sh" ]; then \
+		cd $(DOTFILES_DIR)/gnome-settings && ./setup-gnome-tweaks.sh --export; \
+		echo "✅ Gnome Tweaks の設定エクスポートが完了しました"; \
+	else \
+		echo "⚠️  Gnome Tweaks 設定スクリプトが見つかりません"; \
+	fi
+
 # すべての設定をセットアップ
-setup-all: install-apps setup-vim setup-zsh setup-wezterm setup-vscode setup-git setup-docker setup-development setup-shortcuts
+setup-all: install-apps setup-vim setup-zsh setup-wezterm setup-vscode setup-git setup-docker setup-development setup-shortcuts setup-gnome-extensions setup-gnome-tweaks
 	@echo ""
 	@echo "🎉 すべてのセットアップが完了しました！"
 	@echo ""
