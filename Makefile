@@ -83,12 +83,28 @@ system-setup:
 	@echo "tzdata tzdata/Zones/Asia select Tokyo" | sudo debconf-set-selections
 	@export DEBIAN_FRONTEND=noninteractive
 	
-	# システムアップデート
-	@sudo DEBIAN_FRONTEND=noninteractive apt update && sudo DEBIAN_FRONTEND=noninteractive apt -y upgrade
+	# 問題のあるリポジトリの事前修正
+	@echo "🔧 問題のあるリポジトリを修正中..."
+	@if [ -f /etc/apt/sources.list.d/hluk-ubuntu-copyq-plucky.list ]; then \
+		sudo mv /etc/apt/sources.list.d/hluk-ubuntu-copyq-plucky.list /etc/apt/sources.list.d/hluk-ubuntu-copyq-plucky.list.disabled 2>/dev/null || true; \
+	fi
+	@if [ -f /etc/apt/sources.list.d/remmina-ppa-team-ubuntu-remmina-next-plucky.list ]; then \
+		sudo mv /etc/apt/sources.list.d/remmina-ppa-team-ubuntu-remmina-next-plucky.list /etc/apt/sources.list.d/remmina-ppa-team-ubuntu-remmina-next-plucky.list.disabled 2>/dev/null || true; \
+	fi
+	
+	# TablePlusの公開鍵を再インストール
+	@echo "🔑 TablePlusの公開鍵を修正中..."
+	@sudo rm -f /etc/apt/trusted.gpg.d/tableplus-archive.gpg 2>/dev/null || true
+	@wget -qO - https://deb.tableplus.com/apt.tableplus.com.gpg.key | gpg --dearmor | sudo tee /etc/apt/trusted.gpg.d/tableplus-archive.gpg >/dev/null 2>&1 || true
+	
+	# システムアップデート（エラーを許容）
+	@echo "📦 システムパッケージを更新中..."
+	@sudo DEBIAN_FRONTEND=noninteractive apt update 2>/dev/null || echo "⚠️  一部のリポジトリで問題がありますが、処理を続行します"
+	@sudo DEBIAN_FRONTEND=noninteractive apt -y upgrade 2>/dev/null || echo "⚠️  一部のパッケージで問題がありますが、処理を続行します"
 	
 	# 日本語環境の設定
 	@echo "🌏 日本語環境を設定中..."
-	@sudo DEBIAN_FRONTEND=noninteractive apt -y install language-pack-ja language-pack-ja-base
+	@sudo DEBIAN_FRONTEND=noninteractive apt -y install language-pack-ja language-pack-ja-base 2>/dev/null || echo "⚠️  一部の日本語パッケージのインストールに失敗しましたが、処理を続行します"
 	
 	# タイムゾーンを日本/東京に設定
 	@echo "🕐 タイムゾーンをAsia/Tokyoに設定中..."
@@ -138,7 +154,8 @@ system-setup:
 	fi
 	
 	# 基本開発ツール
-	@sudo DEBIAN_FRONTEND=noninteractive apt -y install build-essential curl file wget software-properties-common unzip
+	@echo "🔧 基本開発ツールをインストール中..."
+	@sudo DEBIAN_FRONTEND=noninteractive apt -y install build-essential curl file wget software-properties-common unzip 2>/dev/null || echo "⚠️  一部の基本開発ツールのインストールに失敗しましたが、処理を続行します"
 	
 	# ユーザーディレクトリ管理パッケージをインストール
 	@sudo DEBIAN_FRONTEND=noninteractive apt -y install xdg-user-dirs
@@ -147,10 +164,12 @@ system-setup:
 	@LANG=C xdg-user-dirs-update --force
 	
 	# Ubuntu Japanese
-	@sudo wget https://www.ubuntulinux.jp/ubuntu-jp-ppa-keyring.gpg -P /etc/apt/trusted.gpg.d/ || true
-	@sudo wget https://www.ubuntulinux.jp/ubuntu-ja-archive-keyring.gpg -P /etc/apt/trusted.gpg.d/ || true
-	@sudo wget https://www.ubuntulinux.jp/sources.list.d/$$(lsb_release -cs).list -O /etc/apt/sources.list.d/ubuntu-ja.list || true
-	@sudo DEBIAN_FRONTEND=noninteractive apt update && sudo DEBIAN_FRONTEND=noninteractive apt install -y ubuntu-defaults-ja || true
+	@echo "🇯🇵 Ubuntu Japanese環境を設定中..."
+	@sudo wget https://www.ubuntulinux.jp/ubuntu-jp-ppa-keyring.gpg -P /etc/apt/trusted.gpg.d/ 2>/dev/null || true
+	@sudo wget https://www.ubuntulinux.jp/ubuntu-ja-archive-keyring.gpg -P /etc/apt/trusted.gpg.d/ 2>/dev/null || true
+	@sudo wget https://www.ubuntulinux.jp/sources.list.d/$$(lsb_release -cs).list -O /etc/apt/sources.list.d/ubuntu-ja.list 2>/dev/null || true
+	@sudo DEBIAN_FRONTEND=noninteractive apt update 2>/dev/null || true
+	@sudo DEBIAN_FRONTEND=noninteractive apt install -y ubuntu-defaults-ja 2>/dev/null || echo "⚠️  Ubuntu Japanese のインストールに失敗しましたが、処理を続行します"
 	
 	# キーボード設定
 	@echo "⌨️  キーボードレイアウトを設定中..."
@@ -170,7 +189,8 @@ system-setup:
 	@echo "✅ キーボードレイアウトが英語（US）に設定されました"
 	
 	# 基本パッケージ
-	@sudo DEBIAN_FRONTEND=noninteractive apt install -y flatpak gdebi chrome-gnome-shell xclip xsel
+	@echo "📦 基本パッケージをインストール中..."
+	@sudo DEBIAN_FRONTEND=noninteractive apt install -y flatpak gdebi chrome-gnome-shell xclip xsel 2>/dev/null || echo "⚠️  一部の基本パッケージのインストールに失敗しましたが、処理を続行します"
 	
 	# AppImage実行に必要なFUSEパッケージ
 	@echo "📦 AppImage実行用のFUSEパッケージをインストール中..."
@@ -185,13 +205,16 @@ system-setup:
 	@sudo chmod u+s /usr/bin/fusermount || true
 	
 	@echo "✅ システムレベルの基本設定が完了しました。"
-	@echo "🌏 タイムゾーン: $$(timedatectl show --property=Timezone --value)"
-	@echo "🌐 ロケール: $$(locale | grep LANG)"
+	@echo "🌏 タイムゾーン: $$(timedatectl show --property=Timezone --value 2>/dev/null || echo '取得に失敗')"
+	@echo "🌐 ロケール: $$(locale | grep LANG 2>/dev/null || echo '取得に失敗')"
 	@echo "🇯🇵 日本語入力: mozc（IBus）がインストールされました"
 	@echo ""
 	@echo "⚠️  重要：設定を反映するため、システムの再起動を推奨します。"
 	@echo "🔄 再起動後は Super+Space または Alt+` で日本語⇔英語切り替えが可能です"
 	@echo "⚙️  mozc設定は「設定」→「地域と言語」→「入力ソース」から変更できます"
+	@echo ""
+	@echo "ℹ️  一部のリポジトリでエラーが発生した場合は、以下のコマンドで修正できます："
+	@echo "    make clean-repos"
 
 # Homebrewのインストール
 install-homebrew:
