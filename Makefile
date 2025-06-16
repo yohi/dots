@@ -145,7 +145,7 @@ system-setup:
 			unzip -q plex-fonts.zip 2>/dev/null && \
 			cp ibm-plex-sans/fonts/complete/ttf/*.ttf $(HOME_DIR)/.local/share/fonts/ibm-plex/ 2>/dev/null && \
 			rm -rf plex-fonts.zip ibm-plex-sans 2>/dev/null && \
-			fc-cache -f -v 2>/dev/null && \
+			(fc-cache -f 2>/dev/null || echo "⚠️  フォントキャッシュの更新をスキップしました（システムにより自動更新されます）") && \
 			echo "✅ IBM Plex Sans フォントのインストールが完了しました"; \
 		else \
 			echo "⚠️  IBM Plex フォントのダウンロードに失敗しました（インターネット接続を確認してください）"; \
