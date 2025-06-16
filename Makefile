@@ -38,8 +38,8 @@ help:
 	@echo "  2. make install-homebrew"
 	@echo "  3. make setup-all"
 	@echo ""
-	@echo "🌐 Google Chrome/Chromeベータについて:"
-	@echo "  'make install-deb' でGoogle Chrome StableとBetaの両方がインストールされます"
+	@echo "🌐 ブラウザについて:"
+	@echo "  'make install-deb' でGoogle Chrome Stable/Beta、Chromiumがインストールされます"
 	@echo ""
 	@echo "👨‍💻 開発環境IDEについて:"
 	@echo "  'make install-deb' で以下のIDEがインストールされます:"
@@ -263,6 +263,9 @@ install-deb:
 	
 	@sudo DEBIAN_FRONTEND=noninteractive apt install -y google-chrome-stable google-chrome-beta || \
 	echo "⚠️  Google Chromeのインストールに失敗しました"
+	
+	@sudo DEBIAN_FRONTEND=noninteractive apt install -y chromium || \
+	echo "⚠️  Chromiumのインストールに失敗しました"
 	
 	# VS Codeはリポジトリからではなく、DEBファイルから直接インストール
 	@echo "ℹ️  VS CodeはDEBファイルから直接インストールされます（下記参照）"
