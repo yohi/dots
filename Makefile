@@ -1266,26 +1266,8 @@ setup-shortcuts:
 	@echo "⚠️  設定を反映するため、一度ログアウト・ログインすることを推奨します。"
 
 # Gnome Extensions の設定をセットアップ
-setup-gnome-extensions:
-	@echo "🔧 Gnome Extensions の自動インストール＆設定を実行中..."
-	
-	# gnome-shell-extension-installerのインストール
-	@echo "📦 gnome-shell-extension-installer をインストール中..."
-	@if ! command -v gnome-shell-extension-installer >/dev/null 2>&1; then \
-		sudo wget -O /usr/local/bin/gnome-shell-extension-installer "https://github.com/brunelli/gnome-shell-extension-installer/raw/master/gnome-shell-extension-installer" && \
-		sudo chmod +x /usr/local/bin/gnome-shell-extension-installer; \
-	else \
-		echo "✅ gnome-shell-extension-installer は既にインストールされています。"; \
-	fi
-	
-	# jqのインストール
-	@echo "📦 jq をインストール中..."
-	@if ! command -v jq >/dev/null 2>&1; then \
-		sudo apt-get update && \
-		sudo apt-get install -y jq; \
-	else \
-		echo "✅ jq は既にインストールされています。"; \
-	fi
+setup-gnome-extensions: install-extensions-dependencies
+c	@echo "🔧 Gnome Extensions の自動インストール＆設定を実行中..."
 	
 	# 既存のスクリプトを使用してインストール
 	@if [ -d "$(DOTFILES_DIR)/gnome-extensions" ]; then \

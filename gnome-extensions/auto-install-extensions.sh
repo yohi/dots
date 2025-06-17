@@ -3,7 +3,7 @@
 # 🚀 GNOME Extensions 自動インストール & 設定スクリプト
 # このスクリプトは必要な依存関係の自動インストールから拡張機能の設定まで一括で行います
 
-set -e
+set -euo pipefail
 
 # カラー定義
 RED='\033[0;31m'
@@ -75,14 +75,24 @@ install_dependencies() {
         "gettext"
     )
     
+    # 不足しているパッケージを収集
+    local missing_packages=()
     for package in "${required_packages[@]}"; do
         if ! dpkg -l | grep -q "^ii  $package "; then
-            log "$package をインストール中..."
-            sudo apt install -y "$package"
+            missing_packages+=("$package")
         else
             log "$package は既にインストールされています"
         fi
     done
+    
+    # 不足しているパッケージを一括でインストール
+    if [ ${#missing_packages[@]} -gt 0 ]; then
+        log "不足しているパッケージをインストール中: ${missing_packages[*]}"
+        sudo apt install -y "${missing_packages[@]}"
+        success "${#missing_packages[@]} 個のパッケージのインストールが完了しました"
+    else
+        success "すべての必要なパッケージは既にインストールされています"
+    fi
     
     # gnome-shell-extension-installer のインストール
     if ! command -v gnome-shell-extension-installer >/dev/null 2>&1; then

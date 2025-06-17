@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Simple test script for extension installation
-set -e
+set -euo pipefail
 
 # Colors for output
 RED='\033[0;31m'
