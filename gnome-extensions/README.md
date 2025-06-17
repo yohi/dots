@@ -7,6 +7,9 @@
 ```
 gnome-extensions/
 ├── install-extensions.sh      # メインのインストールスクリプト
+├── auto-install-extensions.sh # 依存関係込みの自動セットアップ
+├── test-install.sh           # テスト用インストールスクリプト
+├── test-settings.sh          # 設定テスト用スクリプト
 ├── extensions-settings.dconf  # Extensions の設定
 ├── shell-settings.dconf       # Gnome Shell の設定
 ├── enabled-extensions.txt     # 有効な Extensions のリスト
@@ -19,17 +22,26 @@ gnome-extensions/
 ### 基本的な使用方法
 
 ```bash
-# Extensions を自動インストール・設定
+# 🚀 完全自動セットアップ（推奨）- 依存関係から全て自動インストール
+./auto-install-extensions.sh
+
+# 📦 Extensions のみをインストール・設定
 ./install-extensions.sh install
 
-# 現在の設定をエクスポート
+# 📤 現在の設定をエクスポート
 ./install-extensions.sh export
 
-# 設定のみを適用
+# ⚙️ 設定のみを適用
 ./install-extensions.sh apply-settings
 
-# Extensions を有効化のみ
+# 🔌 Extensions を有効化のみ
 ./install-extensions.sh enable
+
+# 🔧 スキーマの再コンパイル
+./install-extensions.sh compile-schemas
+
+# 🧪 テスト用インストール（少数の拡張機能のみ）
+./test-install.sh
 ```
 
 ### Makefileからの実行

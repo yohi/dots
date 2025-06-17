@@ -1266,15 +1266,20 @@ setup-shortcuts:
 	@echo "⚠️  設定を反映するため、一度ログアウト・ログインすることを推奨します。"
 
 # Gnome Extensions の設定をセットアップ
-setup-gnome-extensions:
-	@echo "🔧 Gnome Extensions の設定をセットアップ中..."
+setup-gnome-extensions: install-extensions-dependencies
+c	@echo "🔧 Gnome Extensions の自動インストール＆設定を実行中..."
+	
+	# 既存のスクリプトを使用してインストール
 	@if [ -d "$(DOTFILES_DIR)/gnome-extensions" ]; then \
-		echo "📦 Gnome Extensions のインストールと設定を実行中..."; \
+		echo "📦 拡張機能のインストールを実行中..."; \
 		cd $(DOTFILES_DIR)/gnome-extensions && ./install-extensions.sh install; \
-		echo "✅ Gnome Extensions の設定が完了しました"; \
 	else \
-		echo "⚠️  Gnome Extensions ディレクトリが見つかりません: $(DOTFILES_DIR)/gnome-extensions"; \
+		echo "❌ gnome-extensions ディレクトリが見つかりません"; \
 	fi
+	
+	# 設定適用と有効化は install-extensions.sh 内で処理される
+	
+	@echo "✅ Gnome Extensions の設定が完了しました"
 
 # Gnome Tweaks の設定をセットアップ
 setup-gnome-tweaks:
@@ -1479,3 +1484,20 @@ install-cursor:
 		echo "2. 'Download for Linux' をクリック"; \
 		echo "3. ダウンロード後、再度このコマンドを実行"; \
 	fi
+
+# Gnome Extensions 関連のユーティリティターゲット
+install-extensions-dependencies:
+	@echo "📦 Gnome Extensions の依存関係をインストール中..."
+	@cd $(DOTFILES_DIR)/gnome-extensions && ./auto-install-extensions.sh
+
+test-extensions:
+	@echo "🧪 拡張機能のテストインストールを実行中..."
+	@cd $(DOTFILES_DIR)/gnome-extensions && ./test-install.sh
+
+extensions-status:
+	@echo "📊 拡張機能の状態を確認中..."
+	@echo "有効な拡張機能:"
+	@gnome-extensions list --enabled
+	@echo ""
+	@echo "無効な拡張機能:"
+	@gnome-extensions list --disabled
