@@ -1,0 +1,45 @@
+# システムファイル
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# エディタ・IDE関連
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# フォントファイル
+*.ttf
+*.otf
+*.woff
+*.woff2
+plex-fonts.zip
+
+# 一時ファイル
+*.tmp
+*.temp
+*.cache
+*.log
+
+# 個人設定ファイル
+.personal
+.local.conf
+.secret
+
+# Vim関連
+vim/tmp/
+vim/backup/
+vim/undo/
+vim/sessions/
+
+# Neovim関連
+nvim/lazy-lock.json.bak
+nvim/plugin/packer_compiled.lua
+
+# シンボリックリンクのバックアップ
+*.orig
+
+# OS固有
+*Zone.Identifier
