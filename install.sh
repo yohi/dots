@@ -95,10 +95,20 @@ parse_arguments() {
     while [[ $# -gt 0 ]]; do
         case $1 in
             --branch)
+                if [[ -z "$2" || "$2" == --* ]]; then
+                    log_error "--branch オプションには引数が必要です"
+                    show_help
+                    exit 1
+                fi
                 BRANCH="$2"
                 shift 2
                 ;;
             --dir)
+                if [[ -z "$2" || "$2" == --* ]]; then
+                    log_error "--dir オプションには引数が必要です"
+                    show_help
+                    exit 1
+                fi
                 DOTFILES_DIR="$2"
                 shift 2
                 ;;

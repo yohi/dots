@@ -1,3 +1,17 @@
+--[[
+WezTerm Configuration
+
+Performance Optimizations:
+- システム情報取得の最適化: io.popen での外部コマンド実行を廃止し、
+  /proc/stat と /proc/meminfo から直接読み取ることで CPU 負荷を大幅に削減
+- 非同期更新: バックグラウンドタイマーでシステム情報を定期更新し、
+  update-status イベントではキャッシュされた値を即座に返すように変更
+- CPU 使用率計算: 前回値との差分計算により正確な CPU 使用率を算出
+- 更新競合防止: is_updating フラグで同時更新を防止
+
+Updates: 2025-01-20
+--]]
+
 local wezterm = require 'wezterm'
 local config = wezterm.config_builder and wezterm.config_builder() or {}
 
@@ -120,8 +134,10 @@ local system_info_cache = {
   cpu_info = 'CPU:--',
   mem_info = 'MEM:--',
   last_cpu_stats = nil,
+  prev_cpu_stats = nil, -- 前回のCPU統計用
   last_update = 0,
-  update_interval = 1000 -- 1秒間隔で更新
+  update_interval = 1000, -- 1秒間隔で更新
+  is_updating = false -- 更新中フラグ
 }
 
 -- /proc/statから直接CPU統計を読み取る関数
@@ -208,6 +224,11 @@ end
 
 -- システム情報を非同期で更新する関数
 local function update_system_info()
+  -- 既に更新中の場合はスキップ
+  if system_info_cache.is_updating then
+    return
+  end
+
   -- WezTerm 0.17+ では wezterm.time() が高解像度の UNIX 時刻(float)を返す
   local current_time = wezterm.time() * 1000
 
@@ -216,18 +237,23 @@ local function update_system_info()
     return
   end
 
+  system_info_cache.is_updating = true
+
   -- CPU使用率計算
   local current_cpu_stats = read_cpu_stats()
   if current_cpu_stats then
-    if system_info_cache.last_cpu_stats then
+    if system_info_cache.prev_cpu_stats then
       -- 前回のデータが存在する場合のみ差分計算
-      local prev_stats = system_info_cache.last_cpu_stats
+      local prev_stats = system_info_cache.prev_cpu_stats
       local total_diff = current_cpu_stats.total - prev_stats.total
-      local active_diff = current_cpu_stats.active - prev_stats.active
+      local idle_diff = current_cpu_stats.idle - prev_stats.idle
+      local iowait_diff = current_cpu_stats.iowait - prev_stats.iowait
 
       -- 差分が正の値で、かつ合理的な範囲内の場合のみ計算
       if total_diff > 0 and total_diff < 1000000 then -- 異常に大きな値を防ぐ
-        local cpu_usage = math.max(0, math.min(100, math.floor((active_diff / total_diff) * 100)))
+        -- CPU使用率 = 100% - (idle + iowait) の割合
+        local inactive_diff = idle_diff + iowait_diff
+        local cpu_usage = math.max(0, math.min(100, math.floor(((total_diff - inactive_diff) / total_diff) * 100)))
         system_info_cache.cpu_info = string.format("CPU:%d%%", cpu_usage)
       end
     else
@@ -235,7 +261,8 @@ local function update_system_info()
       system_info_cache.cpu_info = "CPU:--"
     end
 
-    -- 現在の統計を保存（計算成功後に更新）
+    -- 現在の統計を前回の統計として保存（計算成功後に更新）
+    system_info_cache.prev_cpu_stats = current_cpu_stats
     system_info_cache.last_cpu_stats = current_cpu_stats
   end
 
@@ -246,23 +273,43 @@ local function update_system_info()
   end
 
   system_info_cache.last_update = current_time
+  system_info_cache.is_updating = false
 end
 
 -- システム情報を取得する関数（キャッシュ版）
 local function get_system_info()
-  update_system_info()
+  -- キャッシュから即座に返す（更新は非同期で実行）
   return system_info_cache.cpu_info, system_info_cache.mem_info
 end
+
+-- グローバルなシステム情報更新タイマー（アプリケーション全体で1つのみ）
+local system_update_timer = nil
+
+-- 定期的なシステム情報更新を開始する関数
+local function start_system_update_timer()
+  if system_update_timer then
+    return -- 既にタイマーが動作中
+  end
+
+  local function schedule_update()
+    system_update_timer = wezterm.time.call_after(1, function()
+      update_system_info()
+      schedule_update() -- 次回の更新をスケジュール
+    end)
+  end
+
+  -- 初回実行
+  update_system_info()
+  schedule_update()
+end
+
+-- 設定読み込み時にタイマーを開始
+start_system_update_timer()
 
 -- ステータスバー（フッター）イベントハンドラ
 wezterm.on('update-status', function(window, pane)
   local date = os.date('%Y-%m-%d %H:%M:%S')
-  local cpu_info, mem_info = 'CPU:--', 'MEM:--'
-  local ok, c, m = pcall(get_system_info)
-  if ok and c and m then
-    cpu_info = c or 'CPU:--'
-    mem_info = m or 'MEM:--'
-  end
+  local cpu_info, mem_info = get_system_info()
 
   -- IME状態
   local ime = 'IME:OFF'

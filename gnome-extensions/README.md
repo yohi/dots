@@ -8,6 +8,7 @@
 gnome-extensions/
 ├── install-extensions.sh      # メインのインストールスクリプト
 ├── auto-install-extensions.sh # 依存関係込みの自動セットアップ
+├── direct-install.sh          # API直接使用インストールスクリプト
 ├── test-install.sh           # テスト用インストールスクリプト
 ├── test-settings.sh          # 設定テスト用スクリプト
 ├── extensions-settings.dconf  # Extensions の設定
@@ -43,9 +44,23 @@ gnome-extensions/
 # 🧪 テスト用インストール（少数の拡張機能のみ）
 ./test-install.sh
 
-# 直接インストール（依存関係チェック無し）
+# 🎯 直接インストール（extensions.gnome.org API を直接使用）
 ./direct-install.sh
 ```
+
+### インストール方法の詳細
+
+#### `auto-install-extensions.sh` - 完全自動セットアップ
+依存関係のインストールから設定の適用まで、全てを自動で行います。初回セットアップに推奨。
+
+#### `install-extensions.sh` - カスタムインストール
+様々なオプションでカスタマイズしたインストールが可能です。設定の部分的な更新や特定の操作のみを実行する場合に使用。
+
+#### `direct-install.sh` - 直接インストール
+extensions.gnome.org の API を直接使用して拡張機能をダウンロード・インストールします。
+- **特徴**: 依存関係チェックを行わず、即座にインストール開始
+- **用途**: 高速インストール、他の方法で失敗した場合の代替手段
+- **注意**: curl、unzip、jq が必要（事前に手動インストール要）
 
 ### Makefileからの実行
 
