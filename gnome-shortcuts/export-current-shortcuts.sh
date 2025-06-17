@@ -1,4 +1,5 @@
 #!/bin/bash
+set -euo pipefail
 
 # GNOME キーボードショートカット設定エクスポート用スクリプト
 # 現在の設定をdconfファイルとして保存します
@@ -38,4 +39,4 @@ echo "📋 エクスポートされたファイル:"
 ls -la "$SCRIPT_DIR"/*.dconf 2>/dev/null || echo "  設定ファイルが見つかりませんでした"
 echo ""
 echo "💡 これらの設定を適用するには:"
-echo "   make setup-shortcuts" 
+echo "   make setup-shortcuts"

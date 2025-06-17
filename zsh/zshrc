@@ -8,16 +8,16 @@ fi
 
 export LANG=ja_JP.UTF-8
 
-###########################3 
+###########################3
 ###########################3 autoload -Uz colors
 ###########################3 colors
-###########################3 
+###########################3
 # コマンドのスペルミスを指摘
 setopt correct
-###########################3 
+###########################3
 ###########################3 #bindkey -v
 ###########################3 #bindkey -a
-###########################3 
+###########################3
 ###########################3 case ${OSTYPE} in
 ###########################3   darwin*)
 ###########################3     # MAC
@@ -32,10 +32,10 @@ setopt correct
 ###########################3 %% '
 ###########################3     ;;
 ###########################3 esac
-###########################3 
-###########################3 
+###########################3
+###########################3
 ###########################3 fpath=(/usr/local/share/zsh-completions $fpath)
-###########################3 
+###########################3
 alias la="ls -a"
 alias ll="ls -l"
 alias du="du -h"
@@ -49,22 +49,22 @@ alias mkdirdatetime="mkdir $(date +"%Y%m%d%I%M%S")"
 #WORKDIR="/tmp/${DATETIME}_$$"
 #mkdir ${WORKDIR}
 
-###########################3 
+###########################3
 # ls で ディレクトリに色を付ける
 autoload -U compinit
 compinit -u
-###########################3 
+###########################3
 ###########################3 export LSCOLORS=exfxcxdxbxegedabagacad
 ###########################3 export LS_COLORS='di=34:ln=35:so=32:pi=33:ex=31:bd=46;34:cd=43;34:su=41;30:sg=46;30:tw=42;30:ow=43;30'
-###########################3 
+###########################3
 ###########################3 alias ls="ls -GF"
 ###########################3 alias gls="gls --color"
-###########################3 
+###########################3
 ###########################3 zstyle ':completion:*' list-colors 'di=34' 'ln=35' 'so=32' 'ex=31' 'bd=46;34' 'cd=43;34'
-###########################3 
+###########################3
 # DELETE KEY 有効化
 bindkey "^[[3~" delete-char
-###########################3 
+###########################3
 ###########################3 # powerline-shell
 ###########################3 #function powerline_precmd() {
 ###########################3 #    PS1="$(~/powerline-shell.py $? --shell zsh 2> /dev/null)"
@@ -82,7 +82,7 @@ bindkey "^[[3~" delete-char
 ###########################3 #if [ "$TERM" != "linux" ]; then
 ###########################3 #    install_powerline_precmd
 ###########################3 #fi
-###########################3 
+###########################3
 #
 # HOMEBREW
 export PATH=/home/${USER}/bin:${PATH}
@@ -223,12 +223,6 @@ alias -g lb='`git branch | peco --prompt "GIT BRANCH>" | head -n 1 | sed -e "s/^
 # export DENO_INSTALL=$HOME/.deno
 # export PATH="$DENO_INSTALL/bin:$PATH"
 
-# dockerコンテナに入る。deで実行できる
-alias de='docker exec -it $(docker ps | peco | cut -d " " -f 1) /bin/bash'
-
-# エクスプローラオープン
-alias open='xdg-open .'
-
 
 
 
@@ -254,7 +248,7 @@ export PATH=$PATH:$GOPATH/bin
 #   if [ "$#" -gt 0 ]; then
 #     shift
 #   fi
-# 
+#
 #   case "$command" in
 #   rehash|shell)
 #     eval "$(nodenv "sh-$command" "$@")";;
@@ -290,7 +284,7 @@ export PATH="/home/linuxbrew/.linuxbrew/opt/python@3.11/libexec/bin:$PATH"
 #     command nvim $@
 #   fi
 # }
-# 
+#
 # alias nvim=nvimvenv
 
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh

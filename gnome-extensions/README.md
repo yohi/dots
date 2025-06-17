@@ -42,6 +42,9 @@ gnome-extensions/
 
 # 🧪 テスト用インストール（少数の拡張機能のみ）
 ./test-install.sh
+
+# 直接インストール（依存関係チェック無し）
+./direct-install.sh
 ```
 
 ### Makefileからの実行
@@ -89,7 +92,7 @@ setup-gnome-extensions:
 ## ⚙️ 動作要件
 
 - **OS**: Ubuntu 22.04+ (GNOME/Unity デスクトップ環境)
-- **必要なパッケージ**: 
+- **必要なパッケージ**:
   - `gnome-shell-extensions`
   - `gnome-shell-extension-manager`
   - `chrome-gnome-shell`
@@ -192,4 +195,4 @@ killall -HUP gnome-shell
 
 ---
 
-**注意**: このスクリプトは現在の環境 (Ubuntu with GNOME/Unity) で動作確認されています。他の環境では動作しない可能性があります。 
+**注意**: このスクリプトは現在の環境 (Ubuntu with GNOME/Unity) で動作確認されています。他の環境では動作しない可能性があります。

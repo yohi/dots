@@ -4,8 +4,10 @@
 
 ## 設定ファイル
 
-- `keybindings.dconf` - システム全体のキーボードショートカット設定
+- `wm-keybindings.dconf` - ウィンドウマネージャーのキーボードショートカット設定
+- `media-keybindings.dconf` - メディアキーのキーボードショートカット設定
 - `custom-keybindings.dconf` - カスタムキーボードショートカット設定
+- `terminal-keybindings.dconf` - ターミナルのキーボードショートカット設定
 
 ## 現在の設定をエクスポートする方法
 
@@ -53,4 +55,4 @@ dconf load /org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/ < g
 
 - 設定を適用後は、一度ログアウト・ログインして設定を反映させることを推奨します
 - 既存のショートカットと競合する場合は、設定が上書きされる可能性があります
-- カスタムショートカットでは、実行するコマンドのフルパスを指定してください 
+- カスタムショートカットでは、実行するコマンドのフルパスを指定してください

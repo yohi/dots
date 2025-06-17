@@ -6,6 +6,32 @@
 
 set -e
 
+# Check for required dependencies
+check_dependencies() {
+    local dependencies=("curl" "unzip" "python3" "gnome-shell" "gnome-extensions" "dconf")
+    local missing_deps=()
+
+    log "必要な依存関係をチェック中..."
+
+    for cmd in "${dependencies[@]}"; do
+        if ! command -v "$cmd" &> /dev/null; then
+            missing_deps+=("$cmd")
+        fi
+    done
+
+    if [ ${#missing_deps[@]} -ne 0 ]; then
+        error "以下の必要なコマンドが見つかりません:"
+        for dep in "${missing_deps[@]}"; do
+            echo "  - $dep"
+        done
+        echo ""
+        error "必要な依存関係をインストールしてからスクリプトを再実行してください"
+        exit 1
+    fi
+
+    success "すべての必要な依存関係が利用可能です"
+}
+
 # Colors for output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -51,7 +77,7 @@ install_gext() {
 # Install required packages
 install_dependencies() {
     log "必要なパッケージをインストール中..."
-    
+
     if command -v apt &> /dev/null; then
         sudo apt update
         sudo apt install -y \
@@ -75,7 +101,7 @@ compile_extension_schemas() {
     local extension_uuid="$1"
     local extension_dir="$HOME/.local/share/gnome-shell/extensions/$extension_uuid"
     local schemas_dir="$extension_dir/schemas"
-    
+
     if [ -d "$schemas_dir" ]; then
         log "$extension_uuid のスキーマをコンパイル中..."
         if ls "$schemas_dir"/*.gschema.xml 1> /dev/null 2>&1; then
@@ -95,26 +121,26 @@ compile_extension_schemas() {
 install_extension_from_ego() {
     local extension_uuid="$1"
     local extension_name="$2"
-    
-    log "Extension をインストール中: $extension_name ($extension_uuid)"
-    
+
+        log "Extension をインストール中: $extension_name ($extension_uuid)"
+
     # Check if already installed
     if [ -d "$HOME/.local/share/gnome-shell/extensions/$extension_uuid" ]; then
         log "$extension_name は既にインストールされています"
         compile_extension_schemas "$extension_uuid"
         return 0
     fi
-    
+
     # Using API method directly (gext is deprecated)
     log "API経由で直接インストール中..."
-    
+
     # Fallback to manual installation
     local temp_dir=$(mktemp -d)
     local gnome_version=$(gnome-shell --version | cut -d' ' -f3 | cut -d'.' -f1,2)
-    
+
     # Try to get extension info from extensions.gnome.org API
     local api_url="https://extensions.gnome.org/extension-info/?uuid=${extension_uuid}&shell_version=${gnome_version}"
-    
+
     if curl -s "$api_url" | grep -q "download_url"; then
         local download_url=""
         if command -v jq &> /dev/null; then
@@ -123,19 +149,24 @@ install_extension_from_ego() {
             download_url=$(curl -s "$api_url" | python3 -c "
 import json, sys
 try:
-    data = json.load(sys.stdin)
-    print(data.get('download_url', ''))
-except:
+                data = json.load(sys.stdin)
+            print(data.get('download_url', ''))
+        except:
     pass
 " 2>/dev/null || echo "")
         fi
-        
+
+=======
+    sys.exit(1)
+")
+
+>>>>>>> Stashed changes
         if [ -n "$download_url" ]; then
             log "$extension_name のダウンロード中..."
             if curl -L "https://extensions.gnome.org$download_url" -o "$temp_dir/extension.zip"; then
                 local install_dir="$HOME/.local/share/gnome-shell/extensions/$extension_uuid"
                 mkdir -p "$install_dir"
-                
+
                 if unzip -q "$temp_dir/extension.zip" -d "$install_dir"; then
                     success "$extension_name のインストールが完了しました"
                     # Compile schemas if they exist
@@ -150,7 +181,7 @@ except:
             fi
         fi
     fi
-    
+
     rm -rf "$temp_dir"
     warning "$extension_name のインストールに失敗しました。手動でインストールしてください"
     return 1
@@ -159,7 +190,7 @@ except:
 # Install all extensions
 install_extensions() {
     log "Gnome Extensions のインストールを開始します..."
-    
+
     # Array of extensions (UUID, Name) - Only enabled extensions
     declare -a extensions=(
         "bluetooth-battery@michalw.github.com|Bluetooth Battery Indicator"
@@ -172,36 +203,36 @@ install_extensions() {
         "monitor@astraext.github.io|Astra Monitor"
         "search-light@icedman.github.com|Search Light"
     )
-    
+
     local success_count=0
     local total_count=${#extensions[@]}
-    
+
     for extension_info in "${extensions[@]}"; do
         IFS='|' read -r extension_uuid extension_name <<< "$extension_info"
-        
+
         # Check if extension is already installed
         if gnome-extensions list | grep -q "$extension_uuid"; then
             success "$extension_name は既にインストールされています"
             ((success_count++))
             continue
         fi
-        
+
         # Try to install the extension
         if install_extension_from_ego "$extension_uuid" "$extension_name"; then
             ((success_count++))
         fi
-        
+
         # Small delay to avoid overwhelming the server
         sleep 1
     done
-    
+
     log "インストール完了: $success_count/$total_count 個の拡張機能"
 }
 
 # Enable extensions
 enable_extensions() {
     log "Extensions を有効化中..."
-    
+
     # List of extensions to enable
     local enabled_extensions=(
         "bluetooth-battery@michalw.github.com"
@@ -214,19 +245,23 @@ enable_extensions() {
         "monitor@astraext.github.io"
         "search-light@icedman.github.com"
     )
-    
+<<<<<<< Updated upstream
+
     # Wait a moment for extensions to be fully installed
     sleep 2
-    
+
+=======
+
+>>>>>>> Stashed changes
     for extension_uuid in "${enabled_extensions[@]}"; do
         if gnome-extensions list | grep -q "$extension_uuid"; then
             # Compile schemas before enabling
             compile_extension_schemas "$extension_uuid"
-            
+
             # Try to enable the extension multiple times if needed
             local retry_count=0
             local max_retries=3
-            
+
             while [ $retry_count -lt $max_retries ]; do
                 if gnome-extensions enable "$extension_uuid" 2>/dev/null; then
                     success "$extension_uuid を有効化しました"
@@ -245,7 +280,7 @@ enable_extensions() {
             warning "$extension_uuid がインストールされていません"
         fi
     done
-    
+
     # Force enable critical extensions
     log "重要な拡張機能の強制有効化を実行中..."
     gnome-extensions enable "monitor@astraext.github.io" 2>/dev/null || warning "Astra Monitor の強制有効化に失敗"
@@ -255,11 +290,11 @@ enable_extensions() {
 # Apply extension settings
 apply_settings() {
     log "Extension設定を適用中..."
-    
+
     # Apply extension settings from dconf file
     local extensions_settings_file="$SCRIPT_DIR/extensions-settings.dconf"
     local shell_settings_file="$SCRIPT_DIR/shell-settings.dconf"
-    
+
     if [ -f "$extensions_settings_file" ]; then
         log "Extensions設定を読み込み中..."
         dconf load /org/gnome/shell/extensions/ < "$extensions_settings_file"
@@ -267,7 +302,7 @@ apply_settings() {
     else
         warning "Extensions設定ファイルが見つかりません: $extensions_settings_file"
     fi
-    
+
     if [ -f "$shell_settings_file" ]; then
         log "Shell設定を読み込み中..."
         dconf load /org/gnome/shell/ < "$shell_settings_file"
@@ -280,15 +315,15 @@ apply_settings() {
 # Export current extensions and settings
 export_current_setup() {
     log "現在のExtensions設定をエクスポート中..."
-    
+
     # Export enabled extensions list
     gnome-extensions list --enabled > "$SCRIPT_DIR/enabled-extensions.txt"
     gnome-extensions list --disabled > "$SCRIPT_DIR/disabled-extensions.txt"
-    
+
     # Export extension settings
     dconf dump /org/gnome/shell/extensions/ > "$SCRIPT_DIR/extensions-settings.dconf"
     dconf dump /org/gnome/shell/ > "$SCRIPT_DIR/shell-settings.dconf"
-    
+
     success "設定のエクスポートが完了しました"
     log "エクスポートされたファイル:"
     log "  - enabled-extensions.txt"
@@ -300,7 +335,7 @@ export_current_setup() {
 # Verify installation
 verify_installation() {
     log "インストールの検証中..."
-    
+
     # Critical extensions that must be enabled
     local critical_extensions=(
         "monitor@astraext.github.io"
@@ -311,11 +346,11 @@ verify_installation() {
         "BringOutSubmenuOfPowerOffLogoutButton@pratap.fastmail.fm"
         "PrivacyMenu@stuarthayhurst"
     )
-    
+
     local enabled_list
     enabled_list=$(gnome-extensions list --enabled)
     local missing_extensions=()
-    
+
     for extension_uuid in "${critical_extensions[@]}"; do
         if echo "$enabled_list" | grep -q "$extension_uuid"; then
             success "✓ $extension_uuid は有効化されています"
@@ -324,37 +359,37 @@ verify_installation() {
             missing_extensions+=("$extension_uuid")
         fi
     done
-    
+
     # Try to enable missing extensions one more time
     if [ ${#missing_extensions[@]} -gt 0 ]; then
         log "未有効化の拡張機能を再度有効化中..."
         for extension_uuid in "${missing_extensions[@]}"; do
             # Compile schemas before retrying
             compile_extension_schemas "$extension_uuid"
-            
+
             if gnome-extensions enable "$extension_uuid" 2>/dev/null; then
                 success "✓ $extension_uuid を有効化しました"
             else
                 error "✗ $extension_uuid の有効化に失敗しました"
             fi
         done
-        
+
         # Re-check missing extensions after retry
         enabled_list=$(gnome-extensions list --enabled)
         missing_extensions=()
-        
+
         for extension_uuid in "${critical_extensions[@]}"; do
             if ! echo "$enabled_list" | grep -q "$extension_uuid"; then
                 missing_extensions+=("$extension_uuid")
             fi
         done
     fi
-    
+
     # Final status
     local final_enabled
     final_enabled=$(gnome-extensions list --enabled | wc -l)
     log "有効化された拡張機能の総数: $final_enabled"
-    
+
     # Exit with error if critical extensions are still missing
     if [ ${#missing_extensions[@]} -gt 0 ]; then
         error "重要な拡張機能が有効化されていません: ${missing_extensions[*]}"
@@ -365,10 +400,10 @@ verify_installation() {
 # Compile all extension schemas
 compile_all_schemas() {
     log "全ての拡張機能のスキーマをコンパイル中..."
-    
+
     local extensions_dir="$HOME/.local/share/gnome-shell/extensions"
     local compiled_count=0
-    
+
     if [ -d "$extensions_dir" ]; then
         for extension_dir in "$extensions_dir"/*; do
             if [ -d "$extension_dir" ]; then
@@ -379,14 +414,14 @@ compile_all_schemas() {
             fi
         done
     fi
-    
+
     success "スキーマコンパイル完了: $compiled_count 個の拡張機能"
 }
 
 # Restart GNOME Shell
 restart_gnome_shell() {
     log "GNOME Shellを再起動しています..."
-    
+
     if [ "$XDG_SESSION_TYPE" = "x11" ]; then
         # X11 session
         killall -HUP gnome-shell
@@ -402,10 +437,11 @@ restart_gnome_shell() {
 main() {
     echo "🚀 Gnome Extensions 自動セットアップ"
     echo "=================================="
-    
+
     # Parse command line arguments
     case "${1:-install}" in
         "install")
+            check_dependencies
             check_gnome
             install_dependencies
             install_extensions
@@ -443,7 +479,7 @@ main() {
             exit 1
             ;;
     esac
-    
+
     echo ""
     success "🎉 完了しました！"
     echo ""
@@ -454,4 +490,4 @@ main() {
 }
 
 # Run main function
-main "$@" 
+main "$@"

@@ -2,7 +2,7 @@
 # Author: y_ohi
 # Description: Comprehensive Ubuntu setup with applications and dotfiles configuration
 
-.PHONY: all help system-setup install-homebrew install-apps install-deb-packages install-flatpak-packages \
+.PHONY: all help system-setup install-homebrew install-apps install-deb install-flatpak-packages \
         setup-vim setup-zsh setup-wezterm setup-vscode setup-cursor setup-git setup-docker setup-development setup-shortcuts \
         setup-gnome-extensions setup-gnome-tweaks backup-gnome-tweaks export-gnome-tweaks setup-all clean system-config clean-repos install-cursor install-fuse install-cica-fonts install-ibm-plex-fonts install-mysql-workbench
 
@@ -82,13 +82,13 @@ USER := $(shell whoami)
 # システムレベルの基本設定
 system-setup:
 	@echo "🔧 システムレベルの基本設定を開始..."
-	
+
 	# tzdataの入力を省略するための設定
 	@echo "🕐 tzdataの自動設定を行います..."
 	@echo "tzdata tzdata/Areas select Asia" | sudo debconf-set-selections
 	@echo "tzdata tzdata/Zones/Asia select Tokyo" | sudo debconf-set-selections
 	@export DEBIAN_FRONTEND=noninteractive
-	
+
 	# 問題のあるリポジトリの事前修正
 	@echo "🔧 問題のあるリポジトリを修正中..."
 	@if [ -f /etc/apt/sources.list.d/hluk-ubuntu-copyq-plucky.list ]; then \
@@ -97,60 +97,60 @@ system-setup:
 	@if [ -f /etc/apt/sources.list.d/remmina-ppa-team-ubuntu-remmina-next-plucky.list ]; then \
 		sudo mv /etc/apt/sources.list.d/remmina-ppa-team-ubuntu-remmina-next-plucky.list /etc/apt/sources.list.d/remmina-ppa-team-ubuntu-remmina-next-plucky.list.disabled 2>/dev/null || true; \
 	fi
-	
+
 	# TablePlusの公開鍵を再インストール
 	@echo "🔑 TablePlusの公開鍵を修正中..."
 	@sudo rm -f /etc/apt/trusted.gpg.d/tableplus-archive.gpg 2>/dev/null || true
 	@wget -qO - https://deb.tableplus.com/apt.tableplus.com.gpg.key | gpg --dearmor | sudo tee /etc/apt/trusted.gpg.d/tableplus-archive.gpg >/dev/null 2>&1 || true
-	
+
 	# システムアップデート（エラーを許容）
 	@echo "📦 システムパッケージを更新中..."
 	@sudo DEBIAN_FRONTEND=noninteractive apt update 2>/dev/null || echo "⚠️  一部のリポジトリで問題がありますが、処理を続行します"
 	@sudo DEBIAN_FRONTEND=noninteractive apt -y upgrade 2>/dev/null || echo "⚠️  一部のパッケージで問題がありますが、処理を続行します"
-	
+
 	# 日本語環境の設定
 	@echo "🌏 日本語環境を設定中..."
 	@sudo DEBIAN_FRONTEND=noninteractive apt -y install language-pack-ja language-pack-ja-base 2>/dev/null || echo "⚠️  一部の日本語パッケージのインストールに失敗しましたが、処理を続行します"
-	
+
 	# タイムゾーンを日本/東京に設定
 	@echo "🕐 タイムゾーンをAsia/Tokyoに設定中..."
 	@sudo timedatectl set-timezone Asia/Tokyo || true
-	
+
 	# ロケールの設定
 	@echo "🌐 ロケールを設定中..."
 	@sudo locale-gen ja_JP.UTF-8 || true
 	@sudo update-locale LANG=ja_JP.UTF-8 LANGUAGE=ja_JP:ja LC_ALL=ja_JP.UTF-8 || true
-	
+
 	# 日本語フォントのインストール
 	@echo "🔤 日本語フォントをインストール中..."
 	@sudo DEBIAN_FRONTEND=noninteractive apt -y install fonts-noto-cjk fonts-noto-cjk-extra || true
-	
+
 	# 日本語入力メソッド（mozc）のインストール
 	@echo "🇯🇵 日本語入力メソッド（mozc）をインストール中..."
 	@sudo DEBIAN_FRONTEND=noninteractive apt -y install ibus-mozc mozc-utils-gui || true
-	
+
 	# IBusの設定
 	@echo "⌨️  IBus入力メソッドを設定中..."
 	@gsettings set org.gnome.desktop.input-sources sources "[('xkb', 'us'), ('ibus', 'mozc-jp')]" 2>/dev/null || true
 	@gsettings set org.gnome.desktop.input-sources xkb-options "['ctrl:nocaps']" 2>/dev/null || true
-	
+
 	# IBusサービスの有効化
 	@systemctl --user enable ibus-daemon || true
 	@systemctl --user start ibus-daemon || true
-	
+
 	# IBM Plex Sans フォントのインストール
 	@$(MAKE) install-ibm-plex-fonts
-	
+
 	# 基本開発ツール
 	@echo "🔧 基本開発ツールをインストール中..."
 	@sudo DEBIAN_FRONTEND=noninteractive apt -y install build-essential curl file wget software-properties-common unzip 2>/dev/null || echo "⚠️  一部の基本開発ツールのインストールに失敗しましたが、処理を続行します"
-	
+
 	# ユーザーディレクトリ管理パッケージをインストール
 	@sudo DEBIAN_FRONTEND=noninteractive apt -y install xdg-user-dirs
-	
+
 	# ホームディレクトリを英語名にする（非対話的）
 	@LANG=C xdg-user-dirs-update --force
-	
+
 	# Ubuntu Japanese
 	@echo "🇯🇵 Ubuntu Japanese環境を設定中..."
 	@sudo wget https://www.ubuntulinux.jp/ubuntu-jp-ppa-keyring.gpg -P /etc/apt/trusted.gpg.d/ 2>/dev/null || true
@@ -158,40 +158,52 @@ system-setup:
 	@sudo wget https://www.ubuntulinux.jp/sources.list.d/$$(lsb_release -cs).list -O /etc/apt/sources.list.d/ubuntu-ja.list 2>/dev/null || true
 	@sudo DEBIAN_FRONTEND=noninteractive apt update 2>/dev/null || true
 	@sudo DEBIAN_FRONTEND=noninteractive apt install -y ubuntu-defaults-ja 2>/dev/null || echo "⚠️  Ubuntu Japanese のインストールに失敗しましたが、処理を続行します"
-	
+
+=======
+	@sudo wget https://www.ubuntulinux.jp/ubuntu-jp-ppa-keyring.gpg -P /etc/apt/trusted.gpg.d/ || true
+	@sudo wget https://www.ubuntulinux.jp/ubuntu-ja-archive-keyring.gpg -P /etc/apt/trusted.gpg.d/ || true
+	@sudo wget https://www.ubuntulinux.jp/sources.list.d/$$(lsb_release -cs).list -O /etc/apt/sources.list.d/ubuntu-ja.list || true
+	@sudo DEBIAN_FRONTEND=noninteractive apt update && sudo DEBIAN_FRONTEND=noninteractive apt install -y ubuntu-defaults-ja || true
+
+>>>>>>> Stashed changes
 	# キーボード設定
 	@echo "⌨️  キーボードレイアウトを設定中..."
-	
+
 	# キーボードレイアウトを英語（US）に設定
 	@setxkbmap us || true
 	@sudo localectl set-keymap us || true
 	@sudo localectl set-x11-keymap us || true
-	
+
 	# GNOME環境の場合、入力ソースは既にmozc設定で行われているためスキップ
 	@echo "✅ GNOME入力ソースはmozc設定で設定されています"
-	
+
 	# CapsLock -> Ctrl
 	@setxkbmap -option "ctrl:nocaps" || true
 	@sudo update-initramfs -u || true
-	
+
 	@echo "✅ キーボードレイアウトが英語（US）に設定されました"
-	
+
 	# 基本パッケージ
+<<<<<<< Updated upstream
 	@echo "📦 基本パッケージをインストール中..."
 	@sudo DEBIAN_FRONTEND=noninteractive apt install -y flatpak gdebi chrome-gnome-shell xclip xsel 2>/dev/null || echo "⚠️  一部の基本パッケージのインストールに失敗しましたが、処理を続行します"
-	
+
+=======
+	@sudo DEBIAN_FRONTEND=noninteractive apt install -y flatpak gdebi chrome-gnome-shell xclip xsel
+
+>>>>>>> Stashed changes
 	# AppImage実行に必要なFUSEパッケージ
 	@echo "📦 AppImage実行用のFUSEパッケージをインストール中..."
 	@sudo DEBIAN_FRONTEND=noninteractive apt install -y fuse libfuse2t64 libfuse3-3 fuse3 2>/dev/null || \
 	sudo DEBIAN_FRONTEND=noninteractive apt install -y fuse libfuse2 fuse3 2>/dev/null || \
 	sudo DEBIAN_FRONTEND=noninteractive apt install -y fuse fuse3 || true
-	
+
 	# FUSEの設定
 	@echo "🔧 FUSEユーザー権限を設定中..."
 	@sudo usermod -a -G fuse $(USER) || true
 	@sudo chmod +x /usr/bin/fusermount || true
 	@sudo chmod u+s /usr/bin/fusermount || true
-	
+
 	@echo "✅ システムレベルの基本設定が完了しました。"
 	@echo "🌏 タイムゾーン: $$(timedatectl show --property=Timezone --value 2>/dev/null || echo '取得に失敗')"
 	@echo "🌐 ロケール: $$(locale | grep LANG 2>/dev/null || echo '取得に失敗')"
@@ -385,7 +397,7 @@ install-homebrew:
 			fi; \
 		fi; \
 	fi
-	
+
 	@echo "📋 Homebrewの状態確認:"
 	@echo "   バージョン: $$(brew --version | head -1 2>/dev/null || echo '取得できませんでした')"
 	@echo "   インストール先: $$(brew --prefix 2>/dev/null || echo '取得できませんでした')"
@@ -395,14 +407,14 @@ install-homebrew:
 install-fuse:
 	@echo "📦 AppImage実行用のFUSEパッケージをインストール中..."
 	@echo "ℹ️  これによりCursor、PostmanなどのAppImageアプリケーションが実行可能になります"
-	
+
 	# 問題のあるリポジトリの一時的な無効化
 	@echo "🔧 問題のあるリポジトリの確認と修正..."
 	@if [ -f /etc/apt/sources.list.d/google-chrome-beta.list ]; then \
 		echo "ℹ️  重複するGoogle Chromeリポジトリを修正中..."; \
 		sudo rm -f /etc/apt/sources.list.d/google-chrome-beta.list 2>/dev/null || true; \
 	fi
-	
+
 	# Ubuntu 25.04で利用できないPPAの無効化
 	@echo "🔧 Ubuntu 25.04で利用できないPPAを一時的に無効化中..."
 	@if [ -f /etc/apt/sources.list.d/hluk-ubuntu-copyq-plucky.list ]; then \
@@ -411,32 +423,32 @@ install-fuse:
 	@if [ -f /etc/apt/sources.list.d/remmina-ppa-team-ubuntu-remmina-next-plucky.list ]; then \
 		sudo mv /etc/apt/sources.list.d/remmina-ppa-team-ubuntu-remmina-next-plucky.list /etc/apt/sources.list.d/remmina-ppa-team-ubuntu-remmina-next-plucky.list.disabled 2>/dev/null || true; \
 	fi
-	
+
 	# システムパッケージの更新（エラーを抑制）
 	@echo "📦 パッケージリストを更新中..."
 	@sudo apt update -q 2>/dev/null || echo "⚠️  一部のリポジトリで問題がありますが、処理を続行します"
-	
+
 	# FUSEパッケージのインストール
 	@echo "🔧 FUSEライブラリをインストール中..."
 	@echo "ℹ️  Ubuntu 25.04対応: 新しいパッケージ名でインストールを試行中..."
-	
+
 	# Ubuntu 25.04以降の新しいパッケージ名でインストール
 	@sudo DEBIAN_FRONTEND=noninteractive apt install -y fuse libfuse2t64 libfuse3-3 libfuse3-dev fuse3 2>/dev/null || \
 	echo "⚠️  新しいパッケージ名でのインストールに失敗、従来名を試行中..."
-	
+
 	# 従来のパッケージ名でのフォールバック
 	@sudo DEBIAN_FRONTEND=noninteractive apt install -y fuse libfuse2 libfuse2-dev fuse3 libfuse3-dev 2>/dev/null || \
 	echo "⚠️  従来のパッケージ名でもインストールに失敗"
-	
+
 	# 最低限必要なパッケージのみを確実にインストール
 	@echo "🔧 最低限必要なFUSEパッケージをインストール中..."
 	@sudo DEBIAN_FRONTEND=noninteractive apt install -y fuse fuse3 || \
 	echo "⚠️  基本FUSEパッケージのインストールに失敗しました"
-	
+
 	# インストール済みFUSEパッケージの確認
 	@echo "📋 インストール済みFUSEパッケージの確認:"
 	@apt list --installed 2>/dev/null | grep -i fuse || echo "ℹ️  FUSEパッケージが見つかりません"
-	
+
 	# FUSEユーザー権限の設定
 	@echo "👤 FUSEユーザー権限を設定中..."
 	@sudo usermod -a -G fuse $(USER) || true
@@ -444,11 +456,11 @@ install-fuse:
 	@sudo chmod u+s /usr/bin/fusermount 2>/dev/null || true
 	@sudo chmod +x /usr/bin/fusermount3 2>/dev/null || true
 	@sudo chmod u+s /usr/bin/fusermount3 2>/dev/null || true
-	
+
 	# FUSEモジュールのロード
 	@echo "⚙️  FUSEモジュールをロード中..."
 	@sudo modprobe fuse || true
-	
+
 	# FUSEの設定確認
 	@echo "🔍 FUSE設定の確認中..."
 	@if [ -c /dev/fuse ]; then \
@@ -456,7 +468,7 @@ install-fuse:
 	else \
 		echo "⚠️  FUSE デバイス (/dev/fuse) が見つかりません"; \
 	fi
-	
+
 	@if groups $(USER) | grep -q fuse; then \
 		echo "✅ ユーザー $(USER) がfuseグループに所属しています"; \
 	else \
@@ -464,7 +476,7 @@ install-fuse:
 		echo "ℹ️  以下のコマンドを実行してからログアウト・ログインしてください:"; \
 		echo "    sudo usermod -a -G fuse $(USER)"; \
 	fi
-	
+
 	# Chrome Sandboxの問題を事前に回避するための設定
 	@echo "🔒 Chrome Sandboxの設定を確認中..."
 	@if [ -f /opt/cursor/cursor.AppImage ]; then \
@@ -474,7 +486,7 @@ install-fuse:
 	else \
 		echo "ℹ️  Cursor IDEがまだインストールされていません"; \
 	fi
-	
+
 	@echo "✅ FUSEパッケージのインストールが完了しました。"
 	@echo ""
 	@echo "🚀 Cursor IDEを起動するには:"
@@ -514,118 +526,118 @@ install-apps:
 install-deb:
 	@echo "📦 DEBパッケージをインストール中..."
 	@cd /tmp
-	
+
 	# Ubuntu バージョンの確認
 	@UBUNTU_CODENAME=$$(lsb_release -cs); \
 	echo "🔍 検出されたUbuntuバージョン: $$UBUNTU_CODENAME"
-	
+
 	# 必要なリポジトリを追加（エラーハンドリング強化）
 	@echo "🔍 リポジトリを追加中..."
-	
+
 	# CopyQ（Ubuntuのデフォルトリポジトリにあるので、PPAは必須ではない）
 	@sudo add-apt-repository -y ppa:hluk/copyq 2>/dev/null || \
 	echo "⚠️  CopyQ PPAが利用できません。デフォルトリポジトリからインストールします。"
-	
+
 	# Remmina（デフォルトリポジトリからでもインストール可能）
 	@sudo add-apt-repository -y ppa:remmina-ppa-team/remmina-next 2>/dev/null || \
 	echo "⚠️  Remmina PPAが利用できません。デフォルトリポジトリからインストールします。"
-	
+
 	# Howdy（顔認証、オプション）
 	@sudo add-apt-repository -y ppa:boltgolt/howdy 2>/dev/null || \
 	echo "ℹ️  Howdy PPAが利用できません（顔認証機能は省略されます）。"
-	
+
 	# Mainline Kernel（カーネル管理、重要）
 	@sudo add-apt-repository -y ppa:cappelikan/ppa 2>/dev/null || \
 	echo "⚠️  Mainline PPA（カーネル管理）が利用できません。"
-	
+
 	# Google Chromeリポジトリの追加
 	@echo "🌐 Google Chromeリポジトリを追加中..."
 	@wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | sudo gpg --dearmor -o /usr/share/keyrings/google-chrome-keyring.gpg 2>/dev/null || true
 	@sudo sh -c 'echo "deb [arch=amd64 signed-by=/usr/share/keyrings/google-chrome-keyring.gpg] https://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google-chrome.list' 2>/dev/null || true
-	
+
 	# Visual Studio Codeリポジトリの追加
 	@echo "💻 Visual Studio Code（DEBファイル直接ダウンロード）をスキップ中..."
 	@echo "ℹ️  VS CodeはDEBファイルから直接インストールされます"
-	
+
 	# 既存のMicrosoft GPGキーをクリーンアップ（念のため）
 	@sudo rm -f /etc/apt/trusted.gpg.d/packages.microsoft.gpg 2>/dev/null || true
 	@sudo rm -f /usr/share/keyrings/microsoft.gpg 2>/dev/null || true
 	@sudo rm -f /etc/apt/sources.list.d/vscode.list 2>/dev/null || true
 	@sudo rm -f /etc/apt/sources.list.d/vscode.* 2>/dev/null || true
-	
+
 	# TablePlusリポジトリの追加
 	@echo "🗃️  TablePlusリポジトリを追加中..."
 	@wget -qO - https://deb.tableplus.com/apt.tableplus.com.gpg.key | gpg --dearmor | sudo tee /etc/apt/trusted.gpg.d/tableplus-archive.gpg >/dev/null 2>&1 || true
 	@sudo add-apt-repository -y "deb [arch=amd64] https://deb.tableplus.com/debian/22 tableplus main" 2>/dev/null || true
-	
+
 	# pgAdminリポジトリの追加
 	@echo "🐘 pgAdminリポジトリを追加中..."
 	@curl -fsS https://www.pgadmin.org/static/packages_pgadmin_org.pub | sudo gpg --dearmor -o /usr/share/keyrings/packages-pgadmin-org.gpg 2>/dev/null || true
 	@sudo sh -c 'echo "deb [signed-by=/usr/share/keyrings/packages-pgadmin-org.gpg] https://ftp.postgresql.org/pub/pgadmin/pgadmin4/apt/$$(lsb_release -cs) pgadmin4 main" > /etc/apt/sources.list.d/pgadmin4.list' 2>/dev/null || true
-	
+
 	# MySQL公式リポジトリの追加
 	@echo "🐬 MySQL Workbench（DEBファイル直接ダウンロード）をスキップ中..."
 	@echo "ℹ️  MySQL WorkbenchはDEBファイルから直接インストールされます"
-	
+
 	# パッケージリストの更新（エラーを無視）
 	@echo "🔄 パッケージリストを更新中..."
-	
+
 	# Slackリポジトリの追加
 	@echo "💼 Slackリポジトリを追加中..."
 	@sudo rm -f /usr/share/keyrings/slack-keyring.gpg 2>/dev/null || true
 	@sudo rm -f /etc/apt/sources.list.d/slack.list 2>/dev/null || true
 	@wget -qO- https://packagecloud.io/slacktechnologies/slack/gpgkey | sudo gpg --dearmor -o /usr/share/keyrings/slack-keyring.gpg 2>/dev/null || true
 	@sudo sh -c 'echo "deb [arch=amd64 signed-by=/usr/share/keyrings/slack-keyring.gpg] https://packagecloud.io/slacktechnologies/slack/debian/ jessie main" > /etc/apt/sources.list.d/slack.list' 2>/dev/null || true
-	
+
 	@sudo apt update 2>/dev/null || echo "⚠️  一部のリポジトリでエラーがありましたが、処理を続行します。"
-	
+
 	# APTパッケージのインストール（個別にエラーハンドリング）
 	@echo "📦 基本パッケージをインストール中..."
-	
+
 	# AppImage実行に必要なFUSEパッケージ（重要）
 	@echo "📦 AppImage実行用のFUSEパッケージをインストール中..."
 	@sudo DEBIAN_FRONTEND=noninteractive apt install -y fuse libfuse2t64 libfuse3-3 fuse3 2>/dev/null || \
 	sudo DEBIAN_FRONTEND=noninteractive apt install -y fuse libfuse2 fuse3 2>/dev/null || \
 	sudo DEBIAN_FRONTEND=noninteractive apt install -y fuse fuse3 || \
 	echo "⚠️  FUSEパッケージのインストールに失敗しました（AppImageが実行できない可能性があります）"
-	
+
 	@sudo DEBIAN_FRONTEND=noninteractive apt install -y tilix || \
 	echo "⚠️  ターミナルエミュレータのインストールに失敗しました"
-	
+
 	@sudo DEBIAN_FRONTEND=noninteractive apt install -y google-chrome-stable google-chrome-beta || \
 	echo "⚠️  Google Chromeのインストールに失敗しました"
-	
+
 	@sudo DEBIAN_FRONTEND=noninteractive apt install -y chromium || \
 	echo "⚠️  Chromiumのインストールに失敗しました"
-	
+
 	# VS Codeはリポジトリからではなく、DEBファイルから直接インストール
 	@echo "ℹ️  VS CodeはDEBファイルから直接インストールされます（下記参照）"
 
 	@sudo DEBIAN_FRONTEND=noninteractive apt install -y copyq meld gnome-tweaks synaptic || \
 	echo "⚠️  一部のユーティリティのインストールに失敗しました"
-	
+
 	@sudo DEBIAN_FRONTEND=noninteractive apt install -y remmina remmina-plugin-rdp remmina-plugin-secret || \
 	echo "⚠️  Remminaのインストールに失敗しました"
-	
+
 	@sudo DEBIAN_FRONTEND=noninteractive apt install -y tableplus pgadmin4-desktop || \
 	echo "⚠️  データベースツールのインストールに失敗しました"
-	
+
 	# MySQL Workbench（DEBファイル直接ダウンロード）
 	@echo "ℹ️  MySQL WorkbenchはDEBファイルから直接インストールされます（下記参照）"
-	
+
 	@sudo DEBIAN_FRONTEND=noninteractive apt install -y slack-desktop || \
 	echo "⚠️  チャットアプリのインストールに失敗しました"
-	
+
 	@sudo DEBIAN_FRONTEND=noninteractive apt install -y mainline || \
 	echo "⚠️  Mainlineカーネル管理ツールのインストールに失敗しました"
-	
+
 	@sudo DEBIAN_FRONTEND=noninteractive apt install -y kcachegrind blueman gnome-shell-extension-manager \
 		conky-all apt-xapian-index gir1.2-gtop-2.0 gir1.2-nm-1.0 gir1.2-clutter-1.0 || \
 	echo "⚠️  一部のシステムツールのインストールに失敗しました"
-	
+
 	# DEBファイルのダウンロードとインストール
 	@echo "📥 追加のアプリケーションをインストール中..."
-	
+
 	# Visual Studio Code（公式DEBファイル直接ダウンロード）
 	@cd /tmp && \
 	echo "💻 Visual Studio Codeをインストール中（公式DEBファイル）..." && \
@@ -634,7 +646,7 @@ install-deb:
 	sudo apt-get install -f -y 2>/dev/null && \
 	echo "✅ Visual Studio Codeのインストールが完了しました" || \
 	echo "⚠️  Visual Studio Codeのインストールに失敗しました"
-	
+
 	# MySQL Workbench（公式DEBファイル直接ダウンロード）
 	@cd /tmp && \
 	echo "🐬 MySQL Workbenchをインストール中（公式DEBファイル）..." && \
@@ -643,22 +655,22 @@ install-deb:
 	sudo apt-get install -f -y 2>/dev/null && \
 	echo "✅ MySQL Workbenchのインストールが完了しました" || \
 	echo "⚠️  MySQL Workbenchのインストールに失敗しました"
-	
+
 	@cd /tmp && \
 	wget -q https://dbeaver.io/files/dbeaver-ce_latest_amd64.deb 2>/dev/null && \
 	sudo gdebi -n dbeaver-ce_latest_amd64.deb 2>/dev/null || \
 	echo "⚠️  DBeaverのインストールに失敗しました"
-	
+
 	@cd /tmp && \
 	wget -q https://github.com/Kong/insomnia/releases/download/core%402020.3.3/Insomnia.Core-2020.3.3.deb 2>/dev/null && \
 	sudo gdebi -n Insomnia.Core-2020.3.3.deb 2>/dev/null || \
 	echo "⚠️  Insomniaのインストールに失敗しました"
-	
+
 	@cd /tmp && \
 	wget -q https://wdl1.pcfg.cache.wpscdn.com/wpsdl/wpsoffice/download/linux/11664/wps-office_11.1.0.11664.XA_amd64.deb 2>/dev/null && \
 	sudo gdebi -n wps-office_11.1.0.11664.XA_amd64.deb 2>/dev/null || \
 	echo "⚠️  WPS Officeのインストールに失敗しました"
-	
+
 	# Discord
 	@cd /tmp && \
 	echo "🎮 Discordをインストール中..." && \
@@ -666,7 +678,7 @@ install-deb:
 	sudo gdebi -n discord.deb 2>/dev/null && \
 	echo "✅ Discordのインストールが完了しました" || \
 	echo "⚠️  Discordのインストールに失敗しました"
-	
+
 	# Postman
 	@cd /tmp && \
 	echo "📮 Postmanをインストール中..." && \
@@ -803,13 +815,13 @@ install-deb:
 		echo "📱 または、以下のコマンドで手動インストールを実行:"; \
 		echo "   make install-cursor-manual"; \
 	fi
-	
+
 	# AWS Session Manager Plugin
 	@cd /tmp && \
 	curl -q "https://s3.amazonaws.com/session-manager-downloads/plugin/latest/ubuntu_64bit/session-manager-plugin.deb" -o "session-manager-plugin.deb" 2>/dev/null && \
 	sudo gdebi -n session-manager-plugin.deb 2>/dev/null || \
 	echo "⚠️  AWS Session Manager Pluginのインストールに失敗しました"
-	
+
 	# WezTerm
 	@cd /tmp && \
 	echo "🖥️  WezTermをインストール中..." && \
@@ -817,9 +829,9 @@ install-deb:
 	sudo gdebi -n wezterm-20240203-110809-5046fc22.Ubuntu22.04.deb 2>/dev/null && \
 	echo "✅ WezTermのインストールが完了しました" || \
 	echo "⚠️  WezTermのインストールに失敗しました"
-	
+
 	@update-apt-xapian-index -vf 2>/dev/null || true
-	
+
 	@echo "✅ DEBパッケージのインストールが完了しました。"
 	@echo "⚠️  一部のパッケージでインストールエラーが発生した可能性がありますが、"
 	@echo "    大部分のアプリケーションは正常にインストールされました。"
@@ -836,34 +848,34 @@ setup-vim:
 	@mkdir -p $(CONFIG_DIR)/nvim
 	@mkdir -p $(CONFIG_DIR)/cspell
 	@mkdir -p $(CONFIG_DIR)/denops_translate
-	
+
 	# Neovim設定ディレクトリ作成とシンボリックリンク
 	@if [ -d "$(CONFIG_DIR)/nvim" ] && [ ! -L "$(CONFIG_DIR)/nvim" ]; then \
 		echo "⚠️  既存のnvim設定をバックアップ中..."; \
 		mv $(CONFIG_DIR)/nvim $(CONFIG_DIR)/nvim.backup.$$(date +%Y%m%d_%H%M%S); \
 	fi
 	@ln -sfn $(DOTFILES_DIR)/vim $(CONFIG_DIR)/nvim
-	
+
 	# 従来のVIM設定もリンク
 	@ln -sfn $(DOTFILES_DIR)/vim/rc/vimrc $(HOME_DIR)/.vimrc
 	@ln -sfn $(DOTFILES_DIR)/vim/rc/gvimrc $(HOME_DIR)/.gvimrc
-	
+
 	# 追加設定ディレクトリ
 	@if [ -d "$(DOTFILES_DIR)/cspell" ]; then ln -sfn $(DOTFILES_DIR)/cspell $(CONFIG_DIR)/cspell; fi
 	@if [ -d "$(DOTFILES_DIR)/vim/denops_translate" ]; then ln -sfn $(DOTFILES_DIR)/vim/denops_translate $(CONFIG_DIR)/denops_translate; fi
-	
+
 	@echo "✅ VIMの設定が完了しました。"
 
 # ZSHの設定をセットアップ
 setup-zsh:
 	@echo "🐚 ZSHの設定をセットアップ中..."
 	@mkdir -p $(DOTFILES_DIR)/zsh
-	
+
 	# Zinitのインストール
 	@if [ ! -d "$(HOME_DIR)/.local/share/zinit" ]; then \
 		bash -c "$$(curl --fail --show-error --silent --location https://raw.githubusercontent.com/zdharma-continuum/zinit/HEAD/scripts/install.sh)"; \
 	fi
-	
+
 	# 既存のzshrc設定ファイルが存在する場合はそれを使用、ない場合は基本設定を作成
 	@if [ ! -f "$(DOTFILES_DIR)/zsh/zshrc" ]; then \
 		echo "# ZSH Configuration" > $(DOTFILES_DIR)/zsh/zshrc; \
@@ -907,7 +919,7 @@ setup-zsh:
 	else \
 		echo "✅ 既存のzshrc設定ファイルを使用します: $(DOTFILES_DIR)/zsh/zshrc"; \
 	fi
-	
+
 	# P10k設定ファイルの確認（既存があればそれを使用）
 	@if [ ! -f "$(DOTFILES_DIR)/zsh/p10k.zsh" ] && [ ! -f "$(HOME_DIR)/.p10k.zsh" ]; then \
 		echo "# Powerlevel10k configuration generated by dotfiles Makefile" > $(DOTFILES_DIR)/zsh/p10k.zsh; \
@@ -915,14 +927,14 @@ setup-zsh:
 	elif [ -f "$(DOTFILES_DIR)/zsh/p10k.zsh" ]; then \
 		echo "✅ 既存のp10k設定ファイルを使用します: $(DOTFILES_DIR)/zsh/p10k.zsh"; \
 	fi
-	
+
 	# シンボリックリンクを作成
 	@if [ -f "$(HOME_DIR)/.zshrc" ] && [ ! -L "$(HOME_DIR)/.zshrc" ]; then \
 		echo "⚠️  既存の.zshrcをバックアップ中..."; \
 		mv $(HOME_DIR)/.zshrc $(HOME_DIR)/.zshrc.backup.$$(date +%Y%m%d_%H%M%S); \
 	fi
 	@ln -sfn $(DOTFILES_DIR)/zsh/zshrc $(HOME_DIR)/.zshrc
-	
+
 	@if [ -f "$(DOTFILES_DIR)/zsh/p10k.zsh" ]; then \
 		if [ -f "$(HOME_DIR)/.p10k.zsh" ] && [ ! -L "$(HOME_DIR)/.p10k.zsh" ]; then \
 			echo "⚠️  既存の.p10k.zshをバックアップ中..."; \
@@ -930,7 +942,7 @@ setup-zsh:
 		fi; \
 		ln -sfn $(DOTFILES_DIR)/zsh/p10k.zsh $(HOME_DIR)/.p10k.zsh; \
 	fi
-	
+
 	# ZSHをデフォルトシェルに設定
 	@if ! grep -q "$$(which zsh)" /etc/shells; then \
 		sudo sh -c "echo $$(which zsh) >> /etc/shells"; \
@@ -939,30 +951,30 @@ setup-zsh:
 		echo "⚠️  ZSHをデフォルトシェルに設定するため、以下のコマンドを実行してください:"; \
 		echo "    chsh -s $$(which zsh)"; \
 	fi
-	
+
 	@echo "✅ ZSHの設定が完了しました。"
 
 # WEZTERMの設定をセットアップ
 setup-wezterm:
 	@echo "🖥️  WEZTERMの設定をセットアップ中..."
 	@mkdir -p $(CONFIG_DIR)/wezterm
-	
+
 	# 既存設定のバックアップ
 	@if [ -f "$(CONFIG_DIR)/wezterm/wezterm.lua" ] && [ ! -L "$(CONFIG_DIR)/wezterm/wezterm.lua" ]; then \
 		echo "⚠️  既存のwezterm設定をバックアップ中..."; \
 		mv $(CONFIG_DIR)/wezterm/wezterm.lua $(CONFIG_DIR)/wezterm/wezterm.lua.backup.$$(date +%Y%m%d_%H%M%S); \
 	fi
-	
+
 	# シンボリックリンクを作成
 	@ln -sfn $(DOTFILES_DIR)/wezterm/wezterm.lua $(CONFIG_DIR)/wezterm/wezterm.lua
-	
+
 	@echo "✅ WEZTERMの設定が完了しました。"
 
 # VS Codeの設定をセットアップ
 setup-vscode:
 	@echo "💻 VS Codeの設定をセットアップ中..."
 	@mkdir -p $(CONFIG_DIR)/Code/User
-	
+
 	# 既存設定のバックアップ
 	@if [ -f "$(CONFIG_DIR)/Code/User/settings.json" ] && [ ! -L "$(CONFIG_DIR)/Code/User/settings.json" ]; then \
 		echo "⚠️  既存のVS Code settings.jsonをバックアップ中..."; \
@@ -972,11 +984,11 @@ setup-vscode:
 		echo "⚠️  既存のVS Code keybindings.jsonをバックアップ中..."; \
 		mv $(CONFIG_DIR)/Code/User/keybindings.json $(CONFIG_DIR)/Code/User/keybindings.json.backup.$$(date +%Y%m%d_%H%M%S); \
 	fi
-	
+
 	# シンボリックリンクを作成
 	@ln -sfn $(DOTFILES_DIR)/vscode/settings.json $(CONFIG_DIR)/Code/User/settings.json
 	@ln -sfn $(DOTFILES_DIR)/vscode/keybindings.json $(CONFIG_DIR)/Code/User/keybindings.json
-	
+
 	# 拡張機能のインストール
 	@if command -v code >/dev/null 2>&1; then \
 		echo "📦 VS Code拡張機能をインストール中..."; \
@@ -997,14 +1009,14 @@ setup-vscode:
 	else \
 		echo "⚠️  VS Codeがインストールされていません。拡張機能のインストールをスキップします"; \
 	fi
-	
+
 	@echo "✅ VS Codeの設定が完了しました。"
 
 # Cursorの設定をセットアップ
 setup-cursor:
 	@echo "🖱️  Cursorの設定をセットアップ中..."
 	@mkdir -p $(CONFIG_DIR)/Cursor/User
-	
+
 	# 既存設定のバックアップ
 	@if [ -f "$(CONFIG_DIR)/Cursor/User/settings.json" ] && [ ! -L "$(CONFIG_DIR)/Cursor/User/settings.json" ]; then \
 		echo "⚠️  既存のCursor settings.jsonをバックアップ中..."; \
@@ -1014,11 +1026,11 @@ setup-cursor:
 		echo "⚠️  既存のCursor keybindings.jsonをバックアップ中..."; \
 		mv $(CONFIG_DIR)/Cursor/User/keybindings.json $(CONFIG_DIR)/Cursor/User/keybindings.json.backup.$$(date +%Y%m%d_%H%M%S); \
 	fi
-	
+
 	# シンボリックリンクを作成
 	@ln -sfn $(DOTFILES_DIR)/cursor/settings.json $(CONFIG_DIR)/Cursor/User/settings.json
 	@ln -sfn $(DOTFILES_DIR)/cursor/keybindings.json $(CONFIG_DIR)/Cursor/User/keybindings.json
-	
+
 	@echo "✅ Cursorの設定が完了しました。"
 
 
@@ -1026,7 +1038,7 @@ setup-cursor:
 # Git設定のセットアップ
 setup-git:
 	@echo "🖥️  Git設定をセットアップ中..."
-	
+
 	# 既存のGit設定をチェック
 	@CURRENT_EMAIL=$$(git config --global user.email 2>/dev/null || echo ""); \
 	CURRENT_NAME=$$(git config --global user.name 2>/dev/null || echo ""); \
@@ -1047,7 +1059,7 @@ setup-git:
 			echo "✅ Git設定完了 - Email: $$EMAIL_INPUT"; \
 		fi; \
 	fi
-	
+
 	# SSH鍵の生成
 	@if [ ! -f "$(HOME_DIR)/.ssh/id_ed25519" ]; then \
 		echo "🔑 SSH鍵を生成中..."; \
@@ -1066,24 +1078,25 @@ setup-git:
 	else \
 		echo "✅ SSH鍵は既に存在します。"; \
 	fi
-	
+
 	@echo "✅ Git設定が完了しました。"
 
 # Docker設定のセットアップ
 setup-docker:
 	@echo "🐳 Docker設定をセットアップ中..."
-	
+
 	# 必要なパッケージを先にインストール
 	@echo "📦 Docker rootless用の必要パッケージをインストール中..."
 	@sudo DEBIAN_FRONTEND=noninteractive apt-get update || true
 	@sudo DEBIAN_FRONTEND=noninteractive apt-get install -y uidmap || true
-	
+
 	# 必要なカーネルモジュールをロード
 	@echo "🔧 必要なカーネルモジュールをロード中..."
 	@sudo modprobe nf_tables || true
 	@sudo modprobe iptable_nat || true
 	@sudo modprobe ip6table_nat || true
-	
+<<<<<<< Updated upstream
+
 	# AppArmorの設定を確認・修正
 	@echo "🛡️  AppArmorの設定を確認中..."
 	@if [ -f /proc/sys/kernel/apparmor_restrict_unprivileged_userns ] && [ "$$(cat /proc/sys/kernel/apparmor_restrict_unprivileged_userns)" = "1" ]; then \
@@ -1110,25 +1123,28 @@ setup-docker:
 	else \
 		echo "✅ AppArmorによる制限はありません"; \
 	fi
-	
+
+=======
+
+>>>>>>> Stashed changes
 	# Rootless Dockerのセットアップ
 	@if ! command -v dockerd-rootless-setuptool.sh >/dev/null 2>&1; then \
 		echo "📦 Rootless Dockerをインストール中..."; \
 		curl -fsSL https://get.docker.com/rootless | sh; \
 	fi
-	
+
 	# rootless setuptoolの実行（エラーが発生してもスキップするオプション付き）
 	@echo "⚙️  Rootless Dockerをセットアップ中..."
 	@dockerd-rootless-setuptool.sh install --skip-iptables || \
 	dockerd-rootless-setuptool.sh install || \
 	echo "⚠️  Rootless Docker setup completed with warnings (this is often normal)"
-	
+
 	# サービスの設定
 	@echo "🚀 Dockerサービスの設定中..."
 	@systemctl --user enable docker.service || true
 	@systemctl --user start docker.service || true
 	@sudo loginctl enable-linger $(USER) || true
-	
+
 	# Docker Composeのセットアップ
 	@echo "🐙 Docker Composeの設定中..."
 	@mkdir -p $(HOME_DIR)/.docker/cli-plugins
@@ -1136,20 +1152,20 @@ setup-docker:
 		eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"; \
 		ln -sfn $$(brew --prefix)/opt/docker-compose/bin/docker-compose $(HOME_DIR)/.docker/cli-plugins/docker-compose || true; \
 	fi
-	
+
 	# 環境変数の設定確認
 	@echo "🔍 Docker環境の確認中..."
 	@if ! grep -q "DOCKER_HOST" $(HOME_DIR)/.zshrc 2>/dev/null; then \
 		echo "export DOCKER_HOST=unix:///run/user/$$(id -u)/docker.sock" >> $(HOME_DIR)/.zshrc || true; \
 	fi
-	
+
 	@echo "✅ Docker設定が完了しました。"
 	@echo "ℹ️  ターミナルを再起動してからDockerを使用してください。"
 
 # 追加の開発環境設定
 setup-development:
 	@echo "⚙️  追加の開発環境設定を実行中..."
-	
+
 	# Tilixの設定
 	@if [ -f "$(DOTFILES_DIR)/tilix/tilix.dconf" ]; then \
 		echo "🖥️  Tilix設定を読み込み中..."; \
@@ -1158,7 +1174,7 @@ setup-development:
 	else \
 		echo "⚠️  Tilix設定ファイルが見つかりません: $(DOTFILES_DIR)/tilix/tilix.dconf"; \
 	fi
-	
+
 	# logiopsの設定（設定ファイルが存在する場合）
 	@if [ -f "$(DOTFILES_DIR)/logid/logid.cfg" ]; then \
 		echo "🖱️  logiops設定をセットアップ中..."; \
@@ -1176,13 +1192,13 @@ setup-development:
 	else \
 		echo "⚠️  logid設定ファイルが見つかりません: $(DOTFILES_DIR)/logid/logid.cfg"; \
 	fi
-	
+
 	@echo "✅ 追加の開発環境設定が完了しました。"
 
 # キーボードショートカットの設定
 setup-shortcuts:
 	@echo "⌨️  キーボードショートカットの設定を実行中..."
-	
+
 	# ウィンドウマネージャのキーバインド設定
 	@if [ -f "$(DOTFILES_DIR)/gnome-shortcuts/wm-keybindings.dconf" ]; then \
 		echo "🪟 ウィンドウマネージャのキーバインド設定を読み込み中..."; \
@@ -1191,7 +1207,7 @@ setup-shortcuts:
 	else \
 		echo "ℹ️  ウィンドウマネージャのキーバインド設定ファイルが見つかりません: $(DOTFILES_DIR)/gnome-shortcuts/wm-keybindings.dconf"; \
 	fi
-	
+
 	# メディアキーのキーバインド設定
 	@if [ -f "$(DOTFILES_DIR)/gnome-shortcuts/media-keybindings.dconf" ]; then \
 		echo "🎵 メディアキーのキーバインド設定を読み込み中..."; \
@@ -1200,7 +1216,7 @@ setup-shortcuts:
 	else \
 		echo "ℹ️  メディアキーのキーバインド設定ファイルが見つかりません: $(DOTFILES_DIR)/gnome-shortcuts/media-keybindings.dconf"; \
 	fi
-	
+
 	# カスタムキーバインド設定
 	@if [ -f "$(DOTFILES_DIR)/gnome-shortcuts/custom-keybindings.dconf" ]; then \
 		echo "🔧 カスタムキーバインド設定を読み込み中..."; \
@@ -1209,7 +1225,7 @@ setup-shortcuts:
 	else \
 		echo "ℹ️  カスタムキーバインド設定ファイルが見つかりません: $(DOTFILES_DIR)/gnome-shortcuts/custom-keybindings.dconf"; \
 	fi
-	
+
 	# ターミナルキーバインド設定（GNOME Terminal）
 	@if [ -f "$(DOTFILES_DIR)/gnome-shortcuts/terminal-keybindings.dconf" ]; then \
 		echo "🖥️  ターミナルキーバインド設定を読み込み中..."; \
@@ -1218,14 +1234,14 @@ setup-shortcuts:
 	else \
 		echo "ℹ️  ターミナルキーバインド設定ファイルが見つかりません: $(DOTFILES_DIR)/gnome-shortcuts/terminal-keybindings.dconf"; \
 	fi
-	
+
 	@echo "✅ キーボードショートカットの設定が完了しました。"
 	@echo "⚠️  設定を反映するため、一度ログアウト・ログインすることを推奨します。"
 
 # Gnome Extensions の設定をセットアップ
 setup-gnome-extensions: install-extensions-simple
 	@echo "🔧 拡張機能の設定を適用中..."
-	
+
 	# 設定ファイルを適用
 	@if [ -f "$(DOTFILES_DIR)/gnome-extensions/extensions-settings.dconf" ]; then \
 		echo "📋 Extensions設定を読み込み中..."; \
@@ -1234,7 +1250,7 @@ setup-gnome-extensions: install-extensions-simple
 	else \
 		echo "⚠️  Extensions設定ファイルが見つかりません"; \
 	fi
-	
+
 	@if [ -f "$(DOTFILES_DIR)/gnome-extensions/shell-settings.dconf" ]; then \
 		echo "🐚 Shell設定を読み込み中..."; \
 		dconf load /org/gnome/shell/ < $(DOTFILES_DIR)/gnome-extensions/shell-settings.dconf || true; \
@@ -1242,7 +1258,7 @@ setup-gnome-extensions: install-extensions-simple
 	else \
 		echo "⚠️  Shell設定ファイルが見つかりません"; \
 	fi
-	
+
 	@echo "✅ Gnome Extensions の設定が完了しました"
 	@echo "💡 変更を適用するため、GNOME Shell を再起動してください (Alt + F2 → 'r' → Enter)"
 
@@ -1296,70 +1312,70 @@ setup-all: install-apps setup-vim setup-zsh setup-wezterm setup-vscode setup-git
 # リポジトリとGPGキーのクリーンアップ
 clean-repos:
 	@echo "🧹 リポジトリとGPGキーをクリーンアップ中..."
-	
+
 	# Microsoft VS Code関連
 	@sudo rm -f /etc/apt/trusted.gpg.d/packages.microsoft.gpg 2>/dev/null || true
 	@sudo rm -f /usr/share/keyrings/microsoft.gpg 2>/dev/null || true
 	@sudo rm -f /etc/apt/sources.list.d/vscode.list 2>/dev/null || true
-	
+
 	# Slack関連
 	@sudo rm -f /usr/share/keyrings/slack-keyring.gpg 2>/dev/null || true
 	@sudo rm -f /etc/apt/sources.list.d/slack.list 2>/dev/null || true
-	
+
 	# Google Chrome関連
 	@sudo rm -f /usr/share/keyrings/google-chrome-keyring.gpg 2>/dev/null || true
 	@sudo rm -f /etc/apt/sources.list.d/google-chrome.list 2>/dev/null || true
-	
+
 	# TablePlus関連
 	@sudo rm -f /etc/apt/trusted.gpg.d/tableplus-archive.gpg 2>/dev/null || true
 	@sudo rm -f /etc/apt/sources.list.d/archive_uri-https_deb_tableplus_com_debian_22-*.list 2>/dev/null || true
-	
+
 	# pgAdmin関連
 	@sudo rm -f /usr/share/keyrings/packages-pgadmin-org.gpg 2>/dev/null || true
 	@sudo rm -f /etc/apt/sources.list.d/pgadmin4.list 2>/dev/null || true
-	
+
 	# MySQL関連
 	@sudo rm -f /etc/apt/sources.list.d/mysql.list 2>/dev/null || true
-	
+
 	# APTキャッシュをクリアして更新
 	@sudo apt-get clean 2>/dev/null || true
 	@sudo apt-get update 2>/dev/null || true
-	
+
 	@echo "✅ リポジトリとGPGキーのクリーンアップが完了しました。"
 
 # クリーンアップ（シンボリックリンクを削除）
 clean:
 	@echo "🧹 シンボリックリンクを削除中..."
-	
+
 	# VIM関連のリンクを削除
 	@if [ -L "$(CONFIG_DIR)/nvim" ]; then rm -f $(CONFIG_DIR)/nvim; fi
 	@if [ -L "$(HOME_DIR)/.vimrc" ]; then rm -f $(HOME_DIR)/.vimrc; fi
 	@if [ -L "$(HOME_DIR)/.gvimrc" ]; then rm -f $(HOME_DIR)/.gvimrc; fi
 	@if [ -L "$(CONFIG_DIR)/cspell" ]; then rm -f $(CONFIG_DIR)/cspell; fi
 	@if [ -L "$(CONFIG_DIR)/denops_translate" ]; then rm -f $(CONFIG_DIR)/denops_translate; fi
-	
+
 	# ZSH関連のリンクを削除
 	@if [ -L "$(HOME_DIR)/.zshrc" ]; then rm -f $(HOME_DIR)/.zshrc; fi
 	@if [ -L "$(HOME_DIR)/.p10k.zsh" ]; then rm -f $(HOME_DIR)/.p10k.zsh; fi
-	
+
 	# WEZTERM関連のリンクを削除
 	@if [ -L "$(CONFIG_DIR)/wezterm/wezterm.lua" ]; then rm -f $(CONFIG_DIR)/wezterm/wezterm.lua; fi
-	
+
 	# VS Code関連のリンクを削除
 	@if [ -L "$(CONFIG_DIR)/Code/User/settings.json" ]; then rm -f $(CONFIG_DIR)/Code/User/settings.json; fi
 	@if [ -L "$(CONFIG_DIR)/Code/User/keybindings.json" ]; then rm -f $(CONFIG_DIR)/Code/User/keybindings.json; fi
-	
+
 	# Cursor関連のリンクを削除
 	@if [ -L "$(CONFIG_DIR)/Cursor/User/settings.json" ]; then rm -f $(CONFIG_DIR)/Cursor/User/settings.json; fi
 	@if [ -L "$(CONFIG_DIR)/Cursor/User/keybindings.json" ]; then rm -f $(CONFIG_DIR)/Cursor/User/keybindings.json; fi
-	
+
 	# その他の設定ファイル
 	@if [ -L "/etc/logid.cfg" ]; then \
 		echo "🖱️  logid設定リンクを削除中..."; \
 		sudo rm -f /etc/logid.cfg; \
 		echo "ℹ️  logidサービスを停止するには: sudo systemctl stop logid"; \
 	fi
-	
+
 	@echo "✅ クリーンアップが完了しました。"
 
 # デバッグ用：パスと環境変数を確認
@@ -1380,7 +1396,7 @@ debug:
 	@echo "Git user.email: $(shell git config --global user.email 2>/dev/null || echo '未設定')"
 	@echo ""
 	@echo "🔑 SSH鍵の状況:"
-	@echo "SSH鍵存在: $(shell [ -f $(HOME_DIR)/.ssh/id_ed25519 ] && echo 'Yes' || echo 'No')" 
+	@echo "SSH鍵存在: $(shell [ -f $(HOME_DIR)/.ssh/id_ed25519 ] && echo 'Yes' || echo 'No')"
 
 # Cursor IDEのインストール（統合版）
 install-cursor:
@@ -1510,7 +1526,7 @@ extensions-status:
 # MySQL Workbench のインストール（MySQL公式APTリポジトリから）
 install-mysql-workbench:
 	@echo "🐬 MySQL Workbench のインストールを開始..."
-	
+
 	# MySQL APTリポジトリの設定パッケージをダウンロード
 	@echo "📥 MySQL APTリポジトリ設定パッケージをダウンロード中..."
 	@cd /tmp && \
@@ -1518,7 +1534,7 @@ install-mysql-workbench:
 	wget -q https://dev.mysql.com/get/mysql-apt-config_0.8.32-1_all.deb -O mysql-apt-config.deb || \
 	wget -q https://dev.mysql.com/get/mysql-apt-config_0.8.30-1_all.deb -O mysql-apt-config.deb || \
 	wget -q https://dev.mysql.com/get/mysql-apt-config_0.8.29-1_all.deb -O mysql-apt-config.deb
-	
+
 	# MySQL APTリポジトリの設定パッケージをインストール
 	@echo "📦 MySQL APTリポジトリ設定を追加中..."
 	@cd /tmp && \
@@ -1528,18 +1544,19 @@ install-mysql-workbench:
 		sudo DEBIAN_FRONTEND=noninteractive dpkg -i mysql-apt-config.deb || true; \
 		rm -f mysql-apt-config.deb; \
 	else \
+<<<<<<< Updated upstream
 		echo "❌ MySQL APTリポジトリ設定パッケージのダウンロードに失敗しました"; \
 		exit 1; \
 	fi
-	
+
 	# パッケージリストを更新
 	@echo "🔄 パッケージリストを更新中..."
 	@sudo apt update -q 2>/dev/null || echo "⚠️  一部のリポジトリで問題がありますが、処理を続行します"
-	
+
 	# MySQL Workbenchをインストール
 	@echo "🛠️  MySQL Workbench Community をインストール中..."
 	@sudo DEBIAN_FRONTEND=noninteractive apt install -y mysql-workbench-community
-	
+
 	# インストール確認
 	@if command -v mysql-workbench >/dev/null 2>&1; then \
 		echo "✅ MySQL Workbench のインストールが完了しました"; \
@@ -1549,6 +1566,15 @@ install-mysql-workbench:
 		echo "ℹ️  手動でインストールするには、以下のコマンドを実行してください:"; \
 		echo "    sudo apt install mysql-workbench-community"; \
 	fi
-	
+
 	@echo "🎉 MySQL Workbench インストール完了"
 	@echo "📋 アプリケーションメニューから 'MySQL Workbench' を起動できます"
+=======
+		echo "⚠️  すべてのダウンロード方法が失敗しました"; \
+		echo ""; \
+		echo "🔧 追加のインストール方法:"; \
+		echo "1. Snapパッケージ: make install-cursor-snap"; \
+		echo "2. 手動ダウンロード: make install-cursor-manual"; \
+		echo "3. ブラウザで https://cursor.sh/ からダウンロード"; \
+	fi
+>>>>>>> Stashed changes

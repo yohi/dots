@@ -71,13 +71,13 @@ show_help() {
 例:
   # 基本インストール
   $SCRIPT_NAME
-  
+
   # 特定のブランチをインストール
   $SCRIPT_NAME --branch develop
-  
+
   # カスタムディレクトリにインストール
   $SCRIPT_NAME --dir ~/my-dotfiles
-  
+
   # 強制インストール（確認なし）
   $SCRIPT_NAME --force --yes
 
@@ -142,20 +142,20 @@ setup_logging() {
 # システム情報の取得
 get_system_info() {
     log_step "システム情報を取得中..."
-    
+
     local os_name
     local os_version
     local arch
-    
+
     os_name=$(lsb_release -si 2>/dev/null || echo "Unknown")
     os_version=$(lsb_release -sr 2>/dev/null || echo "Unknown")
     arch=$(uname -m)
-    
+
     log_info "OS: $os_name $os_version"
     log_info "アーキテクチャ: $arch"
     log_info "シェル: $SHELL"
     log_info "ユーザー: $USER"
-    
+
     # Ubuntu以外の場合は警告
     if [[ "$os_name" != "Ubuntu" ]]; then
         log_warn "このスクリプトはUbuntu用に設計されています"
@@ -166,13 +166,13 @@ get_system_info() {
 # 前提条件のチェックとインストール
 check_prerequisites() {
     log_step "前提条件をチェック中..."
-    
+
     local packages_to_install=()
     local missing_commands=()
-    
+
     # 必須コマンドの確認
     local required_commands=("curl" "wget" "git" "make")
-    
+
     for cmd in "${required_commands[@]}"; do
         if ! command -v "$cmd" &> /dev/null; then
             missing_commands+=("$cmd")
@@ -191,58 +191,143 @@ check_prerequisites() {
             log_success "$cmd は既にインストールされています"
         fi
     done
-    
+
+                log_error "--branch オプションには引数が必要です"
+                echo "Usage: $0 [OPTIONS]"
+                echo "Options:"
+                echo "  --branch BRANCH    指定したブランチをクローン (default: main)"
+                echo "  --dir DIR          クローン先ディレクトリ (default: ~/dots)"
+                echo "  --help, -h         このヘルプを表示"
+                exit 1
+            fi
+            BRANCH="$2"
+            shift 2
+            ;;
+        --dir)
+            if [[ -z "$2" || "$2" == --* ]]; then
+                log_error "--dir オプションには引数が必要です"
+                echo "Usage: $0 [OPTIONS]"
+                echo "Options:"
+                echo "  --branch BRANCH    指定したブランチをクローン (default: main)"
+                echo "  --dir DIR          クローン先ディレクトリ (default: ~/dots)"
+                echo "  --help, -h         このヘルプを表示"
+                exit 1
+            fi
+            DOTFILES_DIR="$2"
+            shift 2
+            ;;
+        --help|-h)
+            echo "Usage: $0 [OPTIONS]"
+            echo "Options:"
+            echo "  --branch BRANCH    指定したブランチをクローン (default: main)"
+            echo "  --dir DIR          クローン先ディレクトリ (default: ~/dots)"
+            echo "  --help, -h         このヘルプを表示"
+            exit 0
+            ;;
+        *)
+            log_error "不明なオプション: $1"
+            exit 1
+            ;;
+    esac
+done
+
+# 前提条件のチェックとインストール
+check_prerequisites() {
+    log_info "前提条件をチェック中..."
+
+    local packages_to_install=()
+
+    # gitの存在確認
+    if ! command -v git &> /dev/null; then
+        log_warn "gitがインストールされていません"
+        packages_to_install+=("git")
+    else
+        log_success "git は既にインストールされています"
+    fi
+
+    # makeの存在確認
+    if ! command -v make &> /dev/null; then
+        log_warn "makeがインストールされていません"
+        packages_to_install+=("build-essential")
+    else
+        log_success "make は既にインストールされています"
+    fi
+
+>>>>>>> Stashed changes
     # 必要なパッケージをインストール
     if [ ${#packages_to_install[@]} -gt 0 ]; then
         log_info "必要なパッケージをインストール中: ${packages_to_install[*]}"
-        
+
         # パッケージリストを更新
+<<<<<<< Updated upstream
         log_progress "パッケージリストを更新中..."
         if ! sudo apt update; then
             log_error "パッケージリストの更新に失敗しました"
             exit 1
         fi
-        
+
         # パッケージをインストール
         log_progress "パッケージをインストール中..."
         if ! sudo apt install -y "${packages_to_install[@]}"; then
             log_error "パッケージのインストールに失敗しました"
             exit 1
         fi
-        
+
+=======
+        log_info "パッケージリストを更新中..."
+        sudo apt update
+
+        # パッケージをインストール
+        log_info "パッケージをインストール中..."
+        sudo apt install -y "${packages_to_install[@]}"
+
+>>>>>>> Stashed changes
         log_success "必要なパッケージのインストールが完了しました"
-        
+
         # インストール後の確認
+<<<<<<< Updated upstream
         for cmd in "${missing_commands[@]}"; do
             if ! command -v "$cmd" &> /dev/null; then
                 log_error "$cmd のインストールに失敗しました"
                 exit 1
             fi
         done
+=======
+        if ! command -v git &> /dev/null; then
+            log_error "gitのインストールに失敗しました"
+            exit 1
+        fi
+
+        if ! command -v make &> /dev/null; then
+            log_error "makeのインストールに失敗しました"
+            exit 1
+        fi
+>>>>>>> Stashed changes
     fi
-    
+
     log_success "前提条件のチェック完了"
 }
 
+<<<<<<< Updated upstream
 # 既存ディレクトリの処理
 handle_existing_directory() {
     if [[ ! -d "$DOTFILES_DIR" ]]; then
         return 0
     fi
-    
+
     log_warn "ディレクトリ '$DOTFILES_DIR' が既に存在します"
-    
+
     if [[ "$FORCE_INSTALL" == true ]]; then
         log_info "強制インストールが指定されているため、既存のディレクトリを削除します"
         rm -rf "$DOTFILES_DIR"
         return 0
     fi
-    
+
     if [[ "$SKIP_CONFIRMATION" == true ]]; then
         log_info "既存のディレクトリに移動してpullします"
         return 1
     fi
-    
+
     echo
     log_warn "既存のディレクトリをどう処理しますか？"
     echo "  1) 削除してクローンし直す"
@@ -250,10 +335,10 @@ handle_existing_directory() {
     echo "  3) 別のディレクトリ名を指定する"
     echo "  4) 中止する"
     echo
-    
+
     local choice
     read -p "選択してください (1-4): " choice
-    
+
     case $choice in
         1)
             log_info "既存のディレクトリを削除しています..."
@@ -285,94 +370,127 @@ handle_existing_directory() {
 # リポジトリのクローン
 clone_repository() {
     log_step "dotfilesリポジトリを取得中..."
-    
+
     if handle_existing_directory; then
         # 新規クローン
         log_progress "リポジトリをクローンしています..."
         log_info "URL: $REPO_URL"
         log_info "ブランチ: $BRANCH"
         log_info "ディレクトリ: $DOTFILES_DIR"
-        
+
         if ! git clone -b "$BRANCH" "$REPO_URL" "$DOTFILES_DIR"; then
             log_error "リポジトリのクローンに失敗しました"
             exit 1
         fi
-        
+
         log_success "リポジトリのクローン完了"
     else
         # 既存リポジトリの更新
         log_progress "既存のリポジトリを更新中..."
-        
+
         if ! cd "$DOTFILES_DIR"; then
             log_error "ディレクトリに移動できません: $DOTFILES_DIR"
             exit 1
         fi
-        
+
         # リモートの確認
         local current_remote
         current_remote=$(git remote get-url origin 2>/dev/null || echo "")
-        
+
         if [[ "$current_remote" != "$REPO_URL" ]]; then
             log_warn "リモートURLが異なります"
             log_warn "現在: $current_remote"
             log_warn "期待: $REPO_URL"
         fi
-        
+
         # ブランチの確認と切り替え
         local current_branch
         current_branch=$(git branch --show-current 2>/dev/null || echo "")
-        
+
         if [[ "$current_branch" != "$BRANCH" ]]; then
             log_info "ブランチを '$BRANCH' に切り替えています..."
             git fetch origin "$BRANCH"
             git checkout "$BRANCH"
         fi
-        
+
         # プル実行
         if ! git pull origin "$BRANCH"; then
             log_error "git pullに失敗しました"
             exit 1
         fi
-        
+
         log_success "リポジトリの更新完了"
     fi
+=======
+# リポジトリのクローン
+clone_repository() {
+    log_info "dotfilesリポジトリをクローン中..."
+
+    if [ -d "$DOTFILES_DIR" ]; then
+        log_warn "ディレクトリ $DOTFILES_DIR が既に存在します"
+        read -p "既存のディレクトリを削除してクローンしますか? (y/N): " -n 1 -r
+        echo
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+            rm -rf "$DOTFILES_DIR"
+            log_info "既存のディレクトリを削除しました"
+        else
+            log_info "既存のディレクトリに移動してpullします"
+            cd "$DOTFILES_DIR"
+            git pull origin "$BRANCH"
+            log_success "リポジトリを更新しました"
+            return 0
+        fi
+    fi
+
+    git clone -b "$BRANCH" "$REPO_URL" "$DOTFILES_DIR"
+    log_success "リポジトリのクローン完了: $DOTFILES_DIR"
+>>>>>>> Stashed changes
 }
 
 # dotfilesのセットアップ
 setup_dotfiles() {
+<<<<<<< Updated upstream
     log_step "dotfilesのセットアップを開始..."
-    
+
     if ! cd "$DOTFILES_DIR"; then
         log_error "ディレクトリに移動できません: $DOTFILES_DIR"
         exit 1
     fi
-    
+
     # Makefileの存在確認
     if [[ ! -f "Makefile" ]]; then
         log_error "Makefileが見つかりません"
         exit 1
     fi
-    
+
     # 利用可能なターゲットを表示
+=======
+    log_info "dotfilesのセットアップを開始..."
+
+    cd "$DOTFILES_DIR"
+
+    # Makefileのヘルプを表示
+>>>>>>> Stashed changes
     log_info "利用可能なセットアップオプション:"
     make help
-    
+
     echo ""
+<<<<<<< Updated upstream
     log_info "📦 推奨セットアップ手順:"
     log_info "  1. システムレベルの設定: make system-setup"
-    log_info "  2. Homebrew インストール: make install-homebrew" 
+    log_info "  2. Homebrew インストール: make install-homebrew"
     log_info "  3. 全体セットアップ: make setup-all"
-    
+
     if [[ "$SKIP_CONFIRMATION" == true ]]; then
         log_info "自動モードが指定されているため、推奨セットアップを実行します"
         run_recommended_setup
         return
     fi
-    
+
     echo ""
     local choice
     read -p "自動で推奨セットアップを実行しますか? (y/N): " choice
-    
+
     case $choice in
         [Yy]*)
             run_recommended_setup
@@ -388,28 +506,28 @@ setup_dotfiles() {
 # 推奨セットアップの実行
 run_recommended_setup() {
     log_step "推奨セットアップを実行中..."
-    
+
     local steps=(
         "system-setup:システムレベルの設定"
         "install-homebrew:Homebrew インストール"
         "setup-all:全体セットアップ"
     )
-    
+
     for step_info in "${steps[@]}"; do
         local step="${step_info%%:*}"
         local description="${step_info##*:}"
-        
+
         log_progress "$description を実行中..."
-        
+
         if ! timeout 1800 make "$step"; then  # 30分のタイムアウト
             log_error "$description が失敗しました"
             log_error "手動で以下のコマンドを実行してください: make $step"
             return 1
         fi
-        
+
         log_success "$description が完了しました"
     done
-    
+
     log_success "推奨セットアップがすべて完了しました！"
 }
 
@@ -417,8 +535,39 @@ run_recommended_setup() {
 cleanup() {
     if [[ -f "$LOG_FILE" ]]; then
         log_info "ログファイルを保存しました: $LOG_FILE"
+=======
+    log_info "推奨セットアップ手順:"
+    log_info "1. システムレベルの設定: make system-setup"
+    log_info "2. Homebrew インストール: make install-homebrew"
+    log_info "3. 全体セットアップ: make setup-all"
+
+    echo ""
+    read -p "自動で推奨セットアップを実行しますか? (y/N): " -n 1 -r
+    echo
+
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        log_info "推奨セットアップを実行中..."
+
+        # システム設定
+        log_info "システムレベルの設定を実行中..."
+        make system-setup
+
+        # Homebrew インストール
+        log_info "Homebrew をインストール中..."
+        make install-homebrew
+
+        # 全体セットアップ
+        log_info "全体セットアップを実行中..."
+        make setup-all
+
+        log_success "推奨セットアップが完了しました！"
+    else
+        log_info "手動でセットアップを行ってください"
+        log_info "ディレクトリ: $DOTFILES_DIR"
+        log_info "使用可能なコマンド: make help"
+>>>>>>> Stashed changes
     fi
-    
+
     # ファイルディスクリプタを復元
     exec 1>&3 2>&4
     exec 3>&- 4>&-
@@ -428,31 +577,32 @@ cleanup() {
 main() {
     # 引数の解析
     parse_arguments "$@"
-    
+
     # ロギング設定
     setup_logging
-    
+
     # クリーンアップの設定
     trap cleanup EXIT
-    
+
     # ヘッダー表示
     echo "======================================================"
     echo "🚀 Ubuntu開発環境セットアップ dotfiles インストーラー"
     echo "======================================================"
     echo ""
-    
+
     log_info "開始時刻: $(date)"
     log_info "リポジトリ: $REPO_URL"
     log_info "ブランチ: $BRANCH"
     log_info "インストール先: $DOTFILES_DIR"
     echo ""
-    
+<<<<<<< Updated upstream
+
     # 実行手順
     get_system_info
     check_prerequisites
     clone_repository
     setup_dotfiles
-    
+
     echo ""
     echo "======================================================"
     log_success "🎉 dotfiles のインストールが完了しました！"
@@ -463,7 +613,17 @@ main() {
     log_info "🔧 手動設定が必要な場合は、READMEを参照してください"
     echo ""
     log_info "完了時刻: $(date)"
+=======
+
+    check_prerequisites
+    clone_repository
+    setup_dotfiles
+
+    log_success "dotfiles のインストールが完了しました！"
+    log_info "詳細なセットアップオプションについては、以下を参照してください:"
+    log_info "cd $DOTFILES_DIR && make help"
+>>>>>>> Stashed changes
 }
 
 # スクリプト実行
-main "$@" 
+main "$@"
