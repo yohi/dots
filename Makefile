@@ -4,7 +4,7 @@
 
 .PHONY: all help system-setup install-homebrew install-apps install-deb-packages install-flatpak-packages \
         setup-vim setup-zsh setup-wezterm setup-vscode setup-cursor setup-git setup-docker setup-development setup-shortcuts \
-        setup-gnome-extensions setup-gnome-tweaks backup-gnome-tweaks export-gnome-tweaks setup-all clean system-config clean-repos install-cursor install-fuse install-cica-fonts install-ibm-plex-fonts
+        setup-gnome-extensions setup-gnome-tweaks backup-gnome-tweaks export-gnome-tweaks setup-all clean system-config clean-repos install-cursor install-fuse install-cica-fonts install-ibm-plex-fonts install-mysql-workbench
 
 # デフォルトターゲット
 all: help
@@ -35,6 +35,7 @@ help:
 	@echo "  make setup-all             - すべての設定をセットアップ"
 	@echo "  make install-fuse      - AppImage実行用のFUSEパッケージをインストール"
 	@echo "  make install-cica-fonts - Cica Nerd Fontsをインストール"
+	@echo "  make install-mysql-workbench - MySQL Workbenchをインストール"
 	@echo "  make clean             - シンボリックリンクを削除"
 	@echo "  make clean-repos       - リポジトリとGPGキーをクリーンアップ"
 	@echo "  make help              - このヘルプメッセージを表示"
@@ -980,7 +981,17 @@ setup-vscode:
 	@if command -v code >/dev/null 2>&1; then \
 		echo "📦 VS Code拡張機能をインストール中..."; \
 		if [ -f "$(DOTFILES_DIR)/vscode/extensions.list" ]; then \
-			grep -v '^#' $(DOTFILES_DIR)/vscode/extensions.list | grep -v '^$$' | xargs -L 1 code --install-extension || true; \
+			INSTALLED_EXTENSIONS=$$(code --list-extensions); \
+			while IFS= read -r extension || [ -n "$$extension" ]; do \
+				if [ -n "$$extension" ] && ! echo "$$extension" | grep -q '^#' && ! echo "$$extension" | grep -q '^$$'; then \
+					if echo "$$INSTALLED_EXTENSIONS" | grep -q "^$$extension$$"; then \
+						echo "⏭️  $$extension は既にインストール済みです（スキップ）"; \
+					else \
+						echo "📦 $$extension をインストール中..."; \
+						code --install-extension "$$extension" || echo "⚠️  $$extension のインストールに失敗しました"; \
+					fi; \
+				fi; \
+			done < $(DOTFILES_DIR)/vscode/extensions.list; \
 		fi; \
 		echo "✅ VS Code拡張機能のインストールが完了しました"; \
 	else \
@@ -1212,20 +1223,28 @@ setup-shortcuts:
 	@echo "⚠️  設定を反映するため、一度ログアウト・ログインすることを推奨します。"
 
 # Gnome Extensions の設定をセットアップ
-setup-gnome-extensions: install-extensions-dependencies
-c	@echo "🔧 Gnome Extensions の自動インストール＆設定を実行中..."
+setup-gnome-extensions: install-extensions-simple
+	@echo "🔧 拡張機能の設定を適用中..."
 	
-	# 既存のスクリプトを使用してインストール
-	@if [ -d "$(DOTFILES_DIR)/gnome-extensions" ]; then \
-		echo "📦 拡張機能のインストールを実行中..."; \
-		cd $(DOTFILES_DIR)/gnome-extensions && ./install-extensions.sh install; \
+	# 設定ファイルを適用
+	@if [ -f "$(DOTFILES_DIR)/gnome-extensions/extensions-settings.dconf" ]; then \
+		echo "📋 Extensions設定を読み込み中..."; \
+		dconf load /org/gnome/shell/extensions/ < $(DOTFILES_DIR)/gnome-extensions/extensions-settings.dconf || true; \
+		echo "✅ Extensions設定を適用しました"; \
 	else \
-		echo "❌ gnome-extensions ディレクトリが見つかりません"; \
+		echo "⚠️  Extensions設定ファイルが見つかりません"; \
 	fi
 	
-	# 設定適用と有効化は install-extensions.sh 内で処理される
+	@if [ -f "$(DOTFILES_DIR)/gnome-extensions/shell-settings.dconf" ]; then \
+		echo "🐚 Shell設定を読み込み中..."; \
+		dconf load /org/gnome/shell/ < $(DOTFILES_DIR)/gnome-extensions/shell-settings.dconf || true; \
+		echo "✅ Shell設定を適用しました"; \
+	else \
+		echo "⚠️  Shell設定ファイルが見つかりません"; \
+	fi
 	
 	@echo "✅ Gnome Extensions の設定が完了しました"
+	@echo "💡 変更を適用するため、GNOME Shell を再起動してください (Alt + F2 → 'r' → Enter)"
 
 # Gnome Tweaks の設定をセットアップ
 setup-gnome-tweaks:
@@ -1436,6 +1455,46 @@ install-extensions-dependencies:
 	@echo "📦 Gnome Extensions の依存関係をインストール中..."
 	@cd $(DOTFILES_DIR)/gnome-extensions && ./auto-install-extensions.sh
 
+install-extensions-v2:
+	@echo "🚀 改良版 Gnome Extensions 自動インストールを実行中..."
+	@cd $(DOTFILES_DIR)/gnome-extensions && ./auto-install-v2.sh
+
+install-extensions-simple:
+	@echo "🚀 GNOME Extensions シンプル自動インストール実行中..."
+	@echo "📋 インストール対象の拡張機能を確認中..."
+	@for EXTENSION in $$(grep -v '^#' $(DOTFILES_DIR)/gnome-extensions/enabled-extensions.txt | grep -v '^$$'); do \
+		INSTALL_DIR="$$HOME/.local/share/gnome-shell/extensions/$$EXTENSION"; \
+		if [ ! -d "$$INSTALL_DIR" ]; then \
+			echo "📦 $$EXTENSION をインストール中..."; \
+			TEMP_DIR="/tmp/ext_install_$$$$"; \
+			mkdir -p $$TEMP_DIR; \
+			curl -s "https://extensions.gnome.org/extension-info/?uuid=$$EXTENSION&shell_version=48" > $$TEMP_DIR/meta.json; \
+			DOWNLOAD_URL=$$(cat $$TEMP_DIR/meta.json | jq -r '.download_url // empty' 2>/dev/null || echo ""); \
+			if [ -n "$$DOWNLOAD_URL" ] && [ "$$DOWNLOAD_URL" != "null" ]; then \
+				curl -L "https://extensions.gnome.org$$DOWNLOAD_URL" -o $$TEMP_DIR/ext.zip 2>/dev/null; \
+				mkdir -p "$$INSTALL_DIR"; \
+				unzip -q $$TEMP_DIR/ext.zip -d "$$INSTALL_DIR" 2>/dev/null && echo "✅ $$EXTENSION インストール完了"; \
+			else \
+				echo "❌ $$EXTENSION のダウンロードURLが見つかりません"; \
+			fi; \
+			rm -rf $$TEMP_DIR; \
+		else \
+			echo "✅ $$EXTENSION は既にインストール済み"; \
+		fi; \
+	done
+	@echo ""
+	@echo "🔧 拡張機能の有効化中..."
+	@for EXTENSION in $$(grep -v '^#' $(DOTFILES_DIR)/gnome-extensions/enabled-extensions.txt | grep -v '^$$'); do \
+		gnome-extensions enable "$$EXTENSION" 2>/dev/null && echo "✅ $$EXTENSION 有効化完了" || echo "⚠️ $$EXTENSION の有効化に失敗（GNOME Shell再起動後に試してください）"; \
+	done
+	@echo ""
+	@echo "🎉 GNOME Extensions の自動セットアップが完了しました！"
+	@echo ""
+	@echo "💡 次の手順:"
+	@echo "  1. GNOME Shell を再起動してください（Alt + F2 → 'r' → Enter）"
+	@echo "  2. Extensions アプリで各拡張機能を確認してください"
+	@echo "  3. 必要に応じて個別設定を調整してください"
+
 test-extensions:
 	@echo "🧪 拡張機能のテストインストールを実行中..."
 	@cd $(DOTFILES_DIR)/gnome-extensions && ./test-install.sh
@@ -1447,3 +1506,49 @@ extensions-status:
 	@echo ""
 	@echo "無効な拡張機能:"
 	@gnome-extensions list --disabled
+
+# MySQL Workbench のインストール（MySQL公式APTリポジトリから）
+install-mysql-workbench:
+	@echo "🐬 MySQL Workbench のインストールを開始..."
+	
+	# MySQL APTリポジトリの設定パッケージをダウンロード
+	@echo "📥 MySQL APTリポジトリ設定パッケージをダウンロード中..."
+	@cd /tmp && \
+	rm -f mysql-apt-config_*.deb 2>/dev/null; \
+	wget -q https://dev.mysql.com/get/mysql-apt-config_0.8.32-1_all.deb -O mysql-apt-config.deb || \
+	wget -q https://dev.mysql.com/get/mysql-apt-config_0.8.30-1_all.deb -O mysql-apt-config.deb || \
+	wget -q https://dev.mysql.com/get/mysql-apt-config_0.8.29-1_all.deb -O mysql-apt-config.deb
+	
+	# MySQL APTリポジトリの設定パッケージをインストール
+	@echo "📦 MySQL APTリポジトリ設定を追加中..."
+	@cd /tmp && \
+	if [ -f mysql-apt-config.deb ]; then \
+		echo "mysql-apt-config mysql-apt-config/select-server select mysql-8.0" | sudo debconf-set-selections; \
+		echo "mysql-apt-config mysql-apt-config/select-product select Apply" | sudo debconf-set-selections; \
+		sudo DEBIAN_FRONTEND=noninteractive dpkg -i mysql-apt-config.deb || true; \
+		rm -f mysql-apt-config.deb; \
+	else \
+		echo "❌ MySQL APTリポジトリ設定パッケージのダウンロードに失敗しました"; \
+		exit 1; \
+	fi
+	
+	# パッケージリストを更新
+	@echo "🔄 パッケージリストを更新中..."
+	@sudo apt update -q 2>/dev/null || echo "⚠️  一部のリポジトリで問題がありますが、処理を続行します"
+	
+	# MySQL Workbenchをインストール
+	@echo "🛠️  MySQL Workbench Community をインストール中..."
+	@sudo DEBIAN_FRONTEND=noninteractive apt install -y mysql-workbench-community
+	
+	# インストール確認
+	@if command -v mysql-workbench >/dev/null 2>&1; then \
+		echo "✅ MySQL Workbench のインストールが完了しました"; \
+		mysql-workbench --version 2>/dev/null || echo "ℹ️  バージョン情報の取得に失敗しましたが、インストールは完了しています"; \
+	else \
+		echo "❌ MySQL Workbench のインストールに失敗しました"; \
+		echo "ℹ️  手動でインストールするには、以下のコマンドを実行してください:"; \
+		echo "    sudo apt install mysql-workbench-community"; \
+	fi
+	
+	@echo "🎉 MySQL Workbench インストール完了"
+	@echo "📋 アプリケーションメニューから 'MySQL Workbench' を起動できます"

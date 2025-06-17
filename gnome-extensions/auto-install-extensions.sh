@@ -71,7 +71,7 @@ install_dependencies() {
         "python3"
         "python3-requests"
         "jq"
-        "glib2.0-dev"
+        "libglib2.0-dev"
         "gettext"
     )
     
@@ -108,7 +108,7 @@ install_dependencies() {
     # gext のインストール（オプション）
     if ! command -v gext &> /dev/null; then
         log "gext をインストール中..."
-        pip3 install --user gnome-extensions-cli 2>/dev/null || warning "gext のインストールに失敗しました（オプションなので続行します）"
+        pip3 install --user --break-system-packages gnome-extensions-cli 2>/dev/null || warning "gext のインストールに失敗しました（オプションなので続行します）"
     fi
     
     success "依存関係のインストール完了"

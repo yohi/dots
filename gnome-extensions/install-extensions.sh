@@ -42,33 +42,10 @@ check_gnome() {
     fi
 }
 
-# Install gext if not available
+# Install gext if not available (deprecated - using API method instead)
 install_gext() {
-    if ! command -v gext &> /dev/null; then
-        log "gnome-shell-extension-installer (gext) をインストール中..."
-        
-        # Try to install via package manager first
-        if command -v apt &> /dev/null; then
-            sudo apt update
-            sudo apt install -y gnome-shell-extension-installer 2>/dev/null || {
-                log "パッケージマネージャーからのインストールに失敗。PiPからインストールを試行中..."
-                # Install via pip as fallback
-                if command -v pip3 &> /dev/null; then
-                    pip3 install --user gnome-shell-extension-installer
-                elif command -v pip &> /dev/null; then
-                    pip install --user gnome-shell-extension-installer
-                else
-                    error "pip が見つかりません。手動でgnome-shell-extension-installerをインストールしてください"
-                    exit 1
-                fi
-            }
-        else
-            error "パッケージマネージャーが見つかりません"
-            exit 1
-        fi
-    else
-        success "gnome-shell-extension-installer (gext) は既にインストールされています"
-    fi
+    warning "gnome-shell-extension-installer は非推奨です。代わりにAPI経由でインストールします。"
+    return 0
 }
 
 # Install required packages
@@ -80,12 +57,14 @@ install_dependencies() {
         sudo apt install -y \
             gnome-shell-extensions \
             gnome-shell-extension-manager \
-            chrome-gnome-shell \
+            gnome-browser-connector \
             curl \
             wget \
             unzip \
             dconf-cli \
-            python3-pip
+            jq \
+            python3 \
+            libglib2.0-dev
     else
         warning "aptパッケージマネージャーが見つかりません。手動で依存関係をインストールしてください"
     fi
@@ -126,18 +105,8 @@ install_extension_from_ego() {
         return 0
     fi
     
-    # Try using gext first
-    if command -v gext &> /dev/null; then
-        log "gext を使用してインストール中..."
-        if timeout 30 gext install "$extension_uuid" --yes; then
-            success "$extension_name のインストールが完了しました"
-            # Compile schemas if they exist
-            compile_extension_schemas "$extension_uuid"
-            return 0
-        else
-            warning "gext でのインストールに失敗しました。手動インストールを試行中..."
-        fi
-    fi
+    # Using API method directly (gext is deprecated)
+    log "API経由で直接インストール中..."
     
     # Fallback to manual installation
     local temp_dir=$(mktemp -d)
@@ -147,14 +116,19 @@ install_extension_from_ego() {
     local api_url="https://extensions.gnome.org/extension-info/?uuid=${extension_uuid}&shell_version=${gnome_version}"
     
     if curl -s "$api_url" | grep -q "download_url"; then
-        local download_url=$(curl -s "$api_url" | python3 -c "
+        local download_url=""
+        if command -v jq &> /dev/null; then
+            download_url=$(curl -s "$api_url" | jq -r '.download_url // empty' 2>/dev/null || echo "")
+        else
+            download_url=$(curl -s "$api_url" | python3 -c "
 import json, sys
 try:
     data = json.load(sys.stdin)
-    print(data['download_url'])
+    print(data.get('download_url', ''))
 except:
-    sys.exit(1)
-")
+    pass
+" 2>/dev/null || echo "")
+        fi
         
         if [ -n "$download_url" ]; then
             log "$extension_name のダウンロード中..."
@@ -434,7 +408,6 @@ main() {
         "install")
             check_gnome
             install_dependencies
-            install_gext
             install_extensions
             enable_extensions
             apply_settings
