@@ -91,6 +91,27 @@ install_dependencies() {
     fi
 }
 
+# Compile schemas for extension
+compile_extension_schemas() {
+    local extension_uuid="$1"
+    local extension_dir="$HOME/.local/share/gnome-shell/extensions/$extension_uuid"
+    local schemas_dir="$extension_dir/schemas"
+    
+    if [ -d "$schemas_dir" ]; then
+        log "$extension_uuid のスキーマをコンパイル中..."
+        if ls "$schemas_dir"/*.gschema.xml 1> /dev/null 2>&1; then
+            if glib-compile-schemas "$schemas_dir" 2>/dev/null; then
+                success "$extension_uuid のスキーマをコンパイルしました"
+                return 0
+            else
+                warning "$extension_uuid のスキーマコンパイルに失敗しました"
+                return 1
+            fi
+        fi
+    fi
+    return 0
+}
+
 # Function to install extension from extensions.gnome.org
 install_extension_from_ego() {
     local extension_uuid="$1"
@@ -98,10 +119,20 @@ install_extension_from_ego() {
     
     log "Extension をインストール中: $extension_name ($extension_uuid)"
     
+    # Check if already installed
+    if [ -d "$HOME/.local/share/gnome-shell/extensions/$extension_uuid" ]; then
+        log "$extension_name は既にインストールされています"
+        compile_extension_schemas "$extension_uuid"
+        return 0
+    fi
+    
     # Try using gext first
     if command -v gext &> /dev/null; then
-        if gext install "$extension_uuid" --yes; then
+        log "gext を使用してインストール中..."
+        if timeout 30 gext install "$extension_uuid" --yes; then
             success "$extension_name のインストールが完了しました"
+            # Compile schemas if they exist
+            compile_extension_schemas "$extension_uuid"
             return 0
         else
             warning "gext でのインストールに失敗しました。手動インストールを試行中..."
@@ -133,6 +164,8 @@ except:
                 
                 if unzip -q "$temp_dir/extension.zip" -d "$install_dir"; then
                     success "$extension_name のインストールが完了しました"
+                    # Compile schemas if they exist
+                    compile_extension_schemas "$extension_uuid"
                     rm -rf "$temp_dir"
                     return 0
                 else
@@ -208,17 +241,41 @@ enable_extensions() {
         "search-light@icedman.github.com"
     )
     
+    # Wait a moment for extensions to be fully installed
+    sleep 2
+    
     for extension_uuid in "${enabled_extensions[@]}"; do
         if gnome-extensions list | grep -q "$extension_uuid"; then
-            if gnome-extensions enable "$extension_uuid" 2>/dev/null; then
-                success "$extension_uuid を有効化しました"
-            else
-                warning "$extension_uuid の有効化に失敗しました"
-            fi
+            # Compile schemas before enabling
+            compile_extension_schemas "$extension_uuid"
+            
+            # Try to enable the extension multiple times if needed
+            local retry_count=0
+            local max_retries=3
+            
+            while [ $retry_count -lt $max_retries ]; do
+                if gnome-extensions enable "$extension_uuid" 2>/dev/null; then
+                    success "$extension_uuid を有効化しました"
+                    break
+                else
+                    ((retry_count++))
+                    if [ $retry_count -lt $max_retries ]; then
+                        warning "$extension_uuid の有効化に失敗しました (試行 $retry_count/$max_retries)。再試行中..."
+                        sleep 1
+                    else
+                        warning "$extension_uuid の有効化に失敗しました (最大試行回数に達しました)"
+                    fi
+                fi
+            done
         else
             warning "$extension_uuid がインストールされていません"
         fi
     done
+    
+    # Force enable critical extensions
+    log "重要な拡張機能の強制有効化を実行中..."
+    gnome-extensions enable "monitor@astraext.github.io" 2>/dev/null || warning "Astra Monitor の強制有効化に失敗"
+    gnome-extensions enable "search-light@icedman.github.com" 2>/dev/null || warning "Search Light の強制有効化に失敗"
 }
 
 # Apply extension settings
@@ -266,6 +323,74 @@ export_current_setup() {
     log "  - shell-settings.dconf"
 }
 
+# Verify installation
+verify_installation() {
+    log "インストールの検証中..."
+    
+    # Critical extensions that must be enabled
+    local critical_extensions=(
+        "monitor@astraext.github.io"
+        "search-light@icedman.github.com"
+        "bluetooth-battery@michalw.github.com"
+        "bluetooth-quick-connect@bjarosze.gmail.com"
+        "tweaks-system-menu@extensions.gnome-shell.fifi.org"
+        "BringOutSubmenuOfPowerOffLogoutButton@pratap.fastmail.fm"
+        "PrivacyMenu@stuarthayhurst"
+    )
+    
+    local enabled_list=$(gnome-extensions list --enabled)
+    local missing_extensions=()
+    
+    for extension_uuid in "${critical_extensions[@]}"; do
+        if echo "$enabled_list" | grep -q "$extension_uuid"; then
+            success "✓ $extension_uuid は有効化されています"
+        else
+            warning "✗ $extension_uuid が有効化されていません"
+            missing_extensions+=("$extension_uuid")
+        fi
+    done
+    
+    # Try to enable missing extensions one more time
+    if [ ${#missing_extensions[@]} -gt 0 ]; then
+        log "未有効化の拡張機能を再度有効化中..."
+        for extension_uuid in "${missing_extensions[@]}"; do
+            # Compile schemas before retrying
+            compile_extension_schemas "$extension_uuid"
+            
+            if gnome-extensions enable "$extension_uuid" 2>/dev/null; then
+                success "✓ $extension_uuid を有効化しました"
+            else
+                error "✗ $extension_uuid の有効化に失敗しました"
+            fi
+        done
+    fi
+    
+    # Final status
+    local final_enabled=$(gnome-extensions list --enabled | wc -l)
+    log "有効化された拡張機能の総数: $final_enabled"
+}
+
+# Compile all extension schemas
+compile_all_schemas() {
+    log "全ての拡張機能のスキーマをコンパイル中..."
+    
+    local extensions_dir="$HOME/.local/share/gnome-shell/extensions"
+    local compiled_count=0
+    
+    if [ -d "$extensions_dir" ]; then
+        for extension_dir in "$extensions_dir"/*; do
+            if [ -d "$extension_dir" ]; then
+                local extension_uuid=$(basename "$extension_dir")
+                if compile_extension_schemas "$extension_uuid"; then
+                    ((compiled_count++))
+                fi
+            fi
+        done
+    fi
+    
+    success "スキーマコンパイル完了: $compiled_count 個の拡張機能"
+}
+
 # Restart GNOME Shell
 restart_gnome_shell() {
     log "GNOME Shellを再起動しています..."
@@ -295,6 +420,7 @@ main() {
             install_extensions
             enable_extensions
             apply_settings
+            verify_installation
             restart_gnome_shell
             ;;
         "export")
@@ -310,14 +436,19 @@ main() {
             check_gnome
             enable_extensions
             ;;
+        "compile-schemas")
+            check_gnome
+            compile_all_schemas
+            ;;
         *)
-            echo "使用方法: $0 [install|export|apply-settings|enable]"
+            echo "使用方法: $0 [install|export|apply-settings|enable|compile-schemas]"
             echo ""
             echo "コマンド:"
             echo "  install        - Extensions をインストールし設定を適用"
             echo "  export         - 現在の設定をエクスポート"
             echo "  apply-settings - 設定のみを適用"
             echo "  enable         - Extensions を有効化"
+            echo "  compile-schemas - 全ての拡張機能のスキーマをコンパイル"
             exit 1
             ;;
     esac
