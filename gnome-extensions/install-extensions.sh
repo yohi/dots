@@ -4,11 +4,11 @@
 # Author: y_ohi
 # Description: Automatically install and configure Gnome Extensions
 
-set -e
+set -euo pipefail
 
 # Check for required dependencies
 check_dependencies() {
-    local dependencies=("curl" "unzip" "python3" "gnome-shell" "gnome-extensions" "dconf")
+    local dependencies=("curl" "unzip" "python3" "gnome-shell" "gnome-extensions" "dconf" "jq")
     local missing_deps=()
 
     log "必要な依存関係をチェック中..."

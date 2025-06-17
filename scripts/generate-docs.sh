@@ -31,18 +31,18 @@ readonly GENERATED_DIR="$DOCS_DIR/generated"
 # ドキュメント生成ディレクトリの作成
 setup_docs_directory() {
     log_step "ドキュメントディレクトリを準備中..."
-    
+
     mkdir -p "$GENERATED_DIR"
-    
+
     log_info "ドキュメントディレクトリ: $GENERATED_DIR"
 }
 
 # Makefileのターゲット一覧を生成
 generate_makefile_targets() {
     log_step "Makefileターゲット一覧を生成中..."
-    
+
     local output_file="$GENERATED_DIR/makefile-targets.md"
-    
+
     cat > "$output_file" << 'EOF'
 # Makefileターゲット一覧
 
@@ -51,9 +51,9 @@ generate_makefile_targets() {
 ## 利用可能なターゲット
 
 EOF
-    
+
     cd "$DOTFILES_DIR"
-    
+
     # Makefileからターゲットを抽出
     grep -E "^[a-zA-Z0-9_-]+:" Makefile | sed 's/:.*//g' | sort | while read -r target; do
         # ターゲットの説明を取得（可能な場合）
@@ -61,23 +61,23 @@ EOF
         if grep -q "## $target" Makefile; then
             description=$(grep "## $target" Makefile | sed "s/.*## $target - //g")
         fi
-        
+
         echo "- \`make $target\`" >> "$output_file"
         if [[ -n "$description" ]]; then
             echo "  - $description" >> "$output_file"
         fi
         echo "" >> "$output_file"
     done
-    
+
     log_info "Makefileターゲット一覧を生成しました: $output_file"
 }
 
 # Brewfileパッケージ一覧を生成
 generate_brewfile_packages() {
     log_step "Brewfileパッケージ一覧を生成中..."
-    
+
     local output_file="$GENERATED_DIR/brewfile-packages.md"
-    
+
     cat > "$output_file" << 'EOF'
 # Brewfile パッケージ一覧
 
@@ -86,31 +86,31 @@ generate_brewfile_packages() {
 ## Homebrew Taps
 
 EOF
-    
+
     cd "$DOTFILES_DIR"
-    
+
     # Taps
     grep '^tap ' Brewfile | sed 's/tap "/- /g' | sed 's/"//g' >> "$output_file"
-    
+
     echo "" >> "$output_file"
     echo "## Brew パッケージ" >> "$output_file"
     echo "" >> "$output_file"
-    
+
     # Brew packages
     grep '^brew ' Brewfile | sed 's/brew "/- /g' | sed 's/".*//g' | sort >> "$output_file"
-    
+
     echo "" >> "$output_file"
     echo "## Cask パッケージ" >> "$output_file"
     echo "" >> "$output_file"
-    
+
     # Cask packages
     grep '^cask ' Brewfile | sed 's/cask "/- /g' | sed 's/".*//g' | sort >> "$output_file"
-    
+
     # 統計情報
     local tap_count=$(grep -c '^tap ' Brewfile || echo "0")
     local brew_count=$(grep -c '^brew ' Brewfile || echo "0")
     local cask_count=$(grep -c '^cask ' Brewfile || echo "0")
-    
+
     cat >> "$output_file" << EOF
 
 ## 統計情報
@@ -121,22 +121,22 @@ EOF
 - 合計: $((tap_count + brew_count + cask_count)) 個
 
 EOF
-    
+
     log_info "Brewfileパッケージ一覧を生成しました: $output_file"
 }
 
 # VS Code拡張機能一覧を生成
 generate_vscode_extensions() {
     log_step "VS Code拡張機能一覧を生成中..."
-    
+
     local output_file="$GENERATED_DIR/vscode-extensions.md"
-    local extensions_file="$DOTFILES_DIR/vscode/extensions.txt"
-    
+    local extensions_file="$DOTFILES_DIR/vscode/extensions.list"
+
     if [[ ! -f "$extensions_file" ]]; then
         log_info "VS Code拡張機能ファイルが見つかりません: $extensions_file"
         return
     fi
-    
+
     cat > "$output_file" << 'EOF'
 # VS Code 拡張機能一覧
 
@@ -145,7 +145,7 @@ generate_vscode_extensions() {
 ## インストール対象拡張機能
 
 EOF
-    
+
     # カテゴリ別に分類
     declare -A categories
     categories["ms-python"]="Python開発"
@@ -155,24 +155,24 @@ EOF
     categories["ms-azuretools"]="Azure関連"
     categories["ms-toolsai"]="AI・データサイエンス"
     categories["eamodio"]="Git関連"
-    
+
     # 拡張機能をカテゴリ別に分類
     while IFS= read -r extension; do
         if [[ -n "$extension" && ! "$extension" =~ ^# ]]; then
             local category="その他"
             local publisher=$(echo "$extension" | cut -d'.' -f1)
-            
+
             if [[ -n "${categories[$publisher]:-}" ]]; then
                 category="${categories[$publisher]}"
             fi
-            
+
             echo "- \`$extension\` ($category)" >> "$output_file"
         fi
     done < "$extensions_file"
-    
+
     # 統計情報
     local ext_count=$(grep -v '^#' "$extensions_file" | grep -v '^$' | wc -l)
-    
+
     cat >> "$output_file" << EOF
 
 ## 統計情報
@@ -180,16 +180,16 @@ EOF
 - 総拡張機能数: $ext_count 個
 
 EOF
-    
+
     log_info "VS Code拡張機能一覧を生成しました: $output_file"
 }
 
 # ディレクトリ構造を生成
 generate_directory_structure() {
     log_step "ディレクトリ構造を生成中..."
-    
+
     local output_file="$GENERATED_DIR/directory-structure.md"
-    
+
     cat > "$output_file" << 'EOF'
 # ディレクトリ構造
 
@@ -199,9 +199,9 @@ generate_directory_structure() {
 
 ```
 EOF
-    
+
     cd "$DOTFILES_DIR"
-    
+
     # treeコマンドがある場合は使用
     if command -v tree &> /dev/null; then
         tree -a -I '.git|*.tmp|*.cache|*.log' --dirsfirst >> "$output_file"
@@ -210,7 +210,7 @@ EOF
         find . -type d -name .git -prune -o -type f -print | \
         sed 's|^\./||' | sort | sed 's|^|    |' >> "$output_file"
     fi
-    
+
     cat >> "$output_file" << 'EOF'
 ```
 
@@ -226,16 +226,16 @@ EOF
 - `docs/`: ドキュメント
 
 EOF
-    
+
     log_info "ディレクトリ構造を生成しました: $output_file"
 }
 
 # システム要件を生成
 generate_system_requirements() {
     log_step "システム要件を生成中..."
-    
+
     local output_file="$GENERATED_DIR/system-requirements.md"
-    
+
     cat > "$output_file" << 'EOF'
 # システム要件
 
@@ -301,16 +301,16 @@ generate_system_requirements() {
 - 企業ファイアウォール環境では追加の設定が必要な場合があります
 
 EOF
-    
+
     log_info "システム要件を生成しました: $output_file"
 }
 
 # トラブルシューティングガイドを生成
 generate_troubleshooting() {
     log_step "トラブルシューティングガイドを生成中..."
-    
+
     local output_file="$GENERATED_DIR/troubleshooting.md"
-    
+
     cat > "$output_file" << 'EOF'
 # トラブルシューティングガイド
 
@@ -517,16 +517,16 @@ make setup-gnome-tweaks
 4. 環境確認結果: `./scripts/check-setup.sh`
 
 EOF
-    
+
     log_info "トラブルシューティングガイドを生成しました: $output_file"
 }
 
 # インデックスページを生成
 generate_index() {
     log_step "インデックスページを生成中..."
-    
+
     local output_file="$GENERATED_DIR/README.md"
-    
+
     cat > "$output_file" << EOF
 # 生成されたドキュメント
 
@@ -558,7 +558,7 @@ generate_index() {
 - 手動で管理されるドキュメントは \`docs/\` ディレクトリ直下に配置してください
 
 EOF
-    
+
     log_info "インデックスページを生成しました: $output_file"
 }
 
@@ -568,11 +568,11 @@ main() {
     echo "📚 ドキュメント自動生成スクリプト"
     echo "=========================================="
     echo ""
-    
+
     log_info "生成開始時刻: $(date)"
     log_info "dotfilesディレクトリ: $DOTFILES_DIR"
     echo ""
-    
+
     # ドキュメント生成
     setup_docs_directory
     generate_makefile_targets
@@ -582,20 +582,20 @@ main() {
     generate_system_requirements
     generate_troubleshooting
     generate_index
-    
+
     echo ""
     echo "=========================================="
     echo "✅ ドキュメント生成完了"
     echo "=========================================="
     echo ""
-    
+
     log_info "生成されたファイル:"
     find "$GENERATED_DIR" -name "*.md" | sort | sed 's|^|  - |'
-    
+
     echo ""
     log_info "生成終了時刻: $(date)"
     log_info "ドキュメントディレクトリ: $GENERATED_DIR"
 }
 
 # スクリプト実行
-main "$@" 
+main "$@"

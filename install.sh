@@ -234,67 +234,6 @@ check_prerequisites() {
     log_success "前提条件のチェック完了"
 }
 
-# 前提条件のチェックとインストール
-check_prerequisites() {
-    log_step "前提条件をチェック中..."
-
-    local packages_to_install=()
-    local missing_commands=()
-
-    # 必須コマンドの確認
-    local required_commands=("curl" "wget" "git" "make")
-
-    for cmd in "${required_commands[@]}"; do
-        if ! command -v "$cmd" &> /dev/null; then
-            missing_commands+=("$cmd")
-            case $cmd in
-                curl|wget)
-                    packages_to_install+=("$cmd")
-                    ;;
-                git)
-                    packages_to_install+=("git")
-                    ;;
-                make)
-                    packages_to_install+=("build-essential")
-                    ;;
-            esac
-        else
-            log_success "$cmd は既にインストールされています"
-        fi
-    done
-
-    # 必要なパッケージをインストール
-    if [ ${#packages_to_install[@]} -gt 0 ]; then
-        log_info "必要なパッケージをインストール中: ${packages_to_install[*]}"
-
-        # パッケージリストを更新
-        log_progress "パッケージリストを更新中..."
-        if ! sudo apt update; then
-            log_error "パッケージリストの更新に失敗しました"
-            exit 1
-        fi
-
-        # パッケージをインストール
-        log_progress "パッケージをインストール中..."
-        if ! sudo apt install -y "${packages_to_install[@]}"; then
-            log_error "パッケージのインストールに失敗しました"
-            exit 1
-        fi
-
-        log_success "必要なパッケージのインストールが完了しました"
-
-        # インストール後の確認
-        for cmd in "${missing_commands[@]}"; do
-            if ! command -v "$cmd" &> /dev/null; then
-                log_error "$cmd のインストールに失敗しました"
-                exit 1
-            fi
-        done
-    fi
-
-    log_success "前提条件のチェック完了"
-}
-
 # 既存ディレクトリの処理
 handle_existing_directory() {
     if [[ ! -d "$DOTFILES_DIR" ]]; then
