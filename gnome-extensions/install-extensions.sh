@@ -146,14 +146,7 @@ install_extension_from_ego() {
         if command -v jq &> /dev/null; then
             download_url=$(curl -s "$api_url" | jq -r '.download_url // empty' 2>/dev/null || echo "")
         else
-            download_url=$(curl -s "$api_url" | python3 -c "
-import json, sys
-try:
-                data = json.load(sys.stdin)
-            print(data.get('download_url', ''))
-        except:
-    pass
-" 2>/dev/null || echo "")
+            download_url=$(curl -s "$api_url" | python3 -c "import json,sys; print(json.load(sys.stdin).get('download_url','') if sys.stdin.readable() else '')" 2>/dev/null || echo "")
         fi
 
         if [ -n "$download_url" ]; then
