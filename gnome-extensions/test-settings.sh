@@ -42,7 +42,7 @@ float_equals() {
     fi
     
     # Use bc for floating point comparison
-    local result=$(echo "scale=10; if (($val1 - $val2) < 0) ($val2 - $val1) < $epsilon else ($val1 - $val2) < $epsilon" | bc -l 2>/dev/null)
+    local result=$(echo "scale=10; (($val1 - $val2) < 0) * (($val2 - $val1) < $epsilon) + (($val1 - $val2) >= 0) * (($val1 - $val2) < $epsilon)" | bc -l 2>/dev/null)
     
     # If bc is not available, fall back to awk
     if [ $? -ne 0 ] || [ -z "$result" ]; then
