@@ -1127,6 +1127,33 @@ setup-docker:
 	@sudo modprobe iptable_nat || true
 	@sudo modprobe ip6table_nat || true
 	
+	# AppArmorの設定を確認・修正
+	@echo "🛡️  AppArmorの設定を確認中..."
+	@if [ -f /proc/sys/kernel/apparmor_restrict_unprivileged_userns ] && [ "$$(cat /proc/sys/kernel/apparmor_restrict_unprivileged_userns)" = "1" ]; then \
+		echo "⚠️  AppArmorによりunprivileged user namespacesが制限されています"; \
+		echo "🔧 AppArmorプロファイルを作成中..."; \
+		if [ ! -f "/etc/apparmor.d/home.$(USER).bin.rootlesskit" ]; then \
+			echo "# ref: https://ubuntu.com/blog/ubuntu-23-10-restricted-unprivileged-user-namespaces" | sudo tee "/etc/apparmor.d/home.$(USER).bin.rootlesskit" > /dev/null; \
+			echo "abi <abi/4.0>," | sudo tee -a "/etc/apparmor.d/home.$(USER).bin.rootlesskit" > /dev/null; \
+			echo "include <tunables/global>" | sudo tee -a "/etc/apparmor.d/home.$(USER).bin.rootlesskit" > /dev/null; \
+			echo "" | sudo tee -a "/etc/apparmor.d/home.$(USER).bin.rootlesskit" > /dev/null; \
+			echo "/home/$(USER)/bin/rootlesskit flags=(unconfined) {" | sudo tee -a "/etc/apparmor.d/home.$(USER).bin.rootlesskit" > /dev/null; \
+			echo "  userns," | sudo tee -a "/etc/apparmor.d/home.$(USER).bin.rootlesskit" > /dev/null; \
+			echo "" | sudo tee -a "/etc/apparmor.d/home.$(USER).bin.rootlesskit" > /dev/null; \
+			echo "  # Site-specific additions and overrides. See local/README for details." | sudo tee -a "/etc/apparmor.d/home.$(USER).bin.rootlesskit" > /dev/null; \
+			echo "  include if exists <local/home.$(USER).bin.rootlesskit>" | sudo tee -a "/etc/apparmor.d/home.$(USER).bin.rootlesskit" > /dev/null; \
+			echo "}" | sudo tee -a "/etc/apparmor.d/home.$(USER).bin.rootlesskit" > /dev/null; \
+			echo "✅ AppArmorプロファイルを作成しました: /etc/apparmor.d/home.$(USER).bin.rootlesskit"; \
+			echo "🔄 AppArmorサービスを再起動中..."; \
+			sudo systemctl restart apparmor.service; \
+			echo "✅ AppArmorサービスが再起動されました"; \
+		else \
+			echo "✅ AppArmorプロファイルは既に存在します"; \
+		fi; \
+	else \
+		echo "✅ AppArmorによる制限はありません"; \
+	fi
+	
 	# Rootless Dockerのセットアップ
 	@if ! command -v dockerd-rootless-setuptool.sh >/dev/null 2>&1; then \
 		echo "📦 Rootless Dockerをインストール中..."; \
