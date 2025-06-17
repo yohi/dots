@@ -4,7 +4,7 @@
 
 .PHONY: all help system-setup install-homebrew install-apps install-deb-packages install-flatpak-packages \
         setup-vim setup-zsh setup-wezterm setup-vscode setup-cursor setup-git setup-docker setup-development setup-shortcuts \
-        setup-gnome-extensions setup-gnome-tweaks backup-gnome-tweaks export-gnome-tweaks setup-all clean system-config clean-repos install-cursor-manual install-cursor-snap install-cursor-alternative install-fuse install-cica-fonts
+        setup-gnome-extensions setup-gnome-tweaks backup-gnome-tweaks export-gnome-tweaks setup-all clean system-config clean-repos install-cursor install-fuse install-cica-fonts install-ibm-plex-fonts
 
 # デフォルトターゲット
 all: help
@@ -138,61 +138,7 @@ system-setup:
 	@systemctl --user start ibus-daemon || true
 	
 	# IBM Plex Sans フォントのインストール
-	@echo "🔤 IBM Plex Sans フォントをインストール中..."
-	@mkdir -p $(HOME_DIR)/.local/share/fonts/ibm-plex
-	@cd /tmp && \
-	EXISTING_FONTS=$$(fc-list | grep -i "IBM Plex Sans" | wc -l 2>/dev/null || echo "0"); \
-	echo "🔍 現在認識されているIBM Plex Sansフォント数: $$EXISTING_FONTS"; \
-	if [ "$$EXISTING_FONTS" -lt 10 ]; then \
-		echo "📥 IBM Plex フォントをダウンロード中..."; \
-		rm -rf plex-fonts.zip ibm-plex-sans 2>/dev/null; \
-		PLEX_VERSION=$$(curl -s https://api.github.com/repos/IBM/plex/releases/latest | grep -o '"tag_name": "[^"]*' | grep -o '[^"]*$$' 2>/dev/null || echo "@ibm/plex-sans@1.1.0"); \
-		echo "📦 IBM Plex バージョン: $$PLEX_VERSION"; \
-		ENCODED_VERSION=$$(echo "$$PLEX_VERSION" | sed 's/@/%40/g'); \
-		DOWNLOAD_URL="https://github.com/IBM/plex/releases/download/$$ENCODED_VERSION/ibm-plex-sans.zip"; \
-		echo "🔗 ダウンロードURL: $$DOWNLOAD_URL"; \
-		if wget --timeout=30 "$$DOWNLOAD_URL" -O plex-fonts.zip; then \
-			echo "✅ ダウンロード完了 ($$(ls -lh plex-fonts.zip | awk '{print $$5}'))"; \
-			if [ -f plex-fonts.zip ] && [ -s plex-fonts.zip ]; then \
-				echo "📂 ZIPファイルを展開中..."; \
-				if unzip -q plex-fonts.zip; then \
-					if [ -d ibm-plex-sans/fonts/complete/ttf ]; then \
-						FONT_COUNT=$$(find ibm-plex-sans/fonts/complete/ttf -name "*.ttf" | wc -l); \
-						echo "📊 展開されたフォントファイル数: $$FONT_COUNT"; \
-						if [ "$$FONT_COUNT" -gt 0 ]; then \
-							echo "📋 フォントファイルをコピー中..."; \
-							cp ibm-plex-sans/fonts/complete/ttf/*.ttf $(HOME_DIR)/.local/share/fonts/ibm-plex/ && \
-							COPIED_COUNT=$$(ls -1 $(HOME_DIR)/.local/share/fonts/ibm-plex/*.ttf | wc -l 2>/dev/null || echo "0"); \
-							echo "✅ コピー完了: $$COPIED_COUNT 個のフォントファイル"; \
-							rm -rf plex-fonts.zip ibm-plex-sans 2>/dev/null; \
-							echo "🔄 フォントキャッシュを更新中..."; \
-							(fc-cache -f 2>/dev/null && echo "✅ フォントキャッシュ更新完了") || echo "⚠️  フォントキャッシュの更新をスキップ（システムが自動更新します）"; \
-							FINAL_COUNT=$$(fc-list | grep -i "IBM Plex Sans" | wc -l 2>/dev/null || echo "0"); \
-							echo "🎉 インストール完了: $$FINAL_COUNT 個のIBM Plex Sansフォントが認識されています"; \
-						else \
-							echo "❌ TTFファイルが見つかりません"; \
-							rm -rf plex-fonts.zip ibm-plex-sans 2>/dev/null; \
-						fi; \
-					else \
-						echo "❌ 期待されるディレクトリ構造が見つかりません"; \
-						rm -rf plex-fonts.zip ibm-plex-sans 2>/dev/null; \
-					fi; \
-				else \
-					echo "❌ ZIPファイルの展開に失敗しました"; \
-					rm -rf plex-fonts.zip ibm-plex-sans 2>/dev/null; \
-				fi; \
-			else \
-				echo "❌ ダウンロードされたファイルが空または見つかりません"; \
-				rm -rf plex-fonts.zip 2>/dev/null; \
-			fi; \
-		else \
-			echo "❌ IBM Plex フォントのダウンロードに失敗しました"; \
-			echo "ℹ️  インターネット接続を確認してください"; \
-			rm -rf plex-fonts.zip 2>/dev/null; \
-		fi; \
-	else \
-		echo "✅ IBM Plex Sans フォントは既に十分にインストールされています ($$EXISTING_FONTS 個)"; \
-	fi
+	@$(MAKE) install-ibm-plex-fonts
 	
 	# 基本開発ツール
 	@echo "🔧 基本開発ツールをインストール中..."
