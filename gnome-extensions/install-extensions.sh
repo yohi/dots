@@ -156,11 +156,6 @@ try:
 " 2>/dev/null || echo "")
         fi
 
-=======
-    sys.exit(1)
-")
-
->>>>>>> Stashed changes
         if [ -n "$download_url" ]; then
             log "$extension_name のダウンロード中..."
             if curl -L "https://extensions.gnome.org$download_url" -o "$temp_dir/extension.zip"; then
@@ -245,14 +240,10 @@ enable_extensions() {
         "monitor@astraext.github.io"
         "search-light@icedman.github.com"
     )
-<<<<<<< Updated upstream
 
     # Wait a moment for extensions to be fully installed
     sleep 2
 
-=======
-
->>>>>>> Stashed changes
     for extension_uuid in "${enabled_extensions[@]}"; do
         if gnome-extensions list | grep -q "$extension_uuid"; then
             # Compile schemas before enabling

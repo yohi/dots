@@ -158,14 +158,6 @@ system-setup:
 	@sudo wget https://www.ubuntulinux.jp/sources.list.d/$$(lsb_release -cs).list -O /etc/apt/sources.list.d/ubuntu-ja.list 2>/dev/null || true
 	@sudo DEBIAN_FRONTEND=noninteractive apt update 2>/dev/null || true
 	@sudo DEBIAN_FRONTEND=noninteractive apt install -y ubuntu-defaults-ja 2>/dev/null || echo "⚠️  Ubuntu Japanese のインストールに失敗しましたが、処理を続行します"
-
-=======
-	@sudo wget https://www.ubuntulinux.jp/ubuntu-jp-ppa-keyring.gpg -P /etc/apt/trusted.gpg.d/ || true
-	@sudo wget https://www.ubuntulinux.jp/ubuntu-ja-archive-keyring.gpg -P /etc/apt/trusted.gpg.d/ || true
-	@sudo wget https://www.ubuntulinux.jp/sources.list.d/$$(lsb_release -cs).list -O /etc/apt/sources.list.d/ubuntu-ja.list || true
-	@sudo DEBIAN_FRONTEND=noninteractive apt update && sudo DEBIAN_FRONTEND=noninteractive apt install -y ubuntu-defaults-ja || true
-
->>>>>>> Stashed changes
 	# キーボード設定
 	@echo "⌨️  キーボードレイアウトを設定中..."
 
@@ -184,14 +176,8 @@ system-setup:
 	@echo "✅ キーボードレイアウトが英語（US）に設定されました"
 
 	# 基本パッケージ
-<<<<<<< Updated upstream
 	@echo "📦 基本パッケージをインストール中..."
 	@sudo DEBIAN_FRONTEND=noninteractive apt install -y flatpak gdebi chrome-gnome-shell xclip xsel 2>/dev/null || echo "⚠️  一部の基本パッケージのインストールに失敗しましたが、処理を続行します"
-
-=======
-	@sudo DEBIAN_FRONTEND=noninteractive apt install -y flatpak gdebi chrome-gnome-shell xclip xsel
-
->>>>>>> Stashed changes
 	# AppImage実行に必要なFUSEパッケージ
 	@echo "📦 AppImage実行用のFUSEパッケージをインストール中..."
 	@sudo DEBIAN_FRONTEND=noninteractive apt install -y fuse libfuse2t64 libfuse3-3 fuse3 2>/dev/null || \
@@ -1095,7 +1081,6 @@ setup-docker:
 	@sudo modprobe nf_tables || true
 	@sudo modprobe iptable_nat || true
 	@sudo modprobe ip6table_nat || true
-<<<<<<< Updated upstream
 
 	# AppArmorの設定を確認・修正
 	@echo "🛡️  AppArmorの設定を確認中..."
@@ -1123,10 +1108,6 @@ setup-docker:
 	else \
 		echo "✅ AppArmorによる制限はありません"; \
 	fi
-
-=======
-
->>>>>>> Stashed changes
 	# Rootless Dockerのセットアップ
 	@if ! command -v dockerd-rootless-setuptool.sh >/dev/null 2>&1; then \
 		echo "📦 Rootless Dockerをインストール中..."; \
@@ -1544,7 +1525,6 @@ install-mysql-workbench:
 		sudo DEBIAN_FRONTEND=noninteractive dpkg -i mysql-apt-config.deb || true; \
 		rm -f mysql-apt-config.deb; \
 	else \
-<<<<<<< Updated upstream
 		echo "❌ MySQL APTリポジトリ設定パッケージのダウンロードに失敗しました"; \
 		exit 1; \
 	fi
@@ -1569,12 +1549,3 @@ install-mysql-workbench:
 
 	@echo "🎉 MySQL Workbench インストール完了"
 	@echo "📋 アプリケーションメニューから 'MySQL Workbench' を起動できます"
-=======
-		echo "⚠️  すべてのダウンロード方法が失敗しました"; \
-		echo ""; \
-		echo "🔧 追加のインストール方法:"; \
-		echo "1. Snapパッケージ: make install-cursor-snap"; \
-		echo "2. 手動ダウンロード: make install-cursor-manual"; \
-		echo "3. ブラウザで https://cursor.sh/ からダウンロード"; \
-	fi
->>>>>>> Stashed changes

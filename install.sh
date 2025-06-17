@@ -202,74 +202,11 @@ check_prerequisites() {
         fi
     done
 
-                log_error "--branch オプションには引数が必要です"
-                echo "Usage: $0 [OPTIONS]"
-                echo "Options:"
-                echo "  --branch BRANCH    指定したブランチをクローン (default: main)"
-                echo "  --dir DIR          クローン先ディレクトリ (default: ~/dots)"
-                echo "  --help, -h         このヘルプを表示"
-                exit 1
-            fi
-            BRANCH="$2"
-            shift 2
-            ;;
-        --dir)
-            if [[ -z "$2" || "$2" == --* ]]; then
-                log_error "--dir オプションには引数が必要です"
-                echo "Usage: $0 [OPTIONS]"
-                echo "Options:"
-                echo "  --branch BRANCH    指定したブランチをクローン (default: main)"
-                echo "  --dir DIR          クローン先ディレクトリ (default: ~/dots)"
-                echo "  --help, -h         このヘルプを表示"
-                exit 1
-            fi
-            DOTFILES_DIR="$2"
-            shift 2
-            ;;
-        --help|-h)
-            echo "Usage: $0 [OPTIONS]"
-            echo "Options:"
-            echo "  --branch BRANCH    指定したブランチをクローン (default: main)"
-            echo "  --dir DIR          クローン先ディレクトリ (default: ~/dots)"
-            echo "  --help, -h         このヘルプを表示"
-            exit 0
-            ;;
-        *)
-            log_error "不明なオプション: $1"
-            exit 1
-            ;;
-    esac
-done
-
-# 前提条件のチェックとインストール
-check_prerequisites() {
-    log_info "前提条件をチェック中..."
-
-    local packages_to_install=()
-
-    # gitの存在確認
-    if ! command -v git &> /dev/null; then
-        log_warn "gitがインストールされていません"
-        packages_to_install+=("git")
-    else
-        log_success "git は既にインストールされています"
-    fi
-
-    # makeの存在確認
-    if ! command -v make &> /dev/null; then
-        log_warn "makeがインストールされていません"
-        packages_to_install+=("build-essential")
-    else
-        log_success "make は既にインストールされています"
-    fi
-
->>>>>>> Stashed changes
     # 必要なパッケージをインストール
     if [ ${#packages_to_install[@]} -gt 0 ]; then
         log_info "必要なパッケージをインストール中: ${packages_to_install[*]}"
 
         # パッケージリストを更新
-<<<<<<< Updated upstream
         log_progress "パッケージリストを更新中..."
         if ! sudo apt update; then
             log_error "パッケージリストの更新に失敗しました"
@@ -283,42 +220,81 @@ check_prerequisites() {
             exit 1
         fi
 
-=======
-        log_info "パッケージリストを更新中..."
-        sudo apt update
-
-        # パッケージをインストール
-        log_info "パッケージをインストール中..."
-        sudo apt install -y "${packages_to_install[@]}"
-
->>>>>>> Stashed changes
         log_success "必要なパッケージのインストールが完了しました"
 
         # インストール後の確認
-<<<<<<< Updated upstream
         for cmd in "${missing_commands[@]}"; do
             if ! command -v "$cmd" &> /dev/null; then
                 log_error "$cmd のインストールに失敗しました"
                 exit 1
             fi
         done
-=======
-        if ! command -v git &> /dev/null; then
-            log_error "gitのインストールに失敗しました"
-            exit 1
-        fi
-
-        if ! command -v make &> /dev/null; then
-            log_error "makeのインストールに失敗しました"
-            exit 1
-        fi
->>>>>>> Stashed changes
     fi
 
     log_success "前提条件のチェック完了"
 }
 
-<<<<<<< Updated upstream
+# 前提条件のチェックとインストール
+check_prerequisites() {
+    log_step "前提条件をチェック中..."
+
+    local packages_to_install=()
+    local missing_commands=()
+
+    # 必須コマンドの確認
+    local required_commands=("curl" "wget" "git" "make")
+
+    for cmd in "${required_commands[@]}"; do
+        if ! command -v "$cmd" &> /dev/null; then
+            missing_commands+=("$cmd")
+            case $cmd in
+                curl|wget)
+                    packages_to_install+=("$cmd")
+                    ;;
+                git)
+                    packages_to_install+=("git")
+                    ;;
+                make)
+                    packages_to_install+=("build-essential")
+                    ;;
+            esac
+        else
+            log_success "$cmd は既にインストールされています"
+        fi
+    done
+
+    # 必要なパッケージをインストール
+    if [ ${#packages_to_install[@]} -gt 0 ]; then
+        log_info "必要なパッケージをインストール中: ${packages_to_install[*]}"
+
+        # パッケージリストを更新
+        log_progress "パッケージリストを更新中..."
+        if ! sudo apt update; then
+            log_error "パッケージリストの更新に失敗しました"
+            exit 1
+        fi
+
+        # パッケージをインストール
+        log_progress "パッケージをインストール中..."
+        if ! sudo apt install -y "${packages_to_install[@]}"; then
+            log_error "パッケージのインストールに失敗しました"
+            exit 1
+        fi
+
+        log_success "必要なパッケージのインストールが完了しました"
+
+        # インストール後の確認
+        for cmd in "${missing_commands[@]}"; do
+            if ! command -v "$cmd" &> /dev/null; then
+                log_error "$cmd のインストールに失敗しました"
+                exit 1
+            fi
+        done
+    fi
+
+    log_success "前提条件のチェック完了"
+}
+
 # 既存ディレクトリの処理
 handle_existing_directory() {
     if [[ ! -d "$DOTFILES_DIR" ]]; then
@@ -431,35 +407,10 @@ clone_repository() {
 
         log_success "リポジトリの更新完了"
     fi
-=======
-# リポジトリのクローン
-clone_repository() {
-    log_info "dotfilesリポジトリをクローン中..."
-
-    if [ -d "$DOTFILES_DIR" ]; then
-        log_warn "ディレクトリ $DOTFILES_DIR が既に存在します"
-        read -p "既存のディレクトリを削除してクローンしますか? (y/N): " -n 1 -r
-        echo
-        if [[ $REPLY =~ ^[Yy]$ ]]; then
-            rm -rf "$DOTFILES_DIR"
-            log_info "既存のディレクトリを削除しました"
-        else
-            log_info "既存のディレクトリに移動してpullします"
-            cd "$DOTFILES_DIR"
-            git pull origin "$BRANCH"
-            log_success "リポジトリを更新しました"
-            return 0
-        fi
-    fi
-
-    git clone -b "$BRANCH" "$REPO_URL" "$DOTFILES_DIR"
-    log_success "リポジトリのクローン完了: $DOTFILES_DIR"
->>>>>>> Stashed changes
 }
 
 # dotfilesのセットアップ
 setup_dotfiles() {
-<<<<<<< Updated upstream
     log_step "dotfilesのセットアップを開始..."
 
     if ! cd "$DOTFILES_DIR"; then
@@ -474,18 +425,10 @@ setup_dotfiles() {
     fi
 
     # 利用可能なターゲットを表示
-=======
-    log_info "dotfilesのセットアップを開始..."
-
-    cd "$DOTFILES_DIR"
-
-    # Makefileのヘルプを表示
->>>>>>> Stashed changes
     log_info "利用可能なセットアップオプション:"
     make help
 
     echo ""
-<<<<<<< Updated upstream
     log_info "📦 推奨セットアップ手順:"
     log_info "  1. システムレベルの設定: make system-setup"
     log_info "  2. Homebrew インストール: make install-homebrew"
@@ -545,37 +488,6 @@ run_recommended_setup() {
 cleanup() {
     if [[ -f "$LOG_FILE" ]]; then
         log_info "ログファイルを保存しました: $LOG_FILE"
-=======
-    log_info "推奨セットアップ手順:"
-    log_info "1. システムレベルの設定: make system-setup"
-    log_info "2. Homebrew インストール: make install-homebrew"
-    log_info "3. 全体セットアップ: make setup-all"
-
-    echo ""
-    read -p "自動で推奨セットアップを実行しますか? (y/N): " -n 1 -r
-    echo
-
-    if [[ $REPLY =~ ^[Yy]$ ]]; then
-        log_info "推奨セットアップを実行中..."
-
-        # システム設定
-        log_info "システムレベルの設定を実行中..."
-        make system-setup
-
-        # Homebrew インストール
-        log_info "Homebrew をインストール中..."
-        make install-homebrew
-
-        # 全体セットアップ
-        log_info "全体セットアップを実行中..."
-        make setup-all
-
-        log_success "推奨セットアップが完了しました！"
-    else
-        log_info "手動でセットアップを行ってください"
-        log_info "ディレクトリ: $DOTFILES_DIR"
-        log_info "使用可能なコマンド: make help"
->>>>>>> Stashed changes
     fi
 
     # ファイルディスクリプタを復元
@@ -605,7 +517,6 @@ main() {
     log_info "ブランチ: $BRANCH"
     log_info "インストール先: $DOTFILES_DIR"
     echo ""
-<<<<<<< Updated upstream
 
     # 実行手順
     get_system_info
@@ -623,16 +534,6 @@ main() {
     log_info "🔧 手動設定が必要な場合は、READMEを参照してください"
     echo ""
     log_info "完了時刻: $(date)"
-=======
-
-    check_prerequisites
-    clone_repository
-    setup_dotfiles
-
-    log_success "dotfiles のインストールが完了しました！"
-    log_info "詳細なセットアップオプションについては、以下を参照してください:"
-    log_info "cd $DOTFILES_DIR && make help"
->>>>>>> Stashed changes
 }
 
 # スクリプト実行
