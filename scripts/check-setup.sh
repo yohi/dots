@@ -246,7 +246,7 @@ check_docker() {
         fi
         
         # Docker Compose
-        if command -v docker-compose &> /dev/null; then
+        if command -v docker-compose &> /dev/null || docker compose version &> /dev/null; then
             record_result "PASS" "Docker Composeがインストールされています"
         else
             record_result "WARN" "Docker Composeがインストールされていません"

@@ -59,7 +59,6 @@ brew "rust"
 brew "lua"
 brew "luajit"
 brew "luarocks"
-brew "node"
 brew "deno"
 brew "yarn"
 brew "php"
@@ -147,7 +146,6 @@ brew "jq"
 brew "xclip"
 brew "srt"
 brew "mercurial"
-brew "apt"
 
 # ========================================
 # 追加ツール（サードパーティ）
