@@ -26,6 +26,36 @@ error() {
     echo -e "${RED}[ERROR]${NC} $1"
 }
 
+# Function to compare floating point numbers with tolerance
+float_equals() {
+    local val1="$1"
+    local val2="$2"
+    local epsilon="${3:-0.0001}"  # Default epsilon of 0.0001
+    
+    # Remove quotes if present
+    val1=$(echo "$val1" | tr -d '"')
+    val2=$(echo "$val2" | tr -d '"')
+    
+    # Check if values are empty or non-numeric
+    if [ -z "$val1" ] || [ -z "$val2" ]; then
+        return 1
+    fi
+    
+    # Use bc for floating point comparison
+    local result=$(echo "scale=10; if (($val1 - $val2) < 0) ($val2 - $val1) < $epsilon else ($val1 - $val2) < $epsilon" | bc -l 2>/dev/null)
+    
+    # If bc is not available, fall back to awk
+    if [ $? -ne 0 ] || [ -z "$result" ]; then
+        result=$(awk -v v1="$val1" -v v2="$val2" -v eps="$epsilon" 'BEGIN { 
+            diff = (v1 - v2); 
+            if (diff < 0) diff = -diff; 
+            print (diff < eps) ? 1 : 0 
+        }' 2>/dev/null)
+    fi
+    
+    [ "$result" = "1" ]
+}
+
 # Test specific extension settings
 test_extension_settings() {
     echo "🧪 拡張機能設定テスト"
@@ -61,17 +91,18 @@ test_extension_settings() {
     # Test Search Light settings
     local scale_width=$(dconf read /org/gnome/shell/extensions/search-light/scale-width)
     local scale_height=$(dconf read /org/gnome/shell/extensions/search-light/scale-height)
+    local expected_scale="0.1"
     
-    if [ "$scale_width" = "0.10000000000000001" ]; then
+    if float_equals "$scale_width" "$expected_scale"; then
         success "✓ Search Light: 幅スケール設定が正しく適用されています"
     else
-        warning "⚠ Search Light: 幅スケール設定が期待値と異なります (現在値: $scale_width)"
+        warning "⚠ Search Light: 幅スケール設定が期待値と異なります (現在値: $scale_width, 期待値: $expected_scale)"
     fi
     
-    if [ "$scale_height" = "0.10000000000000001" ]; then
+    if float_equals "$scale_height" "$expected_scale"; then
         success "✓ Search Light: 高さスケール設定が正しく適用されています"
     else
-        warning "⚠ Search Light: 高さスケール設定が期待値と異なります (現在値: $scale_height)"
+        warning "⚠ Search Light: 高さスケール設定が期待値と異なります (現在値: $scale_height, 期待値: $expected_scale)"
     fi
     
     log "Bluetooth拡張機能設定をテスト中..."
@@ -117,7 +148,7 @@ test_settings_backup_restore() {
     
     log "設定ファイルのサイズを確認中..."
     local backup_size=$(wc -l < "$backup_dir/extensions-backup.dconf")
-    local original_size=$(wc -l < "gnome-extensions/extensions-settings.dconf")
+    local original_size=$(wc -l < "$(dirname "$0")/extensions-settings.dconf")
     
     echo "  - バックアップファイル: $backup_size 行"
     echo "  - オリジナルファイル: $original_size 行"
@@ -142,7 +173,7 @@ test_settings_application() {
     log "保存された設定ファイルから設定を再適用中..."
     
     # Apply settings using the script
-    if ./gnome-extensions/install-extensions.sh apply-settings >/dev/null 2>&1; then
+    if ./install-extensions.sh apply-settings >/dev/null 2>&1; then
         success "✓ 設定の再適用が成功しました"
     else
         error "✗ 設定の再適用に失敗しました"

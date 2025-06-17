@@ -338,7 +338,8 @@ verify_installation() {
         "PrivacyMenu@stuarthayhurst"
     )
     
-    local enabled_list=$(gnome-extensions list --enabled)
+    local enabled_list
+    enabled_list=$(gnome-extensions list --enabled)
     local missing_extensions=()
     
     for extension_uuid in "${critical_extensions[@]}"; do
@@ -363,11 +364,28 @@ verify_installation() {
                 error "✗ $extension_uuid の有効化に失敗しました"
             fi
         done
+        
+        # Re-check missing extensions after retry
+        enabled_list=$(gnome-extensions list --enabled)
+        missing_extensions=()
+        
+        for extension_uuid in "${critical_extensions[@]}"; do
+            if ! echo "$enabled_list" | grep -q "$extension_uuid"; then
+                missing_extensions+=("$extension_uuid")
+            fi
+        done
     fi
     
     # Final status
-    local final_enabled=$(gnome-extensions list --enabled | wc -l)
+    local final_enabled
+    final_enabled=$(gnome-extensions list --enabled | wc -l)
     log "有効化された拡張機能の総数: $final_enabled"
+    
+    # Exit with error if critical extensions are still missing
+    if [ ${#missing_extensions[@]} -gt 0 ]; then
+        error "重要な拡張機能が有効化されていません: ${missing_extensions[*]}"
+        exit 1
+    fi
 }
 
 # Compile all extension schemas
