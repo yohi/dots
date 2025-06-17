@@ -1,91 +1,154 @@
+# Ubuntu開発環境用Brewfile
+# 自動生成されるファイルではないため、手動で管理
+
+# ========================================
+# Homebrew Taps
+# ========================================
 tap "code-hex/tap"
 tap "knqyf263/utern"
 tap "rcmdnk/file"
 tap "romkatv/powerlevel10k"
 tap "waltarix/customs"
+
+# ========================================
+# システムライブラリ・基盤
+# ========================================
 brew "ncurses"
 brew "libedit"
 brew "openssl@3"
 brew "unzip"
-brew "perl"
 brew "glib"
-brew "apt"
-brew "asdf"
 brew "at-spi2-core"
 brew "pkgconf"
-brew "awscli"
-brew "node"
-brew "bitwarden-cli"
 brew "cairo"
-brew "clang-format"
-brew "cmake"
-brew "php"
-brew "composer"
-brew "ctop"
-brew "cython"
-brew "dagger"
-brew "deno"
-brew "direnv"
-brew "gcc"
-brew "dlib"
-brew "docker"
-brew "docker-compose"
-brew "fd"
-brew "flake8"
-brew "flux"
-cask "font-cica"
-cask "font-noto-sans-cjk-jp"
 brew "mesa"
 brew "freeglut"
-brew "fzf"
-brew "git-lfs"
-brew "go"
-brew "gobject-introspection"
 brew "pango"
 brew "gtk+"
 brew "gtk+3"
-brew "openjdk"
-brew "jmeter"
-brew "jq"
-brew "lazydocker"
-brew "lazygit"
 brew "librsvg"
-brew "lpeg"
+brew "vte3"
+brew "gobject-introspection"
+brew "netpbm"
+brew "dlib"
+
+# ========================================
+# フォント（Linuxbrewでは別途手動インストール）
+# ========================================
+# cask "font-cica" # Linuxbrewではcaskはサポートされていません
+# cask "font-noto-sans-cjk-jp" # Linuxbrewではcaskはサポートされていません
+
+# ========================================
+# 開発ツール・バージョン管理
+# ========================================
+brew "git-lfs"
+brew "asdf"
+brew "direnv"
+brew "nodenv"
+brew "node-build"
+brew "gcc"
+brew "cmake"
+brew "clang-format"
+brew "tree-sitter"
+
+# ========================================
+# プログラミング言語・ランタイム
+# ========================================
+brew "go"
+brew "rust"
 brew "lua"
 brew "luajit"
 brew "luarocks"
-brew "mercurial"
-brew "mmctl"
-brew "mypy"
-brew "mysql"
-brew "tree-sitter"
-brew "neovim"
-brew "netpbm"
-brew "newrelic-cli"
-brew "nghttp2"
-brew "node-build"
-brew "nodenv"
-brew "p7zip"
-brew "peco"
-brew "pipenv"
-brew "postgresql@14"
-brew "powerlevel10k"
-brew "pv"
-brew "pygobject3"
+brew "deno"
+brew "yarn"
+brew "php"
+brew "composer"
+brew "ruby"
+brew "perl"
+
+# ========================================
+# Python関連
+# ========================================
 brew "python-tk@3.9"
 brew "python-yq"
-brew "ripgrep"
-brew "ruby"
-brew "rust"
-brew "srt"
-brew "vte3"
-brew "terminator", link: false
-brew "tree"
+brew "cython"
+brew "flake8"
+brew "mypy"
+brew "pipenv"
 brew "uv"
+brew "pygobject3"
+
+# ========================================
+# データベース
+# ========================================
+brew "mysql"
+brew "postgresql@14"
+
+# ========================================
+# コンテナ・インフラ
+# ========================================
+brew "docker"
+# brew "docker-compose" # 非推奨: dockerパッケージに'docker compose'サブコマンドが含まれています
+brew "flux"
+brew "dagger"
+
+# ========================================
+# ネットワーク・クラウド
+# ========================================
+brew "awscli"
+brew "nghttp2"
+brew "newrelic-cli"
+
+# ========================================
+# 監視・管理ツール
+# ========================================
+brew "ctop"
+brew "lazydocker"
+brew "lazygit"
 brew "watchman"
-brew "xclip"
-brew "yarn"
+brew "mmctl"
+
+# ========================================
+# ファイル操作・検索
+# ========================================
+brew "fd"
+brew "ripgrep"
+brew "tree"
+brew "fzf"
+brew "peco"
+brew "p7zip"
+brew "pv"
+
+# ========================================
+# エディタ・ターミナル
+# ========================================
+brew "neovim"
+brew "terminator", link: false
 brew "zsh"
 brew "zsh-autosuggestions"
+brew "powerlevel10k"
+
+# ========================================
+# セキュリティ
+# ========================================
+brew "bitwarden-cli"
+
+# ========================================
+# 開発・テスト
+# ========================================
+brew "openjdk"
+brew "jmeter"
+
+# ========================================
+# ユーティリティ
+# ========================================
+brew "jq"
+brew "xclip"
+brew "srt"
+brew "mercurial"
+
+# ========================================
+# 追加ツール（サードパーティ）
+# ========================================
 brew "code-hex/tap/neo-cowsay"
 brew "knqyf263/utern/utern"
