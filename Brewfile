@@ -33,10 +33,10 @@ brew "netpbm"
 brew "dlib"
 
 # ========================================
-# フォント
+# フォント（Linuxbrewでは別途手動インストール）
 # ========================================
-cask "font-cica"
-cask "font-noto-sans-cjk-jp"
+# cask "font-cica" # Linuxbrewではcaskはサポートされていません
+# cask "font-noto-sans-cjk-jp" # Linuxbrewではcaskはサポートされていません
 
 # ========================================
 # 開発ツール・バージョン管理
@@ -89,7 +89,7 @@ brew "postgresql@14"
 # コンテナ・インフラ
 # ========================================
 brew "docker"
-brew "docker-compose"
+# brew "docker-compose" # 非推奨: dockerパッケージに'docker compose'サブコマンドが含まれています
 brew "flux"
 brew "dagger"
 

@@ -86,7 +86,8 @@ check_system_info() {
 check_basic_commands() {
     log_step "基本コマンドを確認中..."
     
-    local commands=("git" "make" "curl" "wget" "build-essential")
+    # 実際のコマンドをチェック
+    local commands=("git" "make" "curl" "wget" "gcc")
     
     for cmd in "${commands[@]}"; do
         if command -v "$cmd" &> /dev/null; then
@@ -95,6 +96,13 @@ check_basic_commands() {
             record_result "FAIL" "$cmd がインストールされていません - sudo apt install $cmd"
         fi
     done
+    
+    # build-essentialパッケージの確認（dpkgでパッケージの存在を確認）
+    if dpkg -l | grep -q "^ii.*build-essential"; then
+        record_result "PASS" "build-essential パッケージがインストールされています"
+    else
+        record_result "FAIL" "build-essential パッケージがインストールされていません - sudo apt install build-essential"
+    fi
 }
 
 # Homebrew の確認
@@ -328,9 +336,21 @@ check_dotfiles() {
 check_performance() {
     log_step "システムパフォーマンスを確認中..."
     
-    # メモリ使用量
-    local mem_used=$(free | grep Mem | awk '{printf "%.1f", $3/$2 * 100.0}')
-    if (( $(echo "$mem_used < 80" | bc -l) )); then
+    # メモリ使用量（awkで浮動小数点比較を実行）
+    local mem_usage_info=$(free | grep Mem | awk '
+        {
+            mem_used_percent = ($3/$2 * 100.0)
+            if (mem_used_percent < 80) {
+                printf "PASS %.1f", mem_used_percent
+            } else {
+                printf "WARN %.1f", mem_used_percent
+            }
+        }
+    ')
+    local status=$(echo "$mem_usage_info" | cut -d' ' -f1)
+    local mem_used=$(echo "$mem_usage_info" | cut -d' ' -f2)
+    
+    if [[ "$status" == "PASS" ]]; then
         record_result "PASS" "メモリ使用量: ${mem_used}%"
     else
         record_result "WARN" "メモリ使用量が高い: ${mem_used}%"
