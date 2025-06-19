@@ -105,11 +105,28 @@ compile_extension_schemas() {
     if [ -d "$schemas_dir" ]; then
         log "$extension_uuid のスキーマをコンパイル中..."
         if ls "$schemas_dir"/*.gschema.xml 1> /dev/null 2>&1; then
+            # 既存のコンパイル済みファイルを削除
+            rm -f "$schemas_dir/gschemas.compiled"
+
+            # 必要なツールのチェック
+            if ! command -v glib-compile-schemas >/dev/null 2>&1; then
+                warning "glib-compile-schemas が見つかりません。必要なパッケージをインストール中..."
+                sudo apt update
+                sudo apt install -y libglib2.0-dev-bin libglib2.0-dev
+            fi
+
             if glib-compile-schemas "$schemas_dir" 2>/dev/null; then
-                success "$extension_uuid のスキーマをコンパイルしました"
-                return 0
+                if [ -f "$schemas_dir/gschemas.compiled" ]; then
+                    success "$extension_uuid のスキーマをコンパイルしました"
+                    return 0
+                else
+                    warning "$extension_uuid のスキーマコンパイルは成功しましたが、ファイルが生成されませんでした"
+                    return 1
+                fi
             else
-                warning "$extension_uuid のスキーマコンパイルに失敗しました"
+                error "$extension_uuid のスキーマコンパイルに失敗しました"
+                # デバッグ情報を表示
+                ls -la "$schemas_dir"/ 2>/dev/null || true
                 return 1
             fi
         fi
