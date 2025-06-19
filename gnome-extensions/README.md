@@ -11,6 +11,7 @@ gnome-extensions/
 ├── direct-install.sh          # API直接使用インストールスクリプト
 ├── test-install.sh           # テスト用インストールスクリプト
 ├── test-settings.sh          # 設定テスト用スクリプト
+├── fix-schema-compile.sh     # スキーマコンパイル修復スクリプト
 ├── extensions-settings.dconf  # Extensions の設定
 ├── shell-settings.dconf       # Gnome Shell の設定
 ├── enabled-extensions.txt     # 有効な Extensions のリスト
@@ -28,6 +29,9 @@ gnome-extensions/
 
 # 📦 Extensions のみをインストール・設定
 ./install-extensions.sh install
+
+# 🔧 スキーマエラー修復
+./fix-schema-compile.sh
 
 # 📤 現在の設定をエクスポート
 ./install-extensions.sh export
@@ -161,6 +165,32 @@ vim shell-settings.dconf
 
 ## 🔄 トラブルシューティング
 
+### 🚨 スキーマコンパイルエラーの修復
+
+**エラー例**:
+```
+GLib.FileError: ファイル"/home/y_ohi/.local/share/gnome-shell/extensions/monitor@astraext.github.io/schemas/gschemas.compiled"を開けません: open() に失敗しました: そのようなファイルやディレクトリはありません
+```
+
+**修復方法**:
+```bash
+# 🔧 すべての拡張機能のスキーマを修復
+./fix-schema-compile.sh
+
+# または特定のオプションで実行
+./fix-schema-compile.sh fix                    # すべて修復（デフォルト）
+./fix-schema-compile.sh fix monitor@astraext.github.io  # 特定の拡張機能のみ修復
+./fix-schema-compile.sh compile                # スキーマコンパイルのみ
+./fix-schema-compile.sh refresh                # 拡張機能リフレッシュのみ
+```
+
+**このスクリプトの機能**:
+- 必要なツール（`glib-compile-schemas`）の自動インストール
+- 既存の破損したスキーマファイルの削除
+- すべての拡張機能のスキーマを正しくコンパイル
+- 拡張機能の無効化・有効化によるリフレッシュ
+- 詳細なエラー診断とレポート
+
 ### Extensions がインストールできない場合
 
 ```bash
@@ -192,6 +222,37 @@ killall -HUP gnome-shell
 
 # Waylandの場合はログアウト/ログインが必要
 ```
+
+### よくある問題と解決方法
+
+1. **スキーマコンパイルエラー**:
+   ```bash
+   ./fix-schema-compile.sh fix
+   ```
+
+2. **拡張機能が動作しない**:
+   ```bash
+   # 拡張機能をリフレッシュ
+   ./fix-schema-compile.sh refresh
+
+   # GNOME Shell を再起動
+   # X11: Alt+F2 → 'r' → Enter
+   # Wayland: ログアウト/ログイン
+   ```
+
+3. **インストール後にエラーが多発**:
+   ```bash
+   # 完全な修復を実行
+   ./fix-schema-compile.sh fix
+
+   # ログアウト/ログインを実行
+   ```
+
+4. **特定の拡張機能のみエラー**:
+   ```bash
+   # 特定の拡張機能を修復
+   ./fix-schema-compile.sh fix <extension-uuid>
+   ```
 
 ## 📚 関連リンク
 

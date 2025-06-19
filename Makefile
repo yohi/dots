@@ -2,10 +2,10 @@
 # Author: y_ohi
 # Description: Comprehensive Ubuntu setup with applications and dotfiles configuration
 
-.PHONY: all help system-setup install-homebrew install-apps install-deb install-flatpak \
+		.PHONY: all help system-setup install-homebrew install-apps install-deb install-flatpak \
         setup-vim setup-zsh setup-wezterm setup-vscode setup-cursor setup-git setup-docker setup-development setup-shortcuts \
         setup-gnome-extensions setup-gnome-tweaks backup-gnome-tweaks export-gnome-tweaks setup-all clean system-config clean-repos install-cursor install-fuse install-cica-fonts install-ibm-plex-fonts install-mysql-workbench \
-        test-extensions extensions-status
+        test-extensions extensions-status fix-extensions-schema
 
 # デフォルトターゲット
 all: help
@@ -30,6 +30,7 @@ help:
 	@echo "  make setup-development     - 開発環境の設定をセットアップ"
 	@echo "  make setup-shortcuts       - キーボードショートカットの設定をセットアップ"
 	@echo "  make setup-gnome-extensions- Gnome Extensions の設定をセットアップ"
+	@echo "  make fix-extensions-schema - Gnome Extensions スキーマエラーを修復"
 	@echo "  make setup-gnome-tweaks    - Gnome Tweaks の設定をセットアップ"
 	@echo "  make backup-gnome-tweaks   - Gnome Tweaks の設定をバックアップ"
 	@echo "  make export-gnome-tweaks   - Gnome Tweaks の設定をエクスポート"
@@ -1224,6 +1225,15 @@ setup-shortcuts:
 setup-gnome-extensions: install-extensions-simple
 	@echo "🔧 拡張機能の設定を適用中..."
 
+	# スキーマエラーを修復
+	@echo "🔧 スキーマエラーを修復中..."
+	@if [ -f "$(DOTFILES_DIR)/gnome-extensions/fix-schema-compile.sh" ]; then \
+		cd $(DOTFILES_DIR)/gnome-extensions && chmod +x fix-schema-compile.sh && ./fix-schema-compile.sh compile; \
+		echo "✅ スキーマコンパイルが完了しました"; \
+	else \
+		echo "⚠️  スキーマ修復スクリプトが見つかりません"; \
+	fi
+
 	# 設定ファイルを適用
 	@if [ -f "$(DOTFILES_DIR)/gnome-extensions/extensions-settings.dconf" ]; then \
 		echo "📋 Extensions設定を読み込み中..."; \
@@ -1471,15 +1481,20 @@ install-extensions-simple:
 			if [ -n "$$DOWNLOAD_URL" ] && [ "$$DOWNLOAD_URL" != "null" ]; then \
 				curl -L "https://extensions.gnome.org$$DOWNLOAD_URL" -o $$TEMP_DIR/ext.zip 2>/dev/null; \
 				mkdir -p "$$INSTALL_DIR"; \
-				unzip -q $$TEMP_DIR/ext.zip -d "$$INSTALL_DIR" 2>/dev/null && echo "✅ $$EXTENSION インストール完了"; \
-			else \
-				echo "❌ $$EXTENSION のダウンロードURLが見つかりません"; \
+							unzip -q $$TEMP_DIR/ext.zip -d "$$INSTALL_DIR" 2>/dev/null && echo "✅ $$EXTENSION インストール完了" && \
+			if [ -d "$$INSTALL_DIR/schemas" ] && ls "$$INSTALL_DIR/schemas"/*.gschema.xml >/dev/null 2>&1; then \
+				echo "🔧 $$EXTENSION のスキーマをコンパイル中..."; \
+				rm -f "$$INSTALL_DIR/schemas/gschemas.compiled"; \
+				glib-compile-schemas "$$INSTALL_DIR/schemas" 2>/dev/null && echo "✅ スキーマコンパイル完了" || echo "⚠️ スキーマコンパイル失敗"; \
 			fi; \
-			rm -rf $$TEMP_DIR; \
 		else \
-			echo "✅ $$EXTENSION は既にインストール済み"; \
+			echo "❌ $$EXTENSION のダウンロードURLが見つかりません"; \
 		fi; \
-	done
+		rm -rf $$TEMP_DIR; \
+	else \
+		echo "✅ $$EXTENSION は既にインストール済み"; \
+	fi; \
+done
 	@echo ""
 	@echo "🔧 拡張機能の有効化中..."
 	@for EXTENSION in $$(grep -v '^#' $(DOTFILES_DIR)/gnome-extensions/enabled-extensions.txt | grep -v '^$$'); do \
@@ -1504,6 +1519,24 @@ extensions-status:
 	@echo ""
 	@echo "無効な拡張機能:"
 	@gnome-extensions list --disabled
+
+# GNOME Extensions スキーマエラー修復
+fix-extensions-schema:
+	@echo "🔧 GNOME Extensions スキーマエラー修復を実行中..."
+	@if [ -f "$(DOTFILES_DIR)/gnome-extensions/fix-schema-compile.sh" ]; then \
+		echo "🛠️  スキーマ修復スクリプトを実行中..."; \
+		cd $(DOTFILES_DIR)/gnome-extensions && chmod +x fix-schema-compile.sh && ./fix-schema-compile.sh; \
+		echo "✅ スキーマ修復スクリプトの実行が完了しました"; \
+		echo ""; \
+		echo "💡 次の手順:"; \
+		echo "  1. GNOME Shell を再起動してください（Alt + F2 → 'r' → Enter）"; \
+		echo "  2. Waylandの場合はログアウト/ログインしてください"; \
+		echo "  3. Extension Manager で拡張機能の状態を確認してください"; \
+	else \
+		echo "❌ スキーマ修復スクリプトが見つかりません: $(DOTFILES_DIR)/gnome-extensions/fix-schema-compile.sh"; \
+		echo "💡 手動で修復する場合:"; \
+		echo "  cd gnome-extensions && ./fix-schema-compile.sh"; \
+	fi
 
 # MySQL Workbench のインストール（MySQL公式APTリポジトリから）
 install-mysql-workbench:
