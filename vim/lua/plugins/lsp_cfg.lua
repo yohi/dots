@@ -69,35 +69,40 @@ return {
                 })
             end
 
-            -- vim.cmd("let g:python3_host_prog = system('echo -n $(which python3)')")
+            -- Python環境設定（改良版：効率的かつエラーハンドリング付き）
+            local function setup_python_host()
+                local python_path = nil
 
-            -- local bufnr = vim.api.nvim_get_current_buf()
-            -- print("bufnr")
-            -- print(bufnr)
-            -- local filepath = vim.api.nvim_buf_get_name(bufnr)
-            -- print('filepath')
-            -- print(filepath)
-            -- local venv_path = lsp_config.util.root_pattern('.venv')
-            -- print('venv_path')
-            -- print(venv_path)
-            -- local python_path = nil
-            -- python_path = vim.g.python3_host_prog
-            -- -- if (venv_path == nil) then
-            -- --     print('a')
-            -- --     python_path = vim.g.python3_host_prog
-            -- -- else
-            -- --     print('b')
-            -- --     python_path = util.path.join(
-            -- --         venv_path,
-            -- --         '.venv',
-            -- --         'bin',
-            -- --         'python'
-            -- --     )
-            -- -- end
-            -- print('python_path')
-            -- print(python_path)
-            -- print('venv_path')
-            -- print(venv_path(filepath))
+                -- 1. 仮想環境が有効な場合は、その環境のPythonを使用
+                if vim.env.VIRTUAL_ENV then
+                    local venv_python = vim.env.VIRTUAL_ENV .. "/bin/python3"
+                    if vim.fn.executable(venv_python) == 1 then
+                        python_path = venv_python
+                    end
+                end
+
+                -- 2. 仮想環境が見つからない場合は、システムのpython3を検索
+                if not python_path then
+                    python_path = vim.fn.exepath("python3")
+                    if python_path == "" then
+                        python_path = vim.fn.exepath("python")
+                    end
+                end
+
+                -- 3. エラーハンドリング
+                if python_path == "" then
+                    vim.notify("警告: Python3が見つかりません。LSPの動作に影響する可能性があります。", vim.log.levels.WARN)
+                    return
+                end
+
+                -- 4. 効率的にホストプログラムを設定
+                vim.g.python3_host_prog = python_path
+
+                -- デバッグ情報（オプション）
+                vim.notify("Python3ホストプログラムが設定されました: " .. python_path, vim.log.levels.INFO)
+            end
+
+            setup_python_host()
 
             lsp_config.basedpyright.setup({
                 root_dir = function(fname)
@@ -254,5 +259,3 @@ return {
     },
 
 }
-
-

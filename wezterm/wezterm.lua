@@ -1,425 +1,532 @@
---[[
-WezTerm Configuration
-
-Performance Optimizations:
-- システム情報取得の最適化: io.popen での外部コマンド実行を廃止し、
-  /proc/stat と /proc/meminfo から直接読み取ることで CPU 負荷を大幅に削減
-- 非同期更新: バックグラウンドタイマーでシステム情報を定期更新し、
-  update-status イベントではキャッシュされた値を即座に返すように変更
-- CPU 使用率計算: 前回値との差分計算により正確な CPU 使用率を算出
-- 更新競合防止: is_updating フラグで同時更新を防止
-
-Updates: 2025-01-20
---]]
-
+-- WezTerm Configuration - 極力シンプル版
 local wezterm = require 'wezterm'
+local act = wezterm.action
+
+-- 設定テーブルを作成
 local config = wezterm.config_builder and wezterm.config_builder() or {}
 
--- 設定の自動リロード
-config.automatically_reload_config = true
-
--- IME使用
-config.use_ime = true
-
--- 背景の透過
-config.window_background_opacity = 1
-
-config.enable_wayland = false
-
-
-----------------------------------------------------
--- Font Configuration
-----------------------------------------------------
-config.font = wezterm.font('Cica Nerd Font', { weight = 'Regular' })
-config.font_size = 11
-
-----------------------------------------------------
--- Window Configuration
-----------------------------------------------------
-config.initial_cols = 120
-config.initial_rows = 30
-
-----------------------------------------------------
--- Character Encoding Configuration
-----------------------------------------------------
--- UTF-8エンコーディングを明示的に設定
-config.set_environment_variables = {
-  LANG = 'ja_JP.UTF-8',
-  LC_ALL = 'ja_JP.UTF-8',
+-- 通常の設定
+config.colors = {
+  background = "#1e1e1e",  -- 通常の暗い背景色
 }
 
-----------------------------------------------------
--- Cursor Configuration
-----------------------------------------------------
-config.default_cursor_style = 'SteadyBar'
+config.color_scheme = "Tokyo Night"  -- カラースキームを設定
 
-----------------------------------------------------
--- Tab Configuration
-----------------------------------------------------
--- ウィンドウ枠を表示（タイトルバーとリサイズ境界を含む）
-config.window_decorations = "TITLE | RESIZE"
--- config.window_decorations = "INTEGRATED_BUTTONS|NONE"
--- config.window_decorations = "INTEGRATED_BUTTONS|RESIZE"
-config.integrated_title_button_style = "Windows"
+-- フォント設定
+config.font = wezterm.font("Cica Nerd Font", {weight="Regular", stretch="Normal", style="Normal"})
 
--- タブバーの表示
-config.show_tabs_in_tab_bar = true
+-- カーソル設定
+config.default_cursor_style = 'SteadyBar'  -- Iビーム（縦線）カーソル
 
--- タブが一つの時もタブバーを表示（タブ追加ボタンのため）
-config.hide_tab_bar_if_only_one_tab = false
+-- IME設定
+config.use_ime = true  -- IMEを有効にする
+config.ime_preedit_rendering = 'Builtin'  -- IMEプリエディットの表示方法
 
--- タブの追加ボタンを表示
-config.show_new_tab_button_in_tab_bar = true
+-- ウィンドウ装飾設定
+config.window_decorations = "INTEGRATED_BUTTONS | RESIZE"  -- 統合ボタンモード（タブバーにウィンドウ制御ボタンを配置）
 
--- Cursorライクなタイトルバー設定
-config.window_frame = {
-  -- font = wezterm.font({ family = 'Cica Nerd Font', weight = 'Medium' }),
-  -- font_size = 10.5,
-  active_titlebar_bg = "#23272e",      -- VSCodeのアクティブタイトルバー色
-  inactive_titlebar_bg = "#2c313a",    -- VSCodeの非アクティブタイトルバー色
-  active_titlebar_fg = "#d4d4d4",      -- VSCodeのアクティブ文字色
-  inactive_titlebar_fg = "#888888",    -- VSCodeの非アクティブ文字色
-  active_titlebar_border_bottom = "#181a1f",
-  inactive_titlebar_border_bottom = "#181a1f",
-}
+-- Linux環境での追加設定
+if wezterm.target_triple:find("linux") then
+  -- X11/Wayland環境での設定
+  config.enable_wayland = true  -- Waylandサポートを有効化
+  config.window_background_opacity = 1.0  -- 透明度を無効化
 
--- プロセス名とアイコン・色の対応テーブル
-local process_icons = {
-  docker = {
-    color = "#1d63ed",
-    icon = wezterm.nerdfonts.md_docker,
-  },
-  go = {
-    color = "#79d4fd",
-    icon = wezterm.nerdfonts.md_language_go,
-  },
-  nvim = {
-    color = "#00b952",
-    icon = wezterm.nerdfonts.custom_neovim,
-  },
-  zsh = {
-    icon = wezterm.nerdfonts.dev_terminal,
-  },
-}
-
--- パスからファイル名部分だけを取り出す関数
-local function trim_path(path)
-  return string.gsub(path, "(.*[/\\])(.*)", "%2")
+  -- タブバーのドラッグ機能を確実に有効化するための追加設定
+  config.adjust_window_size_when_changing_font_size = false  -- フォントサイズ変更時のウィンドウサイズ調整を無効化
 end
 
-wezterm.on("format-tab-title", function(tab, tabs, panes, config, hover, max_width)
-  local pane = tab.active_pane
-  local process_name = trim_path(pane.foreground_process_name or "")
-  local icon_def = process_icons[process_name] or {}
-  local icon = icon_def.icon or ""
-  local icon_color = icon_def.color
-  local cwd = pane.current_working_dir and trim_path(pane.current_working_dir.file_path) or ""
-  local text_color = tab.is_active and "#c0c0c0" or "#808080"
-  local zero_width_space = "\226\128\139"
-  local title = pane.title or process_name
+-- 統合ボタンの設定（INTEGRATED_BUTTONS モード用）
+config.integrated_title_button_style = "Windows"  -- Windows スタイル
+config.integrated_title_buttons = { 'Hide', 'Maximize', 'Close' }  -- 表示するボタン
+config.integrated_title_button_alignment = "Right"  -- ボタンの配置（Right推奨）
 
+-- タブバー設定
+config.enable_tab_bar = true
+config.tab_bar_at_bottom = false  -- タブバーを上部に配置
+-- config.use_fancy_tab_bar = false  -- レトロモードでカスタムボタンスタイルを有効化
+config.tab_max_width = 16
+config.show_tabs_in_tab_bar = true
+config.show_new_tab_button_in_tab_bar = true
+config.hide_tab_bar_if_only_one_tab = false  -- タブが1つでもタブバーを表示（ドラッグ用）
+
+-- ランチャー設定
+config.launch_menu = {}  -- ランチャーメニューを空にする
+config.show_tab_index_in_tab_bar = false  -- タブバーにインデックスを表示しない
+
+-- ランチャーを完全に無効化
+config.disable_default_key_bindings = false  -- デフォルトキーバインドは保持
+config.automatically_reload_config = true  -- 設定の自動リロードを有効化
+
+-- 新しいタブボタンの右クリックでLauncherが表示されないようにする追加設定
+config.enable_tab_bar = true
+config.show_new_tab_button_in_tab_bar = true  -- ボタンは表示するが、カスタムハンドラーで制御
+
+-- ランチャー表示を完全に無効化
+config.default_workspace = "main"  -- デフォルトワークスペースを設定
+config.initial_cols = 80  -- 初期列数
+config.initial_rows = 24  -- 初期行数
+
+-- ペインのサイズと動作に関する設定
+config.adjust_window_size_when_changing_font_size = false  -- フォントサイズ変更時のサイズ調整を無効化
+config.pane_focus_follows_mouse = false  -- マウスフォーカスを無効化（安定性向上）
+config.swallow_mouse_click_on_pane_focus = false  -- ペインフォーカス時のマウスクリックを処理
+config.swallow_mouse_click_on_window_focus = false  -- ウィンドウフォーカス時のマウスクリックを処理
+
+-- ウィンドウフレーム設定（タブバーの色とスタイル）
+config.window_frame = {
+  active_titlebar_bg = '#333333',
+  inactive_titlebar_bg = '#2b2b2b',
+  active_titlebar_fg = '#ffffff',
+  inactive_titlebar_fg = '#cccccc',
+  -- ボタンの色設定（RESIZE モードでは不要）
+  -- button_fg = '#000000',        -- 黒文字
+  -- button_bg = '#ffff00',        -- 黄色背景
+  -- button_hover_fg = '#000000',  -- ホバー時も黒文字
+  -- button_hover_bg = '#ffff80',  -- ホバー時薄い黄色
+}
+
+-- カスタムボタンスタイル（統合ボタン用）
+config.tab_bar_style = {
+  -- 最小化ボタン（より目立つデザイン）
+  window_hide = wezterm.format {
+    { Foreground = { Color = '#000000' } },
+    { Background = { Color = '#ffa500' } },  -- オレンジ色の背景
+    { Text = ' _ ' },  -- シンプルなアンダースコア
+  },
+  window_hide_hover = wezterm.format {
+    { Foreground = { Color = '#000000' } },
+    { Background = { Color = '#ffcc80' } },  -- 薄いオレンジ色
+    { Text = ' _ ' },
+  },
+  -- 最大化ボタン
+  window_maximize = wezterm.format {
+    { Foreground = { Color = '#000000' } },
+    { Background = { Color = '#4caf50' } },  -- 緑色の背景
+    { Text = ' ◻ ' },  -- 四角いアイコン
+  },
+  window_maximize_hover = wezterm.format {
+    { Foreground = { Color = '#000000' } },
+    { Background = { Color = '#80c784' } },  -- 薄い緑色
+    { Text = ' ◻ ' },
+  },
+  -- 閉じるボタン
+  window_close = wezterm.format {
+    { Foreground = { Color = '#ffffff' } },
+    { Background = { Color = '#f44336' } },  -- 赤色の背景
+    { Text = ' × ' },  -- X記号
+  },
+  window_close_hover = wezterm.format {
+    { Foreground = { Color = '#ffffff' } },
+    { Background = { Color = '#ff8a80' } },  -- 薄い赤色
+    { Text = ' × ' },
+  },
+}
+
+-- コマンドパレットにカスタムエントリを追加
+wezterm.on('augment-command-palette', function(window, pane)
   return {
-    { Foreground = { Color = text_color } },
-    { Text = zero_width_space },
-    { Foreground = { Color = icon_color or text_color } },
-    { Text = icon ~= "" and icon or process_name },
-    { Foreground = { Color = text_color } },
-    { Text = " " .. title },
-    { Text = " " .. cwd },
+    {
+      brief = 'Split Vertical (縦分割)',
+      icon = 'md_border_vertical',
+      action = act.SplitVertical { domain = 'CurrentPaneDomain' },
+    },
+    {
+      brief = 'Split Horizontal (横分割)',
+      icon = 'md_border_horizontal',
+      action = act.SplitHorizontal { domain = 'CurrentPaneDomain' },
+    },
+    {
+      brief = 'Close Current Pane (ペインを閉じる)',
+      icon = 'md_close',
+      action = act.CloseCurrentPane { confirm = true },
+    },
   }
 end)
 
--- システム情報キャッシュ
-local system_info_cache = {
-  cpu_info = 'CPU:--',
-  mem_info = 'MEM:--',
-  last_cpu_stats = nil,
-  prev_cpu_stats = nil, -- 前回のCPU統計用
-  last_update = 0,
-  update_interval = 1000, -- 1秒間隔で更新
-  is_updating = false -- 更新中フラグ
-}
-
--- /proc/statから直接CPU統計を読み取る関数
-local function read_cpu_stats()
-  local success, file = pcall(io.open, "/proc/stat", "r")
-  if not success or not file then
-    return nil
+-- 新しいタブボタンをクリックしたときのイベント処理
+wezterm.on('new-tab-button-click', function(window, pane, button, default_action)
+  wezterm.log_info('new-tab-button-click', button)  -- デバッグ用ログ
+  if button == 'Left' then
+    -- 左クリック：通常の新しいタブを作成
+    window:perform_action(act.SpawnTab 'CurrentPaneDomain', pane)
+  elseif button == 'Right' then
+    -- 右クリック：横分割（上下分割）でペインを作成 - SplitHorizontalを使用
+    -- 複数のアクションを順番に実行して、レイアウトを適切に調整
+    window:perform_action(act.Multiple {
+      act.SplitHorizontal { domain = 'CurrentPaneDomain' },
+      -- 新しいペインにフォーカスを移動
+      act.ActivatePaneDirection 'Next',
+      -- 少し待機してから全体のレイアウトを調整
+      act.EmitEvent 'refresh-layout',
+    }, pane)
+  elseif button == 'Middle' then
+    -- 中クリック：縦分割（左右分割）でペインを作成 - SplitVerticalを使用
+    window:perform_action(act.Multiple {
+      act.SplitVertical { domain = 'CurrentPaneDomain' },
+      -- 新しいペインにフォーカスを移動
+      act.ActivatePaneDirection 'Next',
+      -- 少し待機してから全体のレイアウトを調整
+      act.EmitEvent 'refresh-layout',
+    }, pane)
   end
-
-  local line = file:read("*line")
-  file:close()
-
-  if not line or not line:match("^cpu ") then
-    return nil
-  end
-
-  local stats = {}
-  for num in line:gmatch("%d+") do
-    table.insert(stats, tonumber(num))
-  end
-
-  -- /proc/stat のフィールド: user, nice, system, idle, iowait, irq, softirq, steal, guest, guest_nice
-  if #stats >= 7 then
-    local user = stats[1] or 0
-    local nice = stats[2] or 0
-    local system = stats[3] or 0
-    local idle = stats[4] or 0
-    local iowait = stats[5] or 0
-    local irq = stats[6] or 0
-    local softirq = stats[7] or 0
-    local steal = stats[8] or 0
-    local guest = stats[9] or 0
-    local guest_nice = stats[10] or 0
-
-    -- 総時間とアイドル時間を正確に計算
-    local total = user + nice + system + idle + iowait + irq + softirq + steal + guest + guest_nice
-    local active = total - idle - iowait
-
-    return {
-      user = user,
-      nice = nice,
-      system = system,
-      idle = idle,
-      iowait = iowait,
-      total = total,
-      active = active
-    }
-  end
-
-  return nil
-end
-
--- /proc/meminfoから直接メモリ情報を読み取る関数
-local function read_memory_info()
-  local success, file = pcall(io.open, "/proc/meminfo", "r")
-  if not success or not file then
-    return nil
-  end
-
-  local mem_total, mem_available = nil, nil
-
-  for line in file:lines() do
-    if line:match("^MemTotal:") then
-      mem_total = tonumber(line:match("(%d+)"))
-    elseif line:match("^MemAvailable:") then
-      mem_available = tonumber(line:match("(%d+)"))
-    end
-
-    if mem_total and mem_available then
-      break
-    end
-  end
-
-  file:close()
-
-  if mem_total and mem_available then
-    local mem_used = mem_total - mem_available
-    local mem_percentage = math.floor((mem_used / mem_total) * 100)
-    return mem_percentage
-  end
-
-  return nil
-end
-
--- システム情報を非同期で更新する関数
-local function update_system_info()
-  -- 既に更新中の場合はスキップ
-  if system_info_cache.is_updating then
-    return
-  end
-
-  -- WezTerm 0.17+ では wezterm.time() が高解像度の UNIX 時刻(float)を返す
-  local current_time = wezterm.time() * 1000
-
-  -- 更新間隔チェック
-  if current_time - system_info_cache.last_update < system_info_cache.update_interval then
-    return
-  end
-
-  system_info_cache.is_updating = true
-
-  -- CPU使用率計算
-  local current_cpu_stats = read_cpu_stats()
-  if current_cpu_stats then
-    if system_info_cache.prev_cpu_stats then
-      -- 前回のデータが存在する場合のみ差分計算
-      local prev_stats = system_info_cache.prev_cpu_stats
-      local total_diff = current_cpu_stats.total - prev_stats.total
-      local idle_diff = current_cpu_stats.idle - prev_stats.idle
-      local iowait_diff = current_cpu_stats.iowait - prev_stats.iowait
-
-      -- 差分が正の値で、かつ合理的な範囲内の場合のみ計算
-      if total_diff > 0 and total_diff < 1000000 then -- 異常に大きな値を防ぐ
-        -- CPU使用率 = 100% - (idle + iowait) の割合
-        local inactive_diff = idle_diff + iowait_diff
-        local cpu_usage = math.max(0, math.min(100, math.floor(((total_diff - inactive_diff) / total_diff) * 100)))
-        system_info_cache.cpu_info = string.format("CPU:%d%%", cpu_usage)
-      end
-    else
-      -- 初回はベースライン設定のみ、CPU使用率は表示しない
-      system_info_cache.cpu_info = "CPU:--"
-    end
-
-    -- 現在の統計を前回の統計として保存（計算成功後に更新）
-    system_info_cache.prev_cpu_stats = current_cpu_stats
-    system_info_cache.last_cpu_stats = current_cpu_stats
-  end
-
-  -- メモリ使用率計算
-  local mem_percentage = read_memory_info()
-  if mem_percentage then
-    system_info_cache.mem_info = string.format("MEM:%d%%", mem_percentage)
-  end
-
-  system_info_cache.last_update = current_time
-  system_info_cache.is_updating = false
-end
-
--- システム情報を取得する関数（キャッシュ版）
-local function get_system_info()
-  -- キャッシュから即座に返す（更新は非同期で実行）
-  return system_info_cache.cpu_info, system_info_cache.mem_info
-end
-
--- グローバルなシステム情報更新タイマー（アプリケーション全体で1つのみ）
-local system_update_timer = nil
-
--- 定期的なシステム情報更新を開始する関数
-local function start_system_update_timer()
-  if system_update_timer then
-    return -- 既にタイマーが動作中
-  end
-
-  local function schedule_update()
-    system_update_timer = wezterm.time.call_after(1, function()
-      update_system_info()
-      schedule_update() -- 次回の更新をスケジュール
-    end)
-  end
-
-  -- 初回実行
-  update_system_info()
-  schedule_update()
-end
-
--- 設定読み込み時にタイマーを開始
-start_system_update_timer()
-
--- ステータスバー（フッター）イベントハンドラ
-wezterm.on('update-status', function(window, pane)
-  local date = os.date('%Y-%m-%d %H:%M:%S')
-  local cpu_info, mem_info = get_system_info()
-
-  -- IME状態
-  local ime = 'IME:OFF'
-  if window.ime_active ~= nil then
-    local ok2, active = pcall(function() return window:ime_active() end)
-    if ok2 and active then
-      ime = 'IME:ON'
-    end
-  end
-
-  -- アイコンはすべて絵文字で安全に
-  local clock_icon = '🕒'
-  local cpu_icon = '🖥️'
-  local mem_icon = '💾'
-  local ime_icon = '⌨️'
-
-  window:set_right_status(wezterm.format({
-    { Foreground = { Color = "#82aaff" } },
-    { Text = clock_icon .. " " },
-    { Foreground = { Color = "#c3e88d" } },
-    { Text = date .. "  " },
-    { Foreground = { Color = "#ffcb6b" } },
-    { Text = cpu_icon .. " " },
-    { Foreground = { Color = "#ffcb6b" } },
-    { Attribute = { Intensity = "Bold" } },
-    { Text = cpu_info .. "  " },
-    { Foreground = { Color = "#f07178" } },
-    { Text = mem_icon .. " " },
-    { Foreground = { Color = "#f07178" } },
-    { Attribute = { Underline = "Single" } },
-    { Text = mem_info .. "  " },
-    { Foreground = { Color = "#82aaff" } },
-    { Text = ime_icon .. " " },
-    { Foreground = { Color = ime == 'IME:ON' and "#c3e88d" or "#f07178" } },
-    { Text = ime },
-  }))
+  -- デフォルトアクション（Launcherの表示など）を防ぐ
+  return false
 end)
 
--- マウスバインド設定
--- ・Ctrl+左クリック: 縦分割
--- ・Alt+左クリック: 横分割
--- ・右クリック: クリップボードから貼り付け
--- ・左クリック: 選択範囲をコピー
--- ・SUPER+左ドラッグ: ウィンドウ移動（Win/Commandキー）
--- ・Ctrl+Shift+左ドラッグ: ウィンドウ移動
-config.mouse_bindings = {
-  -- Ctrl+左クリックで縦分割
-  {
-    event = { Up = { streak = 1, button = 'Left' } },
-    mods = 'CTRL',
-    action = wezterm.action.SplitVertical { domain = 'CurrentPaneDomain' },
-  },
-  -- Alt+左クリックで横分割
-  {
-    event = { Up = { streak = 1, button = 'Left' } },
-    mods = 'ALT',
-    action = wezterm.action.SplitHorizontal { domain = 'CurrentPaneDomain' },
-  },
-  -- 右クリックでクリップボードから貼り付け
-  {
-    event = { Up = { streak = 1, button = 'Right' } },
-    mods = 'NONE',
-    action = wezterm.action.PasteFrom 'Clipboard',
-  },
-  -- 左クリックで選択範囲をコピー
-  {
-    event = { Up = { streak = 1, button = 'Left' } },
-    mods = 'NONE',
-    action = wezterm.action.CopyTo 'ClipboardAndPrimarySelection',
-  },
-  -- SUPER（Win/Command）+左ドラッグでウィンドウ移動
-  {
-    event = { Drag = { streak = 1, button = 'Left' } },
-    mods = 'SUPER',
-    action = wezterm.action.StartWindowDrag,
-  },
-  -- Ctrl+Shift+左ドラッグでもウィンドウ移動
-  {
-    event = { Drag = { streak = 1, button = 'Left' } },
-    mods = 'CTRL|SHIFT',
-    action = wezterm.action.StartWindowDrag,
-  },
+-- ステータスバーの更新（操作ヒントを表示）
+wezterm.on('update-status', function(window, pane)
+  local left_status = ''
+  local right_status = ''
+
+  -- アクティブなペインの数を取得
+  local tab = window:active_tab()
+  if tab then
+    local panes = tab:panes()
+    if #panes > 1 then
+      left_status = string.format('Panes: %d', #panes)
+    end
+  end
+
+  -- 右側のヒントを非表示にする
+  right_status = ''
+
+  window:set_left_status(wezterm.format {
+    { Foreground = { Color = '#888888' } },
+    { Text = left_status },
+  })
+
+  window:set_right_status(wezterm.format {
+    { Foreground = { Color = '#888888' } },
+    { Text = right_status },
+  })
+end)
+
+-- レイアウト調整用の定数
+local LAYOUT_CONFIG = {
+  -- 座標の許容誤差（ピクセル）
+  POSITION_TOLERANCE = 5,
+  -- 最小ペインサイズ
+  MIN_PANE_SIZE = 10,
+  -- レイアウト調整の最大試行回数
+  MAX_ADJUSTMENT_ATTEMPTS = 3,
 }
 
--- キーバインドも追加（便利のため）
+-- ペインのレイアウトタイプを検出する関数
+local function detect_layout_type(panes)
+  if #panes < 2 then
+    return 'single'
+  end
+
+  local positions = {}
+  for _, pane in ipairs(panes) do
+    local dims = pane:get_dimensions()
+    if dims and dims.pixel_width and dims.pixel_height then
+      table.insert(positions, {
+        x = dims.pixel_x or 0,
+        y = dims.pixel_y or 0,
+        width = dims.pixel_width,
+        height = dims.pixel_height
+      })
+    end
+  end
+
+  if #positions < 2 then
+    return 'single'
+  end
+
+  -- 座標の差を分析してレイアウトタイプを判定
+  local horizontal_count = 0
+  local vertical_count = 0
+
+  for i = 1, #positions - 1 do
+    local pos1 = positions[i]
+    local pos2 = positions[i + 1]
+
+    -- Y座標が近い場合は水平分割（左右配置）
+    if math.abs(pos1.y - pos2.y) <= LAYOUT_CONFIG.POSITION_TOLERANCE then
+      horizontal_count = horizontal_count + 1
+    end
+
+    -- X座標が近い場合は垂直分割（上下配置）
+    if math.abs(pos1.x - pos2.x) <= LAYOUT_CONFIG.POSITION_TOLERANCE then
+      vertical_count = vertical_count + 1
+    end
+  end
+
+  if horizontal_count > 0 and vertical_count == 0 then
+    return 'horizontal'
+  elseif vertical_count > 0 and horizontal_count == 0 then
+    return 'vertical'
+  elseif horizontal_count > 0 and vertical_count > 0 then
+    return 'grid'
+  else
+    return 'unknown'
+  end
+end
+
+-- ペインサイズを調整する関数
+local function adjust_pane_sizes(window, pane, layout_type, pane_count)
+  local dims = pane:get_dimensions()
+  if not dims then
+    return false
+  end
+
+  local adjustments = {}
+
+  if layout_type == 'horizontal' then
+    -- 水平分割：左右方向に均等調整
+    if dims.cols and dims.cols > LAYOUT_CONFIG.MIN_PANE_SIZE * pane_count then
+      local target_size = math.floor(dims.cols / pane_count)
+      table.insert(adjustments, act.AdjustPaneSize { 'Left', target_size })
+      table.insert(adjustments, act.AdjustPaneSize { 'Right', target_size })
+    end
+  elseif layout_type == 'vertical' then
+    -- 垂直分割：上下方向に均等調整
+    if dims.rows and dims.rows > LAYOUT_CONFIG.MIN_PANE_SIZE * pane_count then
+      local target_size = math.floor(dims.rows / pane_count)
+      table.insert(adjustments, act.AdjustPaneSize { 'Up', target_size })
+      table.insert(adjustments, act.AdjustPaneSize { 'Down', target_size })
+    end
+  elseif layout_type == 'grid' then
+    -- グリッド配置：両方向に調整
+    local sqrt_panes = math.ceil(math.sqrt(pane_count))
+    if dims.cols and dims.rows then
+      local col_size = math.floor(dims.cols / sqrt_panes)
+      local row_size = math.floor(dims.rows / sqrt_panes)
+
+      if col_size > LAYOUT_CONFIG.MIN_PANE_SIZE and row_size > LAYOUT_CONFIG.MIN_PANE_SIZE then
+        table.insert(adjustments, act.AdjustPaneSize { 'Left', col_size })
+        table.insert(adjustments, act.AdjustPaneSize { 'Right', col_size })
+        table.insert(adjustments, act.AdjustPaneSize { 'Up', row_size })
+        table.insert(adjustments, act.AdjustPaneSize { 'Down', row_size })
+      end
+    end
+  end
+
+  if #adjustments > 0 then
+    window:perform_action(act.Multiple(adjustments), pane)
+    return true
+  end
+
+  return false
+end
+
+-- レイアウト調整用のイベントハンドラー
+wezterm.on('refresh-layout', function(window, pane)
+  local tab = window:active_tab()
+  if not tab then
+    return
+  end
+
+  local panes = tab:panes()
+  local pane_count = #panes
+
+  -- 単一ペインの場合は調整不要
+  if pane_count <= 1 then
+    return
+  end
+
+  local current_pane = tab:active_pane()
+  if not current_pane then
+    return
+  end
+
+  wezterm.log_info('Refreshing layout for', pane_count, 'panes')
+
+  -- レイアウトタイプを検出
+  local layout_type = detect_layout_type(panes)
+
+  -- レイアウトが検出できない場合は何もしない
+  if layout_type == 'single' or layout_type == 'unknown' then
+    wezterm.log_info('Skipping layout adjustment for type:', layout_type)
+    return
+  end
+
+  -- アクティブなペインに再フォーカス
+  window:perform_action(act.ActivatePane { index = current_pane:pane_id() }, current_pane)
+
+  -- ペインサイズを調整
+  local success = adjust_pane_sizes(window, current_pane, layout_type, pane_count)
+
+  if success then
+    wezterm.log_info('Layout adjusted successfully for', layout_type, 'split')
+  else
+    wezterm.log_info('Layout adjustment skipped - insufficient space or invalid dimensions')
+  end
+end)
+
+-- Neovimのモード変更に応じたIME制御
+wezterm.on('user-var-changed', function(window, pane, name, value)
+  local overrides = window:get_config_overrides() or {}
+  if name == "NVIM_MODE" then
+    if value == "n" then
+      -- ノーマルモード: IMEを無効化
+      overrides.use_ime = false
+    elseif value == "i" or value == "c" then
+      -- 挿入モードまたはコマンドモード: IMEを有効化
+      overrides.use_ime = true
+    end
+    window:set_config_overrides(overrides)
+  end
+end)
+
+-- ランチャーの表示を防ぐ（もし表示されそうになった場合）
+wezterm.on('window-config-reloaded', function(window, pane)
+  -- 設定リロード時にランチャーが表示されないようにする
+  local tab = window:active_tab()
+  if tab then
+    local active_pane = tab:active_pane()
+    if active_pane then
+      -- アクティブなペインにフォーカスを戻す
+      window:perform_action(act.ActivatePane { index = 0 }, active_pane)
+    end
+  end
+end)
+
+-- 貼り付け用のキーバインド
 config.keys = {
-  -- Ctrl+Shift+| で縦分割
-  {
-    key = '|',
-    mods = 'CTRL|SHIFT',
-    action = wezterm.action.SplitVertical { domain = 'CurrentPaneDomain' },
-  },
-  -- Ctrl+Shift+- で横分割
-  {
-    key = '_',
-    mods = 'CTRL|SHIFT',
-    action = wezterm.action.SplitHorizontal { domain = 'CurrentPaneDomain' },
-  },
-  -- より簡単なキーバインドも追加
   {
     key = 'v',
-    mods = 'CTRL|ALT',
-    action = wezterm.action.SplitVertical { domain = 'CurrentPaneDomain' },
+    mods = 'CTRL|SHIFT',
+    action = act.PasteFrom 'Clipboard',
   },
+  -- Ctrl+Shift+K でターミナルリセット
+  {
+    key = 'K',
+    mods = 'CTRL|SHIFT',
+    action = act.Multiple {
+      act.ClearScrollback 'ScrollbackAndViewport',
+      act.SendKey { key = 'L', mods = 'CTRL' },
+    },
+  },
+
+  -- ペイン分割のキーバインド
+  {
+    key = 'Enter',
+    mods = 'CTRL|SHIFT',
+    action = act.SplitHorizontal { domain = 'CurrentPaneDomain' },
+  },
+  {
+    key = '\\',
+    mods = 'CTRL|SHIFT',
+    action = act.SplitVertical { domain = 'CurrentPaneDomain' },
+  },
+
+  -- 追加の分割ショートカット
   {
     key = 'h',
     mods = 'CTRL|ALT',
-    action = wezterm.action.SplitHorizontal { domain = 'CurrentPaneDomain' },
+    action = act.SplitHorizontal { domain = 'CurrentPaneDomain' },
+  },
+  {
+    key = 'v',
+    mods = 'CTRL|ALT',
+    action = act.SplitVertical { domain = 'CurrentPaneDomain' },
+  },
+
+  -- ペイン間の移動
+  {
+    key = 'LeftArrow',
+    mods = 'CTRL|SHIFT',
+    action = act.ActivatePaneDirection 'Left',
+  },
+  {
+    key = 'RightArrow',
+    mods = 'CTRL|SHIFT',
+    action = act.ActivatePaneDirection 'Right',
+  },
+  {
+    key = 'UpArrow',
+    mods = 'CTRL|SHIFT',
+    action = act.ActivatePaneDirection 'Up',
+  },
+  {
+    key = 'DownArrow',
+    mods = 'CTRL|SHIFT',
+    action = act.ActivatePaneDirection 'Down',
+  },
+
+  -- ペインのクローズ
+  {
+    key = 'w',
+    mods = 'CTRL|SHIFT',
+    action = act.CloseCurrentPane { confirm = true },
+  },
+
+  -- ペインのリサイズ
+  {
+    key = 'h',
+    mods = 'CTRL|SHIFT|ALT',
+    action = act.AdjustPaneSize { 'Left', 5 },
+  },
+  {
+    key = 'l',
+    mods = 'CTRL|SHIFT|ALT',
+    action = act.AdjustPaneSize { 'Right', 5 },
+  },
+  {
+    key = 'k',
+    mods = 'CTRL|SHIFT|ALT',
+    action = act.AdjustPaneSize { 'Up', 5 },
+  },
+  {
+    key = 'j',
+    mods = 'CTRL|SHIFT|ALT',
+    action = act.AdjustPaneSize { 'Down', 5 },
+  },
+
+  -- コマンドパレット
+  {
+    key = 'p',
+    mods = 'CTRL|SHIFT',
+    action = act.ActivateCommandPalette,
+  },
+
+  -- ランチャーのキーバインドを無効化
+  {
+    key = 'l',
+    mods = 'CTRL|SHIFT',
+    action = act.DisableDefaultAssignment,
+  },
+  {
+    key = 'L',
+    mods = 'CTRL|SHIFT',
+    action = act.DisableDefaultAssignment,
   },
 }
 
--- Finally, return the configuration to wezterm
+-- マウスバインディング（シンプル版）
+config.mouse_bindings = {
+  -- 右クリック貼り付け
+  {
+    event = { Up = { streak = 1, button = 'Right' } },
+    mods = 'NONE',
+    action = act.PasteFrom 'Clipboard',
+  },
+
+  -- タブバー領域でのドラッグ設定
+  -- 注意: WezTermのデフォルトでは、タブバー領域での左ドラッグは自動的にウィンドウ移動になります
+  -- しかし、Linux環境では明示的な設定が必要な場合があります
+
+  -- 推奨：修飾キーありのドラッグ設定（テキスト選択との競合を避ける）
+  -- Ctrl+Shift+左ドラッグでウィンドウ移動（Weztermデフォルト）
+  {
+    event = { Drag = { streak = 1, button = 'Left' } },
+    mods = 'CTRL|SHIFT',
+    action = act.StartWindowDrag,
+  },
+  -- Alt+左ドラッグでもウィンドウ移動（推奨）
+  {
+    event = { Drag = { streak = 1, button = 'Left' } },
+    mods = 'ALT',
+    action = act.StartWindowDrag,
+  },
+  -- Super（Windowsキー/Commandキー）+左ドラッグでもウィンドウ移動
+  {
+    event = { Drag = { streak = 1, button = 'Left' } },
+    mods = 'SUPER',
+    action = act.StartWindowDrag,
+  },
+}
+
 return config
