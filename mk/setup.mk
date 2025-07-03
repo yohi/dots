@@ -259,31 +259,7 @@ setup-docker:
 	@sudo modprobe ip6table_nat || true
 
 	# AppArmorの設定を確認・修正
-	@echo "🛡️  AppArmorの設定を確認中..."
-	@if [ -f /proc/sys/kernel/apparmor_restrict_unprivileged_userns ] && [ "$$(cat /proc/sys/kernel/apparmor_restrict_unprivileged_userns)" = "1" ]; then \
-		echo "⚠️  AppArmorによりunprivileged user namespacesが制限されています"; \
-		echo "🔧 AppArmorプロファイルを作成中..."; \
-		if [ ! -f "/etc/apparmor.d/home.$(USER).bin.rootlesskit" ]; then \
-			echo "# ref: https://ubuntu.com/blog/ubuntu-23-10-restricted-unprivileged-user-namespaces" | sudo tee "/etc/apparmor.d/home.$(USER).bin.rootlesskit" > /dev/null; \
-			echo "abi <abi/4.0>," | sudo tee -a "/etc/apparmor.d/home.$(USER).bin.rootlesskit" > /dev/null; \
-			echo "include <tunables/global>" | sudo tee -a "/etc/apparmor.d/home.$(USER).bin.rootlesskit" > /dev/null; \
-			echo "" | sudo tee -a "/etc/apparmor.d/home.$(USER).bin.rootlesskit" > /dev/null; \
-			echo "/home/$(USER)/bin/rootlesskit flags=(unconfined) {" | sudo tee -a "/etc/apparmor.d/home.$(USER).bin.rootlesskit" > /dev/null; \
-			echo "  userns," | sudo tee -a "/etc/apparmor.d/home.$(USER).bin.rootlesskit" > /dev/null; \
-			echo "" | sudo tee -a "/etc/apparmor.d/home.$(USER).bin.rootlesskit" > /dev/null; \
-			echo "  # Site-specific additions and overrides. See local/README for details." | sudo tee -a "/etc/apparmor.d/home.$(USER).bin.rootlesskit" > /dev/null; \
-			echo "  include if exists <local/home.$(USER).bin.rootlesskit>" | sudo tee -a "/etc/apparmor.d/home.$(USER).bin.rootlesskit" > /dev/null; \
-			echo "}" | sudo tee -a "/etc/apparmor.d/home.$(USER).bin.rootlesskit" > /dev/null; \
-			echo "✅ AppArmorプロファイルを作成しました: /etc/apparmor.d/home.$(USER).bin.rootlesskit"; \
-			echo "🔄 AppArmorサービスを再起動中..."; \
-			sudo systemctl restart apparmor.service; \
-			echo "✅ AppArmorサービスが再起動されました"; \
-		else \
-			echo "✅ AppArmorプロファイルは既に存在します"; \
-		fi; \
-	else \
-		echo "✅ AppArmorによる制限はありません"; \
-	fi
+	@$(DOTFILES_DIR)/scripts/setup-apparmor.sh
 	# Rootless Dockerのセットアップ
 	@if ! command -v dockerd-rootless-setuptool.sh >/dev/null 2>&1; then \
 		echo "📦 Rootless Dockerをインストール中..."; \
@@ -335,7 +311,10 @@ setup-development:
 	# logiopsの設定（設定ファイルが存在する場合）
 	@if [ -f "$(DOTFILES_DIR)/logid/logid.cfg" ]; then \
 		echo "🖱️  logiops設定をセットアップ中..."; \
-		sudo DEBIAN_FRONTEND=noninteractive apt install -y cmake libevdev-dev libudev-dev libconfig++-dev || true; \
+		echo "⚠️  注意: logiopsの依存関係を事前にインストールしてください"; \
+		echo "   必要な依存関係: cmake libevdev-dev libudev-dev libconfig++-dev"; \
+		echo "   インストールコマンド: sudo apt install -y cmake libevdev-dev libudev-dev libconfig++-dev"; \
+		echo "   または、make setup-logiops-deps を実行してください"; \
 		if [ ! -L "/etc/logid.cfg" ]; then \
 			if [ -f "/etc/logid.cfg" ]; then \
 				echo "⚠️  既存のlogid設定をバックアップ中..."; \
@@ -351,6 +330,15 @@ setup-development:
 	fi
 
 	@echo "✅ 追加の開発環境設定が完了しました。"
+
+# logiops依存関係のインストール
+setup-logiops-deps:
+	@echo "🖱️  logiops依存関係をインストール中..."
+	@echo "📦 必要な依存関係: cmake libevdev-dev libudev-dev libconfig++-dev"
+	@sudo DEBIAN_FRONTEND=noninteractive apt-get update || true
+	@sudo DEBIAN_FRONTEND=noninteractive apt-get install -y cmake libevdev-dev libudev-dev libconfig++-dev || true
+	@echo "✅ logiops依存関係のインストールが完了しました"
+	@echo "ℹ️  logiopsの設定を適用するには: make setup-development"
 
 # キーボードショートカットの設定
 setup-shortcuts:
