@@ -4,7 +4,7 @@
 
 .PHONY: all help system-setup install-homebrew install-apps install-deb install-flatpak \
         setup-vim setup-zsh setup-wezterm setup-vscode setup-cursor setup-git setup-docker setup-development setup-shortcuts \
-        setup-gnome-extensions setup-gnome-tweaks backup-gnome-tweaks export-gnome-tweaks setup-all clean system-config clean-repos install-cursor install-fuse install-cica-fonts install-ibm-plex-fonts install-mysql-workbench \
+        setup-gnome-extensions setup-gnome-tweaks backup-gnome-tweaks export-gnome-tweaks setup-all clean system-config clean-repos install-cursor install-wezterm install-fuse install-cica-fonts install-ibm-plex-fonts install-mysql-workbench \
         test-extensions extensions-status fix-extensions-schema
 
 # デフォルトターゲット
@@ -36,6 +36,7 @@ help:
 	@echo "  make export-gnome-tweaks   - Gnome Tweaks の設定をエクスポート"
 	@echo "  make setup-all             - すべての設定をセットアップ"
 	@echo "  make install-fuse      - AppImage実行用のFUSEパッケージをインストール"
+	@echo "  make install-wezterm   - WezTerm（AppImage版）をインストール"
 	@echo "  make install-cica-fonts - Cica Nerd Fontsをインストール"
 	@echo "  make install-mysql-workbench - MySQL Workbenchをインストール"
 	@echo "  make clean             - シンボリックリンクを削除"
@@ -45,7 +46,8 @@ help:
 	@echo "📦 推奨実行順序:"
 	@echo "  1. make system-setup"
 	@echo "  2. make install-homebrew"
-	@echo "  3. make setup-all"
+	@echo "  3. make install-deb       (IDE・ブラウザ・WezTerm含む)"
+	@echo "  4. make setup-all"
 	@echo ""
 	@echo "🌏 日本語環境について:"
 	@echo "  'make system-setup' で日本語フォント・ロケール・mozc（日本語入力）がインストールされます"
@@ -61,7 +63,9 @@ help:
 	@echo "  'make install-deb' で以下のIDEがインストールされます:"
 	@echo "    - Visual Studio Code (公式リポジトリから)"
 	@echo "    - Cursor IDE (AppImageとして /opt/cursor にインストール)"
+	@echo "    - WezTerm (AppImageとして /opt/wezterm にインストール)"
 	@echo "  'make install-cursor' でCursor IDEをインストール"
+	@echo "  'make install-wezterm' でWezTerm（AppImage版）をインストール"
 	@echo ""
 	@echo "📧 Eメールアドレスの設定:"
 	@echo "  環境変数で指定: EMAIL=your@email.com make setup-git"
@@ -810,13 +814,8 @@ install-deb:
 	sudo gdebi -n session-manager-plugin.deb 2>/dev/null || \
 	echo "⚠️  AWS Session Manager Pluginのインストールに失敗しました"
 
-	# WezTerm
-	@cd /tmp && \
-	echo "🖥️  WezTermをインストール中..." && \
-	wget -q https://github.com/wez/wezterm/releases/download/20240203-110809-5046fc22/wezterm-20240203-110809-5046fc22.Ubuntu22.04.deb 2>/dev/null && \
-	sudo gdebi -n wezterm-20240203-110809-5046fc22.Ubuntu22.04.deb 2>/dev/null && \
-	echo "✅ WezTermのインストールが完了しました" || \
-	echo "⚠️  WezTermのインストールに失敗しました"
+	# WezTerm (AppImage版)
+	@$(MAKE) install-wezterm
 
 	@update-apt-xapian-index -vf 2>/dev/null || true
 
@@ -1368,6 +1367,20 @@ clean:
 		echo "ℹ️  logidサービスを停止するには: sudo systemctl stop logid"; \
 	fi
 
+	# WezTerm AppImageの削除
+	@if [ -f "/opt/wezterm/wezterm.AppImage" ]; then \
+		echo "🖥️  WezTerm AppImageを削除中..."; \
+		sudo rm -rf /opt/wezterm; \
+		sudo rm -f /usr/local/bin/wezterm; \
+		sudo rm -f /usr/share/applications/wezterm.desktop; \
+		sudo rm -f /usr/share/pixmaps/wezterm.png; \
+		sudo rm -f /usr/share/icons/hicolor/48x48/apps/wezterm.png; \
+		sudo rm -f /usr/share/icons/hicolor/64x64/apps/wezterm.png; \
+		echo "🔄 アイコンキャッシュを更新中..."; \
+		sudo gtk-update-icon-cache /usr/share/icons/hicolor 2>/dev/null || true; \
+		echo "✅ WezTerm AppImageが削除されました"; \
+	fi
+
 	@echo "✅ クリーンアップが完了しました。"
 
 # デバッグ用：パスと環境変数を確認
@@ -1389,6 +1402,228 @@ debug:
 	@echo ""
 	@echo "🔑 SSH鍵の状況:"
 	@echo "SSH鍵存在: $(shell [ -f $(HOME_DIR)/.ssh/id_ed25519 ] && echo 'Yes' || echo 'No')"
+
+# WezTerm のインストール（AppImage版）
+install-wezterm:
+	@echo "🖥️  WezTerm AppImage のインストールを開始します..."
+	@WEZTERM_INSTALLED=false && \
+	\
+	echo "🔍 既存のWezTermを確認中..." && \
+	if [ -f /opt/wezterm/wezterm.AppImage ]; then \
+		echo "✅ WezTermは既にインストールされています"; \
+		WEZTERM_INSTALLED=true; \
+	fi && \
+	\
+	if [ "$$WEZTERM_INSTALLED" = "false" ]; then \
+		echo "📦 WezTerm最新版の情報を取得中..." && \
+		cd /tmp && \
+		LATEST_VERSION=$$(curl -s https://api.github.com/repos/wez/wezterm/releases/latest | grep -o '"tag_name": "[^"]*' | grep -o '[^"]*$$' 2>/dev/null || echo "20240203-110809-5046fc22"); \
+		echo "📊 検出されたバージョン: $$LATEST_VERSION"; \
+		\
+		DOWNLOAD_URL="https://github.com/wez/wezterm/releases/download/$$LATEST_VERSION/WezTerm-$$LATEST_VERSION-Ubuntu20.04.AppImage"; \
+		echo "🔗 ダウンロードURL: $$DOWNLOAD_URL"; \
+		\
+		echo "📥 WezTerm AppImage v$$LATEST_VERSION をダウンロード中..."; \
+		if curl -L --max-time 300 --retry 3 --retry-delay 10 \
+			-o wezterm.AppImage "$$DOWNLOAD_URL" 2>/dev/null; then \
+			FILE_SIZE=$$(stat -c%s wezterm.AppImage 2>/dev/null || echo "0"); \
+			if [ "$$FILE_SIZE" -gt 30000000 ]; then \
+				echo "✅ ダウンロード完了（サイズ: $$FILE_SIZE bytes）"; \
+				WEZTERM_INSTALLED=true; \
+			else \
+				echo "❌ ダウンロードファイルが小さすぎます（サイズ: $$FILE_SIZE bytes）"; \
+				rm -f wezterm.AppImage; \
+				\
+				echo "🔄 フォールバック: 固定バージョンを試行中..."; \
+				FALLBACK_URL="https://github.com/wez/wezterm/releases/download/20240203-110809-5046fc22/WezTerm-20240203-110809-5046fc22-Ubuntu20.04.AppImage"; \
+				if curl -L --max-time 300 --retry 3 --retry-delay 10 \
+					-o wezterm.AppImage "$$FALLBACK_URL" 2>/dev/null; then \
+					FILE_SIZE=$$(stat -c%s wezterm.AppImage 2>/dev/null || echo "0"); \
+					if [ "$$FILE_SIZE" -gt 30000000 ]; then \
+						echo "✅ フォールバックダウンロードが成功しました（サイズ: $$FILE_SIZE bytes）"; \
+						WEZTERM_INSTALLED=true; \
+					else \
+						echo "❌ フォールバックダウンロードファイルも小さすぎます"; \
+						rm -f wezterm.AppImage; \
+					fi; \
+				else \
+					echo "❌ フォールバックダウンロードにも失敗しました"; \
+				fi; \
+			fi; \
+		else \
+			echo "❌ ダウンロードに失敗しました"; \
+		fi; \
+	fi && \
+	\
+	if [ "$$WEZTERM_INSTALLED" = "true" ]; then \
+		echo "🔧 WezTermのセットアップを開始します..."; \
+		if [ -f /tmp/wezterm.AppImage ]; then \
+			chmod +x /tmp/wezterm.AppImage; \
+		fi; \
+		sudo mkdir -p /opt/wezterm && \
+		if [ -f /tmp/wezterm.AppImage ]; then \
+			sudo mv /tmp/wezterm.AppImage /opt/wezterm/wezterm.AppImage; \
+		fi; \
+		\
+		echo "🖼️ WezTermアイコンを抽出・配置中..."; \
+		ICON_EXTRACTED=false; \
+		WORK_DIR="/tmp/wezterm_extract_$$$$"; \
+		mkdir -p "$$WORK_DIR" && \
+		cd "$$WORK_DIR" && \
+		rm -rf squashfs-root 2>/dev/null || true; \
+		\
+		echo "🔍 AppImageからアイコンを抽出中..."; \
+		if /opt/wezterm/wezterm.AppImage --appimage-extract 2>/dev/null; then \
+			echo "✅ AppImage展開完了"; \
+			\
+			echo "🔎 AppImage内のアイコンファイルを検索中..."; \
+			find squashfs-root -name "*.png" -o -name "*.svg" | grep -i wezterm | head -5 | while read icon_file; do \
+				echo "🔍 発見: $$icon_file"; \
+			done; \
+			\
+			ICON_FOUND=false; \
+			BEST_ICON=""; \
+			\
+			echo "🎯 最適なアイコンを選択中..."; \
+			for search_pattern in "org.wezfurlong.wezterm.png" "wezterm.png" "WezTerm.png"; do \
+				FOUND_ICON=$$(find squashfs-root -name "$$search_pattern" -type f | head -1); \
+				if [ -n "$$FOUND_ICON" ] && [ -f "$$FOUND_ICON" ]; then \
+					echo "🎯 優先アイコン発見: $$FOUND_ICON"; \
+					BEST_ICON="$$FOUND_ICON"; \
+					ICON_FOUND=true; \
+					break; \
+				fi; \
+			done; \
+			\
+			if [ "$$ICON_FOUND" = "false" ]; then \
+				echo "🔍 より広範囲でアイコンを検索中..."; \
+				BEST_ICON=$$(find squashfs-root -name "*.png" | grep -i wezterm | head -1); \
+				if [ -n "$$BEST_ICON" ] && [ -f "$$BEST_ICON" ]; then \
+					echo "📁 代替アイコン発見: $$BEST_ICON"; \
+					ICON_FOUND=true; \
+				else \
+					echo "🔍 任意のPNGアイコンを検索中..."; \
+					BEST_ICON=$$(find squashfs-root -name "*.png" -path "*/icon*" | head -1); \
+					if [ -n "$$BEST_ICON" ] && [ -f "$$BEST_ICON" ]; then \
+						echo "📁 汎用アイコン発見: $$BEST_ICON"; \
+						ICON_FOUND=true; \
+					fi; \
+				fi; \
+			fi; \
+			\
+			if [ "$$ICON_FOUND" = "true" ] && [ -n "$$BEST_ICON" ]; then \
+				echo "✅ WezTermアイコンを配置します: $$BEST_ICON"; \
+				sudo mkdir -p /opt/wezterm; \
+				sudo cp "$$BEST_ICON" /opt/wezterm/wezterm.png && \
+				ICON_EXTRACTED=true && \
+				echo "📋 アイコンファイルを確認:"; \
+				ls -la /opt/wezterm/wezterm.png 2>/dev/null || echo "❌ アイコンファイルが見つかりません"; \
+			else \
+				echo "❌ 利用可能なアイコンが見つかりませんでした"; \
+			fi; \
+			\
+			rm -rf squashfs-root 2>/dev/null || true; \
+		else \
+			echo "❌ AppImageの展開に失敗しました"; \
+		fi; \
+		\
+		cd /tmp && rm -rf "$$WORK_DIR" 2>/dev/null || true; \
+		\
+		if [ "$$ICON_EXTRACTED" = "true" ]; then \
+			ICON_PATH="/opt/wezterm/wezterm.png"; \
+			echo "🎨 アイコンパス設定: $$ICON_PATH"; \
+		else \
+			echo "⚠️  WezTermアイコンの抽出に失敗、デフォルトアイコンを使用します"; \
+			ICON_PATH="utilities-terminal"; \
+		fi; \
+		\
+		echo "📝 デスクトップエントリーを作成中..." && \
+		echo "🔍 アイコンファイルの最終確認:"; \
+		if [ -f "/opt/wezterm/wezterm.png" ]; then \
+			echo "✅ アイコンファイルが存在します: /opt/wezterm/wezterm.png"; \
+			echo "📊 アイコンファイル情報:"; \
+			ls -la /opt/wezterm/wezterm.png 2>/dev/null || echo "❌ ls コマンドでファイルが見つかりません"; \
+		else \
+			echo "❌ アイコンファイルが見つかりません: /opt/wezterm/wezterm.png"; \
+			echo "🔍 /opt/wezterm/ ディレクトリの内容:"; \
+			ls -la /opt/wezterm/ 2>/dev/null || echo "❌ /opt/wezterm/ ディレクトリが存在しません"; \
+		fi; \
+		echo "🎨 設定されるアイコンパス: $$ICON_PATH"; \
+		echo ""; \
+		echo "[Desktop Entry]" | sudo tee /usr/share/applications/wezterm.desktop > /dev/null && \
+		echo "Name=WezTerm" | sudo tee -a /usr/share/applications/wezterm.desktop > /dev/null && \
+		echo "Comment=A powerful cross-platform terminal emulator and multiplexer" | sudo tee -a /usr/share/applications/wezterm.desktop > /dev/null && \
+		echo "Exec=/opt/wezterm/wezterm.AppImage start --cwd ." | sudo tee -a /usr/share/applications/wezterm.desktop > /dev/null && \
+		echo "Icon=wezterm" | sudo tee -a /usr/share/applications/wezterm.desktop > /dev/null && \
+		echo "Terminal=false" | sudo tee -a /usr/share/applications/wezterm.desktop > /dev/null && \
+		echo "Type=Application" | sudo tee -a /usr/share/applications/wezterm.desktop > /dev/null && \
+		echo "Categories=System;TerminalEmulator;Utility;" | sudo tee -a /usr/share/applications/wezterm.desktop > /dev/null && \
+		echo "MimeType=application/x-shellscript;" | sudo tee -a /usr/share/applications/wezterm.desktop > /dev/null && \
+		echo "StartupWMClass=org.wezfurlong.wezterm" | sudo tee -a /usr/share/applications/wezterm.desktop > /dev/null && \
+		echo "Keywords=terminal;console;cli;" | sudo tee -a /usr/share/applications/wezterm.desktop > /dev/null && \
+		\
+		echo "🎨 アイコンをシステムディレクトリにコピー中..." && \
+		sudo mkdir -p /usr/share/icons/hicolor/128x128/apps && \
+		if [ -f /opt/wezterm/wezterm.png ]; then \
+			sudo cp /opt/wezterm/wezterm.png /usr/share/icons/hicolor/128x128/apps/wezterm.png; \
+			echo "✅ アイコンをシステムディレクトリにコピーしました"; \
+		else \
+			echo "⚠️  アイコンファイルが見つかりません"; \
+		fi && \
+		sudo gtk-update-icon-cache /usr/share/icons/hicolor/ -f 2>/dev/null || true && \
+		\
+		sudo chmod +x /usr/share/applications/wezterm.desktop && \
+		sudo update-desktop-database 2>/dev/null || true && \
+		echo ""; \
+		echo "📋 作成されたデスクトップエントリーファイルの内容:"; \
+		echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"; \
+		sudo cat /usr/share/applications/wezterm.desktop 2>/dev/null || echo "❌ デスクトップエントリーファイルが見つかりません"; \
+		echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"; \
+		echo ""; \
+		\
+		echo "🔧 AppImageの権限を設定中..." && \
+		sudo chmod +x /opt/wezterm/wezterm.AppImage && \
+		\
+		echo "🔗 シンボリックリンクを作成中..." && \
+		sudo ln -sf /opt/wezterm/wezterm.AppImage /usr/local/bin/wezterm && \
+		\
+		echo "✅ WezTermのインストールが完了しました"; \
+		echo ""; \
+		echo "🚀 WezTermを起動するには:"; \
+		echo "   1. アプリケーションメニューから 'WezTerm' を検索"; \
+		echo "   2. ターミナルから: wezterm"; \
+		echo "   3. 直接実行: /opt/wezterm/wezterm.AppImage"; \
+		echo ""; \
+		echo "📝 設定ファイル: ~/.config/wezterm/wezterm.lua"; \
+		echo ""; \
+		echo "🎨 アイコンについて:"; \
+		if [ -f "/opt/wezterm/wezterm.png" ]; then \
+			echo "   ✅ アイコンが正常に配置されました"; \
+			echo "   📁 アイコンファイル: /opt/wezterm/wezterm.png"; \
+		else \
+			echo "   ⚠️  アイコンの配置に問題があります"; \
+			echo "   🔧 アイコンが表示されない場合:"; \
+			echo "      - GNOME Shell を再起動してください (Alt + F2 → 'r' → Enter)"; \
+			echo "      - Waylandの場合はログアウト/ログインしてください"; \
+		fi; \
+	else \
+		echo "⚠️  WezTermの自動インストールに失敗しました"; \
+		echo ""; \
+		echo "🔍 トラブルシューティング:"; \
+		echo "1. インターネット接続を確認してください"; \
+		echo "2. ファイアウォールの設定を確認してください"; \
+		echo "3. 以下のコマンドで手動でダウンロードを試行してください:"; \
+		echo "   curl -L -o wezterm.AppImage https://github.com/wez/wezterm/releases/latest/download/WezTerm-latest-Ubuntu20.04.AppImage"; \
+		echo ""; \
+		echo "💡 手動インストール方法:"; \
+		echo "1. https://github.com/wez/wezterm/releases にアクセス"; \
+		echo "2. 最新版の 'WezTerm-*-Ubuntu20.04.AppImage' をダウンロード"; \
+		echo "3. ダウンロードしたAppImageファイルを以下に配置:"; \
+		echo "   sudo mkdir -p /opt/wezterm"; \
+		echo "   sudo mv WezTerm-*.AppImage /opt/wezterm/wezterm.AppImage"; \
+		echo "   sudo chmod +x /opt/wezterm/wezterm.AppImage"; \
+		echo "   sudo ln -sf /opt/wezterm/wezterm.AppImage /usr/local/bin/wezterm"; \
+	fi
 
 # Cursor IDEのインストール（統合版）
 install-cursor:
