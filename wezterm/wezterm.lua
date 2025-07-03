@@ -23,13 +23,7 @@ config.use_ime = true  -- IMEを有効にする
 config.ime_preedit_rendering = 'Builtin'  -- IMEプリエディットの表示方法
 
 -- ウィンドウ装飾設定
--- config.window_decorations = "TITLE | RESIZE"  -- タイトルバーとリサイズ可能な境界線を有効
 config.window_decorations = "INTEGRATED_BUTTONS | RESIZE"  -- 統合ボタンモード（タブバーにウィンドウ制御ボタンを配置）
-
--- Unity環境では"RESIZE"でもタイトルバーが表示されるため、統合ボタンモードを使用
--- 統合ボタンモードではタブバーにボタンが統合されてタイトルバーが非表示になる
--- config.window_decorations = "INTEGRATED_BUTTONS | RESIZE"  -- タブバーにボタンを統合、タイトルバー非表示
--- config.window_decorations = "INTEGRATED_BUTTONS | RESIZE"  -- タイトルバーを非表示にし、タブバーにウィンドウ制御ボタンを配置
 
 -- Linux環境での追加設定
 if wezterm.target_triple:find("linux") then

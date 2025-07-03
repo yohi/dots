@@ -69,35 +69,8 @@ return {
                 })
             end
 
-            -- vim.cmd("let g:python3_host_prog = system('echo -n $(which python3)')")
-
-            -- local bufnr = vim.api.nvim_get_current_buf()
-            -- print("bufnr")
-            -- print(bufnr)
-            -- local filepath = vim.api.nvim_buf_get_name(bufnr)
-            -- print('filepath')
-            -- print(filepath)
-            -- local venv_path = lsp_config.util.root_pattern('.venv')
-            -- print('venv_path')
-            -- print(venv_path)
-            -- local python_path = nil
-            -- python_path = vim.g.python3_host_prog
-            -- -- if (venv_path == nil) then
-            -- --     print('a')
-            -- --     python_path = vim.g.python3_host_prog
-            -- -- else
-            -- --     print('b')
-            -- --     python_path = util.path.join(
-            -- --         venv_path,
-            -- --         '.venv',
-            -- --         'bin',
-            -- --         'python'
-            -- --     )
-            -- -- end
-            -- print('python_path')
-            -- print(python_path)
-            -- print('venv_path')
-            -- print(venv_path(filepath))
+            -- Python環境設定
+            vim.cmd("let g:python3_host_prog = system('echo -n $(which python3)')")
 
             lsp_config.basedpyright.setup({
                 root_dir = function(fname)
@@ -254,5 +227,3 @@ return {
     },
 
 }
-
-

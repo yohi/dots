@@ -51,58 +51,25 @@ ln -nfs ~/dots/vim/rc/vimrc ~/.config/nvim/init.vim
 :Lazy clean           " 未使用プラグイン削除
 ```
 
+## 🎯 主要プラグイン
+
+### AI統合
+- **Avante**: Claude/OpenAI統合
+- **Copilot**: GitHub Copilot統合
+- **CopilotChat**: AI会話機能
+
+### 言語サーバー
+- **Mason**: LSPサーバー管理
+- **nvim-lspconfig**: LSP設定
+- **nvim-cmp**: 補完エンジン
+
+### UI/UX
+- **Telescope**: ファジーファインダー
+- **Trouble**: エラー表示
+- **Barbecue**: パンくずリスト
+
+### Git統合
+- **Gitgutter**: Git差分表示
+- **Lazygit**: Git TUI統合
+
 詳細は [CLAUDE.md](../CLAUDE.md) を参照してください。
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
