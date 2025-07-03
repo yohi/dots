@@ -54,7 +54,7 @@ install-homebrew:
 			if ! grep -q 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"' $(HOME_DIR)/.zshrc 2>/dev/null; then \
 				echo "📝 .zshrcにHomebrew設定を追加中..."; \
 				echo '' >> $(HOME_DIR)/.zshrc 2>/dev/null || touch $(HOME_DIR)/.zshrc; \
-				echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"' >> $(HOME_DIR)/.zshrci; \
+				echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"' >> $(HOME_DIR)/.zshrc; \
 			else \
 				echo "✅ .zshrcには既にHomebrew設定が存在します"; \
 			fi; \

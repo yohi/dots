@@ -72,7 +72,7 @@ setup-zsh:
 		echo 'alias egrep="egrep --color=auto"' >> $(DOTFILES_DIR)/zsh/zshrc; \
 		echo "" >> $(DOTFILES_DIR)/zsh/zshrc; \
 		echo "# Development tools" >> $(DOTFILES_DIR)/zsh/zshrc; \
-		echo 'export DOCKER_HOST=unix:///run/user/1000/docker.sock' >> $(DOTFILES_DIR)/zsh/zshrc; \
+		echo 'export DOCKER_HOST=unix:///run/user/'$$(id -u)'/docker.sock' >> $(DOTFILES_DIR)/zsh/zshrc; \
 		echo 'export PATH=$$HOME/bin:$$PATH' >> $(DOTFILES_DIR)/zsh/zshrc; \
 		echo 'export PATH=$$PATH:/sbin' >> $(DOTFILES_DIR)/zsh/zshrc; \
 	else \
@@ -205,15 +205,20 @@ setup-git:
 		echo "   Email: $$CURRENT_EMAIL"; \
 	else \
 		echo "📧 Git設定をセットアップします。"; \
+		if [ -n "$(GIT_USER_NAME)" ]; then \
+			GIT_NAME="$(GIT_USER_NAME)"; \
+		else \
+			read -p "Gitで使用するユーザー名を入力してください: " GIT_NAME; \
+		fi; \
 		if [ -n "$(EMAIL)" ]; then \
-			git config --global user.name 'Yusuke Ohi'; \
+			git config --global user.name "$$GIT_NAME"; \
 			git config --global user.email '$(EMAIL)'; \
-			echo "✅ Git設定完了 - Email: $(EMAIL)"; \
+			echo "✅ Git設定完了 - Name: $$GIT_NAME, Email: $(EMAIL)"; \
 		else \
 			read -p "Gitで使用するEメールアドレスを入力してください: " EMAIL_INPUT; \
-			git config --global user.name 'Yusuke Ohi'; \
+			git config --global user.name "$$GIT_NAME"; \
 			git config --global user.email "$$EMAIL_INPUT"; \
-			echo "✅ Git設定完了 - Email: $$EMAIL_INPUT"; \
+			echo "✅ Git設定完了 - Name: $$GIT_NAME, Email: $$EMAIL_INPUT"; \
 		fi; \
 	fi
 
