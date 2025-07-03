@@ -201,102 +201,157 @@ wezterm.on('update-status', function(window, pane)
   })
 end)
 
--- レイアウト調整用のイベントハンドラー
-wezterm.on('refresh-layout', function(window, pane)
-  -- 分割後のレイアウトを調整
-  local tab = window:active_tab()
-  if tab then
-    local panes = tab:panes()
-    if #panes > 1 then
-      -- 複数のペインがある場合、レイアウトを調整
-      wezterm.log_info('Refreshing layout for', #panes, 'panes')
+-- レイアウト調整用の定数
+local LAYOUT_CONFIG = {
+  -- 座標の許容誤差（ピクセル）
+  POSITION_TOLERANCE = 5,
+  -- 最小ペインサイズ
+  MIN_PANE_SIZE = 10,
+  -- レイアウト調整の最大試行回数
+  MAX_ADJUSTMENT_ATTEMPTS = 3,
+}
 
-      -- 少し待機してからレイアウトを強制的に更新
-      wezterm.sleep_ms(50)
+-- ペインのレイアウトタイプを検出する関数
+local function detect_layout_type(panes)
+  if #panes < 2 then
+    return 'single'
+  end
 
-      -- 現在のペインのサイズを取得して調整
-      local current_pane = tab:active_pane()
-      if current_pane then
-        -- アクティブなペインに再フォーカス
-        window:perform_action(act.ActivatePane { index = current_pane:pane_id() }, current_pane)
+  local positions = {}
+  for _, pane in ipairs(panes) do
+    local dims = pane:get_dimensions()
+    if dims and dims.pixel_width and dims.pixel_height then
+      table.insert(positions, {
+        x = dims.pixel_x or 0,
+        y = dims.pixel_y or 0,
+        width = dims.pixel_width,
+        height = dims.pixel_height
+      })
+    end
+  end
 
-        -- 分割後のペインサイズを均等に調整
-        -- 分割タイプを検出してサイズ調整方向を決定
-        local dims = current_pane:get_dimensions()
-        if dims then
-          -- ペインの配置を分析して分割タイプを判定
-          local pane_positions = {}
-          for i, pane in ipairs(panes) do
-            local pane_dims = pane:get_dimensions()
-            if pane_dims and pane_dims.pixel_width and pane_dims.pixel_height then
-              table.insert(pane_positions, {
-                x = pane_dims.pixel_x or 0,
-                y = pane_dims.pixel_y or 0,
-                width = pane_dims.pixel_width,
-                height = pane_dims.pixel_height
-              })
-            end
-          end
+  if #positions < 2 then
+    return 'single'
+  end
 
-          -- 分割タイプの判定
-          local is_horizontal_split = false
-          local is_vertical_split = false
+  -- 座標の差を分析してレイアウトタイプを判定
+  local horizontal_count = 0
+  local vertical_count = 0
 
-          if #pane_positions >= 2 then
-            -- ペインが横に並んでいる場合（水平分割）
-            local same_y_count = 0
-            local same_x_count = 0
+  for i = 1, #positions - 1 do
+    local pos1 = positions[i]
+    local pos2 = positions[i + 1]
 
-            for i = 1, #pane_positions - 1 do
-              local pos1 = pane_positions[i]
-              local pos2 = pane_positions[i + 1]
+    -- Y座標が近い場合は水平分割（左右配置）
+    if math.abs(pos1.y - pos2.y) <= LAYOUT_CONFIG.POSITION_TOLERANCE then
+      horizontal_count = horizontal_count + 1
+    end
 
-              -- Y座標が同じ場合、水平分割（左右に並んでいる）
-              if math.abs(pos1.y - pos2.y) < 5 then
-                same_y_count = same_y_count + 1
-              end
+    -- X座標が近い場合は垂直分割（上下配置）
+    if math.abs(pos1.x - pos2.x) <= LAYOUT_CONFIG.POSITION_TOLERANCE then
+      vertical_count = vertical_count + 1
+    end
+  end
 
-              -- X座標が同じ場合、垂直分割（上下に並んでいる）
-              if math.abs(pos1.x - pos2.x) < 5 then
-                same_x_count = same_x_count + 1
-              end
-            end
+  if horizontal_count > 0 and vertical_count == 0 then
+    return 'horizontal'
+  elseif vertical_count > 0 and horizontal_count == 0 then
+    return 'vertical'
+  elseif horizontal_count > 0 and vertical_count > 0 then
+    return 'grid'
+  else
+    return 'unknown'
+  end
+end
 
-            is_horizontal_split = same_y_count > 0
-            is_vertical_split = same_x_count > 0
-          end
+-- ペインサイズを調整する関数
+local function adjust_pane_sizes(window, pane, layout_type, pane_count)
+  local dims = pane:get_dimensions()
+  if not dims then
+    return false
+  end
 
-          -- 分割タイプに応じたサイズ調整
-          if is_horizontal_split and not is_vertical_split then
-            -- 水平分割（左右に並んでいる）の場合、左右方向で調整
-            if dims.cols then
-              window:perform_action(act.Multiple {
-                act.AdjustPaneSize { 'Left', math.floor(dims.cols / #panes) },
-                act.AdjustPaneSize { 'Right', math.floor(dims.cols / #panes) },
-              }, current_pane)
-            end
-          elseif is_vertical_split and not is_horizontal_split then
-            -- 垂直分割（上下に並んでいる）の場合、上下方向で調整
-            if dims.rows then
-              window:perform_action(act.Multiple {
-                act.AdjustPaneSize { 'Up', math.floor(dims.rows / #panes) },
-                act.AdjustPaneSize { 'Down', math.floor(dims.rows / #panes) },
-              }, current_pane)
-            end
-          elseif is_horizontal_split and is_vertical_split then
-            -- 複雑なレイアウト（グリッド状）の場合、両方向で調整
-            if dims.cols and dims.rows then
-              window:perform_action(act.Multiple {
-                act.AdjustPaneSize { 'Left', math.floor(dims.cols / (#panes / 2)) },
-                act.AdjustPaneSize { 'Right', math.floor(dims.cols / (#panes / 2)) },
-                act.AdjustPaneSize { 'Up', math.floor(dims.rows / (#panes / 2)) },
-                act.AdjustPaneSize { 'Down', math.floor(dims.rows / (#panes / 2)) },
-              }, current_pane)
-            end
-          end
-        end
+  local adjustments = {}
+
+  if layout_type == 'horizontal' then
+    -- 水平分割：左右方向に均等調整
+    if dims.cols and dims.cols > LAYOUT_CONFIG.MIN_PANE_SIZE * pane_count then
+      local target_size = math.floor(dims.cols / pane_count)
+      table.insert(adjustments, act.AdjustPaneSize { 'Left', target_size })
+      table.insert(adjustments, act.AdjustPaneSize { 'Right', target_size })
+    end
+  elseif layout_type == 'vertical' then
+    -- 垂直分割：上下方向に均等調整
+    if dims.rows and dims.rows > LAYOUT_CONFIG.MIN_PANE_SIZE * pane_count then
+      local target_size = math.floor(dims.rows / pane_count)
+      table.insert(adjustments, act.AdjustPaneSize { 'Up', target_size })
+      table.insert(adjustments, act.AdjustPaneSize { 'Down', target_size })
+    end
+  elseif layout_type == 'grid' then
+    -- グリッド配置：両方向に調整
+    local sqrt_panes = math.ceil(math.sqrt(pane_count))
+    if dims.cols and dims.rows then
+      local col_size = math.floor(dims.cols / sqrt_panes)
+      local row_size = math.floor(dims.rows / sqrt_panes)
+
+      if col_size > LAYOUT_CONFIG.MIN_PANE_SIZE and row_size > LAYOUT_CONFIG.MIN_PANE_SIZE then
+        table.insert(adjustments, act.AdjustPaneSize { 'Left', col_size })
+        table.insert(adjustments, act.AdjustPaneSize { 'Right', col_size })
+        table.insert(adjustments, act.AdjustPaneSize { 'Up', row_size })
+        table.insert(adjustments, act.AdjustPaneSize { 'Down', row_size })
       end
     end
+  end
+
+  if #adjustments > 0 then
+    window:perform_action(act.Multiple(adjustments), pane)
+    return true
+  end
+
+  return false
+end
+
+-- レイアウト調整用のイベントハンドラー
+wezterm.on('refresh-layout', function(window, pane)
+  local tab = window:active_tab()
+  if not tab then
+    return
+  end
+
+  local panes = tab:panes()
+  local pane_count = #panes
+
+  -- 単一ペインの場合は調整不要
+  if pane_count <= 1 then
+    return
+  end
+
+  local current_pane = tab:active_pane()
+  if not current_pane then
+    return
+  end
+
+  wezterm.log_info('Refreshing layout for', pane_count, 'panes')
+
+  -- レイアウトタイプを検出
+  local layout_type = detect_layout_type(panes)
+
+  -- レイアウトが検出できない場合は何もしない
+  if layout_type == 'single' or layout_type == 'unknown' then
+    wezterm.log_info('Skipping layout adjustment for type:', layout_type)
+    return
+  end
+
+  -- アクティブなペインに再フォーカス
+  window:perform_action(act.ActivatePane { index = current_pane:pane_id() }, current_pane)
+
+  -- ペインサイズを調整
+  local success = adjust_pane_sizes(window, current_pane, layout_type, pane_count)
+
+  if success then
+    wezterm.log_info('Layout adjusted successfully for', layout_type, 'split')
+  else
+    wezterm.log_info('Layout adjustment skipped - insufficient space or invalid dimensions')
   end
 end)
 
