@@ -150,7 +150,7 @@ wezterm.on('new-tab-button-click', function(window, pane, button, default_action
     -- 左クリック：通常の新しいタブを作成
     window:perform_action(act.SpawnTab 'CurrentPaneDomain', pane)
   elseif button == 'Right' then
-    -- 右クリック：縦分割（上下分割）でペインを作成 - SplitHorizontalを使用
+    -- 右クリック：横分割（上下分割）でペインを作成 - SplitHorizontalを使用
     -- 複数のアクションを順番に実行して、レイアウトを適切に調整
     window:perform_action(act.Multiple {
       act.SplitHorizontal { domain = 'CurrentPaneDomain' },
@@ -160,7 +160,7 @@ wezterm.on('new-tab-button-click', function(window, pane, button, default_action
       act.EmitEvent 'refresh-layout',
     }, pane)
   elseif button == 'Middle' then
-    -- 中クリック：横分割（左右分割）でペインを作成 - SplitVerticalを使用
+    -- 中クリック：縦分割（左右分割）でペインを作成 - SplitVerticalを使用
     window:perform_action(act.Multiple {
       act.SplitVertical { domain = 'CurrentPaneDomain' },
       -- 新しいペインにフォーカスを移動
@@ -221,14 +221,79 @@ wezterm.on('refresh-layout', function(window, pane)
         window:perform_action(act.ActivatePane { index = current_pane:pane_id() }, current_pane)
 
         -- 分割後のペインサイズを均等に調整
-        -- 縦分割（上下分割）の場合、上下のペインを均等に調整
+        -- 分割タイプを検出してサイズ調整方向を決定
         local dims = current_pane:get_dimensions()
-        if dims and dims.rows then
-          -- 上下分割の場合、各ペインを均等に調整
-          window:perform_action(act.Multiple {
-            act.AdjustPaneSize { 'Up', math.floor(dims.rows / #panes) },
-            act.AdjustPaneSize { 'Down', math.floor(dims.rows / #panes) },
-          }, current_pane)
+        if dims then
+          -- ペインの配置を分析して分割タイプを判定
+          local pane_positions = {}
+          for i, pane in ipairs(panes) do
+            local pane_dims = pane:get_dimensions()
+            if pane_dims and pane_dims.pixel_width and pane_dims.pixel_height then
+              table.insert(pane_positions, {
+                x = pane_dims.pixel_x or 0,
+                y = pane_dims.pixel_y or 0,
+                width = pane_dims.pixel_width,
+                height = pane_dims.pixel_height
+              })
+            end
+          end
+
+          -- 分割タイプの判定
+          local is_horizontal_split = false
+          local is_vertical_split = false
+
+          if #pane_positions >= 2 then
+            -- ペインが横に並んでいる場合（水平分割）
+            local same_y_count = 0
+            local same_x_count = 0
+
+            for i = 1, #pane_positions - 1 do
+              local pos1 = pane_positions[i]
+              local pos2 = pane_positions[i + 1]
+
+              -- Y座標が同じ場合、水平分割（左右に並んでいる）
+              if math.abs(pos1.y - pos2.y) < 5 then
+                same_y_count = same_y_count + 1
+              end
+
+              -- X座標が同じ場合、垂直分割（上下に並んでいる）
+              if math.abs(pos1.x - pos2.x) < 5 then
+                same_x_count = same_x_count + 1
+              end
+            end
+
+            is_horizontal_split = same_y_count > 0
+            is_vertical_split = same_x_count > 0
+          end
+
+          -- 分割タイプに応じたサイズ調整
+          if is_horizontal_split and not is_vertical_split then
+            -- 水平分割（左右に並んでいる）の場合、左右方向で調整
+            if dims.cols then
+              window:perform_action(act.Multiple {
+                act.AdjustPaneSize { 'Left', math.floor(dims.cols / #panes) },
+                act.AdjustPaneSize { 'Right', math.floor(dims.cols / #panes) },
+              }, current_pane)
+            end
+          elseif is_vertical_split and not is_horizontal_split then
+            -- 垂直分割（上下に並んでいる）の場合、上下方向で調整
+            if dims.rows then
+              window:perform_action(act.Multiple {
+                act.AdjustPaneSize { 'Up', math.floor(dims.rows / #panes) },
+                act.AdjustPaneSize { 'Down', math.floor(dims.rows / #panes) },
+              }, current_pane)
+            end
+          elseif is_horizontal_split and is_vertical_split then
+            -- 複雑なレイアウト（グリッド状）の場合、両方向で調整
+            if dims.cols and dims.rows then
+              window:perform_action(act.Multiple {
+                act.AdjustPaneSize { 'Left', math.floor(dims.cols / (#panes / 2)) },
+                act.AdjustPaneSize { 'Right', math.floor(dims.cols / (#panes / 2)) },
+                act.AdjustPaneSize { 'Up', math.floor(dims.rows / (#panes / 2)) },
+                act.AdjustPaneSize { 'Down', math.floor(dims.rows / (#panes / 2)) },
+              }, current_pane)
+            end
+          end
         end
       end
     end
