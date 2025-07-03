@@ -5,7 +5,7 @@
 .PHONY: all help system-setup install-homebrew install-apps install-deb install-flatpak \
         setup-vim setup-zsh setup-wezterm setup-vscode setup-cursor setup-git setup-docker setup-development setup-shortcuts \
         setup-gnome-extensions setup-gnome-tweaks backup-gnome-tweaks export-gnome-tweaks setup-all clean system-config clean-repos install-cursor install-wezterm install-fuse install-cica-fonts install-ibm-plex-fonts install-mysql-workbench \
-        test-extensions extensions-status fix-extensions-schema
+        test-extensions extensions-status fix-extensions-schema setup-mozc setup-mozc-ut-dictionaries setup-mozc-ut-dictionaries-manual
 
 # デフォルトターゲット
 all: help
@@ -34,6 +34,9 @@ help:
 	@echo "  make setup-gnome-tweaks    - Gnome Tweaks の設定をセットアップ"
 	@echo "  make backup-gnome-tweaks   - Gnome Tweaks の設定をバックアップ"
 	@echo "  make export-gnome-tweaks   - Gnome Tweaks の設定をエクスポート"
+	@echo "  make setup-mozc            - Mozc入力メソッドの設定をセットアップ"
+	@echo "  make setup-mozc-ut-dictionaries - Mozc UT辞書の設定を開始"
+	@echo "  make setup-mozc-ut-dictionaries-manual - Mozc UT辞書の手動インポート手順を表示"
 	@echo "  make setup-all             - すべての設定をセットアップ"
 	@echo "  make install-fuse      - AppImage実行用のFUSEパッケージをインストール"
 	@echo "  make install-wezterm   - WezTerm（AppImage版）をインストール"
@@ -1284,8 +1287,243 @@ export-gnome-tweaks:
 		echo "⚠️  Gnome Tweaks 設定スクリプトが見つかりません"; \
 	fi
 
+# Mozc入力メソッドの設定
+setup-mozc:
+	@echo "🇯🇵 Mozc入力メソッドの設定をセットアップ中..."
+	@if [ -f "$(DOTFILES_DIR)/mozc/ibus_config.textproto" ]; then \
+		echo "🔧 Mozcディレクトリを作成中..."; \
+		mkdir -p $(CONFIG_DIR)/mozc; \
+		if [ -f "$(CONFIG_DIR)/mozc/ibus_config.textproto" ] && [ ! -L "$(CONFIG_DIR)/mozc/ibus_config.textproto" ]; then \
+			echo "💾 既存の設定をバックアップ中..."; \
+			cp $(CONFIG_DIR)/mozc/ibus_config.textproto $(CONFIG_DIR)/mozc/ibus_config.textproto.bak; \
+		fi; \
+		echo "🔗 Mozc設定ファイルのシンボリックリンクを作成中..."; \
+		rm -f $(CONFIG_DIR)/mozc/ibus_config.textproto; \
+		ln -s $(DOTFILES_DIR)/mozc/ibus_config.textproto $(CONFIG_DIR)/mozc/ibus_config.textproto; \
+		echo "🔄 IBusを再起動中..."; \
+		ibus restart 2>/dev/null || true; \
+		echo "✅ Mozc入力メソッドの設定が完了しました"; \
+	else \
+		echo "⚠️  Mozc設定ファイルが見つかりません: $(DOTFILES_DIR)/mozc/ibus_config.textproto"; \
+	fi
+
+# Mozc UT辞書の設定とビルド
+setup-mozc-ut-dictionaries:
+	@echo "📚 Mozc UT辞書の設定を開始します..."
+	@echo "⚠️  この処理には時間がかかります（数分〜数十分）。"
+	@echo "⚠️  インターネット接続が必要です。"
+	@echo "💡 処理が中断された場合は、このコマンドを再実行してください。"
+	@echo ""
+
+	# 必要なパッケージのインストール
+	@echo "📦 必要なパッケージをインストール中..."
+	@sudo apt-get update 2>/dev/null || true
+	@sudo apt-get install -y git python3 python3-pip wget curl bzip2 build-essential sqlite3 2>/dev/null || true
+	@sudo apt-get install -y mozc-utils-gui mozc-data 2>/dev/null || true
+
+	# 作業ディレクトリの作成
+	@echo "📁 作業ディレクトリを作成中..."
+	@mkdir -p $(HOME_DIR)/.local/share/mozc-ut
+	@cd $(HOME_DIR)/.local/share/mozc-ut
+
+	# merge-ut-dictionaries リポジトリのクローン
+	@echo "📥 merge-ut-dictionaries リポジトリをクローン中..."
+	@if [ ! -d "$(HOME_DIR)/.local/share/mozc-ut/merge-ut-dictionaries" ]; then \
+		cd $(HOME_DIR)/.local/share/mozc-ut && \
+		git clone --depth 1 https://github.com/utuhiro78/merge-ut-dictionaries.git || \
+		{ echo "❌ リポジトリのクローンに失敗しました"; exit 1; }; \
+	else \
+		echo "✅ merge-ut-dictionaries は既にクローンされています"; \
+		cd $(HOME_DIR)/.local/share/mozc-ut/merge-ut-dictionaries && \
+		git pull origin main 2>/dev/null || git pull origin master 2>/dev/null || true; \
+	fi
+
+	# 辞書設定の確認と調整
+	@echo "⚙️  辞書設定を確認中..."
+	@cd $(HOME_DIR)/.local/share/mozc-ut/merge-ut-dictionaries && \
+	if [ -f "src/merge/make.sh" ]; then \
+		echo "✅ 辞書生成スクリプトが見つかりました"; \
+		echo "📋 現在の辞書設定:"; \
+		echo "   - jawiki: 有効 (Wikipedia日本語版)"; \
+		echo "   - personal_names: 有効 (人名辞書)"; \
+		echo "   - place_names: 有効 (地名辞書)"; \
+		echo "   - sudachidict: 有効 (SudachiDict辞書)"; \
+		echo "   - その他の辞書: 無効"; \
+		echo ""; \
+		echo "🔧 設定を変更する場合は、以下のファイルを編集してください:"; \
+		echo "   $(HOME_DIR)/.local/share/mozc-ut/merge-ut-dictionaries/src/merge/make.sh"; \
+	else \
+		echo "❌ 辞書生成スクリプトが見つかりません"; \
+		exit 1; \
+	fi
+
+	# 辞書の生成
+	@echo "🔨 UT辞書を生成中..."
+	@echo "⏳ この処理には時間がかかります。しばらくお待ちください..."
+	@cd $(HOME_DIR)/.local/share/mozc-ut/merge-ut-dictionaries/src/merge && \
+	if bash make.sh; then \
+		echo "✅ UT辞書の生成が完了しました"; \
+		if [ -f "mozcdic-ut.txt" ]; then \
+			echo "📄 生成されたファイル: mozcdic-ut.txt"; \
+			echo "📊 辞書エントリ数: $$(wc -l < mozcdic-ut.txt)"; \
+		else \
+			echo "❌ 辞書ファイルが生成されませんでした"; \
+			exit 1; \
+		fi; \
+	else \
+		echo "❌ 辞書の生成に失敗しました"; \
+		exit 1; \
+	fi
+
+		# 生成された辞書をユーザー辞書として適用
+	@echo "📝 UT辞書をユーザー辞書として適用中..."
+	@mkdir -p $(CONFIG_DIR)/mozc
+	@cd $(HOME_DIR)/.local/share/mozc-ut/merge-ut-dictionaries/src/merge && \
+	if [ -f "mozcdic-ut.txt" ]; then \
+		echo "🔄 Mozc設定ディレクトリに辞書をコピー中..."; \
+		cp mozcdic-ut.txt $(CONFIG_DIR)/mozc/mozcdic-ut.txt; \
+		echo "✅ UT辞書が適用されました"; \
+		echo "📍 辞書ファイル: $(CONFIG_DIR)/mozc/mozcdic-ut.txt"; \
+	fi
+
+	# Mozcの自動辞書インポート機能（バックグラウンド実行版）
+	@echo "🤖 UT辞書を自動的にMozcにインポート中..."
+	@cd $(CONFIG_DIR)/mozc && \
+	if [ -f "mozcdic-ut.txt" ]; then \
+		echo "🔧 Mozcユーザー辞書の自動登録を開始中..."; \
+		echo "⚠️  大量のデータ処理のため、バックグラウンドで実行します"; \
+		\
+		DB_FILE="$(CONFIG_DIR)/mozc/user_dictionary/user_dictionary.db"; \
+		DICT_FILE="$(CONFIG_DIR)/mozc/mozcdic-ut.txt"; \
+		IMPORT_SCRIPT="$(DOTFILES_DIR)/mozc/setup_mozc_import.sh"; \
+		CHECK_SCRIPT="$(DOTFILES_DIR)/mozc/check_import_status.sh"; \
+		\
+		if [ -f "$$IMPORT_SCRIPT" ] && [ -f "$$CHECK_SCRIPT" ]; then \
+			echo "🚀 バックグラウンドで自動インポートを開始中..."; \
+			chmod +x "$$IMPORT_SCRIPT" "$$CHECK_SCRIPT"; \
+			\
+			echo "📝 進捗確認コマンド: bash $$CHECK_SCRIPT $$DB_FILE"; \
+			echo "📄 ログファイル: $${DB_FILE}.import.log"; \
+			echo "⏳ 処理には5-10分程度かかります"; \
+			\
+			nohup bash "$$IMPORT_SCRIPT" "$$DICT_FILE" "$$DB_FILE" "$(DOTFILES_DIR)" > /dev/null 2>&1 & \
+			sleep 2; \
+			\
+			echo "✅ 自動インポートがバックグラウンドで開始されました"; \
+			echo "🔍 進捗確認: make check-mozc-import-status"; \
+		else \
+			echo "❌ インポートスクリプトが見つかりません"; \
+			echo "⚠️  手動でのインポートをお試しください: make setup-mozc-ut-dictionaries-manual"; \
+		fi; \
+	else \
+		echo "❌ 辞書ファイルが見つかりません"; \
+		echo "⚠️  辞書の生成に失敗した可能性があります"; \
+	fi
+
+	@echo ""
+	@echo "🎉 Mozc UT辞書のセットアップが開始されました！"
+	@echo ""
+	@echo "📊 生成された辞書の詳細:"
+	@if [ -f "$(CONFIG_DIR)/mozc/mozcdic-ut.txt" ]; then \
+		echo "   - 辞書エントリ数: $$(wc -l < $(CONFIG_DIR)/mozc/mozcdic-ut.txt)"; \
+		echo "   - ファイルサイズ: $$(du -h $(CONFIG_DIR)/mozc/mozcdic-ut.txt | cut -f1)"; \
+	fi
+	@echo "   - 含まれる辞書: jawiki, personal_names, place_names, sudachidict"
+	@echo ""
+	@echo "🤖 自動インポート機能:"
+	@echo "   🚀 辞書インポートがバックグラウンドで実行中です"
+	@echo "   ⏳ 処理完了まで5-10分程度かかります"
+	@echo "   📄 データベース: $(CONFIG_DIR)/mozc/user_dictionary/user_dictionary.db"
+	@echo ""
+	@echo "🔍 進捗確認とトラブルシューティング:"
+	@echo "   進捗確認: make check-mozc-import-status"
+	@echo "   手動インポート: make setup-mozc-ut-dictionaries-manual"
+	@echo "   辞書設定をカスタマイズ: $(HOME_DIR)/.local/share/mozc-ut/merge-ut-dictionaries/src/merge/make.sh"
+	@echo "   再実行: make setup-mozc-ut-dictionaries"
+	@echo ""
+	@echo "✨ 辞書生成が完了しました！"
+	@echo "   インポートの完了を確認してから日本語入力をお試しください。"
+	@echo "   Wikipedia、人名、地名、専門用語などが豊富に含まれています。"
+
+# Mozc UT辞書のインポート進捗確認
+check-mozc-import-status:
+	@echo "🔍 Mozc UT辞書インポートの進捗を確認中..."
+	@DB_FILE="$(CONFIG_DIR)/mozc/user_dictionary/user_dictionary.db"; \
+	CHECK_SCRIPT="$(DOTFILES_DIR)/mozc/check_import_status.sh"; \
+	\
+	if [ -f "$$CHECK_SCRIPT" ]; then \
+		chmod +x "$$CHECK_SCRIPT"; \
+		bash "$$CHECK_SCRIPT" "$$DB_FILE"; \
+		STATUS=$$?; \
+		\
+		if [ $$STATUS -eq 0 ]; then \
+			echo ""; \
+			echo "🎉 インポートが完了しました！"; \
+			echo "🔄 IBusを再起動してください: ibus restart"; \
+			echo "⌨️  日本語入力で新しい辞書が利用できます"; \
+		elif [ $$STATUS -eq 1 ]; then \
+			echo ""; \
+			echo "⚠️  インポートに失敗しました"; \
+			echo "🔧 手動インポートをお試しください: make setup-mozc-ut-dictionaries-manual"; \
+		elif [ $$STATUS -eq 2 ]; then \
+			echo ""; \
+			echo "⏳ インポートが実行中です"; \
+			echo "🔄 しばらく待ってから再度確認してください: make check-mozc-import-status"; \
+		else \
+			echo ""; \
+			echo "❓ インポートが実行されていません"; \
+			echo "🚀 インポートを開始してください: make setup-mozc-ut-dictionaries"; \
+		fi; \
+	else \
+		echo "❌ 進捗確認スクリプトが見つかりません: $$CHECK_SCRIPT"; \
+	fi
+
+# Mozc UT辞書の手動インポート（自動インポートが失敗した場合）
+setup-mozc-ut-dictionaries-manual:
+	@echo "📋 Mozc UT辞書の手動インポート手順"
+	@echo "⚠️  自動インポートが失敗した場合にこの手順を実行してください。"
+	@echo ""
+	@echo "📍 辞書ファイルの場所:"
+	@echo "   $(CONFIG_DIR)/mozc/mozcdic-ut.txt"
+	@echo ""
+	@if [ -f "$(CONFIG_DIR)/mozc/mozcdic-ut.txt" ]; then \
+		echo "✅ 辞書ファイルが見つかりました"; \
+		echo "📊 辞書エントリ数: $$(wc -l < $(CONFIG_DIR)/mozc/mozcdic-ut.txt)"; \
+		echo "📊 ファイルサイズ: $$(du -h $(CONFIG_DIR)/mozc/mozcdic-ut.txt | cut -f1)"; \
+	else \
+		echo "❌ 辞書ファイルが見つかりません"; \
+		echo "   まず 'make setup-mozc-ut-dictionaries' を実行してください"; \
+		exit 1; \
+	fi
+	@echo ""
+	@echo "🔧 手動インポート手順:"
+	@echo "1. Mozc設定ツールを開く:"
+	@echo "   mozc_tool --mode=config_dialog"
+	@echo ""
+	@echo "2. [辞書] タブを選択"
+	@echo ""
+	@echo "3. [管理] → [新規辞書作成] を選択"
+	@echo ""
+	@echo "4. 辞書名を入力 (例: 'UT辞書')"
+	@echo ""
+	@echo "5. [インポート] をクリック"
+	@echo ""
+	@echo "6. 辞書ファイルを選択:"
+	@echo "   $(CONFIG_DIR)/mozc/mozcdic-ut.txt"
+	@echo ""
+	@echo "7. [OK] をクリックして完了"
+	@echo ""
+	@echo "8. 設定を保存してMozc設定ツールを閉じる"
+	@echo ""
+	@echo "🔄 IBusを再起動:"
+	@echo "   ibus restart"
+	@echo ""
+	@echo "💡 ヒント:"
+	@echo "   - 辞書ファイルが大きいため、インポートに時間がかかる場合があります"
+	@echo "   - インポート完了後、日本語入力で新しい辞書が利用できます"
+
 # すべての設定をセットアップ
-setup-all: install-apps setup-vim setup-zsh setup-wezterm setup-vscode setup-git setup-docker setup-development setup-shortcuts setup-gnome-extensions setup-gnome-tweaks
+setup-all: install-apps setup-vim setup-zsh setup-wezterm setup-vscode setup-git setup-docker setup-development setup-shortcuts setup-gnome-extensions setup-gnome-tweaks setup-mozc setup-mozc-ut-dictionaries
 	@echo ""
 	@echo "🎉 すべてのセットアップが完了しました！"
 	@echo ""
@@ -1359,6 +1597,9 @@ clean:
 	# Cursor関連のリンクを削除
 	@if [ -L "$(CONFIG_DIR)/Cursor/User/settings.json" ]; then rm -f $(CONFIG_DIR)/Cursor/User/settings.json; fi
 	@if [ -L "$(CONFIG_DIR)/Cursor/User/keybindings.json" ]; then rm -f $(CONFIG_DIR)/Cursor/User/keybindings.json; fi
+
+	# Mozc関連のリンクを削除
+	@if [ -L "$(CONFIG_DIR)/mozc/ibus_config.textproto" ]; then rm -f $(CONFIG_DIR)/mozc/ibus_config.textproto; fi
 
 	# その他の設定ファイル
 	@if [ -L "/etc/logid.cfg" ]; then \
