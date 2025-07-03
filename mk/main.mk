@@ -28,6 +28,12 @@ setup-all:
 	@$(MAKE) setup-vim
 	@$(MAKE) setup-zsh
 	@$(MAKE) setup-git
+	@$(MAKE) setup-wezterm
+	@$(MAKE) setup-vscode
+	@$(MAKE) setup-cursor
+	@$(MAKE) setup-docker
+	@$(MAKE) setup-development
+	@$(MAKE) setup-shortcuts
 	@echo ""
 
 	@echo "📋 5. 拡張機能インストール実行中..."

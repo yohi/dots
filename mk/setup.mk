@@ -312,8 +312,8 @@ setup-docker:
 
 	# 環境変数の設定確認
 	@echo "🔍 Docker環境の確認中..."
-	@if ! grep -q "DOCKER_HOST" $(HOME_DIR)/.zshrc 2>/dev/null; then \
-		echo "export DOCKER_HOST=unix:///run/user/$$(id -u)/docker.sock" >> $(HOME_DIR)/.zshrc || true; \
+	@if ! grep -q "DOCKER_HOST" $(DOTFILES_DIR)/zsh/zshrc 2>/dev/null; then \
+		echo "export DOCKER_HOST=unix:///run/user/$$(id -u)/docker.sock" >> $(DOTFILES_DIR)/zsh/zshrc || true; \
 	fi
 
 	@echo "✅ Docker設定が完了しました。"
