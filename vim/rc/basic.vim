@@ -133,3 +133,20 @@ augroup MyVariousAutoCommand
     " ファイルのディレクトリに移動
     autocmd BufNewFile,BufRead,BufEnter * execute ':lcd ' . expand('%:p:h')
 augroup END
+
+" WezTermでのIME制御設定
+if $TERM_PROGRAM ==# 'WezTerm'
+    augroup WezTermIME
+        autocmd!
+        " ノーマルモードに入った時にIMEをOFF
+        autocmd InsertLeave * call system('printf "\033]1337;SetUserVar=NVIM_MODE=%s\007" "n"')
+        " 挿入モードに入った時にIMEをON
+        autocmd InsertEnter * call system('printf "\033]1337;SetUserVar=NVIM_MODE=%s\007" "i"')
+        " コマンドラインモードに入った時にIMEをON
+        autocmd CmdlineEnter * call system('printf "\033]1337;SetUserVar=NVIM_MODE=%s\007" "c"')
+        " コマンドラインモードを出た時にIMEをOFF
+        autocmd CmdlineLeave * call system('printf "\033]1337;SetUserVar=NVIM_MODE=%s\007" "n"')
+        " Neovim起動時はノーマルモード扱い
+        autocmd VimEnter * call system('printf "\033]1337;SetUserVar=NVIM_MODE=%s\007" "n"')
+    augroup END
+endif
