@@ -32,7 +32,20 @@ setup-zsh:
 
 	# Zinitのインストール
 	@if [ ! -d "$(HOME_DIR)/.local/share/zinit" ]; then \
-		bash -c "$$(curl --fail --show-error --silent --location https://raw.githubusercontent.com/zdharma-continuum/zinit/HEAD/scripts/install.sh)"; \
+		echo "📦 Zinitをインストール中..."; \
+		INSTALL_SCRIPT=$$(curl --fail --show-error --silent --location https://raw.githubusercontent.com/zdharma-continuum/zinit/HEAD/scripts/install.sh); \
+		if [ $$? -ne 0 ]; then \
+			echo "❌ エラー: Zinitインストールスクリプトのダウンロードに失敗しました"; \
+			echo "   ネットワーク接続を確認してください"; \
+			exit 1; \
+		fi; \
+		bash -c "$$INSTALL_SCRIPT"; \
+		if [ $$? -ne 0 ]; then \
+			echo "❌ エラー: Zinitのインストールに失敗しました"; \
+			echo "   インストールスクリプトの実行でエラーが発生しました"; \
+			exit 1; \
+		fi; \
+		echo "✅ Zinitのインストールが完了しました"; \
 	fi
 
 	# 既存のzshrc設定ファイルが存在する場合はそれを使用、ない場合は基本設定を作成
@@ -259,7 +272,20 @@ setup-docker:
 	@sudo modprobe ip6table_nat || true
 
 	# AppArmorの設定を確認・修正
-	@$(DOTFILES_DIR)/scripts/setup-apparmor.sh
+	@if [ -f "$(DOTFILES_DIR)/scripts/setup-apparmor.sh" ]; then \
+		if [ -x "$(DOTFILES_DIR)/scripts/setup-apparmor.sh" ]; then \
+			echo "🔧 AppArmorの設定を確認・修正中..."; \
+			$(DOTFILES_DIR)/scripts/setup-apparmor.sh; \
+		else \
+			echo "❌ エラー: $(DOTFILES_DIR)/scripts/setup-apparmor.sh に実行権限がありません"; \
+			echo "   修正するには: chmod +x $(DOTFILES_DIR)/scripts/setup-apparmor.sh"; \
+			exit 1; \
+		fi; \
+	else \
+		echo "❌ エラー: $(DOTFILES_DIR)/scripts/setup-apparmor.sh が見つかりません"; \
+		echo "   必要なファイルが存在しないため、セットアップを中止します"; \
+		exit 1; \
+	fi
 	# Rootless Dockerのセットアップ
 	@if ! command -v dockerd-rootless-setuptool.sh >/dev/null 2>&1; then \
 		echo "📦 Rootless Dockerをインストール中..."; \
