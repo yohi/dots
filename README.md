@@ -156,6 +156,43 @@ make setup-all         # すべての設定をセットアップ
 
 ---
 
+## 🔐 機密情報の設定
+
+### 環境変数の設定
+
+CursorのMCP設定で機密情報を安全に管理するために、環境変数を使用します。
+
+#### 1. 環境変数ファイルの作成
+
+```bash
+# .envファイルを作成（このファイルは.gitignoreに追加済み）
+cat > .env << 'EOF'
+# Bitbucket認証情報
+BITBUCKET_USERNAME=your_username_here
+BITBUCKET_APP_PASSWORD=your_app_password_here
+EOF
+```
+
+#### 2. 環境変数の読み込み
+
+```bash
+# 現在のシェルセッションで読み込む
+source .env
+
+# または、~/.zshrcや~/.bashrcに追加して永続化
+echo "source ~/dots/.env" >> ~/.zshrc
+```
+
+#### 3. 機密情報の確認
+
+以下のファイルには機密情報が含まれていないことを確認してください：
+- `cursor/mcp.json` - 環境変数を参照するように設定済み
+- `.env` - .gitignoreに追加済み
+
+**注意**: `.env`ファイルは絶対に公開リポジトリにコミットしないでください。
+
+---
+
 ## 🔧 詳細設定
 
 ### 📁 設定ファイル配置
@@ -276,5 +313,50 @@ MIT License
 - **アーキテクチャ**: x86_64, ARM64
 
 ---
+
+## 📱 アプリケーション設定
+
+### Cursor設定
+
+- **設定ファイル**: `cursor/settings.json`
+- **キーバインド**: `cursor/keybindings.json`
+- **場所**: `~/.config/Cursor/User/`
+
+```bash
+make setup-cursor
+```
+
+### Cursor MCP Tools設定
+
+- **設定ファイル**: `cursor/mcp.json`
+- **場所**: `~/.cursor/mcp.json`
+
+```bash
+make setup-mcp-tools
+```
+
+**設定済みMCPサーバー**:
+- **Bitbucket MCP Server**: BitbucketのPR管理・コメント機能
+- **Playwright MCP Server**: ウェブブラウザの自動化
+- **AWS Documentation MCP Server**: AWS文書の検索・参照
+- **Terraform MCP Server**: Terraform設定の管理
+- **ECS MCP Server**: AWS ECSの管理
+
+**使用方法**:
+1. Cursorを起動
+2. Composerでチャット開始
+3. 「Available Tools」にMCPツールが表示される
+4. 必要に応じてツールを名前で指定して使用
+
+### VSCode設定
+
+- **設定ファイル**: `vscode/settings.json`
+- **キーバインド**: `vscode/keybindings.json`
+- **拡張機能**: `vscode/extensions.list`
+- **場所**: `~/.config/Code/User/`
+
+```bash
+make setup-vscode
+```
 
 **🎉 快適な開発環境をお楽しみください！**

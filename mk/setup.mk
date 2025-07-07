@@ -205,6 +205,42 @@ setup-cursor:
 
 	@echo "✅ Cursorの設定が完了しました。"
 
+# Cursor MCP Toolsの設定をセットアップ
+setup-mcp-tools:
+	@echo "🔧 Cursor MCP Toolsの設定をセットアップ中..."
+	@mkdir -p $(HOME_DIR)/.cursor
+
+	# 既存設定のバックアップ
+	@if [ -f "$(HOME_DIR)/.cursor/mcp.json" ] && [ ! -L "$(HOME_DIR)/.cursor/mcp.json" ]; then \
+		echo "⚠️  既存のMCP設定をバックアップ中..."; \
+		mv $(HOME_DIR)/.cursor/mcp.json $(HOME_DIR)/.cursor/mcp.json.backup.$$(date +%Y%m%d_%H%M%S); \
+	fi
+
+	# シンボリックリンクを作成
+	@ln -sfn $(DOTFILES_DIR)/cursor/mcp.json $(HOME_DIR)/.cursor/mcp.json
+
+	# 必要な依存関係をインストール
+	@echo "📦 MCP Tools必要な依存関係をチェック中..."
+	@if ! command -v uvx >/dev/null 2>&1; then \
+		echo "⚠️  uvxが見つかりません。インストールしてください:"; \
+		echo "   pip install uv"; \
+		echo "   または:"; \
+		echo "   curl -LsSf https://astral.sh/uv/install.sh | sh"; \
+	fi
+
+	@if ! command -v npx >/dev/null 2>&1; then \
+		echo "⚠️  npxが見つかりません。Node.jsをインストールしてください"; \
+	fi
+
+	@echo "✅ Cursor MCP Toolsの設定が完了しました。"
+	@echo "ℹ️  設定されたMCPサーバー:"
+	@echo "  - Bitbucket MCP Server: BitbucketのPR管理・コメント機能"
+	@echo "  - Playwright MCP Server: ウェブブラウザの自動化"
+	@echo "  - AWS Documentation MCP Server: AWS文書の検索・参照"
+	@echo "  - Terraform MCP Server: Terraform設定の管理"
+	@echo "  - ECS MCP Server: AWS ECSの管理"
+	@echo "ℹ️  Cursorを再起動してMCPツールを有効化してください。"
+
 # Git設定のセットアップ
 setup-git:
 	@echo "🖥️  Git設定をセットアップ中..."
