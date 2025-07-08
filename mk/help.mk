@@ -13,6 +13,7 @@ help:
 	@echo "  make setup-wezterm     - WEZTERMの設定をセットアップ"
 	@echo "  make setup-vscode      - VS Codeの設定をセットアップ"
 	@echo "  make setup-cursor      - Cursorの設定をセットアップ"
+	@echo "  make setup-mcp-tools   - Cursor MCP Toolsの設定をセットアップ"
 	@echo "  make setup-git         - Git設定をセットアップ"
 	@echo "  make setup-docker      - Dockerの設定をセットアップ"
 	@echo "  make setup-development     - 開発環境の設定をセットアップ"

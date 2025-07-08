@@ -31,6 +31,7 @@ setup-all:
 	@$(MAKE) setup-wezterm
 	@$(MAKE) setup-vscode
 	@$(MAKE) setup-cursor
+	@$(MAKE) setup-mcp-tools
 	@$(MAKE) setup-docker
 	@$(MAKE) setup-development
 	@$(MAKE) setup-shortcuts

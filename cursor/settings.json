@@ -154,5 +154,7 @@
     "database-client.autoSync": true,
     "yaml.schemas": {
         "file:///home/y_ohi/.cursor/extensions/atlassian.atlascode-3.8.3/resources/schemas/pipelines-schema.json": "bitbucket-pipelines.yml"
-    }
+    },
+    "atlascode.jira.enabled": false,
+    "atlascode.bitbucket.enabled": true
 }
