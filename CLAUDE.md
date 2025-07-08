@@ -105,7 +105,7 @@
 ### 設定ファイル
 - `vscode/settings.json`: エディタ設定
 - `vscode/keybindings.json`: キーバインド
-- `vscode/extensions.txt`: インストール対象拡張機能
+- `vscode/extensions.list`: インストール対象拡張機能
 
 ---
 
@@ -138,7 +138,7 @@
 
 **良い例**:
 ```
-"vim/init.lua にPython用のLSP設定を追加して、 
+"vim/init.lua にPython用のLSP設定を追加して、
 pylsp の設定でflake8とmypyを有効にしてください"
 ```
 
@@ -167,7 +167,7 @@ PATH に追加されていません。zsh設定を確認して修正してくだ
 ```
 "Django開発用の設定を追加したいです：
 - VS Code用Django拡張機能
-- Neovim用django-vim設定  
+- Neovim用django-vim設定
 - 開発用Docker Compose設定
 Makefileにもセットアップターゲットを追加してください"
 ```
@@ -197,7 +197,7 @@ make setup-development       # 開発環境の設定
 # Python環境
 make setup-python
 
-# Node.js環境  
+# Node.js環境
 make setup-nodejs
 
 # Docker環境
