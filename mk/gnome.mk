@@ -107,3 +107,23 @@ export-gnome-tweaks:
 
 	@echo "✅ GNOME Tweaks設定のエクスポートが完了しました。"
 	@echo "ℹ️  設定ファイルは $(DOTFILES_DIR)/gnome-tweaks/ に保存されました。"
+
+# ========================================
+# 新しい階層的な命名規則のターゲット
+# ========================================
+
+# GNOME関連設定系
+setup-config-gnome-extensions: setup-gnome-extensions
+setup-config-gnome-tweaks: setup-gnome-tweaks
+backup-config-gnome-tweaks: backup-gnome-tweaks
+export-config-gnome-tweaks: export-gnome-tweaks
+
+# ========================================
+# 後方互換性のためのエイリアス
+# ========================================
+
+# 古いターゲット名を維持（既に実装済み）
+# setup-gnome-extensions: は既に実装済み
+# setup-gnome-tweaks: は既に実装済み
+# backup-gnome-tweaks: は既に実装済み
+# export-gnome-tweaks: は既に実装済み
