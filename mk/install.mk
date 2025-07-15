@@ -248,3 +248,133 @@ install-mysql-workbench:
 	fi
 
 	@echo "🎉 MySQL Workbench インストール完了"
+
+# DEBパッケージをインストール（IDE・ブラウザ含む）
+install-deb:
+	@echo "📦 DEBパッケージをインストール中..."
+	@echo "ℹ️  IDE・ブラウザ・開発ツールをインストールします"
+
+	# パッケージリストを更新
+	@echo "🔄 パッケージリストを更新中..."
+	@sudo apt update -q 2>/dev/null || echo "⚠️  一部のリポジトリで問題がありますが、処理を続行します"
+
+	# Visual Studio Code のインストール
+	@echo "📝 Visual Studio Code のインストール中..."
+	@if ! command -v code >/dev/null 2>&1; then \
+		echo "📥 Microsoft GPGキーを追加中..."; \
+		wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > packages.microsoft.gpg; \
+		sudo install -o root -g root -m 644 packages.microsoft.gpg /etc/apt/trusted.gpg.d/; \
+		sudo sh -c 'echo "deb [arch=amd64,arm64,armhf signed-by=/etc/apt/trusted.gpg.d/packages.microsoft.gpg] https://packages.microsoft.com/repos/code stable main" > /etc/apt/sources.list.d/vscode.list'; \
+		sudo apt update -q 2>/dev/null || echo "⚠️  一部のリポジトリで問題がありますが、処理を続行します"; \
+		sudo DEBIAN_FRONTEND=noninteractive apt install -y code; \
+		rm -f packages.microsoft.gpg; \
+	else \
+		echo "✅ Visual Studio Code は既にインストールされています"; \
+	fi
+
+	# Google Chrome Stable のインストール
+	@echo "🌐 Google Chrome Stable のインストール中..."
+	@if ! command -v google-chrome-stable >/dev/null 2>&1; then \
+		echo "📥 Google Chrome キーを追加中..."; \
+		wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | sudo apt-key add -; \
+		sudo sh -c 'echo "deb [arch=amd64] https://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list'; \
+		sudo apt update -q 2>/dev/null || echo "⚠️  一部のリポジトリで問題がありますが、処理を続行します"; \
+		sudo DEBIAN_FRONTEND=noninteractive apt install -y google-chrome-stable; \
+	else \
+		echo "✅ Google Chrome Stable は既にインストールされています"; \
+	fi
+
+	# Google Chrome Beta のインストール
+	@echo "🌐 Google Chrome Beta のインストール中..."
+	@if ! command -v google-chrome-beta >/dev/null 2>&1; then \
+		echo "📥 Google Chrome リポジトリの確認中..."; \
+		if ! grep -q "chrome/deb" /etc/apt/sources.list.d/google-chrome.list 2>/dev/null; then \
+			echo "📥 Google Chrome キーを追加中..."; \
+			wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | sudo apt-key add -; \
+			sudo sh -c 'echo "deb [arch=amd64] https://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list'; \
+			sudo apt update -q 2>/dev/null || echo "⚠️  一部のリポジトリで問題がありますが、処理を続行します"; \
+		fi; \
+		sudo DEBIAN_FRONTEND=noninteractive apt install -y google-chrome-beta; \
+	else \
+		echo "✅ Google Chrome Beta は既にインストールされています"; \
+	fi
+
+	# Chromium のインストール
+	@echo "🌐 Chromium のインストール中..."
+	@if ! command -v chromium-browser >/dev/null 2>&1; then \
+		sudo DEBIAN_FRONTEND=noninteractive apt install -y chromium-browser; \
+	else \
+		echo "✅ Chromium は既にインストールされています"; \
+	fi
+
+	# FUSE（AppImage実行用）のインストール
+	@echo "🔧 FUSE（AppImage実行用）のインストール中..."
+	@$(MAKE) install-fuse
+
+	# Cursor IDE のインストール
+	@echo "💻 Cursor IDE のインストール中..."
+	@$(MAKE) install-cursor
+
+	# WezTerm のインストール
+	@echo "🖥️  WezTerm のインストール中..."
+	@if ! command -v wezterm >/dev/null 2>&1; then \
+		echo "📦 WezTerm GPGキーを追加中..."; \
+		curl -fsSL https://apt.fury.io/wez/gpg.key | sudo gpg --yes --dearmor -o /usr/share/keyrings/wezterm-fury.gpg; \
+		echo 'deb [signed-by=/usr/share/keyrings/wezterm-fury.gpg] https://apt.fury.io/wez/ * *' | sudo tee /etc/apt/sources.list.d/wezterm.list; \
+		sudo apt update -q 2>/dev/null || echo "⚠️  一部のリポジトリで問題がありますが、処理を続行します"; \
+		sudo DEBIAN_FRONTEND=noninteractive apt install -y wezterm; \
+	else \
+		echo "✅ WezTerm は既にインストールされています"; \
+	fi
+
+	@echo "✅ DEBパッケージのインストールが完了しました"
+	@echo "📋 インストール完了項目:"
+	@echo "   - Visual Studio Code"
+	@echo "   - Google Chrome Stable"
+	@echo "   - Google Chrome Beta"
+	@echo "   - Chromium"
+	@echo "   - FUSE（AppImage実行用）"
+	@echo "   - Cursor IDE"
+	@echo "   - WezTerm"
+
+# ========================================
+# 新しい階層的な命名規則のターゲット
+# ========================================
+
+# パッケージ・ソフトウェアインストール系
+install-packages-homebrew: install-homebrew
+install-packages-apps: install-apps
+install-packages-deb: install-deb
+install-packages-flatpak: install-flatpak
+install-packages-fuse: install-fuse
+install-packages-wezterm: install-wezterm
+install-packages-cursor: install-cursor
+install-packages-cica-fonts: install-cica-fonts
+install-packages-mysql-workbench: install-mysql-workbench
+
+# 追加のブラウザインストール系
+install-packages-chrome-beta:
+	@echo "🌐 Google Chrome Beta のインストール中..."
+	@if ! command -v google-chrome-beta >/dev/null 2>&1; then \
+		echo "📥 Google Chrome リポジトリの確認中..."; \
+		if ! grep -q "chrome/deb" /etc/apt/sources.list.d/google-chrome.list 2>/dev/null; then \
+			echo "📥 Google Chrome キーを追加中..."; \
+			wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | sudo apt-key add -; \
+			sudo sh -c 'echo "deb [arch=amd64] https://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list'; \
+			sudo apt update -q 2>/dev/null || echo "⚠️  一部のリポジトリで問題がありますが、処理を続行します"; \
+		fi; \
+		sudo DEBIAN_FRONTEND=noninteractive apt install -y google-chrome-beta; \
+	else \
+		echo "✅ Google Chrome Beta は既にインストールされています"; \
+	fi
+	@echo "✅ Google Chrome Beta のインストールが完了しました"
+
+# ========================================
+# 後方互換性のためのエイリアス
+# ========================================
+
+# 古いターゲット名を維持（新しいターゲットを呼び出すエイリアス）
+# install-homebrew: は既に実装済み
+# install-apps: は既に実装済み
+# install-deb: は既に実装済み
+# その他の既存ターゲットはそのまま

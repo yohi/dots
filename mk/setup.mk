@@ -444,3 +444,29 @@ setup-shortcuts:
 
 	@echo "✅ キーボードショートカットの設定が完了しました。"
 	@echo "⚠️  設定を反映するため、一度ログアウト・ログインすることを推奨します。"
+
+# ========================================
+# 新しい階層的な命名規則のターゲット
+# ========================================
+
+# 設定ファイル・コンフィグセットアップ系
+setup-config-vim: setup-vim
+setup-config-zsh: setup-zsh
+setup-config-wezterm: setup-wezterm
+setup-config-vscode: setup-vscode
+setup-config-cursor: setup-cursor
+setup-config-mcp-tools: setup-mcp-tools
+setup-config-git: setup-git
+setup-config-docker: setup-docker
+setup-config-development: setup-development
+setup-config-shortcuts: setup-shortcuts
+
+# ========================================
+# 後方互換性のためのエイリアス
+# ========================================
+
+# 古いターゲット名を維持（既に実装済み）
+# setup-vim: は既に実装済み
+# setup-zsh: は既に実装済み
+# setup-wezterm: は既に実装済み
+# その他の既存ターゲットはそのまま

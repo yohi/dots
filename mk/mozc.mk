@@ -179,3 +179,21 @@ get-mozc-dict-checksum:
 	@echo "   $(MOZC_DICT_CHECKSUM)"
 	@echo ""
 	@echo "✅ チェックサム取得方法を表示しました。"
+
+# ========================================
+# 新しい階層的な命名規則のターゲット
+# ========================================
+
+# Mozc関連設定系
+setup-config-mozc: setup-mozc
+setup-config-mozc-ut-dictionaries: setup-mozc-ut-dictionaries
+setup-config-mozc-ut-dictionaries-manual: setup-mozc-ut-dictionaries-manual
+
+# ========================================
+# 後方互換性のためのエイリアス
+# ========================================
+
+# 古いターゲット名を維持（既に実装済み）
+# setup-mozc: は既に実装済み
+# setup-mozc-ut-dictionaries: は既に実装済み
+# setup-mozc-ut-dictionaries-manual: は既に実装済み
