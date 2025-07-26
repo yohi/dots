@@ -15,6 +15,8 @@ help:
 	@echo "  make install-packages-fuse            - AppImage実行用のFUSEパッケージをインストール"
 	@echo "  make install-packages-wezterm         - WezTerm（AppImage版）をインストール"
 	@echo "  make install-packages-cursor          - Cursor IDEをインストール"
+	@echo "  make update-cursor                     - Cursor IDEを最新バージョンに更新"
+	@echo "  make check-cursor-version              - Cursor IDEのバージョン情報を確認"
 	@echo "  make install-packages-cica-fonts      - Cica Nerd Fontsをインストール"
 	@echo "  make install-packages-mysql-workbench - MySQL Workbenchをインストール"
 	@echo "  make install-packages-chrome-beta     - Google Chrome Betaをインストール"

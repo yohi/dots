@@ -14,5 +14,5 @@ EMAIL := $(shell git config --global user.email 2>/dev/null || echo "")
         setup-config-gnome-extensions setup-config-gnome-tweaks backup-config-gnome-tweaks export-config-gnome-tweaks setup-config-all clean system-config clean-repos install-packages-cursor install-packages-wezterm install-packages-fuse install-packages-cica-fonts install-packages-ibm-plex-fonts install-packages-mysql-workbench install-packages-chrome-beta \
         test-extensions extensions-status fix-extensions-schema setup-config-mozc setup-config-mozc-ut-dictionaries setup-config-mozc-ut-dictionaries-manual get-mozc-dict-checksum check-mozc-import-status \
         system-setup install-homebrew install-apps install-deb install-flatpak setup-vim setup-zsh setup-wezterm setup-vscode setup-cursor setup-mcp-tools setup-git setup-docker setup-development setup-shortcuts \
-        setup-gnome-extensions setup-gnome-tweaks backup-gnome-tweaks export-gnome-tweaks setup-all install-cursor install-wezterm install-fuse install-cica-fonts install-mysql-workbench \
+        setup-gnome-extensions setup-gnome-tweaks backup-gnome-tweaks export-gnome-tweaks setup-all install-cursor update-cursor check-cursor-version install-wezterm install-fuse install-cica-fonts install-mysql-workbench \
         setup-mozc setup-mozc-ut-dictionaries setup-mozc-ut-dictionaries-manual

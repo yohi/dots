@@ -73,7 +73,16 @@ debug:
 	@echo -n "Neovim: "; command -v nvim >/dev/null 2>&1 && echo "✅ インストール済み" || echo "❌ 未インストール"
 	@echo -n "Docker: "; command -v docker >/dev/null 2>&1 && echo "✅ インストール済み" || echo "❌ 未インストール"
 	@echo -n "VS Code: "; command -v code >/dev/null 2>&1 && echo "✅ インストール済み" || echo "❌ 未インストール"
-	@echo -n "Cursor: "; command -v cursor >/dev/null 2>&1 && echo "✅ インストール済み" || echo "❌ 未インストール"
+	@echo -n "Cursor: "; \
+	if [ -f /opt/cursor/cursor.AppImage ]; then \
+		FILE_DATE=$$(stat -c%Y /opt/cursor/cursor.AppImage 2>/dev/null || echo "0"); \
+		FORMATTED_DATE=$$(date -d @$$FILE_DATE '+%Y-%m-%d' 2>/dev/null || echo '不明'); \
+		echo "✅ インストール済み (更新日: $$FORMATTED_DATE)"; \
+	elif command -v cursor >/dev/null 2>&1; then \
+		echo "✅ インストール済み"; \
+	else \
+		echo "❌ 未インストール"; \
+	fi
 	@echo -n "GNOME Extensions: "; command -v gnome-extensions >/dev/null 2>&1 && echo "✅ インストール済み" || echo "❌ 未インストール"
 	@echo ""
 

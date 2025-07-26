@@ -204,6 +204,179 @@ install-cursor:
 		echo "3. ダウンロード後、再度このコマンドを実行"; \
 	fi
 
+# Cursor IDEのバージョン更新
+# 使用方法:
+#   make update-cursor           (stableトラック)
+#   make update-cursor TRACK=latest  (latestトラック)
+update-cursor:
+	@echo "🔄 Cursor IDEのバージョン更新を開始します..."
+	@TRACK_VALUE="$(if $(TRACK),$(TRACK),stable)" && \
+	echo "📋 リリーストラック: $$TRACK_VALUE" && \
+	CURRENT_VERSION="" && \
+	NEW_VERSION="" && \
+	UPDATE_NEEDED=false && \
+	\
+	echo "🔍 現在のCursor IDEバージョンを確認中..." && \
+	if [ -f /opt/cursor/cursor.AppImage ]; then \
+		echo "✅ 既存のCursor IDEが見つかりました"; \
+		CURRENT_VERSION=$$(stat -c%Y /opt/cursor/cursor.AppImage 2>/dev/null || echo "unknown"); \
+		echo "📅 現在のファイル更新日時: $$(date -d @$$CURRENT_VERSION '+%Y-%m-%d %H:%M:%S' 2>/dev/null || echo '不明')"; \
+	else \
+		echo "❌ Cursor IDEがインストールされていません"; \
+		echo "💡 'make install-cursor' でインストールを行ってください"; \
+		exit 1; \
+	fi && \
+	\
+	echo "📦 最新版をダウンロード中..." && \
+	cd /tmp && \
+	rm -f cursor_new.AppImage cursor_download_info.json 2>/dev/null || true && \
+	DOWNLOAD_SUCCESS=false && \
+	\
+	echo "🔍 最新バージョン情報を取得中..." && \
+	if curl -s --max-time 30 "https://cursor.com/api/download?platform=linux-x64&releaseTrack=$$TRACK_VALUE" \
+		-o cursor_download_info.json 2>/dev/null; then \
+		DOWNLOAD_URL=$$(cat cursor_download_info.json | grep -o '"downloadUrl":"[^"]*"' | cut -d'"' -f4 2>/dev/null || echo ""); \
+		VERSION=$$(cat cursor_download_info.json | grep -o '"version":"[^"]*"' | cut -d'"' -f4 2>/dev/null || echo "unknown"); \
+		if [ -n "$$DOWNLOAD_URL" ]; then \
+			echo "📋 最新バージョン: $$VERSION"; \
+			echo "🔗 ダウンロード中: $$DOWNLOAD_URL"; \
+			if curl -L --user-agent "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36" \
+				--max-time 120 --retry 3 --retry-delay 5 \
+				-o cursor_new.AppImage "$$DOWNLOAD_URL" 2>/dev/null; then \
+				FILE_SIZE=$$(stat -c%s cursor_new.AppImage 2>/dev/null || echo "0"); \
+				if [ "$$FILE_SIZE" -gt 50000000 ]; then \
+					echo "✅ 最新版のダウンロードが成功しました ($$(echo "scale=1; $$FILE_SIZE/1024/1024" | bc 2>/dev/null || echo "$$FILE_SIZE")MB)"; \
+					chmod +x cursor_new.AppImage; \
+					DOWNLOAD_SUCCESS=true; \
+				else \
+					echo "⚠️  ダウンロードファイルのサイズが小さすぎます ($$FILE_SIZE bytes)"; \
+					rm -f cursor_new.AppImage; \
+				fi; \
+			else \
+				echo "❌ ダウンロード失敗: $$DOWNLOAD_URL"; \
+			fi; \
+		else \
+			echo "❌ APIレスポンスからダウンロードURLを取得できませんでした"; \
+		fi; \
+	else \
+		echo "❌ Cursor APIからバージョン情報を取得できませんでした"; \
+		echo "🔗 フォールバック: 古いダウンロードURLを試行中..."; \
+		if curl -L --user-agent "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36" \
+			--max-time 60 --retry 2 --retry-delay 3 \
+			-o cursor_new.AppImage "https://downloader.cursor.sh/linux/appImage/x64" 2>/dev/null; then \
+			FILE_SIZE=$$(stat -c%s cursor_new.AppImage 2>/dev/null || echo "0"); \
+			if [ "$$FILE_SIZE" -gt 50000000 ]; then \
+				echo "✅ フォールバックダウンロードが成功しました ($$(echo "scale=1; $$FILE_SIZE/1024/1024" | bc 2>/dev/null || echo "$$FILE_SIZE")MB)"; \
+				chmod +x cursor_new.AppImage; \
+				DOWNLOAD_SUCCESS=true; \
+			else \
+				echo "⚠️  ダウンロードファイルのサイズが小さすぎます ($$FILE_SIZE bytes)"; \
+				rm -f cursor_new.AppImage; \
+			fi; \
+		else \
+			echo "❌ フォールバックダウンロードも失敗しました"; \
+		fi; \
+	fi; \
+	rm -f cursor_download_info.json 2>/dev/null || true; \
+	\
+	if [ "$$DOWNLOAD_SUCCESS" = "false" ]; then \
+		echo ""; \
+		echo "❌ すべての自動ダウンロードが失敗しました"; \
+		echo ""; \
+		echo "🔍 診断情報:"; \
+		echo "   • downloader.cursor.sh - ドメインが存在しません"; \
+		echo "   • cursor.com/download - 404エラーまたは不正なファイル"; \
+		echo ""; \
+		echo "📥 手動ダウンロード手順:"; \
+		echo "1. ブラウザで https://cursor.com/ を開く"; \
+		echo "2. 'Download for Linux' または 'Linux' ボタンをクリック"; \
+		echo "3. ダウンロードした .AppImage ファイルを確認:"; \
+		echo "   ls -la ~/Downloads/cursor*.AppImage"; \
+		echo ""; \
+		echo "4. 既存ファイルをバックアップ:"; \
+		echo "   sudo cp /opt/cursor/cursor.AppImage /opt/cursor/cursor.AppImage.backup"; \
+		echo ""; \
+		echo "5. 新しいファイルを配置:"; \
+		echo "   sudo cp ~/Downloads/cursor*.AppImage /opt/cursor/cursor.AppImage"; \
+		echo "   sudo chmod +x /opt/cursor/cursor.AppImage"; \
+		echo ""; \
+		echo "6. 再度このコマンドを実行して更新を確認:"; \
+		echo "   make update-cursor"; \
+		echo ""; \
+		echo "💡 ヒント: 最新のダウンロードURLが変更されている可能性があります"; \
+		exit 1; \
+	fi && \
+	\
+	echo "🔍 バージョン比較を実行中..." && \
+	CURRENT_SIZE=$$(stat -c%s /opt/cursor/cursor.AppImage 2>/dev/null || echo "0") && \
+	NEW_SIZE=$$(stat -c%s cursor_new.AppImage 2>/dev/null || echo "0") && \
+	CURRENT_HASH=$$(sha256sum /opt/cursor/cursor.AppImage 2>/dev/null | cut -d' ' -f1 || echo "unknown") && \
+	NEW_HASH=$$(sha256sum cursor_new.AppImage 2>/dev/null | cut -d' ' -f1 || echo "unknown") && \
+	\
+	CURRENT_HASH_SHORT=$$(echo "$$CURRENT_HASH" | cut -c1-16); \
+	NEW_HASH_SHORT=$$(echo "$$NEW_HASH" | cut -c1-16); \
+	echo "📊 ファイル比較結果:"; \
+	echo "   現在: $$(echo "scale=1; $$CURRENT_SIZE/1024/1024" | bc 2>/dev/null || echo "$$CURRENT_SIZE")MB (SHA256: $$CURRENT_HASH_SHORT...)"; \
+	echo "   最新: $$(echo "scale=1; $$NEW_SIZE/1024/1024" | bc 2>/dev/null || echo "$$NEW_SIZE")MB (SHA256: $$NEW_HASH_SHORT...)"; \
+	\
+	if [ "$$CURRENT_HASH" != "$$NEW_HASH" ]; then \
+		echo "🔄 新しいバージョンが利用可能です"; \
+		UPDATE_NEEDED=true; \
+	else \
+		echo "✅ Cursor IDEは既に最新バージョンです"; \
+		UPDATE_NEEDED=false; \
+	fi && \
+	\
+	if [ "$$UPDATE_NEEDED" = "true" ]; then \
+		BACKUP_TIMESTAMP=$$(date +%Y%m%d_%H%M%S); \
+		echo "📁 既存バージョンをバックアップ中..." && \
+		sudo cp /opt/cursor/cursor.AppImage /opt/cursor/cursor.AppImage.backup.$$BACKUP_TIMESTAMP && \
+		echo "🔄 新しいバージョンに更新中..." && \
+		sudo mv cursor_new.AppImage /opt/cursor/cursor.AppImage && \
+		sudo chmod +x /opt/cursor/cursor.AppImage && \
+		echo "🔄 デスクトップエントリーを更新中..." && \
+		sudo update-desktop-database 2>/dev/null || true && \
+		echo "✅ Cursor IDEが正常に更新されました！"; \
+		echo ""; \
+		echo "📝 更新内容:"; \
+		echo "   バックアップ: /opt/cursor/cursor.AppImage.backup.$$BACKUP_TIMESTAMP"; \
+		echo "   新バージョン: SHA256 $$NEW_HASH_SHORT..."; \
+		echo ""; \
+		echo "🚀 Cursorを再起動して新しいバージョンをお楽しみください！"; \
+	else \
+		rm -f cursor_new.AppImage; \
+		echo "ℹ️  更新の必要はありません"; \
+	fi
+
+# Cursor IDE更新の便利なエイリアス
+update-cursor-stable:
+	@make update-cursor TRACK=stable
+
+update-cursor-latest:
+	@make update-cursor TRACK=latest
+
+# Cursor IDEのバージョン情報を確認
+check-cursor-version:
+	@echo "🔍 Cursor IDEバージョン情報を確認中..."
+	@if [ -f /opt/cursor/cursor.AppImage ]; then \
+		echo "✅ Cursor IDEが見つかりました"; \
+		FILE_SIZE=$$(stat -c%s /opt/cursor/cursor.AppImage 2>/dev/null || echo "0"); \
+		FILE_DATE=$$(stat -c%Y /opt/cursor/cursor.AppImage 2>/dev/null || echo "0"); \
+		FILE_HASH=$$(sha256sum /opt/cursor/cursor.AppImage 2>/dev/null | cut -d' ' -f1 || echo "unknown"); \
+		FILE_HASH_SHORT=$$(echo "$$FILE_HASH" | cut -c1-16); \
+		FORMATTED_DATE=$$(date -d @$$FILE_DATE '+%Y-%m-%d %H:%M:%S' 2>/dev/null || echo '不明'); \
+		echo "📊 インストール情報:"; \
+		echo "   ファイルサイズ: $$(echo "scale=1; $$FILE_SIZE/1024/1024" | bc 2>/dev/null || echo "$$FILE_SIZE")MB"; \
+		echo "   更新日時: $$FORMATTED_DATE"; \
+		echo "   SHA256ハッシュ: $$FILE_HASH_SHORT..."; \
+		echo "   インストール先: /opt/cursor/cursor.AppImage"; \
+		echo ""; \
+		echo "💡 最新版へ更新するには: make update-cursor"; \
+	else \
+		echo "❌ Cursor IDEがインストールされていません"; \
+		echo "💡 インストールするには: make install-cursor"; \
+	fi
+
 # MySQL Workbench のインストール
 install-mysql-workbench:
 	@echo "🐬 MySQL Workbench のインストールを開始..."
