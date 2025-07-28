@@ -13,14 +13,28 @@ config.colors = {
 config.color_scheme = "Tokyo Night"  -- カラースキームを設定
 
 -- フォント設定
-config.font = wezterm.font("Cica Nerd Font", {weight="Regular", stretch="Normal", style="Normal"})
+config.font = wezterm.font_with_fallback({
+  "Cica Nerd Font",
+  "Noto Sans CJK JP",
+  "Noto Color Emoji",
+})
+config.font_size = 12.0
+config.cell_width = 1.0
+config.line_height = 1.0
 
 -- カーソル設定
 config.default_cursor_style = 'SteadyBar'  -- Iビーム（縦線）カーソル
 
 -- IME設定
 config.use_ime = true  -- IMEを有効にする
-config.ime_preedit_rendering = 'Builtin'  -- IMEプリエディットの表示方法
+config.ime_preedit_rendering = 'Builtin'  -- BuiltinでWezTerm内でプリエディットを表示
+config.treat_east_asian_ambiguous_width_as_wide = false  -- 曖昧幅文字の扱いを標準に
+config.unicode_version = 14  -- Unicode バージョンを明示的に指定
+
+-- 日本語文字表示の最適化
+config.normalize_output_to_unicode_nfc = true  -- Unicode NFC正規化を有効化
+config.use_resize_increments = true  -- リサイズ時の文字境界調整
+config.selection_word_boundary = " \t\n{}[]()\"'`"  -- 日本語対応の単語境界
 
 -- ウィンドウ装飾設定
 config.window_decorations = "INTEGRATED_BUTTONS | RESIZE"  -- 統合ボタンモード（タブバーにウィンドウ制御ボタンを配置）
@@ -30,6 +44,16 @@ if wezterm.target_triple:find("linux") then
   -- X11/Wayland環境での設定
   config.enable_wayland = true  -- Waylandサポートを有効化
   config.window_background_opacity = 1.0  -- 透明度を無効化
+
+  -- 日本語文字描画の改善設定
+  config.use_cap_height_to_scale_fallback_fonts = false  -- フォントスケーリングを無効化
+  config.warn_about_missing_glyphs = false  -- グリフ警告を無効化
+  config.allow_square_glyphs_to_overflow_width = "Never"  -- グリフの幅オーバーフローを禁止
+  config.custom_block_glyphs = true  -- カスタムブロックグリフを有効化
+
+  -- 文字描画の最適化
+  config.front_end = "WebGpu"  -- レンダリングエンジンをWebGpuに
+  config.webgpu_power_preference = "LowPower"  -- 省電力モード
 
   -- タブバーのドラッグ機能を確実に有効化するための追加設定
   config.adjust_window_size_when_changing_font_size = false  -- フォントサイズ変更時のウィンドウサイズ調整を無効化
