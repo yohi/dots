@@ -35,6 +35,7 @@ help:
 	@echo "  make setup-config-docker              - Dockerの設定をセットアップ"
 	@echo "  make setup-config-development         - 開発環境の設定をセットアップ"
 	@echo "  make setup-config-shortcuts           - キーボードショートカットの設定をセットアップ"
+	@echo "  make setup-config-ime                 - 日本語入力（IME）環境をセットアップ"
 	@echo "  make setup-config-gnome-extensions    - Gnome Extensions の設定をセットアップ"
 	@echo "  make setup-config-gnome-tweaks        - Gnome Tweaks の設定をセットアップ"
 	@echo "  make setup-config-mozc                - Mozc入力メソッドの設定をセットアップ"
