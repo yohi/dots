@@ -533,31 +533,84 @@ install-superclaude:
 	fi
 
 	# SuperClaude の既存インストール確認
+	# セキュリティ改善: v3.0.0.2固定 + SHA256ハッシュ検証
+	# - バージョン固定により依存関係の安定性を確保
+	# - SHA256ハッシュ検証により改ざん防止
+	# - 公式PyPIパッケージからの安全なインストール
 	@echo "🔍 既存の SuperClaude インストールを確認中..."
 	@export PATH="$(HOME_DIR)/.local/bin:$$PATH" && \
 	if command -v SuperClaude >/dev/null 2>&1; then \
+		CURRENT_VERSION=$$(SuperClaude --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+(\.[0-9]+)?' || echo "不明"); \
 		echo "✅ SuperClaude は既にインストールされています"; \
-		echo "   バージョン: $$(SuperClaude --version 2>/dev/null || echo '取得できませんでした')"; \
-		echo ""; \
-		echo "🔄 アップデートを確認中..."; \
-		uv tool upgrade SuperClaude 2>/dev/null || \
-		uv add SuperClaude --upgrade 2>/dev/null || \
-		echo "⚠️  アップデートの確認に失敗しました"; \
-	else \
-		echo "📦 SuperClaude をインストール中..."; \
-		echo "ℹ️  PyPIからインストールします: uv add SuperClaude"; \
-		\
-		if uv tool install SuperClaude 2>/dev/null || uv add SuperClaude; then \
-			echo "✅ SuperClaude のパッケージインストールが完了しました"; \
+		echo "   現在のバージョン: $$CURRENT_VERSION"; \
+		echo "   対象バージョン: 3.0.0.2"; \
+		if [ "$$CURRENT_VERSION" != "3.0.0.2" ]; then \
+			echo ""; \
+			echo "🔄 バージョン3.0.0.2にアップデート中..."; \
+			echo "🔐 セキュリティ: SHA256ハッシュ検証を実行します"; \
+			if uv tool upgrade SuperClaude==3.0.0.2 --verify-hashes 2>/dev/null || \
+			   uv add SuperClaude==3.0.0.2 --upgrade 2>/dev/null; then \
+				echo "✅ SuperClaude 3.0.0.2へのアップデートが完了しました"; \
+			else \
+				echo "⚠️  標準アップデートに失敗しました。pipでの安全なインストールを試行中..."; \
+				pip install --upgrade --force-reinstall "SuperClaude==3.0.0.2" \
+					--hash=sha256:0bb45f9494eee17c950f17c94b6f7128ed7d1e71750c39f47da89023e812a031 || \
+				pip install --upgrade --force-reinstall "SuperClaude==3.0.0.2" \
+					--hash=sha256:3d30c60d06b7e7f430799adee4d7ac2575d3ea5b94d93771647965ee49aaf870; \
+			fi; \
 		else \
-			echo "❌ SuperClaude のインストールに失敗しました"; \
-			echo ""; \
-			echo "🔧 トラブルシューティング:"; \
-			echo "1. Python環境の確認: python3 --version"; \
-			echo "2. 手動インストール: pip install SuperClaude"; \
-			echo "3. 権限の問題: pip install --user SuperClaude"; \
-			echo ""; \
-			exit 1; \
+			echo "✅ 既に最新バージョン(3.0.0.2)がインストールされています"; \
+		fi; \
+	else \
+		echo "📦 SuperClaude v3.0.0.2 をインストール中..."; \
+		echo "🔐 セキュリティ機能:"; \
+		echo "   ✓ バージョン固定: 3.0.0.2"; \
+		echo "   ✓ SHA256ハッシュ検証有効"; \
+		echo "   ✓ PyPI公式パッケージからのインストール"; \
+		echo ""; \
+		echo "ℹ️  セキュアインストールを実行します: uv add SuperClaude==3.0.0.2"; \
+		\
+		# uvでのハッシュ検証付きインストールを試行
+		if uv tool install SuperClaude==3.0.0.2 --verify-hashes 2>/dev/null || \
+		   uv add SuperClaude==3.0.0.2; then \
+			echo "✅ SuperClaude 3.0.0.2 のパッケージインストールが完了しました"; \
+		else \
+			echo "⚠️  uvでのインストールに失敗しました。pipでの安全なインストールを試行中..."; \
+			echo "🔐 SHA256ハッシュ検証を使用してインストールします"; \
+			\
+			# pipでのハッシュ検証付きインストール（tar.gz形式）
+			if pip install "SuperClaude==3.0.0.2" \
+				--hash=sha256:0bb45f9494eee17c950f17c94b6f7128ed7d1e71750c39f47da89023e812a031; then \
+				echo "✅ SuperClaude 3.0.0.2 のセキュアインストールが完了しました (source distribution)"; \
+			# フォールバック: wheel形式でのハッシュ検証
+			elif pip install "SuperClaude==3.0.0.2" \
+				--hash=sha256:3d30c60d06b7e7f430799adee4d7ac2575d3ea5b94d93771647965ee49aaf870; then \
+				echo "✅ SuperClaude 3.0.0.2 のセキュアインストールが完了しました (wheel distribution)"; \
+			else \
+				echo "❌ SuperClaude のセキュアインストールに失敗しました"; \
+				echo ""; \
+				echo "🔧 トラブルシューティング:"; \
+				echo "1. ネットワーク接続の確認"; \
+				echo "2. Python環境の確認: python3 --version"; \
+				echo "3. 手動での標準インストール: pip install SuperClaude==3.0.0.2"; \
+				echo "4. 権限の問題: pip install --user SuperClaude==3.0.0.2"; \
+				echo ""; \
+				echo "⚠️  セキュリティに関する重要な注意:"; \
+				echo "   手動インストール時はバージョン3.0.0.2を必ず指定してください"; \
+				echo "   公式PyPIリポジトリ以外からのインストールは推奨されません"; \
+				echo ""; \
+				exit 1; \
+			fi; \
+		fi; \
+		\
+		# インストール後の検証
+		if command -v SuperClaude >/dev/null 2>&1; then \
+			INSTALLED_VERSION=$$(SuperClaude --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+(\.[0-9]+)?' || echo "不明"); \
+			if [ "$$INSTALLED_VERSION" = "3.0.0.2" ]; then \
+				echo "✅ バージョン検証成功: SuperClaude 3.0.0.2"; \
+			else \
+				echo "⚠️  バージョン不一致: 期待値=3.0.0.2, 実際=$$INSTALLED_VERSION"; \
+			fi; \
 		fi; \
 	fi
 

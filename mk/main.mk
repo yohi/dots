@@ -7,8 +7,9 @@ setup-all:
 	@echo "   1. システムセットアップ"
 	@echo "   2. Homebrewインストール"
 	@echo "   3. アプリケーションインストール"
-	@echo "   4. 設定セットアップ"
-	@echo "   5. 拡張機能インストール"
+	@echo "   4. Claude Codeエコシステムインストール"
+	@echo "   5. 設定セットアップ"
+	@echo "   6. 拡張機能インストール"
 	@echo ""
 
 	# 各セットアップを順次実行
@@ -24,7 +25,11 @@ setup-all:
 	@$(MAKE) install-apps
 	@echo ""
 
-	@echo "📋 4. 設定セットアップ実行中..."
+	@echo "📋 4. Claude Codeエコシステムインストール実行中..."
+	@$(MAKE) install-claude-ecosystem
+	@echo ""
+
+	@echo "📋 5. 設定セットアップ実行中..."
 	@$(MAKE) setup-vim
 	@$(MAKE) setup-zsh
 	@$(MAKE) setup-git
@@ -37,7 +42,7 @@ setup-all:
 	@$(MAKE) setup-shortcuts
 	@echo ""
 
-	@echo "📋 5. 拡張機能インストール実行中..."
+	@echo "📋 6. 拡張機能インストール実行中..."
 	@$(MAKE) install-extensions-simple
 	@echo ""
 
