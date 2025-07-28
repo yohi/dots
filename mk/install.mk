@@ -204,179 +204,6 @@ install-cursor:
 		echo "3. ダウンロード後、再度このコマンドを実行"; \
 	fi
 
-# Cursor IDEのバージョン更新
-# 使用方法:
-#   make update-cursor           (stableトラック)
-#   make update-cursor TRACK=latest  (latestトラック)
-update-cursor:
-	@echo "🔄 Cursor IDEのバージョン更新を開始します..."
-	@TRACK_VALUE="$(if $(TRACK),$(TRACK),stable)" && \
-	echo "📋 リリーストラック: $$TRACK_VALUE" && \
-	CURRENT_VERSION="" && \
-	NEW_VERSION="" && \
-	UPDATE_NEEDED=false && \
-	\
-	echo "🔍 現在のCursor IDEバージョンを確認中..." && \
-	if [ -f /opt/cursor/cursor.AppImage ]; then \
-		echo "✅ 既存のCursor IDEが見つかりました"; \
-		CURRENT_VERSION=$$(stat -c%Y /opt/cursor/cursor.AppImage 2>/dev/null || echo "unknown"); \
-		echo "📅 現在のファイル更新日時: $$(date -d @$$CURRENT_VERSION '+%Y-%m-%d %H:%M:%S' 2>/dev/null || echo '不明')"; \
-	else \
-		echo "❌ Cursor IDEがインストールされていません"; \
-		echo "💡 'make install-cursor' でインストールを行ってください"; \
-		exit 1; \
-	fi && \
-	\
-	echo "📦 最新版をダウンロード中..." && \
-	cd /tmp && \
-	rm -f cursor_new.AppImage cursor_download_info.json 2>/dev/null || true && \
-	DOWNLOAD_SUCCESS=false && \
-	\
-	echo "🔍 最新バージョン情報を取得中..." && \
-	if curl -s --max-time 30 "https://cursor.com/api/download?platform=linux-x64&releaseTrack=$$TRACK_VALUE" \
-		-o cursor_download_info.json 2>/dev/null; then \
-		DOWNLOAD_URL=$$(cat cursor_download_info.json | grep -o '"downloadUrl":"[^"]*"' | cut -d'"' -f4 2>/dev/null || echo ""); \
-		VERSION=$$(cat cursor_download_info.json | grep -o '"version":"[^"]*"' | cut -d'"' -f4 2>/dev/null || echo "unknown"); \
-		if [ -n "$$DOWNLOAD_URL" ]; then \
-			echo "📋 最新バージョン: $$VERSION"; \
-			echo "🔗 ダウンロード中: $$DOWNLOAD_URL"; \
-			if curl -L --user-agent "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36" \
-				--max-time 120 --retry 3 --retry-delay 5 \
-				-o cursor_new.AppImage "$$DOWNLOAD_URL" 2>/dev/null; then \
-				FILE_SIZE=$$(stat -c%s cursor_new.AppImage 2>/dev/null || echo "0"); \
-				if [ "$$FILE_SIZE" -gt 50000000 ]; then \
-					echo "✅ 最新版のダウンロードが成功しました ($$(echo "scale=1; $$FILE_SIZE/1024/1024" | bc 2>/dev/null || echo "$$FILE_SIZE")MB)"; \
-					chmod +x cursor_new.AppImage; \
-					DOWNLOAD_SUCCESS=true; \
-				else \
-					echo "⚠️  ダウンロードファイルのサイズが小さすぎます ($$FILE_SIZE bytes)"; \
-					rm -f cursor_new.AppImage; \
-				fi; \
-			else \
-				echo "❌ ダウンロード失敗: $$DOWNLOAD_URL"; \
-			fi; \
-		else \
-			echo "❌ APIレスポンスからダウンロードURLを取得できませんでした"; \
-		fi; \
-	else \
-		echo "❌ Cursor APIからバージョン情報を取得できませんでした"; \
-		echo "🔗 フォールバック: 古いダウンロードURLを試行中..."; \
-		if curl -L --user-agent "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36" \
-			--max-time 60 --retry 2 --retry-delay 3 \
-			-o cursor_new.AppImage "https://downloader.cursor.sh/linux/appImage/x64" 2>/dev/null; then \
-			FILE_SIZE=$$(stat -c%s cursor_new.AppImage 2>/dev/null || echo "0"); \
-			if [ "$$FILE_SIZE" -gt 50000000 ]; then \
-				echo "✅ フォールバックダウンロードが成功しました ($$(echo "scale=1; $$FILE_SIZE/1024/1024" | bc 2>/dev/null || echo "$$FILE_SIZE")MB)"; \
-				chmod +x cursor_new.AppImage; \
-				DOWNLOAD_SUCCESS=true; \
-			else \
-				echo "⚠️  ダウンロードファイルのサイズが小さすぎます ($$FILE_SIZE bytes)"; \
-				rm -f cursor_new.AppImage; \
-			fi; \
-		else \
-			echo "❌ フォールバックダウンロードも失敗しました"; \
-		fi; \
-	fi; \
-	rm -f cursor_download_info.json 2>/dev/null || true; \
-	\
-	if [ "$$DOWNLOAD_SUCCESS" = "false" ]; then \
-		echo ""; \
-		echo "❌ すべての自動ダウンロードが失敗しました"; \
-		echo ""; \
-		echo "🔍 診断情報:"; \
-		echo "   • downloader.cursor.sh - ドメインが存在しません"; \
-		echo "   • cursor.com/download - 404エラーまたは不正なファイル"; \
-		echo ""; \
-		echo "📥 手動ダウンロード手順:"; \
-		echo "1. ブラウザで https://cursor.com/ を開く"; \
-		echo "2. 'Download for Linux' または 'Linux' ボタンをクリック"; \
-		echo "3. ダウンロードした .AppImage ファイルを確認:"; \
-		echo "   ls -la ~/Downloads/cursor*.AppImage"; \
-		echo ""; \
-		echo "4. 既存ファイルをバックアップ:"; \
-		echo "   sudo cp /opt/cursor/cursor.AppImage /opt/cursor/cursor.AppImage.backup"; \
-		echo ""; \
-		echo "5. 新しいファイルを配置:"; \
-		echo "   sudo cp ~/Downloads/cursor*.AppImage /opt/cursor/cursor.AppImage"; \
-		echo "   sudo chmod +x /opt/cursor/cursor.AppImage"; \
-		echo ""; \
-		echo "6. 再度このコマンドを実行して更新を確認:"; \
-		echo "   make update-cursor"; \
-		echo ""; \
-		echo "💡 ヒント: 最新のダウンロードURLが変更されている可能性があります"; \
-		exit 1; \
-	fi && \
-	\
-	echo "🔍 バージョン比較を実行中..." && \
-	CURRENT_SIZE=$$(stat -c%s /opt/cursor/cursor.AppImage 2>/dev/null || echo "0") && \
-	NEW_SIZE=$$(stat -c%s cursor_new.AppImage 2>/dev/null || echo "0") && \
-	CURRENT_HASH=$$(sha256sum /opt/cursor/cursor.AppImage 2>/dev/null | cut -d' ' -f1 || echo "unknown") && \
-	NEW_HASH=$$(sha256sum cursor_new.AppImage 2>/dev/null | cut -d' ' -f1 || echo "unknown") && \
-	\
-	CURRENT_HASH_SHORT=$$(echo "$$CURRENT_HASH" | cut -c1-16); \
-	NEW_HASH_SHORT=$$(echo "$$NEW_HASH" | cut -c1-16); \
-	echo "📊 ファイル比較結果:"; \
-	echo "   現在: $$(echo "scale=1; $$CURRENT_SIZE/1024/1024" | bc 2>/dev/null || echo "$$CURRENT_SIZE")MB (SHA256: $$CURRENT_HASH_SHORT...)"; \
-	echo "   最新: $$(echo "scale=1; $$NEW_SIZE/1024/1024" | bc 2>/dev/null || echo "$$NEW_SIZE")MB (SHA256: $$NEW_HASH_SHORT...)"; \
-	\
-	if [ "$$CURRENT_HASH" != "$$NEW_HASH" ]; then \
-		echo "🔄 新しいバージョンが利用可能です"; \
-		UPDATE_NEEDED=true; \
-	else \
-		echo "✅ Cursor IDEは既に最新バージョンです"; \
-		UPDATE_NEEDED=false; \
-	fi && \
-	\
-	if [ "$$UPDATE_NEEDED" = "true" ]; then \
-		BACKUP_TIMESTAMP=$$(date +%Y%m%d_%H%M%S); \
-		echo "📁 既存バージョンをバックアップ中..." && \
-		sudo cp /opt/cursor/cursor.AppImage /opt/cursor/cursor.AppImage.backup.$$BACKUP_TIMESTAMP && \
-		echo "🔄 新しいバージョンに更新中..." && \
-		sudo mv cursor_new.AppImage /opt/cursor/cursor.AppImage && \
-		sudo chmod +x /opt/cursor/cursor.AppImage && \
-		echo "🔄 デスクトップエントリーを更新中..." && \
-		sudo update-desktop-database 2>/dev/null || true && \
-		echo "✅ Cursor IDEが正常に更新されました！"; \
-		echo ""; \
-		echo "📝 更新内容:"; \
-		echo "   バックアップ: /opt/cursor/cursor.AppImage.backup.$$BACKUP_TIMESTAMP"; \
-		echo "   新バージョン: SHA256 $$NEW_HASH_SHORT..."; \
-		echo ""; \
-		echo "🚀 Cursorを再起動して新しいバージョンをお楽しみください！"; \
-	else \
-		rm -f cursor_new.AppImage; \
-		echo "ℹ️  更新の必要はありません"; \
-	fi
-
-# Cursor IDE更新の便利なエイリアス
-update-cursor-stable:
-	@make update-cursor TRACK=stable
-
-update-cursor-latest:
-	@make update-cursor TRACK=latest
-
-# Cursor IDEのバージョン情報を確認
-check-cursor-version:
-	@echo "🔍 Cursor IDEバージョン情報を確認中..."
-	@if [ -f /opt/cursor/cursor.AppImage ]; then \
-		echo "✅ Cursor IDEが見つかりました"; \
-		FILE_SIZE=$$(stat -c%s /opt/cursor/cursor.AppImage 2>/dev/null || echo "0"); \
-		FILE_DATE=$$(stat -c%Y /opt/cursor/cursor.AppImage 2>/dev/null || echo "0"); \
-		FILE_HASH=$$(sha256sum /opt/cursor/cursor.AppImage 2>/dev/null | cut -d' ' -f1 || echo "unknown"); \
-		FILE_HASH_SHORT=$$(echo "$$FILE_HASH" | cut -c1-16); \
-		FORMATTED_DATE=$$(date -d @$$FILE_DATE '+%Y-%m-%d %H:%M:%S' 2>/dev/null || echo '不明'); \
-		echo "📊 インストール情報:"; \
-		echo "   ファイルサイズ: $$(echo "scale=1; $$FILE_SIZE/1024/1024" | bc 2>/dev/null || echo "$$FILE_SIZE")MB"; \
-		echo "   更新日時: $$FORMATTED_DATE"; \
-		echo "   SHA256ハッシュ: $$FILE_HASH_SHORT..."; \
-		echo "   インストール先: /opt/cursor/cursor.AppImage"; \
-		echo ""; \
-		echo "💡 最新版へ更新するには: make update-cursor"; \
-	else \
-		echo "❌ Cursor IDEがインストールされていません"; \
-		echo "💡 インストールするには: make install-cursor"; \
-	fi
-
 # MySQL Workbench のインストール
 install-mysql-workbench:
 	@echo "🐬 MySQL Workbench のインストールを開始..."
@@ -421,6 +248,534 @@ install-mysql-workbench:
 	fi
 
 	@echo "🎉 MySQL Workbench インストール完了"
+
+# Claude Code のインストール
+install-claude-code:
+	@echo "🤖 Claude Code のインストールを開始..."
+
+	# Node.jsの確認
+	@echo "🔍 Node.js の確認中..."
+	@if ! command -v node >/dev/null 2>&1; then \
+		echo "❌ Node.js がインストールされていません"; \
+		echo ""; \
+		echo "📥 Node.js のインストール手順:"; \
+		echo "1. Homebrewを使用: brew install node"; \
+		echo "2. NodeVersionManager(nvm)を使用: https://github.com/nvm-sh/nvm"; \
+		echo "3. 公式サイト: https://nodejs.org/"; \
+		echo ""; \
+		echo "ℹ️  Node.js 18+ が必要です"; \
+		exit 1; \
+	else \
+		NODE_VERSION=$$(node --version | cut -d'v' -f2 | cut -d'.' -f1); \
+		echo "✅ Node.js が見つかりました (バージョン: $$(node --version))"; \
+		if [ "$$NODE_VERSION" -lt 18 ]; then \
+			echo "⚠️  Node.js 18+ が推奨されています (現在: $$(node --version))"; \
+			echo "   古いバージョンでも動作する可能性がありますが、問題が発生する場合があります"; \
+		fi; \
+	fi
+
+	# npmの確認
+	@echo "🔍 npm の確認中..."
+	@if ! command -v npm >/dev/null 2>&1; then \
+		echo "❌ npm がインストールされていません"; \
+		echo "ℹ️  通常はNode.jsと一緒にインストールされます"; \
+		exit 1; \
+	else \
+		echo "✅ npm が見つかりました (バージョン: $$(npm --version))"; \
+	fi
+
+	# Claude Code のインストール確認
+	@echo "🔍 既存の Claude Code インストールを確認中..."
+	@if command -v claude >/dev/null 2>&1; then \
+		echo "✅ Claude Code は既にインストールされています"; \
+		echo "   バージョン: $$(claude --version 2>/dev/null || echo '取得できませんでした')"; \
+		echo ""; \
+		echo "🔄 アップデートを確認中..."; \
+		npm update -g @anthropic-ai/claude-code 2>/dev/null || true; \
+	else \
+		echo "📦 Claude Code をインストール中..."; \
+		echo "ℹ️  グローバルインストールを実行します: npm install -g @anthropic-ai/claude-code"; \
+		\
+		if npm install -g @anthropic-ai/claude-code; then \
+			echo "✅ Claude Code のインストールが完了しました"; \
+		else \
+			echo "❌ Claude Code のインストールに失敗しました"; \
+			echo ""; \
+			echo "🔧 トラブルシューティング:"; \
+			echo "1. 権限の問題: npm config set prefix $(HOME)/.local"; \
+			echo "2. WSLの場合: npm config set os linux"; \
+			echo "3. 強制インストール: npm install -g @anthropic-ai/claude-code --force"; \
+			echo ""; \
+			exit 1; \
+		fi; \
+	fi
+
+	# インストール確認
+	@echo "🔍 インストールの確認中..."
+	@if command -v claude >/dev/null 2>&1; then \
+		echo "✅ Claude Code が正常にインストールされました"; \
+		echo "   実行ファイル: $$(which claude)"; \
+		echo "   バージョン: $$(claude --version 2>/dev/null || echo '取得できませんでした')"; \
+	else \
+		echo "❌ Claude Code のインストール確認に失敗しました"; \
+		echo "ℹ️  PATH の問題の可能性があります"; \
+		echo "   手動確認: which claude"; \
+		exit 1; \
+	fi
+
+	@echo ""
+	@echo "🎉 Claude Code のセットアップガイド:"
+	@echo "1. プロジェクトディレクトリに移動: cd your-project-directory"
+	@echo "2. Claude Code を開始: claude"
+	@echo "3. 認証方法を選択:"
+	@echo "   - Anthropic Console (デフォルト)"
+	@echo "   - Claude App (ProまたはMaxプラン)"
+	@echo "   - エンタープライズプラットフォーム"
+	@echo "4. 初回セットアップコマンド:"
+	@echo "   > summarize this project"
+	@echo "   > /init"
+	@echo ""
+	@echo "📚 詳細なドキュメント: https://docs.anthropic.com/claude-code"
+	@echo "✅ Claude Code のインストールが完了しました"
+
+# Claudia (Claude Code GUI) のインストール
+install-claudia:
+	@echo "🖥️  Claudia (Claude Code GUI) のインストールを開始..."
+
+	# Claude Code の確認
+	@echo "🔍 Claude Code の確認中..."
+	@if ! command -v claude >/dev/null 2>&1; then \
+		echo "❌ Claude Code がインストールされていません"; \
+		echo "ℹ️  先に 'make install-packages-claude-code' を実行してください"; \
+		exit 1; \
+	else \
+		echo "✅ Claude Code が見つかりました: $$(claude --version 2>/dev/null)"; \
+	fi
+
+	# Rust の確認 (Homebrew版を使用)
+	@echo "🔍 Rust の確認中..."
+	@if ! command -v rustc >/dev/null 2>&1; then \
+		echo "❌ Rust がインストールされていません"; \
+		echo "📥 Homebrewでインストールしてください: brew install rust"; \
+		exit 1; \
+	else \
+		RUST_VERSION=$$(rustc --version | grep -o '[0-9]\+\.[0-9]\+' | head -1); \
+		echo "✅ Rust が見つかりました: $$(rustc --version)"; \
+		if [ "$$(echo "$$RUST_VERSION" | cut -d'.' -f1)" -lt 1 ] || \
+		   [ "$$(echo "$$RUST_VERSION" | cut -d'.' -f1)" -eq 1 -a "$$(echo "$$RUST_VERSION" | cut -d'.' -f2)" -lt 70 ]; then \
+			echo "⚠️  Rust 1.70.0+ が推奨されています (現在: $$RUST_VERSION)"; \
+		fi; \
+	fi
+
+	# システム依存関係のインストール (Linux)
+	@echo "📦 システム依存関係をインストール中..."
+	@if command -v apt-get >/dev/null 2>&1; then \
+		echo "🔧 Linux向けの依存関係をインストール中..."; \
+		sudo apt update -q 2>/dev/null || echo "⚠️  パッケージリストの更新で問題が発生しましたが、処理を続行します"; \
+		sudo DEBIAN_FRONTEND=noninteractive apt install -y \
+			libwebkit2gtk-4.1-dev \
+			libgtk-3-dev \
+			libayatana-appindicator3-dev \
+			librsvg2-dev \
+			patchelf \
+			build-essential \
+			curl \
+			wget \
+			file \
+			libssl-dev \
+			libxdo-dev \
+			libsoup-3.0-dev \
+			libjavascriptcoregtk-4.1-dev || \
+		echo "⚠️  一部の依存関係のインストールに失敗しましたが、処理を続行します"; \
+	else \
+		echo "ℹ️  Linuxではないため、システム依存関係のインストールをスキップします"; \
+	fi
+
+	# Bun のインストール
+	@echo "🔍 Bun の確認中..."
+	@if ! command -v bun >/dev/null 2>&1; then \
+		echo "📦 Bun をインストール中..."; \
+		curl -fsSL https://bun.sh/install | bash; \
+		echo "🔄 Bunのパスを更新中..."; \
+		export PATH="$(HOME_DIR)/.bun/bin:$$PATH"; \
+		if ! command -v bun >/dev/null 2>&1; then \
+			echo "⚠️  Bunのインストールが完了しましたが、現在のセッションで認識されていません"; \
+			echo "   新しいターミナルセッションで再実行するか、以下を実行してください:"; \
+			echo "   source $(HOME_DIR)/.bashrc"; \
+			echo "   source $(HOME_DIR)/.zshrc (zshの場合)"; \
+		fi; \
+	else \
+		echo "✅ Bun が見つかりました: $$(bun --version)"; \
+	fi
+
+	# Claudia のクローンとビルド
+	@echo "📥 Claudia をクローン中..."
+	@CLAUDIA_DIR="/tmp/claudia-build" && \
+	rm -rf "$$CLAUDIA_DIR" 2>/dev/null || true && \
+	if git clone https://github.com/getAsterisk/claudia.git "$$CLAUDIA_DIR"; then \
+		echo "✅ Claudia のクローンが完了しました"; \
+		cd "$$CLAUDIA_DIR" && \
+		\
+		echo "📦 フロントエンド依存関係をインストール中..."; \
+		export PATH="$(HOME_DIR)/.bun/bin:$$PATH"; \
+		if command -v bun >/dev/null 2>&1; then \
+			bun install; \
+		else \
+			echo "❌ Bun が見つかりません。新しいターミナルセッションで再実行してください"; \
+			exit 1; \
+		fi; \
+		\
+		echo "🔨 Claudia をビルド中..."; \
+		echo "ℹ️  この処理には数分かかる場合があります..."; \
+		export PKG_CONFIG_PATH="/usr/lib/x86_64-linux-gnu/pkgconfig:$$PKG_CONFIG_PATH"; \
+		if bun run tauri build; then \
+			echo "✅ Claudia のビルドが完了しました"; \
+			\
+			echo "📁 実行ファイルをインストール中..."; \
+			if [ -f "src-tauri/target/release/claudia" ]; then \
+				sudo mkdir -p /opt/claudia; \
+				sudo cp src-tauri/target/release/claudia /opt/claudia/; \
+				sudo chmod +x /opt/claudia/claudia; \
+				\
+				echo "📝 デスクトップエントリーを作成中..."; \
+				echo "[Desktop Entry]" | sudo tee /usr/share/applications/claudia.desktop > /dev/null; \
+				echo "Name=Claudia" | sudo tee -a /usr/share/applications/claudia.desktop > /dev/null; \
+				echo "Comment=A powerful GUI app and Toolkit for Claude Code" | sudo tee -a /usr/share/applications/claudia.desktop > /dev/null; \
+				echo "Exec=/opt/claudia/claudia" | sudo tee -a /usr/share/applications/claudia.desktop > /dev/null; \
+				echo "Icon=applications-development" | sudo tee -a /usr/share/applications/claudia.desktop > /dev/null; \
+				echo "Terminal=false" | sudo tee -a /usr/share/applications/claudia.desktop > /dev/null; \
+				echo "Type=Application" | sudo tee -a /usr/share/applications/claudia.desktop > /dev/null; \
+				echo "Categories=Development;IDE;Utility;" | sudo tee -a /usr/share/applications/claudia.desktop > /dev/null; \
+				echo "StartupWMClass=claudia" | sudo tee -a /usr/share/applications/claudia.desktop > /dev/null; \
+				sudo chmod +x /usr/share/applications/claudia.desktop; \
+				sudo update-desktop-database 2>/dev/null || true; \
+				\
+				echo "✅ Claudia が /opt/claudia にインストールされました"; \
+			else \
+				echo "❌ ビルドされた実行ファイルが見つかりません"; \
+				exit 1; \
+			fi; \
+		else \
+			echo "❌ Claudia のビルドに失敗しました"; \
+			echo "🔧 トラブルシューティング:"; \
+			echo "1. 依存関係の確認: すべてのシステム依存関係がインストールされているか"; \
+			echo "2. メモリ不足: ビルドには十分なRAMが必要"; \
+			echo "3. 手動ビルド: cd /tmp/claudia-build && bun run tauri build --debug"; \
+			exit 1; \
+		fi; \
+	else \
+		echo "❌ Claudia のクローンに失敗しました"; \
+		echo "ℹ️  インターネット接続を確認してください"; \
+		exit 1; \
+	fi
+
+	# クリーンアップ
+	@echo "🧹 一時ファイルをクリーンアップ中..."
+	@rm -rf /tmp/claudia-build 2>/dev/null || true
+
+	@echo ""
+	@echo "🎉 Claudia のセットアップが完了しました！"
+	@echo ""
+	@echo "🚀 使用方法:"
+	@echo "1. アプリケーションメニューから 'Claudia' を起動"
+	@echo "2. または、ターミナルから: /opt/claudia/claudia"
+	@echo "3. 初回起動時にClaude Codeディレクトリが自動検出されます"
+	@echo ""
+	@echo "✨ Claudia の機能:"
+	@echo "- 📁 プロジェクト & セッション管理"
+	@echo "- 🤖 カスタムAIエージェント作成"
+	@echo "- 📊 使用状況分析ダッシュボード"
+	@echo "- 🔌 MCP サーバー管理"
+	@echo "- ⏰ タイムライン & チェックポイント"
+	@echo "- 📝 CLAUDE.md 管理"
+	@echo ""
+	@echo "📚 詳細なドキュメント: https://github.com/getAsterisk/claudia"
+	@echo "✅ Claudia のインストールが完了しました"
+
+# SuperClaude (Claude Code Framework) のインストール
+install-superclaude:
+	@echo "🚀 SuperClaude v3 (Claude Code Framework) のインストールを開始..."
+
+	# Claude Code の確認
+	@echo "🔍 Claude Code の確認中..."
+	@if ! command -v claude >/dev/null 2>&1; then \
+		echo "❌ Claude Code がインストールされていません"; \
+		echo "ℹ️  先に 'make install-packages-claude-code' を実行してください"; \
+		exit 1; \
+	else \
+		echo "✅ Claude Code が見つかりました: $$(claude --version 2>/dev/null)"; \
+	fi
+
+	# Python の確認
+	@echo "🔍 Python の確認中..."
+	@if ! command -v python3 >/dev/null 2>&1; then \
+		echo "❌ Python3 がインストールされていません"; \
+		echo "📥 Pythonをインストールしてください: sudo apt install python3 python3-pip"; \
+		exit 1; \
+	else \
+		echo "✅ Python が見つかりました: $$(python3 --version)"; \
+	fi
+
+	# uv の確認とインストール
+	@echo "🔍 uv (Python パッケージマネージャー) の確認中..."
+	@if ! command -v uv >/dev/null 2>&1; then \
+		echo "📦 uv をインストール中..."; \
+		curl -LsSf https://astral.sh/uv/install.sh | sh; \
+		echo "🔄 uvのパスを更新中..."; \
+		export PATH="$(HOME_DIR)/.local/bin:$$PATH"; \
+		if ! command -v uv >/dev/null 2>&1; then \
+			echo "⚠️  uvのインストールが完了しましたが、現在のセッションで認識されていません"; \
+			echo "   新しいターミナルセッションで再実行するか、以下を実行してください:"; \
+			echo "   source $(HOME_DIR)/.bashrc"; \
+		fi; \
+	else \
+		echo "✅ uv が見つかりました: $$(uv --version)"; \
+	fi
+
+	# SuperClaude の既存インストール確認
+	@echo "🔍 既存の SuperClaude インストールを確認中..."
+	@export PATH="$(HOME_DIR)/.local/bin:$$PATH" && \
+	if command -v SuperClaude >/dev/null 2>&1; then \
+		echo "✅ SuperClaude は既にインストールされています"; \
+		echo "   バージョン: $$(SuperClaude --version 2>/dev/null || echo '取得できませんでした')"; \
+		echo ""; \
+		echo "🔄 アップデートを確認中..."; \
+		uv tool upgrade SuperClaude 2>/dev/null || \
+		uv add SuperClaude --upgrade 2>/dev/null || \
+		echo "⚠️  アップデートの確認に失敗しました"; \
+	else \
+		echo "📦 SuperClaude をインストール中..."; \
+		echo "ℹ️  PyPIからインストールします: uv add SuperClaude"; \
+		\
+		if uv tool install SuperClaude 2>/dev/null || uv add SuperClaude; then \
+			echo "✅ SuperClaude のパッケージインストールが完了しました"; \
+		else \
+			echo "❌ SuperClaude のインストールに失敗しました"; \
+			echo ""; \
+			echo "🔧 トラブルシューティング:"; \
+			echo "1. Python環境の確認: python3 --version"; \
+			echo "2. 手動インストール: pip install SuperClaude"; \
+			echo "3. 権限の問題: pip install --user SuperClaude"; \
+			echo ""; \
+			exit 1; \
+		fi; \
+	fi
+
+	# SuperClaude フレームワークのセットアップ
+	@echo "⚙️  SuperClaude フレームワークをセットアップ中..."
+	@export PATH="$(HOME_DIR)/.local/bin:$$PATH" && \
+	if command -v SuperClaude >/dev/null 2>&1; then \
+		echo "🔧 SuperClaude セットアップ準備中..."; \
+		echo "ℹ️  これによりフレームワークファイル、MCPサーバー、Claude Code設定が構成されます"; \
+		\
+		echo "🧹 既存の設定をクリーンアップ中..."; \
+		if [ -d "$(HOME_DIR)/.claude" ]; then \
+			echo "📁 既存の .claude ディレクトリが見つかりました"; \
+			chmod -R u+w "$(HOME_DIR)/.claude" 2>/dev/null || true; \
+			echo "🔧 権限を修正しました"; \
+		fi; \
+		\
+		echo "🚀 SuperClaude インストーラーを実行中..."; \
+		if printf "y\ny\ny\n" | SuperClaude install --profile developer 2>/dev/null; then \
+			echo "✅ SuperClaude フレームワークのセットアップが完了しました"; \
+		else \
+			echo "⚠️  開発者プロファイルでのセットアップに失敗しました。標準セットアップを試行中..."; \
+			if printf "1\ny\ny\n" | SuperClaude install 2>/dev/null; then \
+				echo "✅ SuperClaude フレームワークのセットアップが完了しました"; \
+			else \
+				echo "⚠️  標準セットアップも失敗しました。最小セットアップを試行中..."; \
+				rm -rf "$(HOME_DIR)/.claude/SuperClaude" 2>/dev/null || true; \
+				if printf "2\ny\ny\n" | SuperClaude install 2>/dev/null; then \
+					echo "✅ SuperClaude フレームワークのセットアップが完了しました"; \
+				else \
+					echo "⚠️  自動セットアップに失敗しました。SuperClaudeコマンドは利用可能です"; \
+					echo ""; \
+					echo "🔧 手動セットアップ（必要に応じて）:"; \
+					echo "   SuperClaude install --interactive"; \
+					echo ""; \
+					echo "ℹ️  SuperClaudeパッケージは正常にインストールされており、"; \
+					echo "   フレームワーク設定なしでもコマンドは利用可能です"; \
+				fi; \
+			fi; \
+		fi; \
+	else \
+		echo "❌ SuperClaude コマンドが見つかりません"; \
+		echo "ℹ️  PATH の問題の可能性があります"; \
+		echo "   手動確認: which SuperClaude"; \
+		exit 1; \
+	fi
+
+	# インストール確認とテスト
+	@echo "🔍 インストールの確認中..."
+	@export PATH="$(HOME_DIR)/.local/bin:$$PATH" && \
+	if command -v SuperClaude >/dev/null 2>&1; then \
+		echo "✅ SuperClaude が正常にインストールされました"; \
+		echo "   実行ファイル: $$(which SuperClaude)"; \
+		echo "   バージョン: $$(SuperClaude --version 2>/dev/null || echo '取得できませんでした')"; \
+	else \
+		echo "❌ SuperClaude のインストール確認に失敗しました"; \
+		echo "ℹ️  PATH の問題の可能性があります"; \
+		echo "   手動確認: which SuperClaude"; \
+		exit 1; \
+	fi
+
+	@echo ""
+	@echo "🎉 SuperClaude v3 のセットアップが完了しました！"
+	@echo ""
+	@echo "🚀 使用方法:"
+	@echo "1. Claude Code を起動: claude"
+	@echo "2. SuperClaude コマンドを使用:"
+	@echo ""
+	@echo "📋 利用可能なコマンド例:"
+	@echo "   /sc:implement <feature>    - 機能の実装"
+	@echo "   /sc:build                  - ビルド・パッケージング"
+	@echo "   /sc:design <ui>            - UI/UXデザイン"
+	@echo "   /sc:analyze <code>         - コード分析"
+	@echo "   /sc:troubleshoot <issue>   - 問題のデバッグ"
+	@echo "   /sc:test <suite>           - テストスイート"
+	@echo "   /sc:improve <code>         - コード改善"
+	@echo "   /sc:cleanup                - コードクリーンアップ"
+	@echo "   /sc:document <code>        - ドキュメント生成"
+	@echo "   /sc:git <operation>        - Git操作"
+	@echo "   /sc:estimate <task>        - 時間見積もり"
+	@echo "   /sc:task <management>      - タスク管理"
+	@echo ""
+	@echo "🎭 スマートペルソナ:"
+	@echo "   🏗️  architect   - システム設計・アーキテクチャ"
+	@echo "   🎨 frontend    - UI/UX・アクセシビリティ"
+	@echo "   ⚙️  backend     - API・インフラストラクチャ"
+	@echo "   🔍 analyzer    - デバッグ・問題解決"
+	@echo "   🛡️  security    - セキュリティ・脆弱性評価"
+	@echo "   ✍️  scribe      - ドキュメント・技術文書"
+	@echo ""
+	@echo "🔌 MCP サーバー統合:"
+	@echo "   - Context7 (公式ドキュメント)"
+	@echo "   - Sequential (マルチステップ思考)"
+	@echo "   - Magic (UIコンポーネント)"
+	@echo ""
+	@echo "📚 詳細なドキュメント: https://superclaude-org.github.io/"
+	@echo "✅ SuperClaude v3 のインストールが完了しました"
+
+# SuperClaude 設定修復ヘルパー
+fix-superclaude:
+	@echo "🔧 SuperClaude 設定修復ツール"
+	@echo "ℹ️  権限問題やセットアップエラーを修復します"
+
+	# 権限の修正
+	@echo "🧹 Claude ディレクトリの権限を修正中..."
+	@if [ -d "$(HOME_DIR)/.claude" ]; then \
+		chmod -R u+w "$(HOME_DIR)/.claude" 2>/dev/null || true; \
+		echo "✅ 権限を修正しました"; \
+	else \
+		echo "ℹ️  .claude ディレクトリが存在しません"; \
+	fi
+
+	# SuperClaude固有ファイルのクリーンアップ
+	@echo "🗑️  SuperClaude固有ファイルをクリーンアップ中..."
+	@rm -rf "$(HOME_DIR)/.claude/SuperClaude" 2>/dev/null || true
+	@rm -rf "$(HOME_DIR)/.claude/commands" 2>/dev/null || true
+	@rm -rf "$(HOME_DIR)/.claude/shared" 2>/dev/null || true
+	@echo "✅ クリーンアップが完了しました"
+
+	# SuperClaudeの再セットアップ
+	@echo "🚀 SuperClaude を再セットアップ中..."
+	@export PATH="$(HOME_DIR)/.local/bin:$$PATH" && \
+	if command -v SuperClaude >/dev/null 2>&1; then \
+		echo "📦 最小セットアップを実行中..."; \
+		if printf "2\ny\ny\n" | SuperClaude install 2>/dev/null; then \
+			echo "✅ SuperClaude の修復が完了しました"; \
+		else \
+			echo "⚠️  自動修復に失敗しました"; \
+			echo "🔧 手動での解決が必要です:"; \
+			echo "1. ターミナルで実行: SuperClaude install --interactive"; \
+			echo "2. オプション2（最小）を選択"; \
+			echo "3. 'y' で確認"; \
+		fi; \
+	else \
+		echo "❌ SuperClaude がインストールされていません"; \
+		echo "ℹ️  先に 'make install-packages-superclaude' を実行してください"; \
+	fi
+
+	@echo ""
+	@echo "✅ SuperClaude 修復プロセスが完了しました"
+
+# Claude Code エコシステム一括インストール
+install-claude-ecosystem:
+	@echo "🌟 Claude Code エコシステム一括インストールを開始..."
+	@echo "ℹ️  以下の3つのツールを順次インストールします:"
+	@echo "   1. Claude Code (AI コードエディタ・CLI)"
+	@echo "   2. SuperClaude (Claude Code フレームワーク)"
+	@echo "   3. Claudia (Claude Code GUI アプリ)"
+	@echo ""
+
+	# Step 1: Claude Code のインストール
+	@echo "📋 Step 1/3: Claude Code をインストール中..."
+	@$(MAKE) install-claude-code
+	@echo "✅ Claude Code のインストールが完了しました"
+	@echo ""
+
+	# Step 2: SuperClaude のインストール
+	@echo "📋 Step 2/3: SuperClaude をインストール中..."
+	@$(MAKE) install-superclaude
+	@echo "✅ SuperClaude のインストールが完了しました"
+	@echo ""
+
+	# Step 3: Claudia のインストール
+	@echo "📋 Step 3/3: Claudia をインストール中..."
+	@$(MAKE) install-claudia
+	@echo "✅ Claudia のインストールが完了しました"
+	@echo ""
+
+	# 最終確認
+	@echo "🔍 インストール結果の確認中..."
+	@export PATH="$(HOME_DIR)/.local/bin:$$PATH" && \
+	echo "Claude Code: $$(command -v claude >/dev/null 2>&1 && echo "✅ $$(claude --version 2>/dev/null)" || echo "❌ 未確認")" && \
+	echo "SuperClaude: $$(command -v SuperClaude >/dev/null 2>&1 && echo "✅ $$(SuperClaude --version 2>/dev/null || echo "インストール済み")" || echo "❌ 未確認")" && \
+	echo "Claudia: $$([ -f /opt/claudia/claudia ] && echo "✅ インストール済み (/opt/claudia/claudia)" || echo "❌ 未確認")"
+
+	@echo ""
+	@echo "🎉 Claude Code エコシステムのインストールが完了しました！"
+	@echo ""
+	@echo "🚀 使用開始ガイド:"
+	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	@echo ""
+	@echo "💻 Claude Code (CLI):"
+	@echo "  コマンド: claude"
+	@echo "  使用例: プロジェクトディレクトリで 'claude' を実行"
+	@echo ""
+	@echo "🚀 SuperClaude (フレームワーク):"
+	@echo "  Claude Code内で以下のコマンドが利用可能:"
+	@echo "    /sc:implement <機能>     - 機能実装"
+	@echo "    /sc:design <UI>          - UI/UXデザイン"
+	@echo "    /sc:analyze <コード>     - コード分析"
+	@echo "    /sc:test <テスト>        - テストスイート"
+	@echo "    /sc:improve <コード>     - コード改善"
+	@echo "    /sc:document <コード>    - ドキュメント生成"
+	@echo ""
+	@echo "🖥️  Claudia (GUI):"
+	@echo "  起動方法: アプリケーションメニューから 'Claudia' を選択"
+	@echo "  または: /opt/claudia/claudia"
+	@echo "  機能: プロジェクト管理、使用状況分析、MCPサーバー管理等"
+	@echo ""
+	@echo "🎭 利用可能なペルソナ (SuperClaude):"
+	@echo "  🏗️  architect - システム設計"
+	@echo "  🎨 frontend  - UI/UX開発"
+	@echo "  ⚙️  backend   - API/インフラ"
+	@echo "  🔍 analyzer  - デバッグ・分析"
+	@echo "  🛡️  security  - セキュリティ"
+	@echo "  ✍️  scribe    - ドキュメント"
+	@echo ""
+	@echo "📚 ドキュメント:"
+	@echo "  Claude Code: https://docs.anthropic.com/claude-code"
+	@echo "  SuperClaude: https://superclaude-org.github.io/"
+	@echo "  Claudia: https://github.com/getAsterisk/claudia"
+	@echo ""
+	@echo "✨ おすすめワークフロー:"
+	@echo "  1. 'claude' でプロジェクトを開始"
+	@echo "  2. '/sc:implement' で機能を実装"
+	@echo "  3. Claudia でプロジェクト管理・分析"
+	@echo ""
+	@echo "✅ Claude Code エコシステムの一括インストールが完了しました"
 
 # DEBパッケージをインストール（IDE・ブラウザ含む）
 install-deb:
@@ -522,6 +877,10 @@ install-packages-flatpak: install-flatpak
 install-packages-fuse: install-fuse
 install-packages-wezterm: install-wezterm
 install-packages-cursor: install-cursor
+install-packages-claude-code: install-claude-code
+install-packages-claudia: install-claudia
+install-packages-superclaude: install-superclaude
+install-packages-claude-ecosystem: install-claude-ecosystem
 install-packages-cica-fonts: install-cica-fonts
 install-packages-mysql-workbench: install-mysql-workbench
 
