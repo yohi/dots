@@ -241,6 +241,38 @@ setup-mcp-tools:
 	@echo "  - ECS MCP Server: AWS ECSの管理"
 	@echo "ℹ️  Cursorを再起動してMCPツールを有効化してください。"
 
+# Cursor Rules（自動ペルソナ選択）の設定をセットアップ
+setup-cursor-rules:
+	@echo "🧠 Cursor自動ペルソナ選択ルールをセットアップ中..."
+	@echo "ℹ️  現在のディレクトリ: $$(pwd)"
+
+	# プロジェクトの.cursor/rulesディレクトリを作成
+	@mkdir -p .cursor/rules
+
+	# 既存のルール設定をバックアップ
+	@if [ -d ".cursor/rules" ] && [ ! -L ".cursor/rules" ]; then \
+		echo "⚠️  既存の.cursor/rulesディレクトリが存在します"; \
+		if [ "$$(ls -A .cursor/rules 2>/dev/null)" ]; then \
+			echo "⚠️  既存のルール設定をバックアップ中..."; \
+			mv .cursor/rules .cursor/rules.backup.$$(date +%Y%m%d_%H%M%S); \
+			mkdir -p .cursor/rules; \
+		fi; \
+	fi
+
+	# dotsのcursor/rulesへシンボリックリンクを作成
+	@echo "🔗 SuperClaude自動ペルソナ選択ルールをリンク中..."
+	@ln -sfn $(DOTFILES_DIR)/cursor/rules/* .cursor/rules/
+
+	@echo "✅ Cursor自動ペルソナ選択ルールの設定が完了しました。"
+	@echo "ℹ️  セットアップされたペルソナ:"
+	@echo "  - @architect: システム設計・アーキテクチャ"
+	@echo "  - @developer (Frontend): フロントエンド開発"
+	@echo "  - @developer (Backend): バックエンド開発"
+	@echo "  - @tester: テスト・品質保証"
+	@echo "  - @devops: インフラ・運用"
+	@echo "  - Smart Selector: AI判断による自動選択"
+	@echo "ℹ️  Cursorを再起動して自動ペルソナ選択を有効化してください。"
+
 # Git設定のセットアップ
 setup-git:
 	@echo "🖥️  Git設定をセットアップ中..."

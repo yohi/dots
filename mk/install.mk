@@ -204,6 +204,137 @@ install-cursor:
 		echo "3. ダウンロード後、再度このコマンドを実行"; \
 	fi
 
+# Cursor IDEの更新
+update-cursor:
+	@echo "🔄 Cursor IDEの更新を開始します..."
+
+	# 現在のバージョン確認
+	@echo "🔍 現在のCursor IDEの状態を確認中..."
+	@if [ -f /opt/cursor/cursor.AppImage ]; then \
+		echo "✅ Cursor IDEが見つかりました: /opt/cursor/cursor.AppImage"; \
+		CURRENT_SIZE=$$(stat -c%s /opt/cursor/cursor.AppImage 2>/dev/null || echo "0"); \
+		echo "   現在のファイルサイズ: $$CURRENT_SIZE bytes"; \
+		CURRENT_MODIFIED=$$(stat -c%Y /opt/cursor/cursor.AppImage 2>/dev/null || echo "0"); \
+		echo "   最終更新日: $$(date -d @$$CURRENT_MODIFIED 2>/dev/null || echo '不明')"; \
+	else \
+		echo "❌ Cursor IDEがインストールされていません"; \
+		echo "ℹ️  先に 'make install-packages-cursor' でインストールしてください"; \
+		exit 1; \
+	fi
+
+	# 既存のCursor IDEをバックアップ
+	@echo "💾 現在のCursor IDEをバックアップ中..."
+	@BACKUP_NAME="cursor-backup-$$(date +%Y%m%d_%H%M%S).AppImage" && \
+	sudo cp /opt/cursor/cursor.AppImage "/opt/cursor/$$BACKUP_NAME" && \
+	echo "✅ バックアップを作成しました: /opt/cursor/$$BACKUP_NAME"
+
+	# 最新版をダウンロード
+	@echo "📥 最新版のCursor IDEをダウンロード中..."
+	@cd /tmp && \
+	rm -f cursor-update.AppImage 2>/dev/null && \
+	echo "🌐 公式サイトから最新版をダウンロード中..." && \
+	if curl -L --user-agent "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36" \
+		--max-time 120 --retry 3 --retry-delay 5 \
+		--progress-bar \
+		-o cursor-update.AppImage "https://downloader.cursor.sh/linux/appImage/x64"; then \
+		FILE_SIZE=$$(stat -c%s cursor-update.AppImage 2>/dev/null || echo "0"); \
+		echo "📦 ダウンロード完了: $$FILE_SIZE bytes"; \
+		if [ "$$FILE_SIZE" -gt 10000000 ]; then \
+			echo "✅ ダウンロードが正常に完了しました"; \
+		else \
+			echo "❌ ダウンロードファイルが不完全です (サイズ: $$FILE_SIZE bytes)"; \
+			rm -f cursor-update.AppImage; \
+			exit 1; \
+		fi; \
+	else \
+		echo "❌ ダウンロードに失敗しました"; \
+		echo "🔧 トラブルシューティング:"; \
+		echo "   1. インターネット接続を確認してください"; \
+		echo "   2. 手動でダウンロード: https://cursor.sh/"; \
+		echo "   3. ダウンロード後のファイルを /tmp/cursor-update.AppImage に配置"; \
+		exit 1; \
+	fi
+
+	# バージョン比較とサイズチェック
+	@echo "🔍 新旧バージョンを比較中..."
+	@cd /tmp && \
+	if [ -f cursor-update.AppImage ]; then \
+		OLD_SIZE=$$(stat -c%s /opt/cursor/cursor.AppImage 2>/dev/null || echo "0"); \
+		NEW_SIZE=$$(stat -c%s cursor-update.AppImage 2>/dev/null || echo "0"); \
+		echo "   現在のバージョン: $$OLD_SIZE bytes"; \
+		echo "   新しいバージョン: $$NEW_SIZE bytes"; \
+		\
+		if [ "$$OLD_SIZE" = "$$NEW_SIZE" ]; then \
+			echo "ℹ️  ファイルサイズが同じです。既に最新版の可能性があります"; \
+			echo "❓ 続行しますか？ [y/N]"; \
+			read -r CONTINUE; \
+			if [ "$$CONTINUE" != "y" ] && [ "$$CONTINUE" != "Y" ]; then \
+				echo "⏸️  更新をキャンセルしました"; \
+				rm -f cursor-update.AppImage; \
+				exit 0; \
+			fi; \
+		else \
+			echo "✅ 新しいバージョンが利用可能です"; \
+		fi; \
+	fi
+
+	# 新しいバージョンをインストール
+	@echo "🔄 Cursor IDEを更新中..."
+	@cd /tmp && \
+	if [ -f cursor-update.AppImage ]; then \
+		chmod +x cursor-update.AppImage && \
+		echo "📁 新しいバージョンを配置中..." && \
+		sudo mv cursor-update.AppImage /opt/cursor/cursor.AppImage && \
+		echo "✅ Cursor IDEの更新が完了しました"; \
+	else \
+		echo "❌ 更新ファイルが見つかりません"; \
+		exit 1; \
+	fi
+
+	# デスクトップエントリーの更新
+	@echo "📝 デスクトップエントリーを更新中..."
+	@echo "[Desktop Entry]" | sudo tee /usr/share/applications/cursor.desktop > /dev/null && \
+	echo "Name=Cursor" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
+	echo "Comment=The AI-first code editor" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
+	echo "Exec=/opt/cursor/cursor.AppImage --no-sandbox %F" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
+	echo "Icon=applications-development" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
+	echo "Terminal=false" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
+	echo "Type=Application" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
+	echo "Categories=Development;IDE;TextEditor;" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
+	echo "MimeType=text/plain;inode/directory;" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
+	echo "StartupWMClass=cursor" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
+	sudo chmod +x /usr/share/applications/cursor.desktop && \
+	sudo update-desktop-database 2>/dev/null || true
+
+	# 更新後の確認
+	@echo "🔍 更新後の状態を確認中..."
+	@if [ -f /opt/cursor/cursor.AppImage ]; then \
+		NEW_SIZE=$$(stat -c%s /opt/cursor/cursor.AppImage 2>/dev/null || echo "0"); \
+		NEW_MODIFIED=$$(stat -c%Y /opt/cursor/cursor.AppImage 2>/dev/null || echo "0"); \
+		echo "✅ 更新後の状態:"; \
+		echo "   ファイルサイズ: $$NEW_SIZE bytes"; \
+		echo "   最終更新日: $$(date -d @$$NEW_MODIFIED 2>/dev/null || echo '不明')"; \
+		echo "   インストール場所: /opt/cursor/cursor.AppImage"; \
+	fi
+
+	# クリーンアップ
+	@echo "🧹 一時ファイルをクリーンアップ中..."
+	@rm -f /tmp/cursor-update.AppImage 2>/dev/null || true
+
+	@echo ""
+	@echo "🎉 Cursor IDEの更新が完了しました！"
+	@echo ""
+	@echo "🚀 使用方法:"
+	@echo "  - アプリケーションメニューから 'Cursor' を起動"
+	@echo "  - または、ターミナルから: /opt/cursor/cursor.AppImage"
+	@echo ""
+	@echo "💾 バックアップ情報:"
+	@echo "  古いバージョンは /opt/cursor/cursor-backup-*.AppImage として保存されています"
+	@echo "  問題が発生した場合は以下のコマンドで復元できます:"
+	@echo "  sudo cp /opt/cursor/cursor-backup-*.AppImage /opt/cursor/cursor.AppImage"
+	@echo ""
+	@echo "✅ Cursor IDEの更新が完了しました"
+
 # MySQL Workbench のインストール
 install-mysql-workbench:
 	@echo "🐬 MySQL Workbench のインストールを開始..."
@@ -1008,3 +1139,6 @@ install-packages-chrome-beta:
 # install-apps: は既に実装済み
 # install-deb: は既に実装済み
 # その他の既存ターゲットはそのまま
+
+# 新しい階層的な命名規則に対応
+update-packages-cursor: update-cursor
