@@ -1008,3 +1008,11 @@ install-packages-chrome-beta:
 # install-apps: は既に実装済み
 # install-deb: は既に実装済み
 # その他の既存ターゲットはそのまま
+
+# SuperCopilot Framework for VSCode のインストール
+install-packages-vscode-supercopilot:
+	@echo "📦 SuperCopilot Framework for VSCode をインストール中..."
+	@bash vscode/setup-supercopilot.sh
+
+# 後方互換性のためのエイリアス
+install-vscode-supercopilot: install-packages-vscode-supercopilot
