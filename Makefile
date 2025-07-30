@@ -12,6 +12,7 @@ include mk/mozc.mk
 include mk/extensions.mk
 include mk/clean.mk
 include mk/main.mk
+include docker-mcp-gateway/docker-mcp.mk
 
 # デフォルトターゲット
 .DEFAULT_GOAL := help
