@@ -184,6 +184,32 @@ setup-vscode:
 
 	@echo "✅ VS Codeの設定が完了しました。"
 
+# VS Code用のSuperCopilotフレームワークをセットアップ
+setup-vscode-copilot:
+	@echo "🧠 VS Code用のSuperCopilotフレームワークをセットアップ中..."
+	@mkdir -p $(HOME_DIR)/.vscode/copilot-instructions
+
+	# シンボリックリンクを作成
+	@ln -sfn $(DOTFILES_DIR)/vscode/copilot-instructions/personas.md $(HOME_DIR)/.vscode/copilot-instructions/personas.md
+	@ln -sfn $(DOTFILES_DIR)/vscode/copilot-instructions/commands.md $(HOME_DIR)/.vscode/copilot-instructions/commands.md
+	@ln -sfn $(DOTFILES_DIR)/vscode/copilot-instructions/rules.md $(HOME_DIR)/.vscode/copilot-instructions/rules.md
+
+	@echo "✅ VS Code用のSuperCopilotフレームワークのセットアップが完了しました"
+	@echo ""
+	@echo "📝 VS Code settings.jsonに以下の設定が追加されています:"
+	@echo "\"github.copilot.chat.codeGeneration.instructions\": ["
+	@echo "  {"
+	@echo "    \"file\": \"~/.vscode/copilot-instructions/personas.md\""
+	@echo "  },"
+	@echo "  {"
+	@echo "    \"file\": \"~/.vscode/copilot-instructions/commands.md\""
+	@echo "  },"
+	@echo "  {"
+	@echo "    \"file\": \"~/.vscode/copilot-instructions/rules.md\""
+	@echo "  }"
+	@echo "]"
+	@echo ""
+
 # Cursorの設定をセットアップ
 setup-cursor:
 	@echo "🖱️  Cursorの設定をセットアップ中..."
@@ -489,6 +515,7 @@ setup-config-vim: setup-vim
 setup-config-zsh: setup-zsh
 setup-config-wezterm: setup-wezterm
 setup-config-vscode: setup-vscode
+setup-config-vscode-copilot: setup-vscode-copilot
 setup-config-cursor: setup-cursor
 setup-config-mcp-tools: setup-mcp-tools
 setup-config-git: setup-git
