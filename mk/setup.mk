@@ -187,12 +187,12 @@ setup-vscode:
 # VS Code用のSuperCopilotフレームワークをセットアップ
 setup-vscode-copilot:
 	@echo "🧠 VS Code用のSuperCopilotフレームワークをセットアップ中..."
-	@mkdir -p $(HOME)/.vscode/copilot-instructions
+	@mkdir -p $(HOME_DIR)/.vscode/copilot-instructions
 
 	# シンボリックリンクを作成
-	@ln -sfn $(DOTFILES_DIR)/vscode/copilot-instructions/personas.md $(HOME)/.vscode/copilot-instructions/personas.md
-	@ln -sfn $(DOTFILES_DIR)/vscode/copilot-instructions/commands.md $(HOME)/.vscode/copilot-instructions/commands.md
-	@ln -sfn $(DOTFILES_DIR)/vscode/copilot-instructions/rules.md $(HOME)/.vscode/copilot-instructions/rules.md
+	@ln -sfn $(DOTFILES_DIR)/vscode/copilot-instructions/personas.md $(HOME_DIR)/.vscode/copilot-instructions/personas.md
+	@ln -sfn $(DOTFILES_DIR)/vscode/copilot-instructions/commands.md $(HOME_DIR)/.vscode/copilot-instructions/commands.md
+	@ln -sfn $(DOTFILES_DIR)/vscode/copilot-instructions/rules.md $(HOME_DIR)/.vscode/copilot-instructions/rules.md
 
 	@echo "✅ VS Code用のSuperCopilotフレームワークのセットアップが完了しました"
 	@echo ""
