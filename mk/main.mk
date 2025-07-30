@@ -36,7 +36,8 @@ setup-all:
 	@$(MAKE) setup-wezterm
 	@$(MAKE) setup-vscode
 	@$(MAKE) setup-cursor
-	@$(MAKE) setup-cursor-rules
+	@$(MAKE) setup-cursor-user-rules
+	@$(MAKE) setup-cursor-project-rules
 	@$(MAKE) setup-mcp-tools
 	@$(MAKE) setup-docker
 	@$(MAKE) setup-development

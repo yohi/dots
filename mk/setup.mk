@@ -205,6 +205,270 @@ setup-cursor:
 
 	@echo "✅ Cursorの設定が完了しました。"
 
+# SuperClaude User Rules 統合セットアップ（推奨）
+setup-cursor-user-rules:
+	@echo "🧠 SuperClaude User Rules 完全版をセットアップします"
+	@echo "   ✅ 手動ペルソナ指定機能"
+	@echo "   ✅ 自動ペルソナ選択機能"
+	@echo "   ✅ 16種類のコマンド機能"
+	@echo ""
+
+	# ファイルベース管理をセットアップ
+	@$(MAKE) setup-cursor-user-rules-files
+
+	@echo ""
+	@echo "🛠️  手動設定が必要です！以下の手順に従ってください："
+	@echo ""
+	@echo "📋 ステップ 1: Cursorを起動"
+	@echo "   1. Cursorアプリケーションを開く"
+	@echo "   2. Cmd/Ctrl + , で設定を開く"
+	@echo ""
+	@echo "📋 ステップ 2: AI Rules設定画面を開く"
+	@echo "   1. 左メニューから 'Rules for AI' をクリック"
+	@echo "   2. 'Edit in Settings.json' をクリック"
+	@echo "   または検索バーで 'cursor.aiRules' を検索"
+	@echo ""
+	@echo "📋 ステップ 3: User Rulesを設定"
+	@echo "   1. 'Rules for AI' セクションの 'User Rules' に以下を入力："
+	@echo "   2. ファイル内容をコピー: ~/.config/Cursor/User/rules/basic.md"
+	@echo ""
+	@echo "📁 設定ファイルの場所:"
+	@echo "   $(CONFIG_DIR)/Cursor/User/rules/basic.md"
+	@echo ""
+	@echo "💡 簡単コピー方法:"
+	@echo "   cat $(CONFIG_DIR)/Cursor/User/rules/basic.md | xclip -selection clipboard"
+	@echo "   （または make show-cursor-user-rules-content でファイル内容を表示）"
+	@echo ""
+	@echo "📋 ステップ 4: 設定を保存"
+	@echo "   1. 設定画面で Cmd/Ctrl + S で保存"
+	@echo "   2. Cursorを再起動（推奨）"
+	@echo ""
+	@echo "✅ 設定完了後の機能:"
+	@echo "💡 使用例:"
+	@echo "   手動指定: '@architect システム設計を相談したい'"
+	@echo "   自動選択: 'React最適化について教えて' → @developer(Frontend)自動選択"
+	@echo "   コマンド: 'implement ログイン機能' → 実装に特化"
+	@echo ""
+	@echo "🔧 便利コマンド:"
+	@echo "   make show-cursor-user-rules-content  - 設定内容をターミナルに表示"
+	@echo "   make restart-cursor                  - Cursor再起動"
+	@echo "   make setup-cursor-user-rules-advanced - 自動設定（上級者向け）"
+
+# Project Rules（自動ペルソナ選択）のセットアップ
+setup-cursor-project-rules:
+	@echo "🔧 Cursor Project Rules（上級者向け）をセットアップ中..."
+	@echo "ℹ️  注意: User Rulesでも自動ペルソナ選択は利用可能です"
+	@echo "ℹ️  このコマンドはプロジェクト固有の細かい制御が必要な場合のみ使用"
+	@echo "ℹ️  現在のディレクトリ: $$(pwd)"
+
+	# プロジェクトの.cursor/rulesディレクトリを作成
+	@mkdir -p .cursor/rules
+
+	# 既存のルール設定をバックアップ
+	@if [ -d ".cursor/rules" ] && [ ! -L ".cursor/rules" ]; then \
+		echo "⚠️  既存の.cursor/rulesディレクトリが存在します"; \
+		if [ "$$(ls -A .cursor/rules 2>/dev/null)" ]; then \
+			echo "⚠️  既存のルール設定をバックアップ中..."; \
+			mv .cursor/rules .cursor/rules.backup.$$(date +%Y%m%d_%H%M%S); \
+			mkdir -p .cursor/rules; \
+		fi; \
+	fi
+
+	# dotsのcursor/rulesへシンボリックリンクを作成
+	@echo "🔗 Project Rules（ファイル毎の自動選択）をリンク中..."
+	@ln -sfn $(DOTFILES_DIR)/cursor/rules/* .cursor/rules/
+
+	@echo "✅ Cursor Project Rules（上級者向け）の設定が完了しました。"
+	@echo "ℹ️  セットアップされた追加機能:"
+	@echo "  - ファイル種別による自動ペルソナ選択（*.tsx → Frontend等）"
+	@echo "  - プロジェクト固有のルール細調整"
+	@echo "ℹ️  通常はUser Rulesだけで十分です。"
+	@echo "ℹ️  Cursorを再起動してProject Rulesを有効化してください。"
+
+# =============================================================================
+# 管理コマンド（表示・削除・制御）
+# =============================================================================
+
+# 現在のUser Rulesを表示
+show-cursor-user-rules:
+	@echo "📋 現在のCursor User Rules:"
+	@sqlite3 $(CONFIG_DIR)/Cursor/User/globalStorage/state.vscdb "SELECT value FROM ItemTable WHERE key = 'aicontext.personalContext';" 2>/dev/null || echo "  (設定されていません)"
+
+# User Rulesファイルの内容を表示（手動設定用）
+show-cursor-user-rules-content:
+	@echo "📋 SuperClaude User Rules設定内容:"
+	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	@if [ -f "$(DOTFILES_DIR)/cursor/user-rules/basic.md" ]; then \
+		cat $(DOTFILES_DIR)/cursor/user-rules/basic.md; \
+	else \
+		echo "❌ 設定ファイルが見つかりません: $(DOTFILES_DIR)/cursor/user-rules/basic.md"; \
+	fi
+	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	@echo ""
+	@echo "📋 手動設定手順:"
+	@echo "1. 上記の内容をすべてコピー（Ctrl+Shift+C）"
+	@echo "2. Cursor → Settings → Rules for AI → User Rules"
+	@echo "3. ペースト（Ctrl+V）して保存（Ctrl+S）"
+	@echo ""
+	@echo "💡 クリップボードに自動コピー:"
+	@echo "   cat $(DOTFILES_DIR)/cursor/user-rules/basic.md | xclip -selection clipboard"
+
+# User Rulesをクリア
+clear-cursor-user-rules:
+	@echo "🧹 Cursor User Rulesをクリア中..."
+	@cp $(CONFIG_DIR)/Cursor/User/globalStorage/state.vscdb $(CONFIG_DIR)/Cursor/User/globalStorage/state.vscdb.backup.$$(date +%Y%m%d_%H%M%S)
+	@sqlite3 $(CONFIG_DIR)/Cursor/User/globalStorage/state.vscdb "DELETE FROM ItemTable WHERE key = 'aicontext.personalContext';"
+	@echo "✅ User Rulesをクリアしました。Cursorを再起動してください。"
+
+# Cursor再起動
+restart-cursor:
+	@echo "🔄 Cursorを再起動中..."
+	@$(MAKE) stop-cursor
+	@$(MAKE) start-cursor
+	@echo "✅ Cursor再起動完了"
+
+# Cursorを安全に終了
+stop-cursor:
+	@echo "🛑 Cursorを終了中..."
+	@pkill -f cursor 2>/dev/null || echo "  Cursor is not running"
+	@sleep 2
+	@echo "✅ Cursor終了完了"
+
+# Cursorを起動
+start-cursor:
+	@echo "🚀 Cursorを起動中..."
+	@if command -v cursor >/dev/null 2>&1; then \
+		nohup cursor > /dev/null 2>&1 & \
+		sleep 1; \
+		echo "✅ Cursor起動完了"; \
+	elif [ -f "$(HOME)/Applications/cursor.appimage" ]; then \
+		nohup $(HOME)/Applications/cursor.appimage > /dev/null 2>&1 & \
+		sleep 1; \
+		echo "✅ Cursor起動完了"; \
+	else \
+		echo "❌ Cursorが見つかりません"; \
+	fi
+
+# =============================================================================
+# 詳細コマンド（上級者向け・レガシー互換）
+# =============================================================================
+
+# User Rules ファイル版セットアップ（レガシー互換）
+setup-cursor-user-rules-files:
+	@echo "📁 Cursor User Rules ファイル版をセットアップ中..."
+	@mkdir -p $(CONFIG_DIR)/Cursor/User
+
+	# 既存のUser Rules設定をバックアップ
+	@if [ -d "$(CONFIG_DIR)/Cursor/User/rules" ] && [ ! -L "$(CONFIG_DIR)/Cursor/User/rules" ]; then \
+		echo "⚠️  既存のUser Rulesディレクトリが存在します"; \
+		if [ "$$(ls -A $(CONFIG_DIR)/Cursor/User/rules 2>/dev/null)" ]; then \
+			echo "⚠️  既存のUser Rulesをバックアップ中..."; \
+			mv $(CONFIG_DIR)/Cursor/User/rules $(CONFIG_DIR)/Cursor/User/rules.backup.$$(date +%Y%m%d_%H%M%S); \
+		fi; \
+	fi
+
+	# 既存のrulesディレクトリがシンボリックリンクの場合は削除
+	@if [ -L "$(CONFIG_DIR)/Cursor/User/rules" ]; then \
+		rm $(CONFIG_DIR)/Cursor/User/rules; \
+	fi
+
+	# dotsのcursor/user-rulesへシンボリックリンクを作成
+	@echo "🔗 User Rulesファイルをリンク中..."
+	@ln -sfn $(DOTFILES_DIR)/cursor/user-rules $(CONFIG_DIR)/Cursor/User/rules
+
+	@echo "✅ User Rulesファイル版セットアップ完了"
+	@echo "ℹ️  設定ファイル: ~/.config/Cursor/User/rules/"
+	@echo "💡 手動設定: Cursor → Settings → Rules → User Rules でファイル内容をコピー&ペースト"
+
+# User Rules 高機能版（SQLite直接書き込み）
+setup-cursor-user-rules-advanced:
+	@echo "🚀 SuperClaude User Rules 高機能版を適用中..."
+	@$(MAKE) stop-cursor
+	@$(MAKE) setup-cursor-user-rules-sqlite-internal
+	@$(MAKE) start-cursor
+	@echo "✅ 高機能版適用完了！"
+
+# User Rules 軽量版（SQLite直接書き込み）
+setup-cursor-user-rules-basic:
+	@echo "⚡ SuperClaude User Rules 軽量版を適用中..."
+	@$(MAKE) stop-cursor
+	@$(MAKE) setup-cursor-user-rules-sqlite-template-internal
+	@$(MAKE) start-cursor
+	@echo "✅ 軽量版適用完了！"
+
+# =============================================================================
+# 内部コマンド（直接呼び出し非推奨）
+# =============================================================================
+
+# SQLite直接書き込み（内部用・高機能版）
+setup-cursor-user-rules-sqlite-internal:
+	@echo "🗄️  SQLite: SuperClaude Framework 高機能版を書き込み中..."
+
+	# SQLiteデータベースのバックアップ
+	@cp $(CONFIG_DIR)/Cursor/User/globalStorage/state.vscdb $(CONFIG_DIR)/Cursor/User/globalStorage/state.vscdb.backup.$$(date +%Y%m%d_%H%M%S)
+
+	# ファイル存在確認
+	@if [ ! -f "$(DOTFILES_DIR)/cursor/user-rules/basic.md" ]; then \
+		echo "❌ User Rulesファイルが見つかりません: $(DOTFILES_DIR)/cursor/user-rules/basic.md"; \
+		exit 1; \
+	fi
+
+	# SQLite書き込み
+	@USER_RULES_CONTENT=$$(cat $(DOTFILES_DIR)/cursor/user-rules/basic.md); \
+	sqlite3 $(CONFIG_DIR)/Cursor/User/globalStorage/state.vscdb \
+		"INSERT OR REPLACE INTO ItemTable (key, value) VALUES ('aicontext.personalContext', '$$USER_RULES_CONTENT');"
+
+	@echo "✅ SQLite書き込み完了（高機能版）"
+
+# SQLite直接書き込み（内部用・軽量版）
+setup-cursor-user-rules-sqlite-template-internal:
+	@echo "🗄️  SQLite: SuperClaude Framework 軽量版を書き込み中..."
+
+	# SQLiteデータベースのバックアップ
+	@cp $(CONFIG_DIR)/Cursor/User/globalStorage/state.vscdb $(CONFIG_DIR)/Cursor/User/globalStorage/state.vscdb.backup.$$(date +%Y%m%d_%H%M%S)
+
+	# ファイル存在確認
+	@if [ ! -f "$(DOTFILES_DIR)/cursor/user-rules/template.txt" ]; then \
+		echo "❌ テンプレートファイルが見つかりません"; \
+		exit 1; \
+	fi
+
+	# SQLite書き込み
+	@USER_RULES_CONTENT=$$(cat $(DOTFILES_DIR)/cursor/user-rules/template.txt); \
+	sqlite3 $(CONFIG_DIR)/Cursor/User/globalStorage/state.vscdb \
+		"INSERT OR REPLACE INTO ItemTable (key, value) VALUES ('aicontext.personalContext', '$$USER_RULES_CONTENT');"
+
+	@echo "✅ SQLite書き込み完了（軽量版）"
+
+# =============================================================================
+# レガシーコマンド（後方互換性のため残置）
+# =============================================================================
+
+# レガシー: 旧SQLite書き込み基本版（非推奨）
+setup-cursor-user-rules-sqlite:
+	@echo "⚠️  [非推奨] 代わりに 'make setup-cursor-user-rules-advanced' を使用してください"
+	@$(MAKE) setup-cursor-user-rules-advanced
+
+# レガシー: 旧SQLite書き込み軽量版（非推奨）
+setup-cursor-user-rules-sqlite-template:
+	@echo "⚠️  [非推奨] 代わりに 'make setup-cursor-user-rules-basic' を使用してください"
+	@$(MAKE) setup-cursor-user-rules-basic
+
+# レガシー: 旧再起動+高機能版（非推奨）
+restart-cursor-with-user-rules-sqlite:
+	@echo "⚠️  [非推奨] 代わりに 'make setup-cursor-user-rules-advanced' を使用してください"
+	@$(MAKE) setup-cursor-user-rules-advanced
+
+# レガシー: 旧再起動+軽量版（非推奨）
+restart-cursor-with-user-rules-sqlite-template:
+	@echo "⚠️  [非推奨] 代わりに 'make setup-cursor-user-rules-basic' を使用してください"
+	@$(MAKE) setup-cursor-user-rules-basic
+
+# レガシー: 旧Project Rulesセットアップ（非推奨）
+setup-cursor-rules:
+	@echo "⚠️  [非推奨] 代わりに 'make setup-cursor-project-rules' を使用してください"
+	@$(MAKE) setup-cursor-project-rules
+
 # Cursor MCP Toolsの設定をセットアップ
 setup-mcp-tools:
 	@echo "🔧 Cursor MCP Toolsの設定をセットアップ中..."
@@ -240,38 +504,6 @@ setup-mcp-tools:
 	@echo "  - Terraform MCP Server: Terraform設定の管理"
 	@echo "  - ECS MCP Server: AWS ECSの管理"
 	@echo "ℹ️  Cursorを再起動してMCPツールを有効化してください。"
-
-# Cursor Rules（自動ペルソナ選択）の設定をセットアップ
-setup-cursor-rules:
-	@echo "🧠 Cursor自動ペルソナ選択ルールをセットアップ中..."
-	@echo "ℹ️  現在のディレクトリ: $$(pwd)"
-
-	# プロジェクトの.cursor/rulesディレクトリを作成
-	@mkdir -p .cursor/rules
-
-	# 既存のルール設定をバックアップ
-	@if [ -d ".cursor/rules" ] && [ ! -L ".cursor/rules" ]; then \
-		echo "⚠️  既存の.cursor/rulesディレクトリが存在します"; \
-		if [ "$$(ls -A .cursor/rules 2>/dev/null)" ]; then \
-			echo "⚠️  既存のルール設定をバックアップ中..."; \
-			mv .cursor/rules .cursor/rules.backup.$$(date +%Y%m%d_%H%M%S); \
-			mkdir -p .cursor/rules; \
-		fi; \
-	fi
-
-	# dotsのcursor/rulesへシンボリックリンクを作成
-	@echo "🔗 SuperClaude自動ペルソナ選択ルールをリンク中..."
-	@ln -sfn $(DOTFILES_DIR)/cursor/rules/* .cursor/rules/
-
-	@echo "✅ Cursor自動ペルソナ選択ルールの設定が完了しました。"
-	@echo "ℹ️  セットアップされたペルソナ:"
-	@echo "  - @architect: システム設計・アーキテクチャ"
-	@echo "  - @developer (Frontend): フロントエンド開発"
-	@echo "  - @developer (Backend): バックエンド開発"
-	@echo "  - @tester: テスト・品質保証"
-	@echo "  - @devops: インフラ・運用"
-	@echo "  - Smart Selector: AI判断による自動選択"
-	@echo "ℹ️  Cursorを再起動して自動ペルソナ選択を有効化してください。"
 
 # Git設定のセットアップ
 setup-git:
@@ -528,13 +760,3 @@ setup-config-docker: setup-docker
 setup-config-development: setup-development
 setup-config-shortcuts: setup-shortcuts
 setup-config-ime: setup-ime
-
-# ========================================
-# 後方互換性のためのエイリアス
-# ========================================
-
-# 古いターゲット名を維持（既に実装済み）
-# setup-vim: は既に実装済み
-# setup-zsh: は既に実装済み
-# setup-wezterm: は既に実装済み
-# その他の既存ターゲットはそのまま

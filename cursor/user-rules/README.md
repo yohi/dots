@@ -1,120 +1,186 @@
 # Cursor User Rules - SuperClaude Framework
 
-CursorのUser Rules機能で使用する、SuperClaude風のペルソナ・コマンドシステムです。
+CursorのUser Rules機能で使用する、SuperClaude風の統合ペルソナ・コマンドシステムです。
+
+## 🌟 **統合機能**
+
+**一つのUser Rulesで全機能が利用可能：**
+- ✅ **手動ペルソナ指定**（`@architect として...`）
+- ✅ **自動ペルソナ選択**（質問内容・ファイル種別による自動判定）
+- ✅ **16種類のコマンド機能**（`implement`、`analyze`等）
 
 ## 📁 ファイル構成
 
-### 🔰 `basic.md` - 基本User Rules
 ```
-用途: Cursor初心者〜中級者向け
-内容: 5つのペルソナ + 16のコマンド機能
-設定: Cursor → Settings → Rules → User Rules に貼り付け
-```
-
-### 🏆 `advanced.md` - エンタープライズ級User Rules
-```
-用途: 大規模開発・チーム開発向け
-内容: 高度なペルソナ + 複合コマンド + 品質ゲート
-設定: 基本ルールの代わりに、またはプロジェクト別で使用
+cursor/user-rules/
+├── README.md      # このファイル - 使用ガイド
+├── basic.md       # 🎯 推奨：基本機能フル装備
+├── advanced.md    # 🚀 上級：エンタープライズ級
+├── template.txt   # ⚡ 軽量：お試し用簡易版
 ```
 
-### ⚡ `template.txt` - 簡単貼り付け用テンプレート
-```
-用途: 素早い設定・テスト用
-内容: 基本ルールの簡略版
-設定: 最小限の設定で即座にペルソナ機能を試せる
+## 🚀 クイックスタート
+
+### **ワンコマンドセットアップ（推奨）**
+
+```bash
+make setup-cursor-user-rules
 ```
 
-## 🚀 セットアップ方法
+**これだけで完了！** 手動・自動両方のペルソナ選択機能が使えます。
 
-### 1. 基本設定（推奨）
-```
-1. basic.md の内容をコピー
-2. Cursor → Settings → Rules → User Rules に貼り付け
-3. Save して完了
-```
+### **手動セットアップ**
 
-### 2. 高度設定（チーム開発）
-```
-1. advanced.md の内容をコピー
-2. basic.md の代わりに User Rules に設定
-3. プロジェクト固有ルールも併用可能
-```
+1. ファイル内容をコピー
+   ```bash
+   cat ~/.config/Cursor/User/rules/basic.md
+   ```
 
-### 3. クイック設定（テスト用）
-```
-1. template.txt の内容をコピー
-2. User Rules に貼り付けて即座にテスト
-3. 動作確認後、basic.md or advanced.md に移行
-```
+2. Cursor設定に追加
+   ```
+   Cursor → Settings → Rules → User Rules → + Add Rule
+   Rule Name: SuperClaude Framework
+   Rule Content: [コピーした内容を貼り付け]
+   ```
 
-## 🎯 使用例
+## 💡 使用方法
 
-### ペルソナ指定
+### **手動ペルソナ指定**
 ```
-@architect マイクロサービス化の設計を相談したいです
+@architect システム全体のマイクロサービス化を検討しています
 @developer implement ユーザー認証機能をJWTで実装してください
-@tester test 包括的なテストケースを作成してください
-@devops deploy 本番環境へのデプロイ戦略を教えてください
-@analyst analyze このコードのパフォーマンス改善点を見つけてください
+@tester test APIエンドポイントのテストケースを作成してください
 ```
 
-### コマンド実行
+### **自動ペルソナ選択**
 ```
-design ECサイトのショッピングカート機能
-implement 上記設計に基づいてReactコンポーネントを作成
-test ショッピングカート機能のユニットテスト作成
-troubleshoot デプロイ時のエラーを解決
-optimize アプリケーション全体のパフォーマンス向上
+React最適化について教えて
+→ 🎯 @developer (Frontend) として回答します
+
+マイクロサービス分割戦略を検討したい
+→ 🎯 @architect として回答します
+
+DockerでCI/CD構築したい
+→ 🎯 @devops として回答します
+```
+
+### **コマンド機能**
+```
+analyze このコードの問題点を教えて
+implement ログイン機能を作成して
+design ECサイトのアーキテクチャを設計して
+```
+
+## 🧠 自動ペルソナ選択ルール
+
+### **ファイル種別による自動選択**
+- `*.tsx`, `*.jsx`, `*.vue` → **@developer (Frontend)**
+- `*.py`, `api/`, `server/` → **@developer (Backend)**
+- `*.test.*`, `tests/` → **@tester**
+- `Dockerfile`, `*.yaml` → **@devops**
+- `architecture/`, `design/` → **@architect**
+
+### **質問内容による自動選択**
+- **設計・アーキテクチャ系** → **@architect**
+- **UI・フロントエンド系** → **@developer (Frontend)**
+- **API・サーバー系** → **@developer (Backend)**
+- **テスト・品質系** → **@tester**
+- **インフラ・運用系** → **@devops**
+- **コード分析系** → **@analyst**
+
+## 📋 ファイル詳細
+
+### **basic.md（推奨）**
+- **サイズ**: 約200行
+- **内容**: 手動ペルソナ + 自動選択 + 全コマンド
+- **対象**: 一般的な開発者・チーム
+
+### **advanced.md（上級）**
+- **サイズ**: 約350行
+- **内容**: エンタープライズ級品質基準含む
+- **対象**: 大規模プロジェクト・厳格な品質要求
+
+### **template.txt（軽量）**
+- **サイズ**: 約150行
+- **内容**: 基本機能のコンパクト版
+- **対象**: お試し・軽量な用途
+
+## 🔄 Project Rules との関係
+
+| 機能             | User Rules     | Project Rules   |
+| ---------------- | -------------- | --------------- |
+| 適用範囲         | **Cursor全体** | プロジェクト毎  |
+| 手動ペルソナ     | ✅              | ❌               |
+| 自動ペルソナ選択 | ✅              | ✅               |
+| ファイル種別判定 | ✅              | ✅（より細かい） |
+| 管理の簡単さ     | ✅ **簡単**     | やや複雑        |
+
+**結論**: **User Rulesだけで十分**です。Project Rulesは特殊な要件がある場合のみ使用。
+
+## 🛠️ トラブルシューティング
+
+### **ペルソナが選択されない**
+1. User Rulesが正しく設定されているか確認
+2. Cursorを再起動
+3. `make show-cursor-user-rules` で内容確認
+
+### **設定をリセットしたい**
+```bash
+make clear-cursor-user-rules
+make setup-cursor-user-rules
+```
+
+### **ファイルを直接編集したい**
+```bash
+vim ~/.config/Cursor/User/rules/basic.md
+# または
+code ~/.config/Cursor/User/rules/basic.md
 ```
 
 ## 🔗 関連ファイル
 
-### 自動ペルソナ選択（Project Rules）
+- **設定管理**: `mk/setup.mk`
+- **Project Rules**: `cursor/rules/` (optional)
+- **メイン設定**: `cursor/settings.json`
+- **キーバインド**: `cursor/keybindings.json`
+
+## 🎯 ベストプラクティス
+
+1. **基本はUser Rulesのみ使用** - 管理が簡単
+2. **手動指定を併用** - 明確な専門性が必要な時
+3. **コマンド機能活用** - 目的に応じて `implement`、`analyze` 等
+4. **定期的な更新** - `git pull` → `make setup-cursor-user-rules`
+
+## 🌟 利用例
+
+### **日常開発**
 ```
-../rules/*.mdc - ファイルタイプ基づく自動ペルソナ選択
-../rules/README.md - 自動選択システムの詳細説明
+# 新機能開発
+implement ユーザーダッシュボード機能をReactで作成
+
+# バグ修正
+analyze この関数でメモリリークが発生している原因を特定
+
+# レビュー
+@analyst このコードの改善点を教えて
 ```
 
-### 基本設定
+### **設計フェーズ**
 ```
-../settings.json - Cursor基本設定
-../keybindings.json - キーバインド設定
-../mcp.json - MCP Tools設定
+# システム設計
+@architect マイクロサービス化の段階的戦略を検討
+
+# API設計
+design RESTful APIの仕様を設計して
 ```
 
-## 📊 User Rules vs Project Rules
-
-| 機能         | User Rules     | Project Rules       |
-| ------------ | -------------- | ------------------- |
-| 適用範囲     | 全プロジェクト | プロジェクト単位    |
-| ペルソナ指定 | 手動指定       | 自動選択            |
-| 設定場所     | Cursor設定画面 | .cursor/rules/*.mdc |
-| カスタマイズ | 中程度         | 高度                |
-| 学習コスト   | 低い           | 中程度              |
-
-## 💡 ベストプラクティス
-
-### 1. 段階的導入
+### **テストフェーズ**
 ```
-1. template.txt で機能確認
-2. basic.md で基本ペルソナに慣れる
-3. advanced.md でチーム開発対応
-4. Project Rules（自動選択）も併用
+# テスト戦略
+@tester 統合テストの計画を立てて
+
+# 自動化
+implement E2Eテストを Playwright で自動化
 ```
 
-### 2. カスタマイズ
-```
-- basic.md をベースに独自ルール追加
-- プロジェクト固有の専門用語・制約を追記
-- チーム内でルールを共有・統一
-```
-
-### 3. 効果測定
-```
-- ペルソナ使用前後の開発効率比較
-- コード品質指標の改善確認
-- チーム内のナレッジ共有促進効果
-```
-
-SuperClaudeを超える、高度なAI開発支援をCursorで実現しましょう！
+SuperClaude Framework for Cursor で、**効率的で専門的な開発支援**を実現しましょう！🎉
