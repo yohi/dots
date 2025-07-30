@@ -1,67 +1,88 @@
-# Docker MCP Gateway Makefile targets
-# Include this in your main Makefile
+# Docker MCP Plugin Makefile
+.PHONY: install setup config start stop status restart validate health logs
 
-.PHONY: docker-mcp-install docker-mcp-setup docker-mcp-start docker-mcp-remote docker-mcp-check docker-mcp-show docker-mcp-env
+# インストール
+install:
+	@echo "Docker MCP Pluginをインストールします..."
+	@bash ./install-docker-mcp-plugin.sh
 
-# Docker MCP Plugin installation
-docker-mcp-install:
-	@echo "🚀 Installing Docker MCP Plugin..."
-	@cd docker-mcp-gateway && ./install-docker-mcp-plugin.sh
+# 環境変数設定
+setup:
+	@echo "環境変数を設定します..."
+	@cp -n env.template .env 2>/dev/null || true
+	@echo "環境変数ファイル (.env) を編集してください"
+	@echo "必要なAPIキーを設定してください"
 
-# Setup recommended MCP servers
-docker-mcp-setup: docker-mcp-install
-	@echo "⚙️  Setting up Docker MCP Gateway..."
-	@cd docker-mcp-gateway && ./mcp-config.sh setup
-	@cd docker-mcp-gateway && ./extract-env.sh
-	@cd docker-mcp-gateway && ./mcp-config.sh cursor
+# 設定生成
+config:
+	@echo "MCP Gateway設定を生成します..."
+	@bash ./mcp-config.sh $(ARGS)
 
-# Check Docker MCP status
-docker-mcp-check:
-	@echo "🔍 Checking Docker MCP Gateway status..."
-	@cd docker-mcp-gateway && ./mcp-config.sh check
+# MCP Gateway起動（stdio）
+start:
+	@echo "MCP Gatewayを起動します (stdio)..."
+	@docker mcp gateway run --secrets ./.env
 
-# Show current configuration
-docker-mcp-show:
-	@echo "📋 Showing Docker MCP Gateway configuration..."
-	@cd docker-mcp-gateway && ./mcp-config.sh show
+# MCP Gateway起動（リモートモード）
+start-remote:
+	@echo "MCP Gatewayをリモートモードで起動します..."
+	@docker mcp gateway run --transport streaming --port 8080 --secrets ./.env
 
-# Create/update environment file
-docker-mcp-env:
-	@echo "🔐 Setting up environment variables..."
-	@cd docker-mcp-gateway && ./extract-env.sh
+# MCP Gateway停止
+stop:
+	@echo "MCP Gatewayを停止します..."
+	@docker mcp gateway stop || true
 
-# Start gateway in stdio mode (for Cursor)
-docker-mcp-start:
-	@echo "🚀 Starting Docker MCP Gateway (stdio mode)..."
-	@cd docker-mcp-gateway && ./mcp-config.sh start
+# MCP Gateway状態確認
+status:
+	@echo "MCP Gateway状態:"
+	@docker mcp server list
 
-# Start gateway in remote mode
-docker-mcp-remote:
-	@echo "🌐 Starting Docker MCP Gateway (remote mode)..."
-	@cd docker-mcp-gateway && ./mcp-config.sh remote 8080
+# MCP Gatewayツール一覧表示
+tools:
+	@echo "利用可能なMCPツール一覧:"
+	@docker mcp tools list
 
-# Complete setup from scratch
-docker-mcp-init: docker-mcp-install docker-mcp-setup
+# MCP Gatewayカタログ一覧表示
+catalog:
+	@echo "利用可能なMCPカタログ一覧:"
+	@docker mcp catalog show
+
+# MCP Gatewayサーバー有効化
+enable:
+	@if [ -z "$(SERVER)" ]; then \
+		echo "ERROR: サーバー名を指定してください (例: make enable SERVER=fetch)"; \
+		exit 1; \
+	fi; \
+	echo "MCP サーバー '$(SERVER)' を有効化します..."; \
+	docker mcp server enable $(SERVER)
+
+# MCP Gatewayサーバー無効化
+disable:
+	@if [ -z "$(SERVER)" ]; then \
+		echo "ERROR: サーバー名を指定してください (例: make disable SERVER=fetch)"; \
+		exit 1; \
+	fi; \
+	echo "MCP サーバー '$(SERVER)' を無効化します..."; \
+	docker mcp server disable $(SERVER)
+
+# ヘルプ表示
+help:
+	@echo "Docker MCP Gateway Makefile コマンド一覧:"
 	@echo ""
-	@echo "✅ Docker MCP Gateway setup complete!"
+	@echo "  make install          - Docker MCP Pluginをインストール"
+	@echo "  make setup            - 環境変数テンプレートをセットアップ"
+	@echo "  make config ARGS=...  - MCP Gateway設定を生成 (オプション: --port 8080 など)"
+	@echo "  make start            - MCP Gatewayを標準入出力モードで起動"
+	@echo "  make start-remote     - MCP Gatewayをリモートモードで起動 (port: 8080)"
+	@echo "  make stop             - MCP Gatewayを停止"
+	@echo "  make status           - MCP Gateway状態を表示"
+	@echo "  make tools            - 有効化されたツール一覧を表示"
+	@echo "  make catalog          - 利用可能なMCPカタログを表示"
+	@echo "  make enable SERVER=X  - MCPサーバーXを有効化"
+	@echo "  make disable SERVER=X - MCPサーバーXを無効化"
 	@echo ""
-	@echo "📋 Next steps:"
-	@echo "  1. Edit docker-mcp-gateway/.env to add your API keys"
-	@echo "  2. Update cursor/mcp.json with docker-mcp-gateway/cursor/mcp-docker.json"
-	@echo "  3. Run 'make docker-mcp-start' to start the gateway"
-	@echo ""
-
-# Help for Docker MCP targets
-docker-mcp-help:
-	@echo "Docker MCP Gateway Make targets:"
-	@echo ""
-	@echo "  docker-mcp-init     Complete setup from scratch"
-	@echo "  docker-mcp-install  Install Docker MCP Plugin"
-	@echo "  docker-mcp-setup    Setup recommended MCP servers"
-	@echo "  docker-mcp-check    Check installation and status"
-	@echo "  docker-mcp-show     Show current configuration"
-	@echo "  docker-mcp-env      Create/update environment file"
-	@echo "  docker-mcp-start    Start gateway (stdio mode)"
-	@echo "  docker-mcp-remote   Start gateway (remote mode)"
-	@echo "  docker-mcp-help     Show this help"
+	@echo "例:"
+	@echo "  make config ARGS='--port 9000 --enable fetch --enable tavily --tools tavily:tavily-search'"
+	@echo "  make enable SERVER=fetch"
 	@echo ""
