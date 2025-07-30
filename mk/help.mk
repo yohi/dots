@@ -29,6 +29,7 @@ help:
 	@echo "  make setup-config-zsh                 - ZSHの設定をセットアップ"
 	@echo "  make setup-config-wezterm             - WEZTERMの設定をセットアップ"
 	@echo "  make setup-config-vscode              - VS Codeの設定をセットアップ"
+	@echo "  make setup-config-vscode-copilot      - VS Code用のSuperCopilotフレームワークをセットアップ"
 	@echo "  make setup-config-cursor              - Cursorの設定をセットアップ"
 	@echo "  make setup-config-mcp-tools           - Cursor MCP Toolsの設定をセットアップ"
 	@echo "  make setup-config-git                 - Git設定をセットアップ"
