@@ -108,6 +108,46 @@ export-gnome-tweaks:
 	@echo "✅ GNOME Tweaks設定のエクスポートが完了しました。"
 	@echo "ℹ️  設定ファイルは $(DOTFILES_DIR)/gnome-tweaks/ に保存されました。"
 
+# Weztermをデフォルト端末に設定
+setup-gnome-wezterm:
+	@echo "🚀 Weztermをデフォルト端末に設定中..."
+	@if [ -x "$(DOTFILES_DIR)/gnome-settings/setup-wezterm-default.sh" ]; then \
+		$(DOTFILES_DIR)/gnome-settings/setup-wezterm-default.sh; \
+	else \
+		echo "❌ Wezterm設定スクリプトが見つからないか実行権限がありません: $(DOTFILES_DIR)/gnome-settings/setup-wezterm-default.sh"; \
+		exit 1; \
+	fi
+
+# Weztermデフォルト端末設定の確認
+check-gnome-wezterm:
+	@echo "🔍 Weztermデフォルト端末設定を確認中..."
+	@if [ -x "$(DOTFILES_DIR)/gnome-settings/setup-wezterm-default.sh" ]; then \
+		$(DOTFILES_DIR)/gnome-settings/setup-wezterm-default.sh --check; \
+	else \
+		echo "❌ Wezterm設定スクリプトが見つからないか実行権限がありません: $(DOTFILES_DIR)/gnome-settings/setup-wezterm-default.sh"; \
+		exit 1; \
+	fi
+
+# Weztermデフォルト端末設定のテスト
+test-gnome-wezterm:
+	@echo "🧪 Weztermデフォルト端末設定をテスト中..."
+	@if [ -x "$(DOTFILES_DIR)/gnome-settings/setup-wezterm-default.sh" ]; then \
+		$(DOTFILES_DIR)/gnome-settings/setup-wezterm-default.sh --test; \
+	else \
+		echo "❌ Wezterm設定スクリプトが見つからないか実行権限がありません: $(DOTFILES_DIR)/gnome-settings/setup-wezterm-default.sh"; \
+		exit 1; \
+	fi
+
+# Nautilusの再起動
+restart-nautilus:
+	@echo "🔄 Nautilusを再起動中..."
+	@if [ -x "$(DOTFILES_DIR)/gnome-settings/setup-wezterm-default.sh" ]; then \
+		$(DOTFILES_DIR)/gnome-settings/setup-wezterm-default.sh --restart-nautilus; \
+	else \
+		echo "❌ Wezterm設定スクリプトが見つからないか実行権限がありません: $(DOTFILES_DIR)/gnome-settings/setup-wezterm-default.sh"; \
+		exit 1; \
+	fi
+
 # ========================================
 # 新しい階層的な命名規則のターゲット
 # ========================================
@@ -115,6 +155,7 @@ export-gnome-tweaks:
 # GNOME関連設定系
 setup-config-gnome-extensions: setup-gnome-extensions
 setup-config-gnome-tweaks: setup-gnome-tweaks
+setup-config-gnome-wezterm: setup-gnome-wezterm
 backup-config-gnome-tweaks: backup-gnome-tweaks
 export-config-gnome-tweaks: export-gnome-tweaks
 

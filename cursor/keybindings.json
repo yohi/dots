@@ -13,5 +13,13 @@
         "key": "escape",
         "command": "workbench.action.terminal.moveToBackground",
         "when": "terminalFocus && terminalProcessSupported"
+    },
+    {
+        "key": "ctrl+e",
+        "command": "composerMode.background"
+    },
+    {
+        "key": "ctrl+e",
+        "command": "composerMode.background"
     }
 ]
