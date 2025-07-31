@@ -1008,6 +1008,83 @@ install-packages-chrome-beta:
 # install-apps: は既に実装済み
 # install-deb: は既に実装済み
 # その他の既存ターゲットはそのまま
+# SuperCursor (Cursor Framework) のインストール
+install-supercursor:
+	@echo "🚀 SuperCursor (Cursor Framework) のインストールを開始..."
+
+	# Cursor の確認
+	@echo "🔍 Cursor の確認中..."
+	@if ! command -v cursor >/dev/null 2>&1; then \
+		echo "ℹ️  Cursorはインストールされていますが、コマンドラインからは実行できない場合があります"; \
+		echo "   このメッセージは無視して構いません"; \
+	else \
+		echo "✅ Cursor が見つかりました"; \
+	fi
+
+	# SuperCursorフレームワークのセットアップ
+	@echo "⚙️  SuperCursor フレームワークをセットアップ中..."
+	@echo "🔧 SuperCursor セットアップ準備中..."; \
+	echo "ℹ️  フレームワークファイル、ペルソナ、コマンドをシンボリックリンクで構成します"; \
+	\
+	# 必要な変数の確認 \
+	if [ -z "$(DOTFILES_DIR)" ]; then \
+		echo "❌ DOTFILES_DIR is not set"; \
+		exit 1; \
+	fi; \
+	if [ -z "$(HOME_DIR)" ]; then \
+		echo "❌ HOME_DIR is not set"; \
+		exit 1; \
+	fi; \
+	\
+	echo "📁 必要なディレクトリを作成中..."; \
+	mkdir -p $(HOME_DIR)/.cursor/ || true; \
+	\
+	echo "🔗 シンボリックリンクを作成中..."; \
+	# SuperCursor本体へのリンク \
+	rm -rf $(HOME_DIR)/.cursor/supercursor; \
+	ln -sT $(DOTFILES_DIR)/cursor/supercursor $(HOME_DIR)/.cursor/supercursor || true; \
+	# 各種ディレクトリへのリンク \
+	rm -rf $(HOME_DIR)/.cursor/commands; \
+	ln -sT $(DOTFILES_DIR)/cursor/supercursor/Commands $(HOME_DIR)/.cursor/commands || true; \
+	rm -rf $(HOME_DIR)/.cursor/core; \
+	ln -sT $(DOTFILES_DIR)/cursor/supercursor/Core $(HOME_DIR)/.cursor/core || true; \
+	rm -rf $(HOME_DIR)/.cursor/hooks; \
+	ln -sT $(DOTFILES_DIR)/cursor/supercursor/Hooks $(HOME_DIR)/.cursor/hooks || true; \
+	# 重要なファイルへの直接リンク \
+	rm -f $(HOME_DIR)/.cursor/CURSOR.md; \
+	ln -sf $(DOTFILES_DIR)/cursor/supercursor/README.md $(HOME_DIR)/.cursor/CURSOR.md || true; \
+	\
+	echo "✅ SuperCursor フレームワークのシンボリックリンク設定が完了しました"
+
+	@echo ""
+	@echo "🎉 SuperCursor のセットアップが完了しました！"
+	@echo ""
+	@echo "🚀 使用方法:"
+	@echo "1. Cursor IDEを起動"
+	@echo "2. SuperCursor コマンドを使用:"
+	@echo ""
+	@echo "📋 利用可能なコマンド例:"
+	@echo "   /sc:implement <feature>    - 機能の実装"
+	@echo "   /sc:build                  - ビルド・パッケージング"
+	@echo "   /sc:design <ui>            - UI/UXデザイン"
+	@echo "   /sc:analyze <code>         - コード分析"
+	@echo "   /sc:troubleshoot <issue>   - 問題のデバッグ"
+	@echo "   /sc:test <suite>           - テストスイート"
+	@echo "   /sc:improve <code>         - コード改善"
+	@echo "   /sc:cleanup                - コードクリーンアップ"
+	@echo "   /sc:document <code>        - ドキュメント生成"
+	@echo "   /sc:git <operation>        - Git操作"
+	@echo "   /sc:estimate <task>        - 時間見積もり"
+	@echo "   /sc:task <management>      - タスク管理"
+	@echo ""
+	@echo "🎭 スマートペルソナ:"
+	@echo "   🏗️  architect   - システム設計・アーキテクチャ"
+	@echo "   🎨 developer   - 実装開発"
+	@echo "   📊 analyst     - コード分析・評価"
+	@echo "   🧪 tester      - テスト設計・実装"
+	@echo "   🚀 devops      - インフラ・デプロイ"
+	@echo ""
+	@echo "✅ SuperCursor のインストールが完了しました"
 
 # Gemini CLI のインストール
 install-gemini-cli:
@@ -1241,6 +1318,10 @@ install-gemini-ecosystem:
 # 新しい階層的な命名規則のターゲット
 # ========================================
 
+# SuperCursor関連ターゲット
+install-packages-supercursor: install-supercursor
+
+# ========================================
 # Gemini関連ターゲット
 install-packages-gemini-cli: install-gemini-cli
 install-packages-supergemini: install-supergemini
