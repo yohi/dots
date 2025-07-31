@@ -1026,17 +1026,32 @@ install-supercursor:
 	@echo "🔧 SuperCursor セットアップ準備中..."; \
 	echo "ℹ️  フレームワークファイル、ペルソナ、コマンドをシンボリックリンクで構成します"; \
 	\
+	# 必要な変数の確認 \
+	if [ -z "$(DOTFILES_DIR)" ]; then \
+		echo "❌ DOTFILES_DIR is not set"; \
+		exit 1; \
+	fi; \
+	if [ -z "$(HOME_DIR)" ]; then \
+		echo "❌ HOME_DIR is not set"; \
+		exit 1; \
+	fi; \
+	\
 	echo "📁 必要なディレクトリを作成中..."; \
 	mkdir -p $(HOME_DIR)/.cursor/ || true; \
 	\
 	echo "🔗 シンボリックリンクを作成中..."; \
 	# SuperCursor本体へのリンク \
-	ln -sf $(DOTFILES_DIR)/cursor/supercursor $(HOME_DIR)/.cursor/supercursor || true; \
+	rm -rf $(HOME_DIR)/.cursor/supercursor; \
+	ln -sT $(DOTFILES_DIR)/cursor/supercursor $(HOME_DIR)/.cursor/supercursor || true; \
 	# 各種ディレクトリへのリンク \
-	ln -sf $(DOTFILES_DIR)/cursor/supercursor/Commands $(HOME_DIR)/.cursor/commands || true; \
-	ln -sf $(DOTFILES_DIR)/cursor/supercursor/Core $(HOME_DIR)/.cursor/core || true; \
-	ln -sf $(DOTFILES_DIR)/cursor/supercursor/Hooks $(HOME_DIR)/.cursor/hooks || true; \
+	rm -rf $(HOME_DIR)/.cursor/commands; \
+	ln -sT $(DOTFILES_DIR)/cursor/supercursor/Commands $(HOME_DIR)/.cursor/commands || true; \
+	rm -rf $(HOME_DIR)/.cursor/core; \
+	ln -sT $(DOTFILES_DIR)/cursor/supercursor/Core $(HOME_DIR)/.cursor/core || true; \
+	rm -rf $(HOME_DIR)/.cursor/hooks; \
+	ln -sT $(DOTFILES_DIR)/cursor/supercursor/Hooks $(HOME_DIR)/.cursor/hooks || true; \
 	# 重要なファイルへの直接リンク \
+	rm -f $(HOME_DIR)/.cursor/CURSOR.md; \
 	ln -sf $(DOTFILES_DIR)/cursor/supercursor/README.md $(HOME_DIR)/.cursor/CURSOR.md || true; \
 	\
 	echo "✅ SuperCursor フレームワークのシンボリックリンク設定が完了しました"
