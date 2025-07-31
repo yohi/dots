@@ -49,3 +49,8 @@ nvim/plugin/packer_compiled.lua
 .env.local
 .env.secret
 cursor/mcp.local.json
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[codz]
+*$py.class

@@ -180,8 +180,8 @@
     "yaml.schemas": {
         "file:///home/y_ohi/.vscode/extensions/atlassian.atlascode-3.8.3/resources/schemas/pipelines-schema.json": "bitbucket-pipelines.yml"
     },
-    "chat.tools.autoApprove": true,
     "github.copilot.chat.agent.thinkingTool": true,
     "chat.agent.maxRequests": 200,
-    "diffEditor.maxComputationTime": 0
+    "diffEditor.maxComputationTime": 0,
+    "chat.tools.autoApprove": true
 }

@@ -1008,6 +1008,19 @@ install-packages-chrome-beta:
 # install-apps: は既に実装済み
 # install-deb: は既に実装済み
 # その他の既存ターゲットはそのまま
+
+# SuperCopilot Framework for VSCode のインストール
+install-packages-vscode-supercopilot:
+	@echo "📦 SuperCopilot Framework for VSCode をインストール中..."
+	@if [ ! -f vscode/setup-supercopilot.sh ]; then \
+		echo "❌ エラー: vscode/setup-supercopilot.sh が見つかりません"; \
+		exit 1; \
+	fi
+	@bash vscode/setup-supercopilot.sh || (echo "❌ エラー: SuperCopilot セットアップスクリプトの実行に失敗しました" && exit 1)
+
+# 後方互換性のためのエイリアス
+install-vscode-supercopilot: install-packages-vscode-supercopilot
+
 # SuperCursor (Cursor Framework) のインストール
 install-supercursor:
 	@echo "🚀 SuperCursor (Cursor Framework) のインストールを開始..."
