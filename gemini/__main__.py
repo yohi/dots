@@ -195,9 +195,13 @@ def show_config(edit=False, reset=False):
 
     if edit:
         # エディタで開く
+        import subprocess
         editor = os.environ.get('EDITOR', 'nano')
-        os.system(f"{editor} {CONFIG_PATH}")
-        print("✅ 設定を編集しました")
+        try:
+            subprocess.run([editor, CONFIG_PATH], check=True)
+            print("✅ 設定を編集しました")
+        except Exception as e:
+            print(f"❌ エディタの起動に失敗しました: {e}")
     else:
         # 設定の表示
         print("📋 SuperGemini 設定:")
