@@ -27,10 +27,10 @@ class SuperCopilotMain {
       lastPersona: null,
       lastCommand: null
     };
-    
+
     // デバッグモードの設定
-    this.isDevelopment = process.env.NODE_ENV === 'development' || 
-                         process.env.SUPERCOPILOT_DEBUG === 'true';
+    this.isDevelopment = process.env.NODE_ENV === 'development' ||
+      process.env.SUPERCOPILOT_DEBUG === 'true';
   }
 
   /**
@@ -203,7 +203,17 @@ class SuperCopilotMain {
       const instance = SuperCopilotMain._instance;
       return instance.processUserInput(userText, context.filePath || '');
     } catch (error) {
-      console.error(`[SuperCopilot] Preprocessing error: ${error.message}`);
+      // 環境ベースのロギング：プロダクション環境では詳細なエラー情報を非表示
+      const isProduction = process.env.NODE_ENV === 'production' ||
+        process.env.VSCODE_ENV === 'production';
+
+      if (isProduction) {
+        console.error('[SuperCopilot] An error occurred during preprocessing');
+      } else {
+        console.error(`[SuperCopilot] Preprocessing error: ${error.message}`);
+        console.debug('[SuperCopilot] Error stack:', error.stack);
+      }
+
       return userText; // エラー時は元のテキストをそのまま返す
     }
   }

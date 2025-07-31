@@ -47,7 +47,7 @@ class PersonaSelector {
     // 各ペルソナのファイルパターンを検査
     for (const [personaKey, persona] of Object.entries(this.config.personas)) {
       // パターンが一致するか確認
-      const matches = persona.filePatterns.some(pattern => 
+      const matches = persona.filePatterns.some(pattern =>
         this.matchesPattern(filePath, pattern)
       );
 
@@ -55,7 +55,7 @@ class PersonaSelector {
         // バリアントチェック
         if (persona.variants) {
           for (const [variantKey, variant] of Object.entries(persona.variants)) {
-            const variantMatches = variant.filePatterns.some(pattern => 
+            const variantMatches = variant.filePatterns.some(pattern =>
               this.matchesPattern(filePath, pattern)
             );
 

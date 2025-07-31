@@ -56,7 +56,7 @@ CONFIG_JSON='{"github.copilot.advanced": {"preProcessors": {"chat": {"path": "~/
 # jqが利用可能かチェック
 if command -v jq >/dev/null 2>&1; then
   echo -e "   ${GREEN}✓ jq が利用可能です。安全なJSON操作を使用します${NC}"
-  
+
   if [ -f "$VSCODE_SETTINGS" ]; then
     echo -e "   ${GREEN}✓ VSCode設定ファイルが見つかりました${NC}"
 
@@ -66,11 +66,11 @@ if command -v jq >/dev/null 2>&1; then
       echo -e "   ${GREEN}✓ SuperCopilot設定は既に追加されています${NC}"
     else
       echo -e "   ${YELLOW}SuperCopilot設定を追加します...${NC}"
-      
+
       # 既存のsettings.jsonと新しい設定をマージ
       if jq --argjson config "$CONFIG_JSON" '. * $config' "$VSCODE_SETTINGS" > "${VSCODE_SETTINGS}.tmp"; then
         mv "${VSCODE_SETTINGS}.tmp" "$VSCODE_SETTINGS"
-        
+
         # JSON構文の検証
         if jq empty "$VSCODE_SETTINGS" >/dev/null 2>&1; then
           echo -e "   ${GREEN}✓ settings.jsonに設定を追加しました${NC}"
@@ -92,7 +92,7 @@ if command -v jq >/dev/null 2>&1; then
     # 新しいsettings.jsonファイルを作成
     mkdir -p "$(dirname "$VSCODE_SETTINGS")"
     echo "$CONFIG_JSON" | jq . > "$VSCODE_SETTINGS"
-    
+
     if jq empty "$VSCODE_SETTINGS" >/dev/null 2>&1; then
       echo -e "   ${GREEN}✓ 新しいsettings.jsonファイルを作成しました${NC}"
     else
