@@ -27,6 +27,23 @@ class SuperCopilotMain {
       lastPersona: null,
       lastCommand: null
     };
+    
+    // デバッグモードの設定
+    this.isDevelopment = process.env.NODE_ENV === 'development' || 
+                         process.env.SUPERCOPILOT_DEBUG === 'true';
+  }
+
+  /**
+   * ログ出力のためのヘルパーメソッド
+   */
+  log(level, message, ...args) {
+    if (level === 'error') {
+      // エラーは常に出力
+      console.error(`[SuperCopilot] ${message}`, ...args);
+    } else if (this.isDevelopment && level === 'info') {
+      // 情報ログは開発モードでのみ出力
+      console.log(`[SuperCopilot] ${message}`, ...args);
+    }
   }
 
   /**
@@ -36,19 +53,19 @@ class SuperCopilotMain {
   initialize() {
     try {
       // 初期化処理
-      console.log('[SuperCopilot] Initializing...');
+      this.log('info', 'Initializing...');
 
       // 設定の確認
       if (!this.config || !this.config.personas || !this.config.commands) {
-        console.error('[SuperCopilot] Configuration is invalid');
+        this.log('error', 'Configuration is invalid');
         return false;
       }
 
       this.initialized = true;
-      console.log('[SuperCopilot] Initialized successfully');
+      this.log('info', 'Initialized successfully');
       return true;
     } catch (error) {
-      console.error(`[SuperCopilot] Initialization failed: ${error.message}`);
+      this.log('error', `Initialization failed: ${error.message}`);
       return false;
     }
   }

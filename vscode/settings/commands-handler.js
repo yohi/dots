@@ -146,14 +146,8 @@ class CommandsHandler {
   generateHelpText() {
     let helpText = `# SuperCopilot コマンド一覧\n\n`;
 
-    // カテゴリごとにコマンドを整理
-    const categories = {
-      '分析系': ['analyze', 'explain', 'troubleshoot'],
-      '開発系': ['implement', 'improve', 'build'],
-      '設計系': ['design', 'estimate'],
-      '管理系': ['task', 'workflow', 'document'],
-      'ツール系': ['test', 'git', 'cleanup', 'load', 'index']
-    };
+    // 設定からカテゴリを取得
+    const categories = this.config.commandCategories || {};
 
     // カテゴリごとに出力
     for (const [category, commands] of Object.entries(categories)) {

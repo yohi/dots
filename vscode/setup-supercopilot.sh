@@ -51,48 +51,100 @@ fi
 # 3. settings.jsonの設定確認と生成
 echo -e "\n${BLUE}3. VSCode設定を確認しています...${NC}"
 VSCODE_SETTINGS="$HOME/.vscode/settings.json"
-CONFIG_ENTRY='"github.copilot.advanced": { "preProcessors": { "chat": { "path": "~/.vscode/supercopilot/supercopilot-main.js", "function": "preprocessCopilotPrompt" } } }'
+CONFIG_JSON='{"github.copilot.advanced": {"preProcessors": {"chat": {"path": "~/.vscode/supercopilot/supercopilot-main.js", "function": "preprocessCopilotPrompt"}}}}'
 
-if [ -f "$VSCODE_SETTINGS" ]; then
-  echo -e "   ${GREEN}✓ VSCode設定ファイルが見つかりました${NC}"
+# jqが利用可能かチェック
+if command -v jq >/dev/null 2>&1; then
+  echo -e "   ${GREEN}✓ jq が利用可能です。安全なJSON操作を使用します${NC}"
+  
+  if [ -f "$VSCODE_SETTINGS" ]; then
+    echo -e "   ${GREEN}✓ VSCode設定ファイルが見つかりました${NC}"
 
-  # 設定が既にあるか確認
-  if grep -q "supercopilot-main.js" "$VSCODE_SETTINGS"; then
-    echo -e "   ${GREEN}✓ SuperCopilot設定は既に追加されています${NC}"
+    # 設定が既にあるか確認
+    if jq -e '.github.copilot.advanced.preProcessors.chat | has("path")' "$VSCODE_SETTINGS" >/dev/null 2>&1 && \
+       jq -r '.github.copilot.advanced.preProcessors.chat.path' "$VSCODE_SETTINGS" | grep -q "supercopilot-main.js"; then
+      echo -e "   ${GREEN}✓ SuperCopilot設定は既に追加されています${NC}"
+    else
+      echo -e "   ${YELLOW}SuperCopilot設定を追加します...${NC}"
+      
+      # 既存のsettings.jsonと新しい設定をマージ
+      if jq --argjson config "$CONFIG_JSON" '. * $config' "$VSCODE_SETTINGS" > "${VSCODE_SETTINGS}.tmp"; then
+        mv "${VSCODE_SETTINGS}.tmp" "$VSCODE_SETTINGS"
+        
+        # JSON構文の検証
+        if jq empty "$VSCODE_SETTINGS" >/dev/null 2>&1; then
+          echo -e "   ${GREEN}✓ settings.jsonに設定を追加しました${NC}"
+        else
+          echo -e "   ${RED}✗ JSON構文エラーが発生しました。設定を復元します${NC}"
+          # バックアップがあれば復元
+          if [ -f "${VSCODE_SETTINGS}.backup" ]; then
+            mv "${VSCODE_SETTINGS}.backup" "$VSCODE_SETTINGS"
+          fi
+          exit 1
+        fi
+      else
+        echo -e "   ${RED}✗ 設定の追加に失敗しました${NC}"
+        exit 1
+      fi
+    fi
   else
-    echo -e "   ${YELLOW}SuperCopilot設定を追加します...${NC}"
-
-    # settings.jsonの末尾の閉じ括弧の前に設定を挿入
-    # 空のファイルまたは内容がない場合
-    if [ ! -s "$VSCODE_SETTINGS" ] || [ "$(cat "$VSCODE_SETTINGS" | tr -d '[:space:]')" = "" ]; then
-      echo "{" > "$VSCODE_SETTINGS"
-      echo "  $CONFIG_ENTRY" >> "$VSCODE_SETTINGS"
-      echo "}" >> "$VSCODE_SETTINGS"
+    echo -e "   ${YELLOW}VSCode設定ファイルが見つかりません。新規作成します...${NC}"
+    # 新しいsettings.jsonファイルを作成
+    mkdir -p "$(dirname "$VSCODE_SETTINGS")"
+    echo "$CONFIG_JSON" | jq . > "$VSCODE_SETTINGS"
+    
+    if jq empty "$VSCODE_SETTINGS" >/dev/null 2>&1; then
       echo -e "   ${GREEN}✓ 新しいsettings.jsonファイルを作成しました${NC}"
     else
-      # 末尾が}で終わるか確認
-      if grep -q "}" "$VSCODE_SETTINGS"; then
-        # 最後の閉じ括弧を見つけて、その前に設定を追加
-        sed -i '$ s/}/,\n  '"$CONFIG_ENTRY"'\n}/' "$VSCODE_SETTINGS"
-      else
-        # JSONが不完全な場合、単純に追加
-        echo "," >> "$VSCODE_SETTINGS"
-        echo "  $CONFIG_ENTRY" >> "$VSCODE_SETTINGS"
-        echo "}" >> "$VSCODE_SETTINGS"
-      fi
-      echo -e "   ${GREEN}✓ settings.jsonに設定を追加しました${NC}"
+      echo -e "   ${RED}✗ settings.jsonの作成に失敗しました${NC}"
+      exit 1
     fi
   fi
 else
-  echo -e "   ${YELLOW}VSCode設定ファイルが見つかりません。新規作成します...${NC}"
-  # 新しいsettings.jsonファイルを作成
-  mkdir -p "$(dirname "$VSCODE_SETTINGS")"
-  cat > "$VSCODE_SETTINGS" << EOF
+  echo -e "   ${YELLOW}jq が利用できません。従来のsed方式を使用します${NC}"
+  CONFIG_ENTRY='"github.copilot.advanced": { "preProcessors": { "chat": { "path": "~/.vscode/supercopilot/supercopilot-main.js", "function": "preprocessCopilotPrompt" } } }'
+
+  if [ -f "$VSCODE_SETTINGS" ]; then
+    echo -e "   ${GREEN}✓ VSCode設定ファイルが見つかりました${NC}"
+
+    # 設定が既にあるか確認
+    if grep -q "supercopilot-main.js" "$VSCODE_SETTINGS"; then
+      echo -e "   ${GREEN}✓ SuperCopilot設定は既に追加されています${NC}"
+    else
+      echo -e "   ${YELLOW}SuperCopilot設定を追加します...${NC}"
+
+      # settings.jsonの末尾の閉じ括弧の前に設定を挿入
+      # 空のファイルまたは内容がない場合
+      if [ ! -s "$VSCODE_SETTINGS" ] || [ "$(cat "$VSCODE_SETTINGS" | tr -d '[:space:]')" = "" ]; then
+        echo "{" > "$VSCODE_SETTINGS"
+        echo "  $CONFIG_ENTRY" >> "$VSCODE_SETTINGS"
+        echo "}" >> "$VSCODE_SETTINGS"
+        echo -e "   ${GREEN}✓ 新しいsettings.jsonファイルを作成しました${NC}"
+      else
+        # 末尾が}で終わるか確認
+        if grep -q "}" "$VSCODE_SETTINGS"; then
+          # 最後の閉じ括弧を見つけて、その前に設定を追加
+          sed -i '$ s/}/,\n  '"$CONFIG_ENTRY"'\n}/' "$VSCODE_SETTINGS"
+        else
+          # JSONが不完全な場合、単純に追加
+          echo "," >> "$VSCODE_SETTINGS"
+          echo "  $CONFIG_ENTRY" >> "$VSCODE_SETTINGS"
+          echo "}" >> "$VSCODE_SETTINGS"
+        fi
+        echo -e "   ${GREEN}✓ settings.jsonに設定を追加しました${NC}"
+      fi
+    fi
+  else
+    echo -e "   ${YELLOW}VSCode設定ファイルが見つかりません。新規作成します...${NC}"
+    # 新しいsettings.jsonファイルを作成
+    mkdir -p "$(dirname "$VSCODE_SETTINGS")"
+    cat > "$VSCODE_SETTINGS" << EOF
 {
   $CONFIG_ENTRY
 }
 EOF
-  echo -e "   ${GREEN}✓ 新しいsettings.jsonファイルを作成しました${NC}"
+    echo -e "   ${GREEN}✓ 新しいsettings.jsonファイルを作成しました${NC}"
+  fi
 fi
 
 # 4. 完了メッセージ

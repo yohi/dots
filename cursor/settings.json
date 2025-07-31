@@ -26,7 +26,6 @@
     "cursor.terminal.usePreviewBox": true,
     // ワークベンチ設定
     "workbench.colorTheme": "Red",
-    "workbench.iconTheme": "vscode-icons",
     "workbench.startupEditor": "welcomePage",
     "workbench.editor.enablePreview": false,
     "workbench.editor.enablePreviewFromQuickOpen": false,
@@ -156,5 +155,6 @@
         "file:///home/y_ohi/.cursor/extensions/atlassian.atlascode-3.8.3/resources/schemas/pipelines-schema.json": "bitbucket-pipelines.yml"
     },
     "atlascode.jira.enabled": false,
-    "atlascode.bitbucket.enabled": true
+    "atlascode.bitbucket.enabled": true,
+    "geminicodeassist.project": "dh-0001-319210"
 }

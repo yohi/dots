@@ -17,9 +17,29 @@ class PersonaSelector {
   }
 
   /**
-   * ファイル拡張子やパスからペルソナを選択
-   * @param {string} filePath - 現在開いているファイルのパス
-   * @returns {Object} 選択されたペルソナ情報
+   * ファイルパターンマッチングのヘルパー関数
+   * @param {string} filePath - ファイルパス
+   * @param {string} pattern - マッチパターン
+   * @returns {boolean} マッチするかどうか
+   */
+  matchesPattern(filePath, pattern) {
+    if (pattern.endsWith('/')) {
+      // ディレクトリパターン
+      return filePath.includes(pattern);
+    } else if (pattern.startsWith('*.')) {
+      // 拡張子パターン
+      const extension = pattern.replace('*.', '');
+      return filePath.endsWith(`.${extension}`);
+    } else {
+      // 完全一致
+      return filePath.includes(pattern);
+    }
+  }
+
+  /**
+   * ファイルパスに基づいてペルソナを選択
+   * @param {string} filePath - ファイルパス
+   * @returns {Object|null} 選択されたペルソナ
    */
   selectPersonaByFile(filePath) {
     if (!filePath) return null;
@@ -27,34 +47,17 @@ class PersonaSelector {
     // 各ペルソナのファイルパターンを検査
     for (const [personaKey, persona] of Object.entries(this.config.personas)) {
       // パターンが一致するか確認
-      const matches = persona.filePatterns.some(pattern => {
-        if (pattern.endsWith('/')) {
-          // ディレクトリパターン
-          return filePath.includes(pattern);
-        } else if (pattern.startsWith('*.')) {
-          // 拡張子パターン
-          const extension = pattern.replace('*.', '');
-          return filePath.endsWith(`.${extension}`);
-        } else {
-          // 完全一致
-          return filePath.includes(pattern);
-        }
-      });
+      const matches = persona.filePatterns.some(pattern => 
+        this.matchesPattern(filePath, pattern)
+      );
 
       if (matches) {
         // バリアントチェック
         if (persona.variants) {
           for (const [variantKey, variant] of Object.entries(persona.variants)) {
-            const variantMatches = variant.filePatterns.some(pattern => {
-              if (pattern.endsWith('/')) {
-                return filePath.includes(pattern);
-              } else if (pattern.startsWith('*.')) {
-                const extension = pattern.replace('*.', '');
-                return filePath.endsWith(`.${extension}`);
-              } else {
-                return filePath.includes(pattern);
-              }
-            });
+            const variantMatches = variant.filePatterns.some(pattern => 
+              this.matchesPattern(filePath, pattern)
+            );
 
             if (variantMatches) {
               return {
@@ -70,8 +73,7 @@ class PersonaSelector {
       }
     }
 
-    // デフォルトはアナリスト
-    return this.config.personas.analyst;
+    return null;
   }
 
   /**
@@ -114,6 +116,7 @@ class PersonaSelector {
 
     // キーワードパターンによる自動選択
     const matchScores = {};
+    const variantScores = {}; // 分離されたバリアントスコア
 
     for (const [personaKey, persona] of Object.entries(this.config.personas)) {
       matchScores[personaKey] = 0;
@@ -140,8 +143,8 @@ class PersonaSelector {
 
           // バリアントスコアが高い場合は記録
           if (variantScore > 0) {
-            if (!persona.variantScores) persona.variantScores = {};
-            persona.variantScores[variantKey] = variantScore;
+            if (!variantScores[personaKey]) variantScores[personaKey] = {};
+            variantScores[personaKey][variantKey] = variantScore;
           }
         }
       }
@@ -161,11 +164,11 @@ class PersonaSelector {
     const selectedPersona = this.config.personas[selectedPersonaKey];
 
     // バリアントの中で最高スコアがあれば選択
-    if (selectedPersona.variantScores) {
+    if (variantScores[selectedPersonaKey]) {
       let highestVariantScore = 0;
       let selectedVariantKey = null;
 
-      for (const [variantKey, score] of Object.entries(selectedPersona.variantScores)) {
+      for (const [variantKey, score] of Object.entries(variantScores[selectedPersonaKey])) {
         if (score > highestVariantScore) {
           highestVariantScore = score;
           selectedVariantKey = variantKey;

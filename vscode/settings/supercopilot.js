@@ -196,6 +196,17 @@ const superCopilot = {
       codeReview: true,
       documentation: true
     }
+  },
+
+  /**
+   * コマンドカテゴリ設定
+   */
+  commandCategories: {
+    '分析系': ['analyze', 'explain', 'troubleshoot'],
+    '開発系': ['implement', 'improve', 'build'],
+    '設計系': ['design', 'estimate'],
+    '管理系': ['task', 'workflow', 'document'],
+    'ツール系': ['test', 'git', 'cleanup', 'load', 'index']
   }
 };
 
