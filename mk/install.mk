@@ -1020,3 +1020,322 @@ install-packages-vscode-supercopilot:
 
 # 後方互換性のためのエイリアス
 install-vscode-supercopilot: install-packages-vscode-supercopilot
+
+# SuperCursor (Cursor Framework) のインストール
+install-supercursor:
+	@echo "🚀 SuperCursor (Cursor Framework) のインストールを開始..."
+
+	# Cursor の確認
+	@echo "🔍 Cursor の確認中..."
+	@if ! command -v cursor >/dev/null 2>&1; then \
+		echo "ℹ️  Cursorはインストールされていますが、コマンドラインからは実行できない場合があります"; \
+		echo "   このメッセージは無視して構いません"; \
+	else \
+		echo "✅ Cursor が見つかりました"; \
+	fi
+
+	# SuperCursorフレームワークのセットアップ
+	@echo "⚙️  SuperCursor フレームワークをセットアップ中..."
+	@echo "🔧 SuperCursor セットアップ準備中..."; \
+	echo "ℹ️  フレームワークファイル、ペルソナ、コマンドをシンボリックリンクで構成します"; \
+	\
+	# 必要な変数の確認 \
+	if [ -z "$(DOTFILES_DIR)" ]; then \
+		echo "❌ DOTFILES_DIR is not set"; \
+		exit 1; \
+	fi; \
+	if [ -z "$(HOME_DIR)" ]; then \
+		echo "❌ HOME_DIR is not set"; \
+		exit 1; \
+	fi; \
+	\
+	echo "📁 必要なディレクトリを作成中..."; \
+	mkdir -p $(HOME_DIR)/.cursor/ || true; \
+	\
+	echo "🔗 シンボリックリンクを作成中..."; \
+	# SuperCursor本体へのリンク \
+	rm -rf $(HOME_DIR)/.cursor/supercursor; \
+	ln -sT $(DOTFILES_DIR)/cursor/supercursor $(HOME_DIR)/.cursor/supercursor || true; \
+	# 各種ディレクトリへのリンク \
+	rm -rf $(HOME_DIR)/.cursor/commands; \
+	ln -sT $(DOTFILES_DIR)/cursor/supercursor/Commands $(HOME_DIR)/.cursor/commands || true; \
+	rm -rf $(HOME_DIR)/.cursor/core; \
+	ln -sT $(DOTFILES_DIR)/cursor/supercursor/Core $(HOME_DIR)/.cursor/core || true; \
+	rm -rf $(HOME_DIR)/.cursor/hooks; \
+	ln -sT $(DOTFILES_DIR)/cursor/supercursor/Hooks $(HOME_DIR)/.cursor/hooks || true; \
+	# 重要なファイルへの直接リンク \
+	rm -f $(HOME_DIR)/.cursor/CURSOR.md; \
+	ln -sf $(DOTFILES_DIR)/cursor/supercursor/README.md $(HOME_DIR)/.cursor/CURSOR.md || true; \
+	\
+	echo "✅ SuperCursor フレームワークのシンボリックリンク設定が完了しました"
+
+	@echo ""
+	@echo "🎉 SuperCursor のセットアップが完了しました！"
+	@echo ""
+	@echo "🚀 使用方法:"
+	@echo "1. Cursor IDEを起動"
+	@echo "2. SuperCursor コマンドを使用:"
+	@echo ""
+	@echo "📋 利用可能なコマンド例:"
+	@echo "   /sc:implement <feature>    - 機能の実装"
+	@echo "   /sc:build                  - ビルド・パッケージング"
+	@echo "   /sc:design <ui>            - UI/UXデザイン"
+	@echo "   /sc:analyze <code>         - コード分析"
+	@echo "   /sc:troubleshoot <issue>   - 問題のデバッグ"
+	@echo "   /sc:test <suite>           - テストスイート"
+	@echo "   /sc:improve <code>         - コード改善"
+	@echo "   /sc:cleanup                - コードクリーンアップ"
+	@echo "   /sc:document <code>        - ドキュメント生成"
+	@echo "   /sc:git <operation>        - Git操作"
+	@echo "   /sc:estimate <task>        - 時間見積もり"
+	@echo "   /sc:task <management>      - タスク管理"
+	@echo ""
+	@echo "🎭 スマートペルソナ:"
+	@echo "   🏗️  architect   - システム設計・アーキテクチャ"
+	@echo "   🎨 developer   - 実装開発"
+	@echo "   📊 analyst     - コード分析・評価"
+	@echo "   🧪 tester      - テスト設計・実装"
+	@echo "   🚀 devops      - インフラ・デプロイ"
+	@echo ""
+	@echo "✅ SuperCursor のインストールが完了しました"
+
+# Gemini CLI のインストール
+install-gemini-cli:
+	@echo "🤖 Gemini CLI のインストールを開始..."
+
+	# Node.jsの確認
+	@echo "🔍 Node.js の確認中..."
+	@if ! command -v node >/dev/null 2>&1; then \
+		echo "❌ Node.js がインストールされていません"; \
+		echo ""; \
+		echo "📥 Node.js のインストール手順:"; \
+		echo "1. Homebrewを使用: brew install node"; \
+		echo "2. NodeVersionManager(nvm)を使用: https://github.com/nvm-sh/nvm"; \
+		echo "3. 公式サイト: https://nodejs.org/"; \
+		echo ""; \
+		echo "ℹ️  Node.js 18+ が必要です"; \
+		exit 1; \
+	else \
+		NODE_VERSION=$$(node --version | cut -d'v' -f2 | cut -d'.' -f1); \
+		echo "✅ Node.js が見つかりました (バージョン: $$(node --version))"; \
+		if [ "$$NODE_VERSION" -lt 18 ]; then \
+			echo "⚠️  Node.js 18+ が推奨されています (現在: $$(node --version))"; \
+			echo "   古いバージョンでも動作する可能性がありますが、問題が発生する場合があります"; \
+		fi; \
+	fi
+
+	# npmの確認
+	@echo "🔍 npm の確認中..."
+	@if ! command -v npm >/dev/null 2>&1; then \
+		echo "❌ npm がインストールされていません"; \
+		echo "ℹ️  通常はNode.jsと一緒にインストールされます"; \
+		exit 1; \
+	else \
+		echo "✅ npm が見つかりました (バージョン: $$(npm --version))"; \
+	fi
+
+	# Gemini CLI のインストール確認
+	@echo "🔍 既存の Gemini CLI インストールを確認中..."
+	@if command -v gemini >/dev/null 2>&1; then \
+		echo "✅ Gemini CLI は既にインストールされています"; \
+		echo "   バージョン: $$(gemini --version 2>/dev/null || echo '取得できませんでした')"; \
+		echo ""; \
+		echo "🔄 アップデートを確認中..."; \
+		npm update -g @google/gemini-cli 2>/dev/null || true; \
+	else \
+		echo "📦 Gemini CLI をインストール中..."; \
+		echo "ℹ️  グローバルインストールを実行します: npm install -g @google/gemini-cli"; \
+		\
+		if npm install -g @google/gemini-cli; then \
+			echo "✅ Gemini CLI のインストールが完了しました"; \
+		else \
+			echo "❌ Gemini CLI のインストールに失敗しました"; \
+			echo ""; \
+			echo "🔧 トラブルシューティング:"; \
+			echo "1. 権限の問題: npm config set prefix $(HOME)/.local"; \
+			echo "2. WSLの場合: npm config set os linux"; \
+			echo "3. 強制インストール: npm install -g @google/gemini-cli --force"; \
+			echo ""; \
+			exit 1; \
+		fi; \
+	fi
+
+	# インストール確認
+	@echo "🔍 インストールの確認中..."
+	@if command -v gemini >/dev/null 2>&1; then \
+		echo "✅ Gemini CLI が正常にインストールされました"; \
+		echo "   実行ファイル: $$(which gemini)"; \
+		echo "   バージョン: $$(gemini --version 2>/dev/null || echo '取得できませんでした')"; \
+	else \
+		echo "❌ Gemini CLI のインストール確認に失敗しました"; \
+		echo "ℹ️  PATH の問題の可能性があります"; \
+		echo "   手動確認: which gemini"; \
+		exit 1; \
+	fi
+
+	@echo ""
+	@echo "🎉 Gemini CLI のセットアップガイド:"
+	@echo "1. プロジェクトディレクトリに移動: cd your-project-directory"
+	@echo "2. Gemini CLI を開始: gemini"
+	@echo "3. 認証方法を選択: Google Cloud認証"
+	@echo "4. 初回セットアップコマンド:"
+	@echo "   > summarize this project"
+	@echo "   > /help"
+	@echo ""
+	@echo "✅ Gemini CLI のインストールが完了しました"
+
+# SuperGemini (Gemini CLI Framework) のインストール
+install-supergemini:
+	@echo "🚀 SuperGemini (Gemini CLI Framework) のインストールを開始..."
+
+	# Gemini CLI の確認
+	@echo "🔍 Gemini CLI の確認中..."
+	@if ! command -v gemini >/dev/null 2>&1; then \
+		echo "❌ Gemini CLI がインストールされていません"; \
+		echo "ℹ️  先に 'make install-gemini-cli' を実行してください"; \
+		exit 1; \
+	else \
+		echo "✅ Gemini CLI が見つかりました"; \
+	fi
+
+	# SuperGeminiフレームワークのセットアップ
+	@echo "⚙️  SuperGemini フレームワークをセットアップ中..."
+	@export PATH="$(HOME_DIR)/.local/bin:$$PATH" && \
+	echo "🔧 SuperGemini セットアップ準備中..."; \
+	echo "ℹ️  フレームワークファイル、ユーザーツール、Gemini CLI設定をシンボリックリンクで構成します"; \
+	\
+	echo "📁 必要なディレクトリを作成中..."; \
+	mkdir -p $(HOME_DIR)/.gemini/ || true; \
+	mkdir -p $(HOME_DIR)/.gemini/user-tools/ || true; \
+	\
+	echo "🔗 シンボリックリンクを作成中..."; \
+	# SuperGemini本体へのリンク \
+	ln -sf $(DOTFILES_DIR)/gemini/supergemini $(HOME_DIR)/.gemini/supergemini || true; \
+	# 各種ディレクトリへのリンク \
+	ln -sf $(DOTFILES_DIR)/gemini/supergemini/Core $(HOME_DIR)/.gemini/core || true; \
+	ln -sf $(DOTFILES_DIR)/gemini/supergemini/Hooks $(HOME_DIR)/.gemini/hooks || true; \
+	# 重要なファイルへの直接リンク \
+	ln -sf $(DOTFILES_DIR)/gemini/supergemini/GEMINI.md $(HOME_DIR)/.gemini/GEMINI.md || true; \
+	\
+	echo "📝 カスタムツールファイルを作成中..."; \
+	cp -f $(DOTFILES_DIR)/gemini/supergemini/Commands/help.md $(HOME_DIR)/.gemini/user-tools/user-help.md 2>/dev/null || \
+	echo "import-help: # /user-help コマンド\n\nSuperGeminiフレームワークのコマンド一覧を表示します。" > $(HOME_DIR)/.gemini/user-tools/user-help.md; \
+	\
+	cp -f $(DOTFILES_DIR)/gemini/supergemini/Commands/analyze.md $(HOME_DIR)/.gemini/user-tools/user-analyze.md 2>/dev/null || \
+	echo "import-analyze: # /user-analyze コマンド\n\nコードや機能を分析します。" > $(HOME_DIR)/.gemini/user-tools/user-analyze.md; \
+	\
+	cp -f $(DOTFILES_DIR)/gemini/supergemini/Commands/implement.md $(HOME_DIR)/.gemini/user-tools/user-implement.md 2>/dev/null || \
+	echo "import-implement: # /user-implement コマンド\n\n新機能を実装します。" > $(HOME_DIR)/.gemini/user-tools/user-implement.md; \
+	\
+	echo "🔧 Gemini CLI設定ファイルを更新中..."; \
+	echo '{\n  "selectedAuthType": "oauth-personal",\n  "usageStatisticsEnabled": false,\n  "customToolsDirectory": "~/.gemini/user-tools",\n  "enableCustomTools": true\n}' > $(HOME_DIR)/.gemini/settings.json || true; \
+	\
+	echo "✅ SuperGemini フレームワークのシンボリックリンク設定が完了しました"
+
+	@echo ""
+	@echo "🎉 SuperGemini のセットアップが完了しました！"
+	@echo ""
+	@echo "🚀 使用方法:"
+	@echo "1. Gemini CLI を起動: gemini"
+	@echo "2. SuperGemini コマンドを使用:"
+	@echo ""
+	@echo "📋 利用可能なコマンド例:"
+	@echo "   /user-implement <feature>    - 機能の実装"
+	@echo "   /user-build                  - ビルド・パッケージング"
+	@echo "   /user-design <ui>            - UI/UXデザイン"
+	@echo "   /user-analyze <code>         - コード分析"
+	@echo "   /user-troubleshoot <issue>   - 問題のデバッグ"
+	@echo "   /user-test <suite>           - テストスイート"
+	@echo "   /user-improve <code>         - コード改善"
+	@echo "   /user-cleanup                - コードクリーンアップ"
+	@echo "   /user-document <code>        - ドキュメント生成"
+	@echo "   /user-git <operation>        - Git操作"
+	@echo "   /user-estimate <task>        - 時間見積もり"
+	@echo "   /user-task <management>      - タスク管理"
+	@echo ""
+	@echo "🎭 スマートペルソナ:"
+	@echo "   🏗️  architect   - システム設計・アーキテクチャ"
+	@echo "   🎨 frontend    - UI/UX・アクセシビリティ"
+	@echo "   ⚙️  backend     - API・インフラストラクチャ"
+	@echo "   🔍 analyzer    - デバッグ・問題解決"
+	@echo "   🛡️  security    - セキュリティ・脆弱性評価"
+	@echo "   ✍️  scribe      - ドキュメント・技術文書"
+	@echo ""
+	@echo "📝 注意: カスタムツールを再読み込みするには /reload-user-tools コマンドを使用します"
+	@echo ""
+	@echo "✅ SuperGemini のインストールが完了しました"
+
+# Gemini エコシステム一括インストール
+install-gemini-ecosystem:
+	@echo "🌟 Gemini エコシステム一括インストールを開始..."
+	@echo ""
+
+	# Step 1: Gemini CLI のインストール
+	@echo "📋 Step 1/2: Gemini CLI をインストール中..."
+	@$(MAKE) install-gemini-cli
+	@echo "✅ Gemini CLI のインストールが完了しました"
+	@echo ""
+
+	# Step 2: SuperGemini のインストール
+	@echo "📋 Step 2/2: SuperGemini をインストール中..."
+	@$(MAKE) install-supergemini
+	@echo "✅ SuperGemini のインストールが完了しました"
+	@echo ""
+
+	# 最終確認
+	@echo "🔍 インストール結果の確認中..."
+	@export PATH="$(HOME_DIR)/.local/bin:$$PATH" && \
+	echo "Gemini CLI: $$(command -v gemini >/dev/null 2>&1 && echo "✅ $$(gemini --version 2>/dev/null || echo "インストール済み")" || echo "❌ 未確認")" && \
+	echo "SuperGemini: $$([ -f $(HOME_DIR)/.gemini/GEMINI.md ] && echo "✅ インストール済み" || echo "❌ 未確認")"
+
+	@echo ""
+	@echo "🎉 Gemini エコシステムのインストールが完了しました！"
+	@echo ""
+	@echo "🚀 使用開始ガイド:"
+	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	@echo ""
+	@echo "💻 Gemini CLI:"
+	@echo "  コマンド: gemini"
+	@echo "  使用例: プロジェクトディレクトリで 'gemini' を実行"
+	@echo ""
+	@echo "🚀 SuperGemini (フレームワーク):"
+	@echo "  Gemini CLI内で以下のコマンドが利用可能:"
+	@echo "    /user-implement <機能>     - 機能実装"
+	@echo "    /user-build                  - ビルド・パッケージング"
+	@echo "    /user-design <UI>            - UI/UXデザイン"
+	@echo "    /user-analyze <コード>       - コード分析"
+	@echo "    /user-troubleshoot <issue>   - 問題のデバッグ"
+	@echo "    /user-test <テスト>          - テストスイート"
+	@echo "    /user-improve <コード>       - コード改善"
+	@echo "    /user-cleanup                - コードクリーンアップ"
+	@echo "    /user-document <コード>      - ドキュメント生成"
+	@echo "    /user-git <operation>        - Git操作"
+	@echo "    /user-estimate <task>        - 時間見積もり"
+	@echo "    /user-task <management>      - タスク管理"
+	@echo ""
+	@echo "🎭 利用可能なペルソナ (SuperGemini):"
+	@echo "  🏗️  architect - システム設計"
+	@echo "  🎨 frontend  - UI/UX開発"
+	@echo "  ⚙️  backend   - API/インフラ"
+	@echo "  🔍 analyzer  - デバッグ・分析"
+	@echo "  🛡️  security  - セキュリティ"
+	@echo "  ✍️  scribe    - ドキュメント"
+	@echo ""
+	@echo "✨ おすすめワークフロー:"
+	@echo "  1. 'gemini' でプロジェクトを開始"
+	@echo "  2. '/user-implement' で機能を実装"
+	@echo ""
+	@echo "✅ Gemini エコシステムの一括インストールが完了しました"
+
+# ========================================
+# 新しい階層的な命名規則のターゲット
+# ========================================
+
+# SuperCursor関連ターゲット
+install-packages-supercursor: install-supercursor
+
+# ========================================
+# Gemini関連ターゲット
+install-packages-gemini-cli: install-gemini-cli
+install-packages-supergemini: install-supergemini
+install-packages-gemini-ecosystem: install-gemini-ecosystem
