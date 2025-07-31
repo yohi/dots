@@ -16,13 +16,13 @@ SuperGemini Hooks Module
 
 使用例:
     from supergemini.hooks import register_hook, execute_hooks
-    
+
     # フックの登録
     @register_hook('before_response')
     def custom_filter(data):
         # カスタム処理
         return modified_data
-    
+
     # フックの実行
     result = execute_hooks('before_response', input_data)
 """
@@ -32,16 +32,16 @@ __version__ = "1.0.0"
 
 class HookRegistry:
     """フック登録とトリガー管理クラス"""
-    
+
     def __init__(self):
         self.hooks = {}
-    
+
     def register(self, event_name, callback):
         """フックを登録"""
         if event_name not in self.hooks:
             self.hooks[event_name] = []
         self.hooks[event_name].append(callback)
-    
+
     def execute(self, event_name, data=None):
         """指定されたイベントのフックを実行"""
         if event_name in self.hooks:
@@ -56,9 +56,11 @@ _hook_registry = HookRegistry()
 
 def register_hook(event_name):
     """デコレータ形式でフックを登録"""
+
     def decorator(func):
         _hook_registry.register(event_name, func)
         return func
+
     return decorator
 
 

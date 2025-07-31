@@ -11,7 +11,7 @@ import logging
 import shutil
 from pathlib import Path
 
-from . import __version__, show_version, get_config
+from . import __version__, show_version, get_config, get_personas_config
 from . import GEMINI_HOME, SHARED_DIR, COMMANDS_DIR, GEMINI_MD
 
 # ロガーの設定
@@ -69,6 +69,14 @@ def create_parser():
         "personas", help="利用可能なペルソナ一覧を表示"
     )
 
+    # ペルソナ詳細表示
+    persona_detail_parser = subparsers.add_parser(
+        "persona-detail", help="指定されたペルソナの詳細情報を表示"
+    )
+    persona_detail_parser.add_argument(
+        "persona_name", help="詳細を表示するペルソナ名"
+    )
+
     return parser
 
 
@@ -108,11 +116,13 @@ def install_framework(profile="standard", interactive=False, force=False):
     setup_environment()
 
     # 既存のインストールを確認
-    is_installed = os.path.exists(GEMINI_MD) and os.path.getsize(GEMINI_MD) > 100
+    is_installed = (
+        os.path.exists(GEMINI_MD) and os.path.getsize(GEMINI_MD) > 100
+    )
 
     if is_installed and not force:
         print("ℹ️  SuperGemini は既にインストールされています")
-        if not interactive:
+        if interactive:
             choice = input("上書きしますか？ (y/N): ").strip().lower()
             if choice != "y":
                 print("❌ インストールを中止しました")
@@ -153,22 +163,36 @@ def show_commands():
     print("📋 SuperGemini コマンド一覧:")
     print("")
 
-    # コマンドをカテゴリごとに整理
-    categories = {
-        "分析系": ["analyze", "explain", "troubleshoot"],
-        "開発系": ["implement", "improve", "build"],
-        "設計系": ["design", "estimate"],
-        "管理系": ["task", "workflow", "document"],
-        "ツール系": ["test", "git", "cleanup", "load", "index", "spawn"],
-    }
+    # 設定ファイルからコマンドをカテゴリごとに動的に整理
+    categories = {}
+    for cmd_name, cmd_info in commands.items():
+        if cmd_info.get("enabled", True):
+            category = cmd_info.get("category", "その他")
+            if category not in categories:
+                categories[category] = []
+            categories[category].append({
+                "name": cmd_name,
+                "description": cmd_info.get("description", "")
+            })
 
+    # カテゴリの表示順序を定義（設定にない場合は最後に表示）
+    category_order = ["分析系", "開発系", "設計系", "管理系", "ツール系"]
+
+    # 順序に従ってカテゴリを表示
+    for category in category_order:
+        if category in categories:
+            print(f"【{category}】")
+            for cmd in categories[category]:
+                print(f"  {prefix}:{cmd['name']} - {cmd['description']}")
+            print("")
+
+    # 定義されていないカテゴリがあれば最後に表示
     for category, cmd_list in categories.items():
-        print(f"【{category}】")
-        for cmd in cmd_list:
-            if cmd in commands and commands[cmd].get("enabled", True):
-                desc = commands[cmd].get("description", "")
-                print(f"  {prefix}:{cmd} - {desc}")
-        print("")
+        if category not in category_order:
+            print(f"【{category}】")
+            for cmd in cmd_list:
+                print(f"  {prefix}:{cmd['name']} - {cmd['description']}")
+            print("")
 
     print("使用例: /sg:implement ログイン機能")
 
@@ -178,32 +202,64 @@ def show_personas():
     利用可能なペルソナ一覧を表示
     """
     config = get_config()
+    personas_config = get_personas_config()
     personas = config.get("personas", [])
 
     print("🎭 SuperGemini ペルソナ一覧:")
     print("")
 
-    # ペルソナとその説明
-    persona_details = {
-        "architect": "🏗️  システム設計・アーキテクチャ",
-        "developer": "💻 アプリケーション実装・開発",
-        "frontend": "🎨 UI/UX・アクセシビリティ",
-        "backend": "⚙️  API・インフラストラクチャ",
-        "analyst": "📊 コード分析・最適化",
-        "tester": "🧪 テスト設計・品質保証",
-        "devops": "🚀 CI/CD・デプロイメント",
-        "security": "🛡️  セキュリティ・脆弱性対策",
-        "scribe": "✍️  ドキュメント・技術文書",
-    }
+    # ペルソナ設定ファイルからペルソナ詳細を取得
+    personas_data = personas_config.get("personas", {})
 
     for persona in personas:
-        if persona in persona_details:
-            print(f"  @{persona} - {persona_details[persona]}")
+        if persona in personas_data:
+            persona_info = personas_data[persona]
+            emoji = persona_info.get("emoji", "")
+            title = persona_info.get("title", "")
+            print(f"  @{persona} - {emoji} {title}")
         else:
             print(f"  @{persona}")
 
     print("")
     print("使用例: @architect として、マイクロサービスのアーキテクチャを設計して")
+    print("")
+    print("詳細情報を見るには: python -m gemini persona-detail <persona名>")
+
+
+def show_persona_detail(persona_name):
+    """
+    指定されたペルソナの詳細情報を表示
+    """
+    personas_config = get_personas_config()
+    personas_data = personas_config.get("personas", {})
+    
+    if persona_name not in personas_data:
+        print(f"❌ ペルソナ '{persona_name}' が見つかりません。")
+        print("利用可能なペルソナ一覧を確認するには: python -m gemini personas")
+        return
+    
+    persona_info = personas_data[persona_name]
+    emoji = persona_info.get("emoji", "")
+    title = persona_info.get("title", "")
+    description = persona_info.get("description", "")
+    specialties = persona_info.get("specialties", [])
+    
+    print(f"🎭 ペルソナ詳細: @{persona_name}")
+    print("=" * 50)
+    print(f"{emoji} {title}")
+    print("")
+    print("📝 説明:")
+    print(f"  {description}")
+    print("")
+    
+    if specialties:
+        print("🎯 専門分野:")
+        for specialty in specialties:
+            print(f"  • {specialty}")
+        print("")
+    
+    print("💡 使用例:")
+    print(f"  @{persona_name} として、システムの改善提案をして")
 
 
 def show_config(edit=False, reset=False):
@@ -264,6 +320,8 @@ def main():
         show_commands()
     elif args.command == "personas":
         show_personas()
+    elif args.command == "persona-detail":
+        show_persona_detail(args.persona_name)
     elif args.command == "config":
         show_config(args.edit, args.reset)
     else:
