@@ -40,6 +40,9 @@ __all__ = [
     "PERSONAS_CONFIG_PATH",
 ]
 
+# ディレクトリの存在確認と作成
+os.makedirs(GEMINI_HOME, exist_ok=True)
+
 # ロガーの設定
 logging.basicConfig(
     level=logging.INFO,

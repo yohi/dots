@@ -73,9 +73,7 @@ def create_parser():
     persona_detail_parser = subparsers.add_parser(
         "persona-detail", help="指定されたペルソナの詳細情報を表示"
     )
-    persona_detail_parser.add_argument(
-        "persona_name", help="詳細を表示するペルソナ名"
-    )
+    persona_detail_parser.add_argument("persona_name", help="詳細を表示するペルソナ名")
 
     return parser
 
@@ -116,9 +114,7 @@ def install_framework(profile="standard", interactive=False, force=False):
     setup_environment()
 
     # 既存のインストールを確認
-    is_installed = (
-        os.path.exists(GEMINI_MD) and os.path.getsize(GEMINI_MD) > 100
-    )
+    is_installed = os.path.exists(GEMINI_MD) and os.path.getsize(GEMINI_MD) > 100
 
     if is_installed and not force:
         print("ℹ️  SuperGemini は既にインストールされています")
@@ -170,10 +166,9 @@ def show_commands():
             category = cmd_info.get("category", "その他")
             if category not in categories:
                 categories[category] = []
-            categories[category].append({
-                "name": cmd_name,
-                "description": cmd_info.get("description", "")
-            })
+            categories[category].append(
+                {"name": cmd_name, "description": cmd_info.get("description", "")}
+            )
 
     # カテゴリの表示順序を定義（設定にない場合は最後に表示）
     category_order = ["分析系", "開発系", "設計系", "管理系", "ツール系"]
@@ -232,18 +227,18 @@ def show_persona_detail(persona_name):
     """
     personas_config = get_personas_config()
     personas_data = personas_config.get("personas", {})
-    
+
     if persona_name not in personas_data:
         print(f"❌ ペルソナ '{persona_name}' が見つかりません。")
         print("利用可能なペルソナ一覧を確認するには: python -m gemini personas")
         return
-    
+
     persona_info = personas_data[persona_name]
     emoji = persona_info.get("emoji", "")
     title = persona_info.get("title", "")
     description = persona_info.get("description", "")
     specialties = persona_info.get("specialties", [])
-    
+
     print(f"🎭 ペルソナ詳細: @{persona_name}")
     print("=" * 50)
     print(f"{emoji} {title}")
@@ -251,13 +246,13 @@ def show_persona_detail(persona_name):
     print("📝 説明:")
     print(f"  {description}")
     print("")
-    
+
     if specialties:
         print("🎯 専門分野:")
         for specialty in specialties:
             print(f"  • {specialty}")
         print("")
-    
+
     print("💡 使用例:")
     print(f"  @{persona_name} として、システムの改善提案をして")
 
