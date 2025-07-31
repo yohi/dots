@@ -17,13 +17,14 @@ from . import GEMINI_HOME, SHARED_DIR, COMMANDS_DIR, GEMINI_MD
 # ロガーの設定
 logger = logging.getLogger("SuperGemini.CLI")
 
+
 def create_parser():
     """
     コマンドラインパーサーの作成
     """
     parser = argparse.ArgumentParser(
         description="SuperGemini - Gemini CLI拡張フレームワーク",
-        epilog="SuperGemini v" + __version__
+        epilog="SuperGemini v" + __version__,
     )
 
     # サブコマンドの設定
@@ -33,24 +34,43 @@ def create_parser():
     version_parser = subparsers.add_parser("version", help="バージョン情報を表示")
 
     # インストールコマンド
-    install_parser = subparsers.add_parser("install", help="SuperGemini をインストールまたは更新")
-    install_parser.add_argument("--profile", choices=["minimal", "standard", "developer"],
-                              default="standard", help="インストールプロファイル")
-    install_parser.add_argument("--interactive", action="store_true", help="対話モードでインストール")
-    install_parser.add_argument("--force", action="store_true", help="既存の設定を上書き")
+    install_parser = subparsers.add_parser(
+        "install", help="SuperGemini をインストールまたは更新"
+    )
+    install_parser.add_argument(
+        "--profile",
+        choices=["minimal", "standard", "developer"],
+        default="standard",
+        help="インストールプロファイル",
+    )
+    install_parser.add_argument(
+        "--interactive", action="store_true", help="対話モードでインストール"
+    )
+    install_parser.add_argument(
+        "--force", action="store_true", help="既存の設定を上書き"
+    )
 
     # コマンド一覧表示
-    commands_parser = subparsers.add_parser("commands", help="利用可能なコマンド一覧を表示")
+    commands_parser = subparsers.add_parser(
+        "commands", help="利用可能なコマンド一覧を表示"
+    )
 
     # 設定表示・編集
     config_parser = subparsers.add_parser("config", help="設定を表示・編集")
-    config_parser.add_argument("--edit", action="store_true", help="設定をエディタで開く")
-    config_parser.add_argument("--reset", action="store_true", help="設定をデフォルトにリセット")
+    config_parser.add_argument(
+        "--edit", action="store_true", help="設定をエディタで開く"
+    )
+    config_parser.add_argument(
+        "--reset", action="store_true", help="設定をデフォルトにリセット"
+    )
 
     # ペルソナ一覧表示
-    personas_parser = subparsers.add_parser("personas", help="利用可能なペルソナ一覧を表示")
+    personas_parser = subparsers.add_parser(
+        "personas", help="利用可能なペルソナ一覧を表示"
+    )
 
     return parser
+
 
 def setup_environment():
     """
@@ -66,18 +86,23 @@ def setup_environment():
     # GEMINI.mdファイルの作成（存在しない場合）
     if not os.path.exists(GEMINI_MD):
         try:
-            with open(GEMINI_MD, 'w') as f:
+            with open(GEMINI_MD, "w") as f:
                 f.write("# SuperGemini Framework\n\n")
                 f.write("SuperGemini は Gemini CLI のための拡張フレームワークです。\n")
-                f.write("詳細な使い方については、`SuperGemini commands` を実行して確認してください。\n")
+                f.write(
+                    "詳細な使い方については、`SuperGemini commands` を実行して確認してください。\n"
+                )
         except Exception as e:
             logger.error(f"GEMINI.md ファイルの作成エラー: {e}")
+
 
 def install_framework(profile="standard", interactive=False, force=False):
     """
     フレームワークのインストール
     """
-    print(f"🚀 SuperGemini フレームワークのインストールを開始します（プロファイル: {profile}）")
+    print(
+        f"🚀 SuperGemini フレームワークのインストールを開始します（プロファイル: {profile}）"
+    )
 
     # 環境のセットアップ
     setup_environment()
@@ -89,7 +114,7 @@ def install_framework(profile="standard", interactive=False, force=False):
         print("ℹ️  SuperGemini は既にインストールされています")
         if not interactive:
             choice = input("上書きしますか？ (y/N): ").strip().lower()
-            if choice != 'y':
+            if choice != "y":
                 print("❌ インストールを中止しました")
                 return
 
@@ -116,6 +141,7 @@ def install_framework(profile="standard", interactive=False, force=False):
     print("   /sg:design <ui>            - UI/UXデザイン")
     print("   etc...")
 
+
 def show_commands():
     """
     利用可能なコマンド一覧を表示
@@ -133,7 +159,7 @@ def show_commands():
         "開発系": ["implement", "improve", "build"],
         "設計系": ["design", "estimate"],
         "管理系": ["task", "workflow", "document"],
-        "ツール系": ["test", "git", "cleanup", "load", "index", "spawn"]
+        "ツール系": ["test", "git", "cleanup", "load", "index", "spawn"],
     }
 
     for category, cmd_list in categories.items():
@@ -145,6 +171,7 @@ def show_commands():
         print("")
 
     print("使用例: /sg:implement ログイン機能")
+
 
 def show_personas():
     """
@@ -166,7 +193,7 @@ def show_personas():
         "tester": "🧪 テスト設計・品質保証",
         "devops": "🚀 CI/CD・デプロイメント",
         "security": "🛡️  セキュリティ・脆弱性対策",
-        "scribe": "✍️  ドキュメント・技術文書"
+        "scribe": "✍️  ドキュメント・技術文書",
     }
 
     for persona in personas:
@@ -177,6 +204,7 @@ def show_personas():
 
     print("")
     print("使用例: @architect として、マイクロサービスのアーキテクチャを設計して")
+
 
 def show_config(edit=False, reset=False):
     """
@@ -196,7 +224,8 @@ def show_config(edit=False, reset=False):
     if edit:
         # エディタで開く
         import subprocess
-        editor = os.environ.get('EDITOR', 'nano')
+
+        editor = os.environ.get("EDITOR", "nano")
         try:
             subprocess.run([editor, CONFIG_PATH], check=True)
             print("✅ 設定を編集しました")
@@ -211,6 +240,7 @@ def show_config(edit=False, reset=False):
         print(f"  • ペルソナ数: {len(config.get('personas', []))}")
         print(f"  • コマンド数: {len(config.get('commands', {}))}")
         print(f"  • 設定ファイル: {CONFIG_PATH}")
+
 
 def main():
     """
@@ -238,6 +268,7 @@ def main():
         show_config(args.edit, args.reset)
     else:
         parser.print_help()
+
 
 if __name__ == "__main__":
     main()
