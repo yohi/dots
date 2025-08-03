@@ -523,6 +523,7 @@ setup-config-docker: setup-docker
 setup-config-development: setup-development
 setup-config-shortcuts: setup-shortcuts
 setup-config-ime: setup-ime
+setup-config-claude: setup-claude
 
 # ========================================
 # 後方互換性のためのエイリアス
@@ -533,3 +534,29 @@ setup-config-ime: setup-ime
 # setup-zsh: は既に実装済み
 # setup-wezterm: は既に実装済み
 # その他の既存ターゲットはそのまま
+
+# Claude設定をセットアップ
+setup-claude:
+	@echo "🤖 Claude設定をセットアップ中..."
+	@mkdir -p $(HOME_DIR)/.claude
+
+	# CLAUDE.mdのシンボリックリンク作成
+	@if [ -f "$(HOME_DIR)/.claude/CLAUDE.md" ] && [ ! -L "$(HOME_DIR)/.claude/CLAUDE.md" ]; then \
+		echo "⚠️  既存のCLAUDE.mdをバックアップ中..."; \
+		mv $(HOME_DIR)/.claude/CLAUDE.md $(HOME_DIR)/.claude/CLAUDE.md.backup.$$(date +%Y%m%d_%H%M%S); \
+	fi
+	@ln -sfn $(DOTFILES_DIR)/CLAUDE.md $(HOME_DIR)/.claude/CLAUDE.md
+
+	# claude-settings.jsonのシンボリックリンク作成
+	@if [ -f "$(HOME_DIR)/.claude/claude-settings.json" ] && [ ! -L "$(HOME_DIR)/.claude/claude-settings.json" ]; then \
+		echo "⚠️  既存のclaude-settings.jsonをバックアップ中..."; \
+		mv $(HOME_DIR)/.claude/claude-settings.json $(HOME_DIR)/.claude/claude-settings.json.backup.$$(date +%Y%m%d_%H%M%S); \
+	fi
+	@ln -sfn $(DOTFILES_DIR)/claude-settings.json $(HOME_DIR)/.claude/claude-settings.json
+
+	@echo "✅ Claude設定が完了しました。"
+	@echo "   設定ファイル: ~/.claude/CLAUDE.md -> $(DOTFILES_DIR)/CLAUDE.md"
+	@echo "   設定ファイル: ~/.claude/claude-settings.json -> $(DOTFILES_DIR)/claude-settings.json"
+
+# 設定ファイル・コンフィグセットアップ系
+setup-config-claude: setup-claude
