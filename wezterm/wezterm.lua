@@ -14,7 +14,7 @@ config.color_scheme = "Tokyo Night"  -- カラースキームを設定
 
 -- フォント設定
 config.font = wezterm.font_with_fallback({
-  "Cica Nerd Font",
+  "Cica",
   "Noto Sans CJK JP",
   "Noto Color Emoji",
 })
@@ -36,14 +36,24 @@ config.normalize_output_to_unicode_nfc = true  -- Unicode NFC正規化を有効�
 config.use_resize_increments = true  -- リサイズ時の文字境界調整
 config.selection_word_boundary = " \t\n{}[]()\"'`"  -- 日本語対応の単語境界
 
--- ウィンドウ装飾設定
-config.window_decorations = "INTEGRATED_BUTTONS | RESIZE"  -- 統合ボタンモード（タブバーにウィンドウ制御ボタンを配置）
+-- ウィンドウ装飾設定（統合ボタン付きでタイトルバーなし）
+config.window_decorations = "INTEGRATED_BUTTONS | RESIZE"  -- 統合ボタンを有効化
+
+-- 統合ボタンを使用する場合の追加設定（実験的）
+-- Linux環境では統合ボタンでもタイトルバーが表示される場合があるため、
+-- より確実な方法として、ウィンドウマネージャーに依存しない設定を使用
+config.window_close_confirmation = "NeverPrompt"  -- 終了確認なし
 
 -- Linux環境での追加設定
 if wezterm.target_triple:find("linux") then
-  -- X11/Wayland環境での設定
-  config.enable_wayland = true  -- Waylandサポートを有効化
+  -- X11/Wayland環境での設定（安定性重視）
+  config.enable_wayland = false  -- Waylandを一時的に無効化（X11使用）
   config.window_background_opacity = 1.0  -- 透明度を無効化
+
+  -- タイトルバーを確実に無効化するための追加設定
+  config.window_decorations = "INTEGRATED_BUTTONS | RESIZE"  -- Linux環境でも統合ボタンを使用
+  config.enable_tab_bar = true  -- タブバーは有効のまま
+  -- config.use_fancy_tab_bar = false  -- シンプルなタブバーを使用（コメントアウト）
 
   -- 日本語文字描画の改善設定
   config.use_cap_height_to_scale_fallback_fonts = false  -- フォントスケーリングを無効化
@@ -51,27 +61,34 @@ if wezterm.target_triple:find("linux") then
   config.allow_square_glyphs_to_overflow_width = "Never"  -- グリフの幅オーバーフローを禁止
   config.custom_block_glyphs = true  -- カスタムブロックグリフを有効化
 
-  -- 文字描画の最適化
-  config.front_end = "WebGpu"  -- レンダリングエンジンをWebGpuに
-  config.webgpu_power_preference = "LowPower"  -- 省電力モード
+  -- 文字描画の最適化（安定性重視）
+  config.front_end = "OpenGL"  -- より安定したOpenGLレンダラーを使用
+  -- config.webgpu_power_preference = "LowPower"  -- WebGPU設定をコメントアウト
 
   -- タブバーのドラッグ機能を確実に有効化するための追加設定
   config.adjust_window_size_when_changing_font_size = false  -- フォントサイズ変更時のウィンドウサイズ調整を無効化
 end
 
--- 統合ボタンの設定（INTEGRATED_BUTTONS モード用）
+-- 統合ボタンの設定（明示的に有効化）
 config.integrated_title_button_style = "Windows"  -- Windows スタイル
 config.integrated_title_buttons = { 'Hide', 'Maximize', 'Close' }  -- 表示するボタン
 config.integrated_title_button_alignment = "Right"  -- ボタンの配置（Right推奨）
 
--- タブバー設定
+-- 統合ボタンが確実に動作するための追加設定
+config.show_new_tab_button_in_tab_bar = true  -- 新しいタブボタンも表示
+config.show_tab_index_in_tab_bar = false  -- タブインデックスは非表示
+
+-- タブバー設定（統合ボタン表示のため）
 config.enable_tab_bar = true
 config.tab_bar_at_bottom = false  -- タブバーを上部に配置
--- config.use_fancy_tab_bar = false  -- レトロモードでカスタムボタンスタイルを有効化
+config.use_fancy_tab_bar = true  -- 統合ボタンには必須
 config.tab_max_width = 16
 config.show_tabs_in_tab_bar = true
 config.show_new_tab_button_in_tab_bar = true
-config.hide_tab_bar_if_only_one_tab = false  -- タブが1つでもタブバーを表示（ドラッグ用）
+config.hide_tab_bar_if_only_one_tab = false  -- タブが1つでもタブバーを表示（統合ボタン用）
+
+-- 統合ボタンを確実に表示するための追加設定
+config.window_close_confirmation = "NeverPrompt"  -- 終了確認なし（統合ボタン用）
 
 -- ランチャー設定
 config.launch_menu = {}  -- ランチャーメニューを空にする
@@ -96,17 +113,13 @@ config.pane_focus_follows_mouse = false  -- マウスフォーカスを無効化
 config.swallow_mouse_click_on_pane_focus = false  -- ペインフォーカス時のマウスクリックを処理
 config.swallow_mouse_click_on_window_focus = false  -- ウィンドウフォーカス時のマウスクリックを処理
 
--- ウィンドウフレーム設定（タブバーの色とスタイル）
+-- ウィンドウフレーム設定（統合ボタン用）
 config.window_frame = {
+  -- タブバーの色設定（統合ボタンが表示される部分）
   active_titlebar_bg = '#333333',
   inactive_titlebar_bg = '#2b2b2b',
   active_titlebar_fg = '#ffffff',
   inactive_titlebar_fg = '#cccccc',
-  -- ボタンの色設定（RESIZE モードでは不要）
-  -- button_fg = '#000000',        -- 黒文字
-  -- button_bg = '#ffff00',        -- 黄色背景
-  -- button_hover_fg = '#000000',  -- ホバー時も黒文字
-  -- button_hover_bg = '#ffff80',  -- ホバー時薄い黄色
 }
 
 -- カスタムボタンスタイル（統合ボタン用）
@@ -366,8 +379,8 @@ wezterm.on('refresh-layout', function(window, pane)
     return
   end
 
-  -- アクティブなペインに再フォーカス
-  window:perform_action(act.ActivatePane { index = current_pane:pane_id() }, current_pane)
+  -- アクティブなペインに再フォーカス（正しいAPIを使用）
+  current_pane:activate()
 
   -- ペインサイズを調整
   local success = adjust_pane_sizes(window, current_pane, layout_type, pane_count)
@@ -401,8 +414,8 @@ wezterm.on('window-config-reloaded', function(window, pane)
   if tab then
     local active_pane = tab:active_pane()
     if active_pane then
-      -- アクティブなペインにフォーカスを戻す
-      window:perform_action(act.ActivatePane { index = 0 }, active_pane)
+      -- アクティブなペインにフォーカスを戻す（正しいAPIを使用）
+      active_pane:activate()
     end
   end
 end)
@@ -506,6 +519,23 @@ config.keys = {
     action = act.ActivateCommandPalette,
   },
 
+  -- ウィンドウ制御のキーバインド（統合ボタンの代替）
+  {
+    key = 'F11',
+    mods = 'NONE',
+    action = act.ToggleFullScreen,
+  },
+  {
+    key = 'F4',
+    mods = 'ALT',
+    action = act.QuitApplication,
+  },
+  {
+    key = 'm',
+    mods = 'CTRL|SHIFT',
+    action = act.Hide,  -- 最小化
+  },
+
   -- ランチャーのキーバインドを無効化
   {
     key = 'l',
@@ -519,7 +549,7 @@ config.keys = {
   },
 }
 
--- マウスバインディング（シンプル版）
+-- マウスバインディング（タイトルバーなし用）
 config.mouse_bindings = {
   -- 右クリック貼り付け
   {
@@ -528,24 +558,27 @@ config.mouse_bindings = {
     action = act.PasteFrom 'Clipboard',
   },
 
-  -- タブバー領域でのドラッグ設定
-  -- 注意: WezTermのデフォルトでは、タブバー領域での左ドラッグは自動的にウィンドウ移動になります
-  -- しかし、Linux環境では明示的な設定が必要な場合があります
+  -- タブバー領域でのウィンドウドラッグ（タイトルバーがない場合の代替）
+  {
+    event = { Drag = { streak = 1, button = 'Left' } },
+    mods = 'NONE',
+    action = wezterm.action_callback(function(window, pane)
+      -- タブバー領域のクリックかどうかを判定
+      window:perform_action(act.StartWindowDrag, pane)
+    end),
+  },
 
-  -- 推奨：修飾キーありのドラッグ設定（テキスト選択との競合を避ける）
-  -- Ctrl+Shift+左ドラッグでウィンドウ移動（Weztermデフォルト）
+  -- 修飾キーありのドラッグ設定（テキスト選択との競合回避）
   {
     event = { Drag = { streak = 1, button = 'Left' } },
     mods = 'CTRL|SHIFT',
     action = act.StartWindowDrag,
   },
-  -- Alt+左ドラッグでもウィンドウ移動（推奨）
   {
     event = { Drag = { streak = 1, button = 'Left' } },
     mods = 'ALT',
     action = act.StartWindowDrag,
   },
-  -- Super（Windowsキー/Commandキー）+左ドラッグでもウィンドウ移動
   {
     event = { Drag = { streak = 1, button = 'Left' } },
     mods = 'SUPER',

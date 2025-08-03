@@ -40,6 +40,7 @@ setup-all:
 	@$(MAKE) setup-docker
 	@$(MAKE) setup-development
 	@$(MAKE) setup-shortcuts
+	@$(MAKE) setup-claude
 	@echo ""
 
 	@echo "📋 6. 拡張機能インストール実行中..."
@@ -156,3 +157,7 @@ setup-config-all: setup-all
 # 古いターゲット名を維持（既に実装済み）
 # setup-all: は既に実装済み
 # system-setup: は既に実装済み
+
+# Playwright エイリアス（短縮形）
+playwright: install-packages-playwright  ## Playwright E2Eテストフレームワークをインストール
+pw: install-packages-playwright          ## Playwright E2Eテストフレームワークをインストール（短縮形）
