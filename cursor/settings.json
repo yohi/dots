@@ -156,5 +156,6 @@
     },
     "atlascode.jira.enabled": false,
     "atlascode.bitbucket.enabled": true,
-    "geminicodeassist.project": "dh-0001-319210"
+    "geminicodeassist.project": "dh-0001-319210",
+    "window.restoreWindows": "none"
 }
