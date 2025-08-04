@@ -15,4 +15,5 @@ EMAIL := $(shell git config --global user.email 2>/dev/null || echo "")
         test-extensions extensions-status fix-extensions-schema setup-config-mozc setup-config-mozc-ut-dictionaries setup-config-mozc-ut-dictionaries-manual get-mozc-dict-checksum check-mozc-import-status \
         system-setup install-homebrew install-apps install-deb install-flatpak setup-vim setup-zsh setup-wezterm setup-vscode setup-cursor setup-mcp-tools setup-git setup-docker setup-development setup-shortcuts \
         setup-gnome-extensions setup-gnome-tweaks backup-gnome-tweaks export-gnome-tweaks setup-all install-cursor update-cursor stop-cursor check-cursor-version install-wezterm install-fuse install-claude-code install-claudia install-superclaude install-claude-ecosystem fix-superclaude install-cica-fonts install-mysql-workbench setup-claude \
-        setup-mozc setup-mozc-ut-dictionaries setup-mozc-ut-dictionaries-manual
+        setup-mozc setup-mozc-ut-dictionaries setup-mozc-ut-dictionaries-manual \
+        fonts-setup fonts-install fonts-install-nerd fonts-install-google fonts-install-japanese fonts-clean fonts-update fonts-list fonts-refresh fonts-debug fonts-backup fonts-configure

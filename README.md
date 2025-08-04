@@ -89,7 +89,7 @@ make setup-all         # すべての設定をセットアップ
 - **基本ツール**: build-essential, curl, file, wget, software-properties-common
 - **日本語環境**: language-pack-ja, ubuntu-defaults-ja, fonts-noto-cjk, ibus-mozc
 - **システムユーティリティ**: xdg-user-dirs-gtk, flatpak, gdebi, chrome-gnome-shell, xclip, xsel
-- **フォント**: IBM Plex Sans, Noto CJK, Cica Nerd Fonts
+- **フォント管理**: 自動ダウンロード・インストール (Nerd Fonts, Google Fonts, 日本語フォント)
 
 </details>
 
@@ -249,6 +249,52 @@ make setup-development
 # GUI設定のみ
 make setup-gnome-extensions
 make setup-gnome-tweaks
+
+# フォント管理
+make fonts-setup       # 全フォントインストール
+make fonts-install     # 個別インストール
+make fonts-list        # インストール済み確認
+make fonts-update      # 最新版への更新
+```
+
+---
+
+## 🔤 フォント管理機能
+
+**⚡ 自動フォント管理システム**
+- リポジトリにフォントファイルを保存せず、必要時に自動ダウンロード
+- ライセンスリスクを回避し、リポジトリサイズを最適化
+
+### 利用可能なフォント
+
+| カテゴリ | フォント名 | 用途 |
+|---------|-----------|------|
+| **Nerd Fonts** | JetBrainsMono, FiraCode, Hack, DejaVuSansMono | 開発・ターミナル |
+| **Google Fonts** | Roboto, Open Sans, Source Code Pro, IBM Plex Mono | ウェブ・文書 |
+| **日本語フォント** | Noto CJK, IBM Plex Sans JP | 日本語表示 |
+
+### フォント管理コマンド
+
+```bash
+# 基本操作
+make fonts-setup      # 全フォント環境セットアップ
+make fonts-install    # 全種類フォントインストール
+make fonts-list       # インストール済みフォント一覧
+make fonts-clean      # 一時ファイルクリーンアップ
+
+# 種類別インストール
+make fonts-install-nerd      # Nerd Fonts のみ
+make fonts-install-google    # Google Fonts のみ
+make fonts-install-japanese  # 日本語フォントのみ
+
+# メンテナンス
+make fonts-update     # 最新版に更新（既存削除→再インストール）
+make fonts-refresh    # フォントキャッシュ更新
+make fonts-configure  # 推奨フォント設定適用
+
+# デバッグ・管理
+make fonts-debug      # フォント環境デバッグ情報
+make fonts-backup     # フォント設定バックアップ
 ```
 
 ---
@@ -265,7 +311,9 @@ make setup-gnome-tweaks
 
 2. **フォントが表示されない**
    ```bash
-   fc-cache -f       # フォントキャッシュ更新
+   make fonts-refresh    # フォントキャッシュ更新
+   make fonts-list       # インストール済みフォント確認
+   make fonts-debug      # フォント環境のデバッグ情報
    ```
 
 3. **GNOME設定が反映されない**

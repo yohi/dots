@@ -4,7 +4,9 @@
 # 分割されたMakefileをinclude
 include mk/variables.mk
 include mk/help.mk
+include mk/help-short.mk
 include mk/system.mk
+include mk/fonts.mk
 include mk/install.mk
 include mk/setup.mk
 include mk/gnome.mk
@@ -12,9 +14,11 @@ include mk/mozc.mk
 include mk/extensions.mk
 include mk/clean.mk
 include mk/main.mk
+include mk/menu.mk
+include mk/shortcuts.mk
 
 .PHONY: all
-all: help
+all: menu
 
 .PHONY: setup
 setup: gnome-settings gnome-extensions system ## Set up the system
@@ -25,18 +29,6 @@ install: ## Install dotfiles only (without SuperCopilot)
 
 .PHONY: install-all
 install-all: install vscode-supercopilot ## Install dotfiles and SuperCopilot
-
-.PHONY: clean
-clean: ## Clean up temporary files and directories
-	@rm -rf *.tmp
-	@find . -name "*.tmp" -type f -delete
-
-.PHONY: help
-help: ## Show this help message
-	@echo 'Usage: make [target]'
-	@echo ''
-	@echo 'Targets:'
-	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z0-9_-]+:.*?## / {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST) | sort
 
 .PHONY: vscode-supercopilot
 vscode-supercopilot: ## Install SuperCopilot Framework for VSCode
