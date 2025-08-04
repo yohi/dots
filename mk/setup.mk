@@ -525,6 +525,47 @@ setup-config-shortcuts: setup-shortcuts
 setup-config-ime: setup-ime
 
 # ========================================
+# Claude Code設定のセットアップ
+# ========================================
+
+setup-claude: ## Claude Code設定ファイルのセットアップ
+	@echo "🤖 Claude Code設定をセットアップ中..."
+
+	# Claude設定ディレクトリの作成
+	@mkdir -p $(HOME_DIR)/.config/claude
+
+	# Claude設定ファイルのコピー
+	@if [ -f "$(DOTFILES_DIR)/claude/claude-settings.json" ]; then \
+		echo "📋 Claude設定ファイルをコピー中..."; \
+		cp "$(DOTFILES_DIR)/claude/claude-settings.json" "$(HOME_DIR)/.config/claude/claude-settings.json" && \
+		echo "✅ Claude設定ファイルが正常にコピーされました"; \
+	else \
+		echo "⚠️ Claude設定ファイルが見つかりません: $(DOTFILES_DIR)/claude/claude-settings.json"; \
+	fi
+
+	# Claude CLIの設定確認
+	@if command -v claude >/dev/null 2>&1; then \
+		echo "✅ Claude CLIが利用可能です"; \
+		echo "   バージョン: $$(claude --version 2>/dev/null || echo '取得できませんでした')"; \
+		echo "   設定ディレクトリ: $(HOME_DIR)/.config/claude"; \
+	else \
+		echo "ℹ️ Claude CLIがインストールされていません"; \
+		echo "   'make install-claude-ecosystem' でClaude Code関連ツールをインストールできます"; \
+	fi
+
+	# CLAUDE.mdファイルのリンク作成
+	@if [ -f "$(DOTFILES_DIR)/CLAUDE.md" ]; then \
+		echo "📖 CLAUDE.mdドキュメントをホームディレクトリにリンク中..."; \
+		ln -sf "$(DOTFILES_DIR)/CLAUDE.md" "$(HOME_DIR)/CLAUDE.md" && \
+		echo "✅ CLAUDE.mdドキュメントがリンクされました: ~/CLAUDE.md"; \
+	else \
+		echo "⚠️ CLAUDE.mdドキュメントが見つかりません"; \
+	fi
+
+	@echo "✅ Claude Code設定のセットアップが完了しました"
+	@echo "📚 詳細なガイドは ~/CLAUDE.md を参照してください"
+
+# ========================================
 # 後方互換性のためのエイリアス
 # ========================================
 
