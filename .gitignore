@@ -16,6 +16,7 @@ desktop.ini
 *.woff
 *.woff2
 plex-fonts.zip
+fonts/
 
 # 一時ファイル
 *.tmp

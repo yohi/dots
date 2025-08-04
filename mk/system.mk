@@ -57,8 +57,8 @@ system-setup:
 	@systemctl --user enable ibus-daemon || true
 	@systemctl --user start ibus-daemon || true
 
-	# IBM Plex Sans フォントのインストール
-	@$(MAKE) install-ibm-plex-fonts
+	# フォント環境のセットアップ
+	@$(MAKE) fonts-setup
 
 	# 基本開発ツール
 	@echo "🔧 基本開発ツールをインストール中..."
