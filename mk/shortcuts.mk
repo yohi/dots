@@ -138,7 +138,7 @@ status: ## システム状態の一覧表示
 	@echo "📦 インストール済みパッケージ:"
 	@echo "- Homebrew: $$(command -v brew >/dev/null && echo '✅ インストール済み' || echo '❌ 未インストール')"
 	@echo "- VSCode: $$(command -v code >/dev/null && echo '✅ インストール済み' || echo '❌ 未インストール')"
-	@echo "- Git: $$(command -v git >/dev/null && echo "✅ $$(git --version)" || echo '❌ 未インストール')"
+	@echo "- Git: $$(command -v git >/dev/null && echo '✅ '$$(git --version) || echo '❌ 未インストール')"
 
 # 全体チェック
 check-all: ## 全ての設定・インストール状況をチェック
