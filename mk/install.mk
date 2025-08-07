@@ -181,12 +181,68 @@ install-cursor:
 	fi && \
 	\
 	if [ "$$CURSOR_INSTALLED" = "true" ]; then \
+		echo "📝 デスクトップエントリーとアイコンを作成中..." && \
+		\
+		echo "🎨 アイコンを設定中..." && \
+		ICON_EXTRACTED=false && \
+		cd /tmp && \
+		\
+		echo "📥 公式アイコンをダウンロード中..." && \
+		if curl -f -L --connect-timeout 10 --max-time 30 \
+			-H 'user-agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36' \
+			-o cursor-favicon.ico "https://cursor.com/favicon.ico" 2>/dev/null; then \
+			if command -v convert >/dev/null 2>&1; then \
+				if convert cursor-favicon.ico cursor-icon.png 2>/dev/null; then \
+					sudo mkdir -p /usr/share/pixmaps && \
+					sudo cp cursor-icon.png /usr/share/pixmaps/cursor.png && \
+					ICON_EXTRACTED=true && \
+					echo "✅ 公式アイコンをダウンロードして設定しました"; \
+				fi; \
+			else \
+				sudo mkdir -p /usr/share/pixmaps && \
+				sudo cp cursor-favicon.ico /usr/share/pixmaps/cursor.ico && \
+				ICON_EXTRACTED=true && \
+				echo "✅ 公式アイコン（ICO形式）をダウンロードして設定しました"; \
+			fi; \
+			rm -f cursor-favicon.ico cursor-icon.png 2>/dev/null || true; \
+		fi && \
+		\
+		if [ "$$ICON_EXTRACTED" = "false" ]; then \
+			echo "🔍 AppImageからアイコンを抽出中..." && \
+			if command -v unzip >/dev/null 2>&1; then \
+				if timeout 30 unzip -j /opt/cursor/cursor.AppImage "*.png" 2>/dev/null || timeout 30 unzip -j /opt/cursor/cursor.AppImage "usr/share/pixmaps/*.png" 2>/dev/null || timeout 30 unzip -j /opt/cursor/cursor.AppImage "resources/*.png" 2>/dev/null; then \
+					ICON_FILE=$$(ls -1 *.png 2>/dev/null | grep -i "cursor\|icon\|app" | head -1); \
+					if [ -z "$$ICON_FILE" ]; then \
+						ICON_FILE=$$(ls -1 *.png 2>/dev/null | head -1); \
+					fi; \
+					if [ ! -z "$$ICON_FILE" ] && [ -f "$$ICON_FILE" ]; then \
+						sudo mkdir -p /usr/share/pixmaps && \
+						sudo cp "$$ICON_FILE" /usr/share/pixmaps/cursor.png && \
+						ICON_EXTRACTED=true && \
+						echo "✅ AppImageからアイコンを抽出しました: $$ICON_FILE"; \
+					fi; \
+					rm -f *.png 2>/dev/null || true; \
+				fi; \
+			fi; \
+		fi && \
+		\
+		ICON_PATH="applications-development" && \
+		if [ "$$ICON_EXTRACTED" = "true" ]; then \
+			if [ -f /usr/share/pixmaps/cursor.png ]; then \
+				ICON_PATH="/usr/share/pixmaps/cursor.png"; \
+			elif [ -f /usr/share/pixmaps/cursor.ico ]; then \
+				ICON_PATH="/usr/share/pixmaps/cursor.ico"; \
+			fi; \
+		else \
+			echo "⚠️  アイコンの設定に失敗しました。デフォルトアイコンを使用します"; \
+		fi && \
+		\
 		echo "📝 デスクトップエントリーを作成中..." && \
 		echo "[Desktop Entry]" | sudo tee /usr/share/applications/cursor.desktop > /dev/null && \
 		echo "Name=Cursor" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
 		echo "Comment=The AI-first code editor" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
 		echo "Exec=/opt/cursor/cursor.AppImage --no-sandbox %F" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
-		echo "Icon=applications-development" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
+		echo "Icon=$$ICON_PATH" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
 		echo "Terminal=false" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
 		echo "Type=Application" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
 		echo "Categories=Development;IDE;TextEditor;" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
@@ -204,136 +260,180 @@ install-cursor:
 		echo "3. ダウンロード後、再度このコマンドを実行"; \
 	fi
 
-# Cursor IDEの更新
+# Cursor IDEのアップデート
 update-cursor:
-	@echo "🔄 Cursor IDEの更新を開始します..."
-
-	# 現在のバージョン確認
-	@echo "🔍 現在のCursor IDEの状態を確認中..."
-	@if [ -f /opt/cursor/cursor.AppImage ]; then \
-		echo "✅ Cursor IDEが見つかりました: /opt/cursor/cursor.AppImage"; \
-		CURRENT_SIZE=$$(stat -c%s /opt/cursor/cursor.AppImage 2>/dev/null || echo "0"); \
-		echo "   現在のファイルサイズ: $$CURRENT_SIZE bytes"; \
-		CURRENT_MODIFIED=$$(stat -c%Y /opt/cursor/cursor.AppImage 2>/dev/null || echo "0"); \
-		echo "   最終更新日: $$(date -d @$$CURRENT_MODIFIED 2>/dev/null || echo '不明')"; \
-	else \
-		echo "❌ Cursor IDEがインストールされていません"; \
-		echo "ℹ️  先に 'make install-packages-cursor' でインストールしてください"; \
-		exit 1; \
-	fi
-
-	# 既存のCursor IDEをバックアップ
-	@echo "💾 現在のCursor IDEをバックアップ中..."
-	@BACKUP_NAME="cursor-backup-$$(date +%Y%m%d_%H%M%S).AppImage" && \
-	sudo cp /opt/cursor/cursor.AppImage "/opt/cursor/$$BACKUP_NAME" && \
-	echo "✅ バックアップを作成しました: /opt/cursor/$$BACKUP_NAME"
-
-	# 最新版をダウンロード
-	@echo "📥 最新版のCursor IDEをダウンロード中..."
-	@cd /tmp && \
-	rm -f cursor-update.AppImage 2>/dev/null && \
-	echo "🌐 公式サイトから最新版をダウンロード中..." && \
-	if curl -L --user-agent "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36" \
-		--max-time 120 --retry 3 --retry-delay 5 \
-		--progress-bar \
-		-o cursor-update.AppImage "https://downloader.cursor.sh/linux/appImage/x64"; then \
-		FILE_SIZE=$$(stat -c%s cursor-update.AppImage 2>/dev/null || echo "0"); \
-		echo "📦 ダウンロード完了: $$FILE_SIZE bytes"; \
-		if [ "$$FILE_SIZE" -gt 10000000 ]; then \
-			echo "✅ ダウンロードが正常に完了しました"; \
-		else \
-			echo "❌ ダウンロードファイルが不完全です (サイズ: $$FILE_SIZE bytes)"; \
-			rm -f cursor-update.AppImage; \
+	@echo "🔄 Cursor IDEのアップデートを開始します..."
+	@CURSOR_UPDATED=false && \
+	\
+	echo "🔍 現在のCursor IDEを確認中..." && \
+	if [ -f /opt/cursor/cursor.AppImage ]; then \
+		echo "🔄 Cursor IDEの実行状況を確認中..." && \
+		if pgrep -f "^/opt/cursor/cursor.AppImage" >/dev/null 2>&1; then \
+			echo "⚠️  Cursor IDEが実行中です。アップデートを続行するには、まずCursor IDEを終了してください。"; \
+			echo "   Cursor IDEを終了後、再度このコマンドを実行してください。"; \
+			echo ""; \
+			echo "💡 自動的にCursor IDEを終了するには: make stop-cursor"; \
 			exit 1; \
-		fi; \
-	else \
-		echo "❌ ダウンロードに失敗しました"; \
-		echo "🔧 トラブルシューティング:"; \
-		echo "   1. インターネット接続を確認してください"; \
-		echo "   2. 手動でダウンロード: https://cursor.sh/"; \
-		echo "   3. ダウンロード後のファイルを /tmp/cursor-update.AppImage に配置"; \
-		exit 1; \
-	fi
-
-	# バージョン比較とサイズチェック
-	@echo "🔍 新旧バージョンを比較中..."
-	@cd /tmp && \
-	if [ -f cursor-update.AppImage ]; then \
-		OLD_SIZE=$$(stat -c%s /opt/cursor/cursor.AppImage 2>/dev/null || echo "0"); \
-		NEW_SIZE=$$(stat -c%s cursor-update.AppImage 2>/dev/null || echo "0"); \
-		echo "   現在のバージョン: $$OLD_SIZE bytes"; \
-		echo "   新しいバージョン: $$NEW_SIZE bytes"; \
+		fi && \
+		echo "📦 最新バージョンのダウンロード情報を取得中..." && \
+		cd /tmp && \
+		rm -f cursor-new.AppImage 2>/dev/null && \
 		\
-		if [ "$$OLD_SIZE" = "$$NEW_SIZE" ]; then \
-			echo "ℹ️  ファイルサイズが同じです。既に最新版の可能性があります"; \
-			echo "❓ 続行しますか？ [y/N]"; \
-			read -r CONTINUE; \
-			if [ "$$CONTINUE" != "y" ] && [ "$$CONTINUE" != "Y" ]; then \
-				echo "⏸️  更新をキャンセルしました"; \
-				rm -f cursor-update.AppImage; \
-				exit 0; \
+		echo "🌐 Cursor APIから最新バージョン情報を取得中..." && \
+		if ! command -v jq >/dev/null 2>&1; then \
+			echo "📦 jqをインストール中..."; \
+			if command -v apt-get >/dev/null 2>&1; then \
+				sudo apt-get update >/dev/null 2>&1 && sudo apt-get install -y jq >/dev/null 2>&1; \
+			elif command -v brew >/dev/null 2>&1; then \
+				brew install jq >/dev/null 2>&1; \
+			elif command -v yum >/dev/null 2>&1; then \
+				sudo yum install -y jq >/dev/null 2>&1; \
+			elif command -v dnf >/dev/null 2>&1; then \
+				sudo dnf install -y jq >/dev/null 2>&1; \
+			fi; \
+		fi && \
+		\
+		if command -v jq >/dev/null 2>&1; then \
+			API_RESPONSE=$$(curl -sL "https://www.cursor.com/api/download?platform=linux-x64&releaseTrack=stable" 2>/dev/null); \
+			if [ -n "$$API_RESPONSE" ] && echo "$$API_RESPONSE" | jq . >/dev/null 2>&1; then \
+				DOWNLOAD_URL=$$(echo "$$API_RESPONSE" | jq -r '.downloadUrl' 2>/dev/null); \
+				VERSION=$$(echo "$$API_RESPONSE" | jq -r '.version' 2>/dev/null); \
+				if [ "$$DOWNLOAD_URL" != "null" ] && [ "$$DOWNLOAD_URL" != "" ]; then \
+					echo "📋 最新バージョン: $$VERSION"; \
+					echo "🔗 ダウンロードURL: $$DOWNLOAD_URL"; \
+				else \
+					DOWNLOAD_URL=""; \
+				fi; \
+			else \
+				echo "⚠️  API応答の解析に失敗しました。フォールバック方式を使用します..."; \
+				DOWNLOAD_URL=""; \
 			fi; \
 		else \
-			echo "✅ 新しいバージョンが利用可能です"; \
+			echo "⚠️  jqのインストールに失敗しました。フォールバック方式を使用します..."; \
+			DOWNLOAD_URL=""; \
+		fi && \
+		\
+		if [ -z "$$DOWNLOAD_URL" ]; then \
+			echo "🔄 フォールバック: 直接ダウンロードを試行中..."; \
+			DOWNLOAD_URL="https://downloader.cursor.sh/linux/appImage/x64"; \
+		fi && \
+		\
+		echo "📥 ダウンロード中: $$DOWNLOAD_URL" && \
+		if curl -L --user-agent "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36" \
+			--max-time 120 --retry 3 --retry-delay 5 \
+			-o cursor-new.AppImage "$$DOWNLOAD_URL" 2>/dev/null; then \
+			FILE_SIZE=$$(stat -c%s cursor-new.AppImage 2>/dev/null || echo "0"); \
+			if [ "$$FILE_SIZE" -gt 10000000 ]; then \
+				echo "✅ 新しいバージョンのダウンロードが完了しました (サイズ: $$FILE_SIZE bytes)"; \
+				echo "🔧 既存ファイルをバックアップ中..."; \
+				sudo cp /opt/cursor/cursor.AppImage /opt/cursor/cursor.AppImage.backup.$$(date +%Y%m%d_%H%M%S) && \
+				chmod +x cursor-new.AppImage && \
+				sudo cp cursor-new.AppImage /opt/cursor/cursor.AppImage && \
+				sudo chown root:root /opt/cursor/cursor.AppImage && \
+				sudo chmod 755 /opt/cursor/cursor.AppImage && \
+				rm -f cursor-new.AppImage && \
+				CURSOR_UPDATED=true && \
+				echo "🎉 Cursor IDEのアップデートが完了しました"; \
+			else \
+				echo "❌ ダウンロードファイルが不完全です (サイズ: $$FILE_SIZE bytes)"; \
+				rm -f cursor-new.AppImage 2>/dev/null; \
+			fi; \
+		else \
+			echo "❌ ダウンロードに失敗しました"; \
 		fi; \
-	fi
-
-	# 新しいバージョンをインストール
-	@echo "🔄 Cursor IDEを更新中..."
-	@cd /tmp && \
-	if [ -f cursor-update.AppImage ]; then \
-		chmod +x cursor-update.AppImage && \
-		echo "📁 新しいバージョンを配置中..." && \
-		sudo mv cursor-update.AppImage /opt/cursor/cursor.AppImage && \
-		echo "✅ Cursor IDEの更新が完了しました"; \
 	else \
-		echo "❌ 更新ファイルが見つかりません"; \
-		exit 1; \
+		echo "❌ Cursor IDEがインストールされていません"; \
+		echo "   'make install-cursor' でインストールしてください"; \
+	fi && \
+	\
+	if [ "$$CURSOR_UPDATED" = "false" ]; then \
+		echo "💡 手動アップデート手順:"; \
+		echo "1. ブラウザで https://cursor.sh/ を開く"; \
+		echo "2. 'Download for Linux' をクリック"; \
+		echo "3. ダウンロードしたファイルを /opt/cursor/cursor.AppImage に置き換え"; \
+		echo "4. sudo chmod +x /opt/cursor/cursor.AppImage でアクセス権を設定"; \
+		echo ""; \
+		echo "🔧 代替手順 (API経由):"; \
+		echo "curl -s 'https://www.cursor.com/api/download?platform=linux-x64&releaseTrack=stable' | jq -r '.downloadUrl'"; \
 	fi
 
-	# デスクトップエントリーの更新
-	@echo "📝 デスクトップエントリーを更新中..."
-	@echo "[Desktop Entry]" | sudo tee /usr/share/applications/cursor.desktop > /dev/null && \
-	echo "Name=Cursor" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
-	echo "Comment=The AI-first code editor" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
-	echo "Exec=/opt/cursor/cursor.AppImage --no-sandbox %F" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
-	echo "Icon=applications-development" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
-	echo "Terminal=false" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
-	echo "Type=Application" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
-	echo "Categories=Development;IDE;TextEditor;" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
-	echo "MimeType=text/plain;inode/directory;" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
-	echo "StartupWMClass=cursor" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
-	sudo chmod +x /usr/share/applications/cursor.desktop && \
-	sudo update-desktop-database 2>/dev/null || true
-
-	# 更新後の確認
-	@echo "🔍 更新後の状態を確認中..."
-	@if [ -f /opt/cursor/cursor.AppImage ]; then \
-		NEW_SIZE=$$(stat -c%s /opt/cursor/cursor.AppImage 2>/dev/null || echo "0"); \
-		NEW_MODIFIED=$$(stat -c%Y /opt/cursor/cursor.AppImage 2>/dev/null || echo "0"); \
-		echo "✅ 更新後の状態:"; \
-		echo "   ファイルサイズ: $$NEW_SIZE bytes"; \
-		echo "   最終更新日: $$(date -d @$$NEW_MODIFIED 2>/dev/null || echo '不明')"; \
-		echo "   インストール場所: /opt/cursor/cursor.AppImage"; \
+# Cursor IDEを停止
+stop-cursor:
+	@echo "🛑 Cursor IDEを停止しています..."
+	@CURSOR_RUNNING=false && \
+	\
+	if pgrep -f "^/opt/cursor/cursor.AppImage" >/dev/null 2>&1; then \
+		CURSOR_RUNNING=true; \
+		echo "📋 実行中のCursor関連プロセスを終了中..."; \
+		\
+		echo "🔄 Cursor IDEの優雅な終了を試行中..."; \
+		pkill -TERM -f "^/opt/cursor/cursor.AppImage" 2>/dev/null; \
+		sleep 3; \
+		\
+		if pgrep -f "^/opt/cursor/cursor.AppImage" >/dev/null 2>&1; then \
+			echo "⚠️  一部のプロセスが残っています。強制終了中..."; \
+			pkill -9 -f "^/opt/cursor/cursor.AppImage" 2>/dev/null; \
+			sleep 2; \
+		fi; \
+		\
+		if pgrep -f "^/opt/cursor/cursor.AppImage" >/dev/null 2>&1; then \
+			echo "⚠️  まだ一部のプロセスが残っています"; \
+			echo "📋 残存プロセス:"; \
+			pgrep -af "^/opt/cursor/cursor.AppImage" | head -5; \
+		else \
+			echo "✅ 全てのCursor関連プロセスを停止しました"; \
+		fi; \
+	fi && \
+	\
+	if [ "$$CURSOR_RUNNING" = "false" ]; then \
+		echo "ℹ️  Cursor IDEは実行されていません"; \
 	fi
 
-	# クリーンアップ
-	@echo "🧹 一時ファイルをクリーンアップ中..."
-	@rm -f /tmp/cursor-update.AppImage 2>/dev/null || true
-
-	@echo ""
-	@echo "🎉 Cursor IDEの更新が完了しました！"
-	@echo ""
-	@echo "🚀 使用方法:"
-	@echo "  - アプリケーションメニューから 'Cursor' を起動"
-	@echo "  - または、ターミナルから: /opt/cursor/cursor.AppImage"
-	@echo ""
-	@echo "💾 バックアップ情報:"
-	@echo "  古いバージョンは /opt/cursor/cursor-backup-*.AppImage として保存されています"
-	@echo "  問題が発生した場合は以下のコマンドで復元できます:"
-	@echo "  sudo cp /opt/cursor/cursor-backup-*.AppImage /opt/cursor/cursor.AppImage"
-	@echo ""
-	@echo "✅ Cursor IDEの更新が完了しました"
+# Cursor IDEのバージョン確認
+check-cursor-version:
+	@echo "🔍 Cursor IDEのバージョン情報を確認中..."
+	@CURRENT_VERSION="" && \
+	LATEST_VERSION="" && \
+	\
+	if [ -f /opt/cursor/cursor.AppImage ]; then \
+		echo "📋 インストール済みバージョンを確認中..."; \
+		CURRENT_VERSION="不明"; \
+		if command -v strings >/dev/null 2>&1; then \
+			VERSION_STR=$$(strings /opt/cursor/cursor.AppImage | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$$' | head -1 2>/dev/null || echo ""); \
+			if [ -n "$$VERSION_STR" ]; then \
+				CURRENT_VERSION="$$VERSION_STR"; \
+			fi; \
+		fi; \
+		if [ "$$CURRENT_VERSION" = "不明" ]; then \
+			FILE_DATE=$$(stat -c%y /opt/cursor/cursor.AppImage 2>/dev/null | cut -d' ' -f1 || echo "不明"); \
+			CURRENT_VERSION="インストール済み ($$FILE_DATE)"; \
+		fi; \
+		echo "💻 現在のバージョン: $$CURRENT_VERSION"; \
+	else \
+		echo "❌ Cursor IDEがインストールされていません"; \
+	fi && \
+	\
+	echo "🌐 最新バージョンを確認中..." && \
+	if command -v jq >/dev/null 2>&1; then \
+		API_RESPONSE=$$(curl -sL "https://www.cursor.com/api/download?platform=linux-x64&releaseTrack=stable" 2>/dev/null); \
+		if [ -n "$$API_RESPONSE" ] && echo "$$API_RESPONSE" | jq . >/dev/null 2>&1; then \
+			LATEST_VERSION=$$(echo "$$API_RESPONSE" | jq -r '.version' 2>/dev/null); \
+			echo "🆕 最新バージョン: $$LATEST_VERSION"; \
+			\
+			if [ -n "$$CURRENT_VERSION" ] && [ "$$CURRENT_VERSION" != "不明" ] && [ "$$CURRENT_VERSION" != "$$LATEST_VERSION" ]; then \
+				echo ""; \
+				echo "🔄 アップデートが利用可能です!"; \
+				echo "   'make update-cursor' でアップデートできます"; \
+			elif [ "$$CURRENT_VERSION" = "$$LATEST_VERSION" ]; then \
+				echo "✅ 最新バージョンです"; \
+			fi; \
+		else \
+			echo "❌ 最新バージョンの確認に失敗しました"; \
+		fi; \
+	else \
+		echo "⚠️  jqがインストールされていないため、最新バージョンを確認できません"; \
+		echo "   'sudo apt install jq' でjqをインストールしてください"; \
+	fi
 
 # MySQL Workbench のインストール
 install-mysql-workbench:
@@ -472,6 +572,9 @@ install-claude-code:
 # Claudia (Claude Code GUI) のインストール
 install-claudia:
 	@echo "🖥️  Claudia (Claude Code GUI) のインストールを開始..."
+	@echo "ℹ️  注意: ClaudiaはまだRelease版が公開されていないため、ソースからビルドします"
+	@echo "⏱️  ビルドには10-15分かかる場合があります（システム環境により変動）"
+	@echo ""
 
 	# Claude Code の確認
 	@echo "🔍 Claude Code の確認中..."
@@ -488,6 +591,7 @@ install-claudia:
 	@if ! command -v rustc >/dev/null 2>&1; then \
 		echo "❌ Rust がインストールされていません"; \
 		echo "📥 Homebrewでインストールしてください: brew install rust"; \
+		echo "💡 または公式のrustupでインストール: curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh"; \
 		exit 1; \
 	else \
 		RUST_VERSION=$$(rustc --version | grep -o '[0-9]\+\.[0-9]\+' | head -1); \
@@ -495,6 +599,7 @@ install-claudia:
 		if [ "$$(echo "$$RUST_VERSION" | cut -d'.' -f1)" -lt 1 ] || \
 		   [ "$$(echo "$$RUST_VERSION" | cut -d'.' -f1)" -eq 1 -a "$$(echo "$$RUST_VERSION" | cut -d'.' -f2)" -lt 70 ]; then \
 			echo "⚠️  Rust 1.70.0+ が推奨されています (現在: $$RUST_VERSION)"; \
+			echo "💡 アップデート: rustup update または brew upgrade rust"; \
 		fi; \
 	fi
 
@@ -610,17 +715,22 @@ install-claudia:
 	@echo "🚀 使用方法:"
 	@echo "1. アプリケーションメニューから 'Claudia' を起動"
 	@echo "2. または、ターミナルから: /opt/claudia/claudia"
-	@echo "3. 初回起動時にClaude Codeディレクトリが自動検出されます"
+	@echo "3. 初回起動時にClaude Codeディレクトリ（~/.claude）が自動検出されます"
 	@echo ""
-	@echo "✨ Claudia の機能:"
-	@echo "- 📁 プロジェクト & セッション管理"
-	@echo "- 🤖 カスタムAIエージェント作成"
-	@echo "- 📊 使用状況分析ダッシュボード"
-	@echo "- 🔌 MCP サーバー管理"
-	@echo "- ⏰ タイムライン & チェックポイント"
-	@echo "- 📝 CLAUDE.md 管理"
+	@echo "✨ Claudia の主要機能:"
+	@echo "- 📁 プロジェクト & セッション管理（~/.claude/projects/）"
+	@echo "- 🤖 カスタムAIエージェント作成・実行"
+	@echo "- 📊 使用状況分析ダッシュボード（コスト・トークン追跡）"
+	@echo "- 🔌 MCP サーバー管理（Model Context Protocol）"
+	@echo "- ⏰ タイムライン & チェックポイント（セッション履歴）"
+	@echo "- 📝 CLAUDE.md ファイル管理・編集"
 	@echo ""
 	@echo "📚 詳細なドキュメント: https://github.com/getAsterisk/claudia"
+	@echo "🔗 公式サイト: https://claudiacode.com"
+	@echo ""
+	@echo "💡 次のステップ:"
+	@echo "- Claude Code でプロジェクトを作成してから Claudia で管理"
+	@echo "- カスタムエージェントを作成して開発タスクを自動化"
 	@echo "✅ Claudia のインストールが完了しました"
 
 # SuperClaude (Claude Code Framework) のインストール
@@ -1094,6 +1204,167 @@ install-deb:
 	@echo "   - Cursor IDE"
 	@echo "   - WezTerm"
 
+# Playwright E2Eテストフレームワークのインストール
+install-playwright:
+	@echo "🎭 Playwright E2Eテストフレームワークのインストールを開始..."
+
+	# Node.jsの確認
+	@echo "🔍 Node.js の確認中..."
+	@if ! command -v node >/dev/null 2>&1; then \
+		echo "❌ Node.js がインストールされていません"; \
+		echo ""; \
+		echo "📥 Node.js のインストール手順:"; \
+		echo "1. Homebrewを使用: brew install node"; \
+		echo "2. NodeVersionManager(nvm)を使用: https://github.com/nvm-sh/nvm"; \
+		echo "3. 公式サイト: https://nodejs.org/"; \
+		echo ""; \
+		echo "ℹ️  Node.js 18+ が必要です"; \
+		exit 1; \
+	else \
+		NODE_VERSION=$$(node --version | cut -d'v' -f2 | cut -d'.' -f1); \
+		echo "✅ Node.js が見つかりました (バージョン: $$(node --version))"; \
+		if [ "$$NODE_VERSION" -lt 18 ]; then \
+			echo "⚠️  Node.js 18+ が推奨されています (現在: $$(node --version))"; \
+			echo "   古いバージョンでも動作する可能性がありますが、問題が発生する場合があります"; \
+		fi; \
+	fi
+
+	# npmの確認
+	@echo "🔍 npm の確認中..."
+	@if ! command -v npm >/dev/null 2>&1; then \
+		echo "❌ npm がインストールされていません"; \
+		echo "ℹ️  通常はNode.jsと一緒にインストールされます"; \
+		exit 1; \
+	else \
+		echo "✅ npm が見つかりました (バージョン: $$(npm --version))"; \
+	fi
+
+	# Playwright のインストール確認
+	@echo "🔍 既存の Playwright インストールを確認中..."
+	@if command -v npx >/dev/null 2>&1 && npx playwright --version >/dev/null 2>&1; then \
+		echo "✅ Playwright は既にインストールされています"; \
+		echo "   バージョン: $$(npx playwright --version 2>/dev/null || echo '取得できませんでした')"; \
+		echo ""; \
+		echo "🔄 Playwright をアップデート中..."; \
+		npm update -g @playwright/test 2>/dev/null || npm install -g @playwright/test@latest 2>/dev/null || true; \
+		echo "🌐 ブラウザバイナリをアップデート中..."; \
+		npx playwright install 2>/dev/null || true; \
+	else \
+		echo "📦 Playwright をインストール中..."; \
+		echo "ℹ️  グローバルインストールを実行します: npm install -g @playwright/test"; \
+		\
+		if npm install -g @playwright/test; then \
+			echo "✅ Playwright のインストールが完了しました"; \
+		else \
+			echo "❌ Playwright のインストールに失敗しました"; \
+			echo ""; \
+			echo "🔧 トラブルシューティング:"; \
+			echo "1. 権限の問題: npm config set prefix $(HOME)/.local"; \
+			echo "2. WSLの場合: npm config set os linux"; \
+			echo "3. ローカルプロジェクトでのインストール: npm install @playwright/test"; \
+			echo "4. 強制インストール: npm install -g @playwright/test --force"; \
+			echo ""; \
+			exit 1; \
+		fi; \
+		\
+		echo "🌐 ブラウザバイナリをインストール中..."; \
+		echo "ℹ️  Chromium、Firefox、WebKit のブラウザエンジンをダウンロードします"; \
+		if npx playwright install; then \
+			echo "✅ ブラウザバイナリのインストールが完了しました"; \
+		else \
+			echo "⚠️  ブラウザバイナリのインストールに失敗しました"; \
+			echo "ℹ️  手動でインストールしてください: npx playwright install"; \
+		fi; \
+	fi
+
+	# システム依存関係のインストール (Linux)
+	@echo "📦 システム依存関係をインストール中..."
+	@if command -v apt-get >/dev/null 2>&1; then \
+		echo "🔧 Linux向けの依存関係をインストール中..."; \
+		sudo apt update -q 2>/dev/null || echo "⚠️  パッケージリストの更新で問題が発生しましたが、処理を続行します"; \
+		npx playwright install-deps 2>/dev/null || \
+		sudo DEBIAN_FRONTEND=noninteractive apt install -y \
+			libnss3 \
+			libatk-bridge2.0-0 \
+			libdrm2 \
+			libgtk-3-0 \
+			libgbm1 \
+			libasound2 \
+			fonts-liberation \
+			libappindicator3-1 \
+			libxss1 \
+			xdg-utils 2>/dev/null || \
+		echo "⚠️  一部の依存関係のインストールに失敗しましたが、処理を続行します"; \
+	else \
+		echo "ℹ️  Linuxではないため、システム依存関係のインストールをスキップします"; \
+	fi
+
+	# インストール確認
+	@echo "🔍 インストールの確認中..."
+	@if command -v npx >/dev/null 2>&1 && npx playwright --version >/dev/null 2>&1; then \
+		echo "✅ Playwright が正常にインストールされました"; \
+		echo "   実行ファイル: npx playwright"; \
+		echo "   バージョン: $$(npx playwright --version 2>/dev/null || echo '取得できませんでした')"; \
+		echo ""; \
+		echo "🌐 インストール済みブラウザの確認:"; \
+		npx playwright --help | grep -A 5 "browsers" 2>/dev/null || \
+		echo "   ℹ️  npx playwright install でブラウザをインストールできます"; \
+	else \
+		echo "❌ Playwright のインストール確認に失敗しました"; \
+		echo "ℹ️  PATH の問題の可能性があります"; \
+		echo "   手動確認: npx playwright --version"; \
+		exit 1; \
+	fi
+
+	@echo ""
+	@echo "🎉 Playwright のセットアップガイド:"
+	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	@echo ""
+	@echo "🚀 基本的な使用方法:"
+	@echo "1. プロジェクトディレクトリに移動: cd your-project-directory"
+	@echo "2. Playwright 設定ファイルを生成: npx playwright init"
+	@echo "3. テストファイルを作成: npx playwright codegen"
+	@echo "4. テストを実行: npx playwright test"
+	@echo ""
+	@echo "📋 主要なコマンド:"
+	@echo "   npx playwright test              - すべてのテストを実行"
+	@echo "   npx playwright test --ui         - UIモードでテストを実行"
+	@echo "   npx playwright test --headed     - ブラウザ表示モードで実行"
+	@echo "   npx playwright test --debug      - デバッグモードで実行"
+	@echo "   npx playwright codegen <URL>     - テストコードを生成"
+	@echo "   npx playwright show-report       - テストレポートを表示"
+	@echo "   npx playwright install           - ブラウザバイナリを再インストール"
+	@echo ""
+	@echo "🌐 対応ブラウザ:"
+	@echo "   ✓ Chromium (Chrome、Microsoft Edge)"
+	@echo "   ✓ Firefox"
+	@echo "   ✓ WebKit (Safari)"
+	@echo ""
+	@echo "📱 対応プラットフォーム:"
+	@echo "   ✓ デスクトップ (Windows、macOS、Linux)"
+	@echo "   ✓ モバイル (Android、iOS シミュレータ)"
+	@echo ""
+	@echo "🎯 主要機能:"
+	@echo "   - クロスブラウザテスト自動化"
+	@echo "   - モバイルデバイステスト"
+	@echo "   - スクリーンショット・動画記録"
+	@echo "   - パフォーマンステスト"
+	@echo "   - APIテスト"
+	@echo "   - 視覚的回帰テスト"
+	@echo ""
+	@echo "📚 詳細なドキュメント:"
+	@echo "   公式サイト: https://playwright.dev/"
+	@echo "   ガイド: https://playwright.dev/docs/intro"
+	@echo "   API リファレンス: https://playwright.dev/docs/api/class-playwright"
+	@echo ""
+	@echo "💡 おすすめワークフロー:"
+	@echo "   1. 'npx playwright init' でプロジェクトをセットアップ"
+	@echo "   2. 'npx playwright codegen' でテストを録画生成"
+	@echo "   3. 'npx playwright test --ui' でテストをデバッグ・実行"
+	@echo "   4. CI/CDパイプラインに組み込んで継続的テスト"
+	@echo ""
+	@echo "✅ Playwright のインストールが完了しました"
+
 # ========================================
 # 新しい階層的な命名規則のターゲット
 # ========================================
@@ -1112,6 +1383,7 @@ install-packages-superclaude: install-superclaude
 install-packages-claude-ecosystem: install-claude-ecosystem
 install-packages-cica-fonts: install-cica-fonts
 install-packages-mysql-workbench: install-mysql-workbench
+install-packages-playwright: install-playwright
 
 # 追加のブラウザインストール系
 install-packages-chrome-beta:

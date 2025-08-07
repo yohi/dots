@@ -184,6 +184,32 @@ setup-vscode:
 
 	@echo "✅ VS Codeの設定が完了しました。"
 
+# VS Code用のSuperCopilotフレームワークをセットアップ
+setup-vscode-copilot:
+	@echo "🧠 VS Code用のSuperCopilotフレームワークをセットアップ中..."
+	@mkdir -p $(HOME_DIR)/.vscode/copilot-instructions
+
+	# シンボリックリンクを作成
+	@ln -sfn $(DOTFILES_DIR)/vscode/copilot-instructions/personas.md $(HOME_DIR)/.vscode/copilot-instructions/personas.md
+	@ln -sfn $(DOTFILES_DIR)/vscode/copilot-instructions/commands.md $(HOME_DIR)/.vscode/copilot-instructions/commands.md
+	@ln -sfn $(DOTFILES_DIR)/vscode/copilot-instructions/rules.md $(HOME_DIR)/.vscode/copilot-instructions/rules.md
+
+	@echo "✅ VS Code用のSuperCopilotフレームワークのセットアップが完了しました"
+	@echo ""
+	@echo "📝 VS Code settings.jsonに以下の設定が追加されています:"
+	@echo "\"github.copilot.chat.codeGeneration.instructions\": ["
+	@echo "  {"
+	@echo "    \"file\": \"~/.vscode/copilot-instructions/personas.md\""
+	@echo "  },"
+	@echo "  {"
+	@echo "    \"file\": \"~/.vscode/copilot-instructions/commands.md\""
+	@echo "  },"
+	@echo "  {"
+	@echo "    \"file\": \"~/.vscode/copilot-instructions/rules.md\""
+	@echo "  }"
+	@echo "]"
+	@echo ""
+
 # Cursorの設定をセットアップ
 setup-cursor:
 	@echo "🖱️  Cursorの設定をセットアップ中..."
@@ -753,6 +779,7 @@ setup-config-vim: setup-vim
 setup-config-zsh: setup-zsh
 setup-config-wezterm: setup-wezterm
 setup-config-vscode: setup-vscode
+setup-config-vscode-copilot: setup-vscode-copilot
 setup-config-cursor: setup-cursor
 setup-config-mcp-tools: setup-mcp-tools
 setup-config-git: setup-git
@@ -760,3 +787,43 @@ setup-config-docker: setup-docker
 setup-config-development: setup-development
 setup-config-shortcuts: setup-shortcuts
 setup-config-ime: setup-ime
+setup-config-claude: setup-claude
+
+# ========================================
+# Claude Code設定のセットアップ
+# ========================================
+
+# Claude設定をセットアップ
+setup-claude:
+	@echo "🤖 Claude設定をセットアップ中..."
+	@mkdir -p $(HOME_DIR)/.claude
+
+	# CLAUDE.mdのシンボリックリンク作成
+	@if [ -f "$(DOTFILES_DIR)/claude/CLAUDE.md" ]; then \
+		if [ -f "$(HOME_DIR)/.claude/CLAUDE.md" ] && [ ! -L "$(HOME_DIR)/.claude/CLAUDE.md" ]; then \
+			echo "⚠️  既存のCLAUDE.mdをバックアップ中..."; \
+			mv $(HOME_DIR)/.claude/CLAUDE.md $(HOME_DIR)/.claude/CLAUDE.md.backup.$$(date +%Y%m%d_%H%M%S); \
+		fi; \
+		echo "🔗 CLAUDE.mdのシンボリックリンクを作成中..."; \
+		ln -sfn $(DOTFILES_DIR)/claude/CLAUDE.md $(HOME_DIR)/.claude/CLAUDE.md && \
+		echo "✅ CLAUDE.mdがリンクされました"; \
+	else \
+		echo "⚠️ CLAUDE.mdが見つかりません: $(DOTFILES_DIR)/claude/CLAUDE.md"; \
+	fi
+
+	# claude-settings.jsonのシンボリックリンク作成
+	@if [ -f "$(DOTFILES_DIR)/claude/claude-settings.json" ]; then \
+		if [ -f "$(HOME_DIR)/.claude/claude-settings.json" ] && [ ! -L "$(HOME_DIR)/.claude/claude-settings.json" ]; then \
+			echo "⚠️  既存のclaude-settings.jsonをバックアップ中..."; \
+			mv $(HOME_DIR)/.claude/claude-settings.json $(HOME_DIR)/.claude/claude-settings.json.backup.$$(date +%Y%m%d_%H%M%S); \
+		fi; \
+		echo "🔗 claude-settings.jsonのシンボリックリンクを作成中..."; \
+		ln -sfn $(DOTFILES_DIR)/claude/claude-settings.json $(HOME_DIR)/.claude/claude-settings.json && \
+		echo "✅ claude-settings.jsonがリンクされました"; \
+	else \
+		echo "⚠️ claude-settings.jsonが見つかりません: $(DOTFILES_DIR)/claude/claude-settings.json"; \
+	fi
+
+	@echo "✅ Claude設定が完了しました。"
+	@echo "   設定ファイル: ~/.claude/CLAUDE.md -> $(DOTFILES_DIR)/claude/CLAUDE.md"
+	@echo "   設定ファイル: ~/.claude/claude-settings.json -> $(DOTFILES_DIR)/claude/claude-settings.json"

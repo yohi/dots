@@ -171,12 +171,92 @@ dconf load /org/gnome/mutter/ < mutter.dconf
 - **GNOME Shell再起動**: 設定反映のため、GNOME Shellの再起動またはログアウト・ログインが必要な場合があります
 - **環境依存**: X11/Waylandセッション、GNOMEバージョンにより一部動作が異なる場合があります
 
+## Wezterm デフォルト端末設定
+
+### 概要
+
+`setup-wezterm-default.sh`スクリプトは、WeztermをGNOMEのデフォルト端末として設定するためのツールです。設定後、Nautilusファイルマネージャーの右クリックメニューで「端末で開く」を選択した際にWeztermが起動します。
+
+### 使用方法
+
+#### Makefile経由での実行（推奨）
+
+```bash
+# Weztermをデフォルト端末に設定
+make setup-config-gnome-wezterm
+
+# 現在の設定状況を確認
+make check-gnome-wezterm
+
+# 設定をテスト
+make test-gnome-wezterm
+
+# Nautilusを再起動（設定反映）
+make restart-nautilus
+```
+
+#### コマンドライン直接実行
+
+```bash
+# Weztermをデフォルト端末に設定
+./setup-wezterm-default.sh
+
+# 現在の設定を確認
+./setup-wezterm-default.sh --check
+
+# 設定をテスト
+./setup-wezterm-default.sh --test
+
+# Nautilusを再起動
+./setup-wezterm-default.sh --restart-nautilus
+
+# ヘルプ表示
+./setup-wezterm-default.sh --help
+```
+
+### 機能
+
+- **事前チェック**: Weztermのインストール状況確認
+- **デスクトップエントリ**: 必要に応じてWeztermのデスクトップエントリファイルを作成
+- **デフォルト端末設定**: gsettingsを使用してシステムレベルでデフォルト端末を設定
+- **設定テスト**: 設定が正しく適用されているかの確認
+- **Nautilus再起動**: 設定反映のためのNautilusプロセス再起動
+
+### 設定される項目
+
+- `org.gnome.desktop.default-applications.terminal exec`: `wezterm`
+- `org.gnome.desktop.default-applications.terminal exec-arg`: `''` (空文字)
+- `update-alternatives x-terminal-emulator`: weztermを優先度50で設定
+
+### トラブルシューティング
+
+#### 「端末で開く」メニューが表示されない場合
+
+1. Nautilusを再起動: `make restart-nautilus`
+2. ログアウト・ログインして設定を完全に反映
+3. 古いUbuntuの場合、`nautilus-open-terminal`パッケージが必要な場合があります
+
+#### Weztermが起動しない場合
+
+1. 詳細テストを実行: `make test-gnome-wezterm`
+2. 設定状況の確認: `make check-gnome-wezterm`
+3. Weztermのインストール確認: `which wezterm`
+4. デスクトップエントリの確認: `ls /usr/share/applications/wezterm.desktop`
+5. システムレベル設定の確認: `update-alternatives --display x-terminal-emulator`
+
+#### 設定の不具合の場合
+
+1. 再設定の実行: `make setup-config-gnome-wezterm`
+2. 権限の確認: `sudo`権限でupdate-alternativesが実行可能か確認
+3. 手動でupdate-alternatives設定: `sudo update-alternatives --install /usr/bin/x-terminal-emulator x-terminal-emulator $(which wezterm) 50`
+
 ## ファイル構成
 
 ```
 gnome-settings/
 ├── README.md                           # このファイル
 ├── setup-gnome-tweaks.sh              # メイン設定スクリプト
+├── setup-wezterm-default.sh           # Weztermデフォルト端末設定スクリプト
 └── gnome-settings-export-*/           # エクスポートされた設定
     ├── desktop.dconf                   # デスクトップ設定
     ├── shell.dconf                     # シェル設定
@@ -186,8 +266,19 @@ gnome-settings/
 
 ## 更新履歴
 
+- **v1.2**: Weztermデフォルト端末設定の改良
+  - `update-alternatives`によるシステムレベル設定の追加
+  - 設定確認・テスト機能の強化（gsettings + update-alternatives対応）
+  - Ubuntu標準端末が開く問題の解決
+
+- **v1.1**: Weztermデフォルト端末設定機能追加
+  - `setup-wezterm-default.sh`スクリプト追加
+  - Makefileターゲット追加（setup-config-gnome-wezterm等）
+  - Nautilusファイルマネージャーの「端末で開く」でWeztermを使用可能
+  - 設定確認・テスト機能付き
+
 - **v1.0**: 初期バージョン
   - 基本的なGNOME Tweaks設定の自動化
   - バックアップ・復元機能
   - 拡張機能設定対応
-  - Makefile統合 
+  - Makefile統合

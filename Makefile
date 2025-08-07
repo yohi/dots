@@ -4,7 +4,9 @@
 # 分割されたMakefileをinclude
 include mk/variables.mk
 include mk/help.mk
+include mk/help-short.mk
 include mk/system.mk
+include mk/fonts.mk
 include mk/install.mk
 include mk/setup.mk
 include mk/gnome.mk
@@ -12,25 +14,43 @@ include mk/mozc.mk
 include mk/extensions.mk
 include mk/clean.mk
 include mk/main.mk
+include mk/menu.mk
+include mk/shortcuts.mk
 
-# デフォルトターゲット
-.DEFAULT_GOAL := help
+.PHONY: all
+all: menu
 
-# このMakefileの内容は分割されたファイルに移動されました
-# 以下のファイルに機能別に分割されています:
-# - mk/variables.mk: 変数定義とPHONYターゲット
-# - mk/help.mk: ヘルプメッセージ
-# - mk/system.mk: システムレベル設定
-# - mk/install.mk: アプリケーションインストール
-# - mk/setup.mk: 設定セットアップ
-# - mk/gnome.mk: GNOME関連
-# - mk/mozc.mk: Mozc関連
-# - mk/extensions.mk: 拡張機能関連
-# - mk/clean.mk: クリーンアップ
-# - mk/main.mk: 統合ターゲット
+.PHONY: setup
+setup: gnome-settings gnome-extensions system ## Set up the system
 
-# 使用方法:
-# make help - 利用可能なターゲット一覧を表示
-# make setup-all - 全体のセットアップを実行
-# make install-apps - アプリケーションのインストール
-# make debug - デバッグ情報を表示
+.PHONY: install
+install: ## Install dotfiles only (without SuperCopilot)
+	@bash install.sh
+
+.PHONY: install-all
+install-all: install vscode-supercopilot ## Install dotfiles and SuperCopilot
+
+.PHONY: vscode-supercopilot
+vscode-supercopilot: ## Install SuperCopilot Framework for VSCode
+	@echo "Installing SuperCopilot Framework for VSCode..."
+	@bash vscode/setup-supercopilot.sh
+
+.PHONY: gemini-cli
+gemini-cli: ## Install Gemini CLI
+	@echo "Installing Gemini CLI..."
+	@$(MAKE) install-gemini-cli
+
+.PHONY: supergemini
+supergemini: ## Install SuperGemini Framework for Gemini CLI
+	@echo "Installing SuperGemini Framework for Gemini CLI..."
+	@$(MAKE) install-supergemini
+
+.PHONY: gemini-ecosystem
+gemini-ecosystem: ## Install complete Gemini ecosystem (CLI + SuperGemini)
+	@echo "Installing complete Gemini ecosystem..."
+	@$(MAKE) install-gemini-ecosystem
+
+.PHONY: supercursor
+supercursor: ## Install SuperCursor Framework for Cursor
+	@echo "Installing SuperCursor Framework for Cursor..."
+	@$(MAKE) install-supercursor
