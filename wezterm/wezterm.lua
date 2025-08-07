@@ -25,9 +25,10 @@ config.line_height = 1.0
 -- カーソル設定
 config.default_cursor_style = 'SteadyBar'  -- Iビーム（縦線）カーソル
 
--- IME設定
+-- IME設定（日本語入力対応強化）
 config.use_ime = true  -- IMEを有効にする
 config.ime_preedit_rendering = 'Builtin'  -- BuiltinでWezTerm内でプリエディットを表示
+config.xim_im_name = "ibus"  -- X11環境でのIME指定
 config.treat_east_asian_ambiguous_width_as_wide = false  -- 曖昧幅文字の扱いを標準に
 config.unicode_version = 14  -- Unicode バージョンを明示的に指定
 
@@ -46,8 +47,8 @@ config.window_close_confirmation = "NeverPrompt"  -- 終了確認なし
 
 -- Linux環境での追加設定
 if wezterm.target_triple:find("linux") then
-  -- X11/Wayland環境での設定（安定性重視）
-  config.enable_wayland = false  -- Waylandを一時的に無効化（X11使用）
+  -- Wayland環境でのIME統合のため、Waylandを有効化
+  config.enable_wayland = true  -- WaylandでのIME統合を改善
   config.window_background_opacity = 1.0  -- 透明度を無効化
 
   -- タイトルバーを確実に無効化するための追加設定
@@ -392,16 +393,19 @@ wezterm.on('refresh-layout', function(window, pane)
   end
 end)
 
--- Neovimのモード変更に応じたIME制御
+-- Neovimのモード変更に応じたIME制御（改善版）
 wezterm.on('user-var-changed', function(window, pane, name, value)
   local overrides = window:get_config_overrides() or {}
   if name == "NVIM_MODE" then
     if value == "n" then
       -- ノーマルモード: IMEを無効化
       overrides.use_ime = false
-    elseif value == "i" or value == "c" then
-      -- 挿入モードまたはコマンドモード: IMEを有効化
+    elseif value == "i" or value == "c" or value == "R" then
+      -- 挿入モード、コマンドモード、置換モード: IMEを有効化
       overrides.use_ime = true
+    else
+      -- その他のモード（ビジュアルモードなど）: IMEを無効化
+      overrides.use_ime = false
     end
     window:set_config_overrides(overrides)
   end
