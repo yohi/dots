@@ -39,6 +39,7 @@ help:
 	@echo "  make setup-config-shortcuts           - キーボードショートカットの設定をセットアップ"
 	@echo "  make setup-config-ime                 - 日本語入力（IME）環境をセットアップ"
 	@echo "  make setup-config-claude              - Claude設定をセットアップ"
+	@echo "  make setup-config-lazygit             - Lazygitの設定をセットアップ"
 	@echo "  make setup-config-gnome-extensions    - Gnome Extensions の設定をセットアップ"
 	@echo "  make setup-config-gnome-tweaks        - Gnome Tweaks の設定をセットアップ"
 	@echo "  make setup-config-mozc                - Mozc入力メソッドの設定をセットアップ"

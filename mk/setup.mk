@@ -524,6 +524,7 @@ setup-config-development: setup-development
 setup-config-shortcuts: setup-shortcuts
 setup-config-ime: setup-ime
 setup-config-claude: setup-claude
+setup-config-lazygit: setup-lazygit
 
 # ========================================
 # Claude Code設定のセットアップ
@@ -611,5 +612,26 @@ setup-claude:
 	@echo "   設定ファイル: ~/.claude/CLAUDE.md -> $(DOTFILES_DIR)/claude/CLAUDE.md"
 	@echo "   設定ファイル: ~/.claude/claude-settings.json -> $(DOTFILES_DIR)/claude/claude-settings.json"
 
+
+# Lazygitの設定をセットアップ
+setup-lazygit:
+	@echo "📦 Lazygitの設定をセットアップ中..."
+	@mkdir -p $(CONFIG_DIR)/lazygit
+
+	# 既存設定のバックアップ
+	@if [ -f "$(CONFIG_DIR)/lazygit/config.yml" ] && [ ! -L "$(CONFIG_DIR)/lazygit/config.yml" ]; then \
+		echo "⚠️  既存のlazygit設定をバックアップ中..."; \
+		mv $(CONFIG_DIR)/lazygit/config.yml $(CONFIG_DIR)/lazygit/config.yml.backup.$$(date +%Y%m%d_%H%M%S); \
+	fi
+
+	# シンボリックリンクを作成
+	@ln -sfn $(DOTFILES_DIR)/lazygit/config.yml $(CONFIG_DIR)/lazygit/config.yml
+
+	@echo "✅ Lazygitの設定が完了しました。"
+	@echo "   設定ファイル: ~/.config/lazygit/config.yml -> $(DOTFILES_DIR)/lazygit/config.yml"
+
+
+
 # 設定ファイル・コンフィグセットアップ系
 setup-config-claude: setup-claude
+setup-config-lazygit: setup-lazygit
