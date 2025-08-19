@@ -357,8 +357,8 @@ zinit light romkatv/powerlevel10k
 alias kgnome='killall -3 gnome-shell'
 
 # カスタム関数の読み込み
-if [ -d "$HOME/dots/zsh/functions" ]; then
-    for func_file in "$HOME/dots/zsh/functions"/*.zsh; do
+if [ -d "$HOME/dotfiles/zsh/functions" ]; then
+    for func_file in "$HOME/dotfiles/zsh/functions"/*.zsh; do
         [ -r "$func_file" ] && source "$func_file"
     done
 fi
