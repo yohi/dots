@@ -15,8 +15,9 @@ function ec2-ssm() {
     echo "Profile: $profile を使用します"
 
     # 選択されたprofileでEC2インスタンス一覧を取得
-    local instance_info=$(aws --profile ${profile} ec2 describe-instances \
-        --filter "Name=instance-state-name,Values=running" \
+    local instance_info=$(aws ec2 describe-instances \
+        --profile "${profile}" \
+        --filters "Name=instance-state-name,Values=running" \
         --query 'Reservations[].Instances[].[InstanceId,Tags[?Key==`Name`].Value|[0],Placement.AvailabilityZone,InstanceType]' \
         --output text | \
         awk '{
@@ -36,7 +37,7 @@ function ec2-ssm() {
     echo "Instance: $instance_id に接続します"
 
     # SSM接続を実行
-    aws --profile ${profile} ssm start-session --target ${instance_id}
+    aws ssm start-session --profile "${profile}" --target ${instance_id}
 }
 
 # ECS タスク接続 (fzf版)
