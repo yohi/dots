@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=Disable Sticky Keys
+Comment=Ensure Sticky Keys remain disabled at login
+Exec=HOME_DIR/.local/bin/disable-sticky-keys.sh
+Terminal=false
+Type=Application
+X-GNOME-Autostart-enabled=true
+StartupNotify=false
+Hidden=false
