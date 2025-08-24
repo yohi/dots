@@ -12,6 +12,7 @@ include mk/setup.mk
 include mk/gnome.mk
 include mk/mozc.mk
 include mk/extensions.mk
+include mk/sticky-keys.mk
 include mk/clean.mk
 include mk/main.mk
 include mk/menu.mk
@@ -21,7 +22,7 @@ include mk/shortcuts.mk
 all: menu
 
 .PHONY: setup
-setup: gnome-settings gnome-extensions system ## Set up the system
+setup: gnome-settings gnome-extensions system setup-sticky-keys ## Set up the system
 
 .PHONY: install
 install: ## Install dotfiles only (without SuperCopilot)

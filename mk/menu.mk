@@ -42,15 +42,17 @@ sys:
 	@echo "│ 2) Gnome設定                                          │"
 	@echo "│ 3) 日本語入力設定                                      │"
 	@echo "│ 4) ショートカット設定                                  │"
+	@echo "│ 5) SHIFTキー固定モード対策                             │"
 	@echo "│ 0) メインメニューに戻る                                │"
 	@echo "└─────────────────────────────────────────────────────────┘"
 	@echo ""
-	@read -p "選択してください [0-4]: " choice; \
+	@read -p "選択してください [0-5]: " choice; \
 	case $$choice in \
 		1) $(MAKE) setup-system ;; \
 		2) $(MAKE) gnome-settings ;; \
 		3) $(MAKE) setup-config-mozc ;; \
 		4) $(MAKE) setup-config-shortcuts ;; \
+		5) $(MAKE) sticky-keys-menu ;; \
 		0) $(MAKE) menu ;; \
 		*) echo "❌ 無効な選択です"; $(MAKE) sys ;; \
 	esac

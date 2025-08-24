@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=SHIFTキー固定解除
+Comment=SHIFTキー固定モードを即座に解除
+Exec=HOME_DIR/.local/bin/fix-sticky-keys-instant.sh
+Icon=input-keyboard
+Terminal=false
+Type=Application
+StartupNotify=true
+Categories=Utility;
