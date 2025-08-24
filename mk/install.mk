@@ -78,11 +78,9 @@ install-fuse:
 		sudo rm -f /etc/apt/sources.list.d/google-chrome-beta.list 2>/dev/null || true; \
 	fi
 
-	# Ubuntu 25.04で利用できないPPAの無効化
+	# Ubuntu 25.04で利用できないPPAの無効化（CopyQは除外）
 	@echo "🔧 Ubuntu 25.04で利用できないPPAを一時的に無効化中..."
-	@if [ -f /etc/apt/sources.list.d/hluk-ubuntu-copyq-plucky.list ]; then \
-		sudo mv /etc/apt/sources.list.d/hluk-ubuntu-copyq-plucky.list /etc/apt/sources.list.d/hluk-ubuntu-copyq-plucky.list.disabled 2>/dev/null || true; \
-	fi
+	# CopyQ PPAは正常なPPAなので無効化しない
 	@if [ -f /etc/apt/sources.list.d/remmina-ppa-team-ubuntu-remmina-next-plucky.list ]; then \
 		sudo mv /etc/apt/sources.list.d/remmina-ppa-team-ubuntu-remmina-next-plucky.list /etc/apt/sources.list.d/remmina-ppa-team-ubuntu-remmina-next-plucky.list.disabled 2>/dev/null || true; \
 	fi

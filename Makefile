@@ -12,6 +12,7 @@ include mk/setup.mk
 include mk/gnome.mk
 include mk/mozc.mk
 include mk/extensions.mk
+include mk/clipboard.mk
 include mk/clean.mk
 include mk/main.mk
 include mk/menu.mk
