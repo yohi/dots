@@ -19,7 +19,6 @@ customCommands:
     context: "files"
     description: "🎯 AI統合コミット"
     loadingText: "🤖 Gemini AI でコミットメッセージ生成中..."
-    output: "terminal"
     prompts:
       - type: "menu"
         title: "🎯 実行したい操作を選択してください"
@@ -40,7 +39,7 @@ customCommands:
         body: |
           🎯 選択した操作: {{.Form.Action}}
           
-          {{runCommand "sh -c '$(which ai-commit-generator) --generate-only'"}}
+          {{runCommand "/home/y_ohi/dots/lazygit/ai-commit-generator/scripts/instant_feedback.sh"}}
           
                     この内容で実行しますか？
           [Enter] 実行 / [Esc] キャンセル
@@ -53,20 +52,14 @@ customCommands:
            echo "🤖 AIコメント生成完了"
            ;;
          "ai_commit")
-           echo "📝 AIコメットでコミット実行中..."
-           if $(which ai-commit-generator) --use-cached; then
-               echo "✅ コミット完了"
-           else
-               echo "❌ コミット失敗 (exit code: $?)"
-           fi
+           echo "📝 AIコメントでコミット実行中..."
+           /home/y_ohi/dots/lazygit/ai-commit-generator/scripts/ai_commit_integrated.sh commit --quiet
+           echo "✅ コミット完了"
            ;;
          "ai_commit_push")
            echo "🚀 AIコメントでコミット・プッシュ実行中..."
-           if $(which ai-commit-generator) --use-cached && git push; then
-               echo "✅ コミット・プッシュ完了"
-           else
-               echo "❌ コミット・プッシュ失敗"
-           fi
+           /home/y_ohi/dots/lazygit/ai-commit-generator/scripts/ai_commit_integrated.sh commit_push --quiet
+           echo "✅ コミット・プッシュ完了"
            ;;
        esac
 
