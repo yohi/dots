@@ -22,7 +22,14 @@ include mk/shortcuts.mk
 all: menu
 
 .PHONY: setup
-setup: gnome-settings gnome-extensions system setup-sticky-keys ## Set up the system
+setup: gnome-settings gnome-extensions system
+@# Run sticky-keys setup only when GNOME schema is available
+@if command -v gsettings >/dev/null 2>&1 && \
+    gsettings list-schemas | grep -qx 'org.gnome.desktop.a11y.keyboard'; then \
+  $(MAKE) setup-sticky-keys; \
+else \
+  echo "ℹ️  GNOME 環境が見つからないため sticky-keys セットアップをスキップしました"; \
+fi
 
 .PHONY: install
 install: ## Install dotfiles only (without SuperCopilot)

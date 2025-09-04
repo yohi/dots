@@ -1,7 +1,7 @@
 #!/bin/bash
 # SHIFTキー固定モード対策のインストールスクリプト
 
-set -e
+set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 HOME_DIR="${HOME}"
@@ -29,6 +29,9 @@ mkdir -p "${HOME_DIR}/Desktop"
 sed "s|HOME_DIR|${HOME_DIR}|g" "${SCRIPT_DIR}/Fix-Sticky-Keys.desktop" > "${HOME_DIR}/Desktop/Fix-Sticky-Keys.desktop"
 chmod +x "${HOME_DIR}/Desktop/Fix-Sticky-Keys.desktop"
 
+# デスクトップファイルの信頼済みフラグを設定
+gio set -t bool "${HOME_DIR}/Desktop/Fix-Sticky-Keys.desktop" metadata::trusted true 2>/dev/null || true
+
 # ホットキー設定
 echo "⌨️ ホットキー設定を構成中..."
 # 既存のカスタムキーバインドを取得
@@ -49,7 +52,7 @@ fi
 # キーバインドの詳細設定
 gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:${new_path} name 'Fix Sticky Keys'
 gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:${new_path} command "${HOME_DIR}/.local/bin/fix-sticky-keys-instant.sh"
-gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:${new_path} binding '<Ctrl><Alt>s'
+gsettings set org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:${new_path} binding '<Primary><Alt>s'
 
 # 基本設定の適用
 echo "⚙️ 基本設定を適用中..."

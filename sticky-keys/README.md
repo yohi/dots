@@ -4,7 +4,7 @@ UbuntuのGNOME環境で時々発生するSHIFTキー固定モード（Sticky Key
 
 ## 📁 ファイル構成
 
-```
+```text
 sticky-keys/
 ├── install.sh                      # インストールスクリプト
 ├── fix-sticky-keys-instant.sh      # 即座解除スクリプト

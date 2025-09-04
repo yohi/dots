@@ -1,5 +1,6 @@
 #!/bin/bash
 # SHIFTキー固定モードを即座に解除（ログアウト不要）
+set -euo pipefail
 
 echo "=== SHIFTキー固定モード解除中 ==="
 
@@ -9,11 +10,7 @@ gsettings set org.gnome.desktop.a11y.keyboard stickykeys-enable false
 # 2. dconf経由で直接設定
 dconf write /org/gnome/desktop/a11y/keyboard/stickykeys-enable false
 
-# 3. GNOME Shell経由でリアルタイム変更
-gdbus call --session --dest org.gnome.Shell --object-path /org/gnome/Shell \
-    --method org.gnome.Shell.Eval \
-    'global.settings.set_boolean("org.gnome.desktop.a11y.keyboard", "stickykeys-enable", false)' >/dev/null 2>&1
-
+# 3. （任意）GNOME Shellへの明示通知は不要。gsettings/dconfで反映されます。
 # 4. キーボード入力をリセット（XWaylandとWayland両方）
 setxkbmap -option '' 2>/dev/null || true
 setxkbmap us 2>/dev/null || true

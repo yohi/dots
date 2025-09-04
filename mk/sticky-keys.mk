@@ -9,8 +9,8 @@ setup-sticky-keys: ## SHIFTキー固定モード対策をセットアップ
 .PHONY: fix-sticky-keys
 fix-sticky-keys: ## SHIFTキー固定モードを即座に解除
 	@echo "🛠️ SHIFTキー固定モードを解除中..."
-	@if [ -f "$(HOME)/.local/bin/fix-sticky-keys-instant.sh" ]; then \
-		$(HOME)/.local/bin/fix-sticky-keys-instant.sh; \
+	@if [ -f ""$(HOME)/.local/bin/fix-sticky-keys-instant.sh"" ]; then \
+		"$(HOME)/.local/bin/fix-sticky-keys-instant.sh"; \
 	else \
 		echo "❌ fix-sticky-keys-instant.sh が見つかりません。先に 'make setup-sticky-keys' を実行してください。"; \
 		exit 1; \
@@ -19,8 +19,8 @@ fix-sticky-keys: ## SHIFTキー固定モードを即座に解除
 .PHONY: disable-sticky-keys
 disable-sticky-keys: ## SHIFTキー固定モードを無効化
 	@echo "⚙️ SHIFTキー固定モードを無効化中..."
-	@if [ -f "$(HOME)/.local/bin/disable-sticky-keys.sh" ]; then \
-		$(HOME)/.local/bin/disable-sticky-keys.sh; \
+	@if [ -f ""$(HOME)/.local/bin/disable-sticky-keys.sh"" ]; then \
+		"$(HOME)/.local/bin/disable-sticky-keys.sh"; \
 	else \
 		echo "❌ disable-sticky-keys.sh が見つかりません。先に 'make setup-sticky-keys' を実行してください。"; \
 		exit 1; \
@@ -35,17 +35,17 @@ sticky-keys-status: ## SHIFTキー固定モードの現在の状態を確認
 	@echo "always-show-universal-access-status: $$(gsettings get org.gnome.desktop.a11y always-show-universal-access-status)"
 	@echo ""
 	@echo "📁 インストール状況:"
-	@if [ -f "$(HOME)/.local/bin/fix-sticky-keys-instant.sh" ]; then \
+	@if [ -f ""$(HOME)/.local/bin/fix-sticky-keys-instant.sh"" ]; then \
 		echo "✅ 即座解除スクリプト: インストール済み"; \
 	else \
 		echo "❌ 即座解除スクリプト: 未インストール"; \
 	fi
-	@if [ -f "$(HOME)/.config/autostart/disable-sticky-keys.desktop" ]; then \
+	@if [ -f ""$(HOME)/.config/autostart/disable-sticky-keys.desktop"" ]; then \
 		echo "✅ 自動起動設定: インストール済み"; \
 	else \
 		echo "❌ 自動起動設定: 未インストール"; \
 	fi
-	@if [ -f "$(HOME)/Desktop/Fix-Sticky-Keys.desktop" ]; then \
+	@if [ -f ""$(HOME)/Desktop/Fix-Sticky-Keys.desktop"" ]; then \
 		echo "✅ デスクトップショートカット: インストール済み"; \
 	else \
 		echo "❌ デスクトップショートカット: 未インストール"; \
@@ -54,10 +54,10 @@ sticky-keys-status: ## SHIFTキー固定モードの現在の状態を確認
 .PHONY: uninstall-sticky-keys
 uninstall-sticky-keys: ## SHIFTキー固定モード対策をアンインストール
 	@echo "🗑️ SHIFTキー固定モード対策をアンインストール中..."
-	@rm -f $(HOME)/.local/bin/fix-sticky-keys-instant.sh
-	@rm -f $(HOME)/.local/bin/disable-sticky-keys.sh
-	@rm -f $(HOME)/.config/autostart/disable-sticky-keys.desktop
-	@rm -f $(HOME)/Desktop/Fix-Sticky-Keys.desktop
+	@rm -f "$(HOME)/.local/bin/fix-sticky-keys-instant.sh"
+	@rm -f "$(HOME)/.local/bin/disable-sticky-keys.sh"
+	@rm -f "$(HOME)/.config/autostart/disable-sticky-keys.desktop"
+	@rm -f "$(HOME)/Desktop/Fix-Sticky-Keys.desktop"
 	@echo "🔧 カスタムキーバインドを削除中..."
 	@gsettings reset org.gnome.settings-daemon.plugins.media-keys custom-keybindings 2>/dev/null || true
 	@echo "✅ SHIFTキー固定モード対策のアンインストールが完了しました"
