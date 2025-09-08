@@ -153,8 +153,21 @@ function ecs-exec() {
     fi
 }
 
-# AWS CloudWatch ログ閲覧 (fzf版)
+# AWS CloudWatch ログ閲覧 (fzf版) - 階層構造ナビゲーション対応
 function awslogs() {
+    local level="${1:-group}"  # デフォルトはlog group選択まで
+    local help_msg="使用方法: awslogs [level]
+    level:
+      group  - ロググループ単位で選択 (デフォルト)
+      stream - ログストリーム単位で選択（階層構造対応）
+      help   - このヘルプを表示"
+
+    # ヘルプ表示
+    if [[ "$level" == "help" || "$level" == "--help" || "$level" == "-h" ]]; then
+        echo "$help_msg"
+        return 0
+    fi
+
     # .aws/credentialsからprofile一覧を取得
     local profile=$(awk '/^\[/{gsub(/\[|\]/, ""); print}' ~/.aws/credentials | fzf --prompt="AWS Profile> " --height=40% --reverse)
 
@@ -183,41 +196,297 @@ function awslogs() {
 
     # ロググループ名だけを抽出（フォーマット情報を除去）
     local clean_log_group_name=$(echo $log_group_name | awk '{print $1}')
-    echo "Log Group: $clean_log_group_name のログを表示します"
+    echo "Log Group: $clean_log_group_name を選択しました"
 
-    # オプション選択（tail or 範囲指定）
+    local log_stream_name=""
+    local filter_pattern=""
+
+    # ログストリーム単位での選択が指定された場合（階層構造対応）
+    if [[ "$level" == "stream" ]]; then
+        echo "ログストリームを取得中..."
+        
+        # 全ログストリーム一覧を取得
+        local all_streams=$(aws --profile ${profile} logs describe-log-streams \
+            --log-group-name "${clean_log_group_name}" \
+            --order-by LastEventTime \
+            --descending \
+            --max-items 200 \
+            --query 'logStreams[].[logStreamName,lastEventTime,storedBytes]' \
+            --output text)
+
+        if [[ -z "$all_streams" ]]; then
+            echo "ログストリームが見つかりませんでした。"
+            return 1
+        fi
+
+        # 階層構造ナビゲーション関数
+        function navigate_stream_hierarchy() {
+            local current_path="${1:-}"
+            local depth="${2:-0}"
+            
+            # 現在のパスにマッチするストリームを抽出し、次のレベルの選択肢を作成
+            local stream_map_file=$(mktemp)
+            
+            # 現在のパス配下のストリーム一覧を構築
+            while IFS=$'\t' read -r stream_name last_event stored_bytes; do
+                if [[ -z "$current_path" || "$stream_name" == "$current_path"* ]]; then
+                    # 現在のパス以降の部分を取得
+                    local remaining_path="${stream_name#$current_path}"
+                    [[ "$remaining_path" == "$stream_name" && -n "$current_path" ]] && continue
+                    
+                    # 次のスラッシュまでの部分を取得
+                    if [[ "$remaining_path" == */* ]]; then
+                        local next_segment="${remaining_path%%/*}"
+                        if [[ -n "$next_segment" ]]; then
+                            local display_name="$current_path$next_segment/"
+                            echo "$display_name" >> "$stream_map_file.dirs"
+                        fi
+                    else
+                        # 完全なストリーム名（終端）
+                        if [[ -n "$remaining_path" ]]; then
+                            local time_str="未記録"
+                            if [[ -n "$last_event" && "$last_event" != "None" ]]; then
+                                time_str=$(date -d "@$((last_event/1000))" "+%Y-%m-%d %H:%M:%S" 2>/dev/null || echo "未記録")
+                            fi
+                            local size_kb="0KB"
+                            if [[ -n "$stored_bytes" && "$stored_bytes" -gt 0 ]]; then
+                                size_kb=$(printf "%.1fKB" $((stored_bytes/1024)))
+                            fi
+                            printf "%-80s [最終:%s, サイズ:%s]\n" "$stream_name" "$time_str" "$size_kb" >> "$stream_map_file.streams"
+                        fi
+                    fi
+                fi
+            done <<< "$all_streams"
+            
+            # ディレクトリレベルのオプションを作成（重複除去・ソート）
+            local dir_options=""
+            if [[ -f "$stream_map_file.dirs" ]]; then
+                dir_options=$(sort -u "$stream_map_file.dirs")
+            fi
+            
+            # ストリームオプションを作成
+            local stream_options=""
+            if [[ -f "$stream_map_file.streams" ]]; then
+                stream_options=$(cat "$stream_map_file.streams")
+            fi
+            
+            # 戻るオプションを追加（ルート以外）
+            local back_option=""
+            if [[ -n "$current_path" ]]; then
+                back_option="🔙 戻る (上位階層へ)"
+            fi
+            
+            # 現在の階層以下のすべてを選択するオプション
+            local select_all_option=""
+            if [[ -n "$stream_options" || -n "$dir_options" ]]; then
+                local path_display="${current_path:-すべて}"
+                select_all_option="📁 この階層以下のすべてのストリームを表示 ($path_display*)"
+            fi
+            
+            # 選択肢を統合
+            local all_options=""
+            [[ -n "$back_option" ]] && all_options="$back_option"
+            [[ -n "$select_all_option" ]] && {
+                [[ -n "$all_options" ]] && all_options="$all_options"$'\n'
+                all_options="$all_options$select_all_option"
+            }
+            if [[ -n "$dir_options" ]]; then
+                [[ -n "$all_options" ]] && all_options="$all_options"$'\n'
+                all_options="$all_options$dir_options"
+            fi
+            if [[ -n "$stream_options" ]]; then
+                [[ -n "$all_options" ]] && all_options="$all_options"$'\n'
+                all_options="$all_options$stream_options"
+            fi
+            
+            # 一時ファイルをクリーンアップ
+            rm -f "$stream_map_file" "$stream_map_file.dirs" "$stream_map_file.streams"
+            
+            if [[ -z "$all_options" ]]; then
+                echo "このパスにはログストリームがありません。"
+                return 1
+            fi
+            
+            # fzfで選択
+            local path_display="${current_path:-/}"
+            local selection=$(echo "$all_options" | fzf \
+                --prompt="Path: $path_display > " \
+                --height=60% --reverse \
+                --header="階層を選択してください (ディレクトリ: /, 📁: 階層一括, ストリーム: 時間情報付き)")
+            
+            if [[ -z "$selection" ]]; then
+                echo "選択がキャンセルされました。"
+                return 1
+            fi
+            
+            # 選択結果の処理
+            if [[ "$selection" == "🔙 戻る (上位階層へ)" ]]; then
+                # 上位階層に戻る
+                local parent_path="${current_path%/}"
+                parent_path="${parent_path%/*}"
+                [[ -n "$parent_path" ]] && parent_path="$parent_path/"
+                navigate_stream_hierarchy "$parent_path" $((depth-1))
+            elif [[ "$selection" == "📁 この階層以下のすべてのストリームを表示"* ]]; then
+                # 現在の階層以下のすべてのストリームを選択
+                echo "階層 '$current_path' 以下のすべてのストリームを選択しました"
+                log_stream_name="$current_path*"
+                return 0
+            elif [[ "$selection" == */ ]]; then
+                # ディレクトリが選択された場合、さらに深く
+                navigate_stream_hierarchy "$selection" $((depth+1))
+            else
+                # ストリームが選択された場合
+                log_stream_name=$(echo "$selection" | awk '{print $1}')
+                echo "Log Stream: $log_stream_name を選択しました"
+                return 0
+            fi
+        }
+        
+        # 階層ナビゲーションを開始
+        navigate_stream_hierarchy "" 0
+        
+        if [[ -z "$log_stream_name" ]]; then
+            echo "ログストリームが選択されませんでした。"
+            return 1
+        fi
+        
+        # フィルターパターンの選択
+        echo "フィルターパターンを選択してください："
+        local filter_option=$(echo -e "フィルターなし\nERRORレベルのみ\nWARNレベル以上\nカスタムフィルター\nJSON形式ログの特定フィールド" | \
+            fzf --prompt="Filter> " --height=40% --reverse)
+        
+        case "$filter_option" in
+            "ERRORレベルのみ")
+                filter_pattern="ERROR"
+                ;;
+            "WARNレベル以上")
+                filter_pattern="?WARN ?ERROR"
+                ;;
+            "カスタムフィルター")
+                echo "フィルターパターンを入力してください（例: [timestamp, request_id, ERROR]）:"
+                read custom_filter
+                if [[ -n "$custom_filter" ]]; then
+                    filter_pattern="$custom_filter"
+                fi
+                ;;
+            "JSON形式ログの特定フィールド")
+                echo "JSONフィールドを指定してください（例: $.level = \"ERROR\"）:"
+                read json_filter
+                if [[ -n "$json_filter" ]]; then
+                    filter_pattern="$json_filter"
+                fi
+                ;;
+        esac
+    fi
+
+    # 表示方法の選択
+    echo "表示方法を選択してください："
     local action=$(echo -e "リアルタイム表示 (--follow)\n過去1時間のログ\n過去24時間のログ\n指定時間範囲のログ" | \
         fzf --prompt="表示方法> " --height=40% --reverse)
 
-    case "$action" in
-        "リアルタイム表示 (--follow)")
-            echo "リアルタイムでログを表示します (Ctrl+Cで終了)"
-            aws --profile ${profile} logs tail ${clean_log_group_name} --follow
-            ;;
-        "過去1時間のログ")
-            echo "過去1時間のログを表示します"
-            aws --profile ${profile} logs tail ${clean_log_group_name} --since 1h
-            ;;
-        "過去24時間のログ")
-            echo "過去24時間のログを表示します"
-            aws --profile ${profile} logs tail ${clean_log_group_name} --since 24h
-            ;;
-        "指定時間範囲のログ")
-            echo "開始時間を入力してください (例: 2024-01-01T10:00:00):"
-            read start_time
-            echo "終了時間を入力してください (例: 2024-01-01T12:00:00):"
-            read end_time
-            if [[ -n "$start_time" && -n "$end_time" ]]; then
-                echo "指定された時間範囲のログを表示します"
-                aws --profile ${profile} logs tail ${clean_log_group_name} --since "${start_time}" --until "${end_time}"
-            else
-                echo "時間範囲が正しく指定されませんでした。"
+    # AWS CLIコマンドの実行
+    if [[ "$level" == "stream" && -n "$log_stream_name" ]]; then
+        # ログストリーム指定の場合はfilter-log-eventsを使用
+        local aws_cmd=""
+        
+        if [[ "$log_stream_name" == *"*" ]]; then
+            # 階層選択（ワイルドカード）の場合、プレフィックスフィルターを使用
+            local prefix="${log_stream_name%*}"
+            
+            echo "階層プレフィックス: $prefix でフィルタリングします"
+            
+            # log-stream-name-prefixを使用してプレフィックスマッチング
+            aws_cmd="aws --profile ${profile} logs filter-log-events --log-group-name \"${clean_log_group_name}\" --log-stream-name-prefix \"${prefix}\""
+        else
+            # 単一ストリームの場合
+            aws_cmd="aws --profile ${profile} logs filter-log-events --log-group-name \"${clean_log_group_name}\" --log-stream-names \"${log_stream_name}\""
+        fi
+        
+        if [[ -n "$filter_pattern" ]]; then
+            aws_cmd="${aws_cmd} --filter-pattern \"${filter_pattern}\""
+        fi
+        
+        case "$action" in
+            "リアルタイム表示 (--follow)")
+                if [[ "$log_stream_name" == *"*" ]]; then
+                    echo "複数ストリーム指定時はaws logs tailでリアルタイム表示を試行します..."
+                    # プレフィックスマッチングでaws logs tailを使用
+                    local prefix="${log_stream_name%*}"
+                    aws --profile ${profile} logs tail ${clean_log_group_name} --follow --log-stream-name-prefix "${prefix}"
+                    return 0
+                else
+                    echo "単一ストリーム指定時はリアルタイム表示ができません。最新のログを表示します。"
+                    aws_cmd="${aws_cmd} --start-time $(date -d '1 hour ago' +%s)000"
+                fi
+                ;;
+            "過去1時間のログ")
+                aws_cmd="${aws_cmd} --start-time $(date -d '1 hour ago' +%s)000"
+                ;;
+            "過去24時間のログ")
+                aws_cmd="${aws_cmd} --start-time $(date -d '1 day ago' +%s)000"
+                ;;
+            "指定時間範囲のログ")
+                echo "開始時間を入力してください (例: 2024-01-01T10:00:00):"
+                read start_time
+                echo "終了時間を入力してください (例: 2024-01-01T12:00:00):"
+                read end_time
+                if [[ -n "$start_time" && -n "$end_time" ]]; then
+                    start_ms=$(date -d "${start_time}" +%s)000
+                    end_ms=$(date -d "${end_time}" +%s)000
+                    aws_cmd="${aws_cmd} --start-time ${start_ms} --end-time ${end_ms}"
+                else
+                    echo "時間範囲が正しく指定されませんでした。"
+                    return 1
+                fi
+                ;;
+        esac
+        
+        # フィルター結果を整形して表示
+        echo "実行中: $aws_cmd"
+        eval "$aws_cmd" | jq -r '.events[] | "\(.timestamp | strftime("%Y-%m-%d %H:%M:%S")) [\(.logStreamName)] \(.message)"' 2>/dev/null || \
+        eval "$aws_cmd" --query 'events[].[timestamp,logStreamName,message]' --output text | \
+        awk '{
+            if($1 > 0) {
+                timestamp = strftime("%Y-%m-%d %H:%M:%S", $1/1000);
+                stream = $2;
+                $1 = $2 = "";
+                message = substr($0, 3);
+                printf "%s [%s] %s\n", timestamp, stream, message;
+            }
+        }'
+        
+    else
+        # 従来のtailコマンドを使用（ロググループレベル）
+        case "$action" in
+            "リアルタイム表示 (--follow)")
+                echo "リアルタイムでログを表示します (Ctrl+Cで終了)"
+                aws --profile ${profile} logs tail ${clean_log_group_name} --follow
+                ;;
+            "過去1時間のログ")
+                echo "過去1時間のログを表示します"
+                aws --profile ${profile} logs tail ${clean_log_group_name} --since 1h
+                ;;
+            "過去24時間のログ")
+                echo "過去24時間のログを表示します"
+                aws --profile ${profile} logs tail ${clean_log_group_name} --since 24h
+                ;;
+            "指定時間範囲のログ")
+                echo "開始時間を入力してください (例: 2024-01-01T10:00:00):"
+                read start_time
+                echo "終了時間を入力してください (例: 2024-01-01T12:00:00):"
+                read end_time
+                if [[ -n "$start_time" && -n "$end_time" ]]; then
+                    echo "指定された時間範囲のログを表示します"
+                    aws --profile ${profile} logs tail ${clean_log_group_name} --since "${start_time}" --until "${end_time}"
+                else
+                    echo "時間範囲が正しく指定されませんでした。"
+                    return 1
+                fi
+                ;;
+            *)
+                echo "操作がキャンセルされました。"
                 return 1
-            fi
-            ;;
-        *)
-            echo "操作がキャンセルされました。"
-            return 1
-            ;;
-    esac
+                ;;
+        esac
+    fi
 }
