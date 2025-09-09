@@ -490,3 +490,168 @@ function awslogs() {
         esac
     fi
 }
+
+# RDS IAM認証接続 (fzf版)
+function rds-iam() {
+    local help_msg="使用方法: rds-iam [database_type]
+    database_type:
+      mysql     - MySQL/MariaDB接続 (デフォルト)
+      postgres  - PostgreSQL接続
+      aurora    - Aurora MySQL/PostgreSQL接続
+      help      - このヘルプを表示
+
+    必要な前提条件:
+    • AWS CLI設定済み
+    • RDS IAM認証が有効化されている
+    • 適切なIAM権限 (rds-db:connect)
+    • データベースクライアント (mysql, psql等) がインストール済み"
+
+    # ヘルプ表示
+    if [[ "$1" == "help" || "$1" == "--help" || "$1" == "-h" ]]; then
+        echo "$help_msg"
+        return 0
+    fi
+
+    local db_type="${1:-mysql}"  # デフォルトはMySQL
+
+    # .aws/credentialsからprofile一覧を取得
+    local profile=$(awk '/^\[/{gsub(/\[|\]/, ""); print}' ~/.aws/credentials | fzf --prompt="AWS Profile> " --height=40% --reverse)
+
+    if [[ -z "$profile" ]]; then
+        echo "profileが選択されませんでした。"
+        return 1
+    fi
+
+    echo "Profile: $profile を使用します"
+
+    # 選択されたprofileでRDSインスタンス一覧を取得
+    echo "RDSインスタンスを取得中..."
+    local rds_info=$(aws rds describe-db-instances \
+        --profile "${profile}" \
+        --query 'DBInstances[].[DBInstanceIdentifier,Engine,DBInstanceStatus,Endpoint.Address,Endpoint.Port,MasterUsername]' \
+        --output text | \
+        awk '{
+            status_icon = ($3 == "available") ? "🟢" : "🔴";
+            printf "%-30s %-15s %s %-15s %-5s %s\n", $1, $2, status_icon, $4, $5, $6
+        }' | \
+        fzf --prompt="RDS Instance> " --height=40% --reverse --header="Instance ID                    Engine          Status   Endpoint           Port   Username")
+
+    if [[ -z "$rds_info" ]]; then
+        echo "RDSインスタンスが選択されませんでした。"
+        return 1
+    fi
+
+    local instance_id=$(echo $rds_info | awk '{print $1}')
+    local engine=$(echo $rds_info | awk '{print $2}')
+    local endpoint=$(echo $rds_info | awk '{print $4}')
+    local port=$(echo $rds_info | awk '{print $5}')
+    local username=$(echo $rds_info | awk '{print $6}')
+
+    echo "Instance: $instance_id (${engine}) を選択しました"
+    echo "Endpoint: $endpoint:$port"
+    echo "Username: $username"
+
+    # データベース名の入力
+    echo "データベース名を入力してください (空の場合はデフォルトDBに接続):"
+    read database_name
+
+    # IAM認証トークンの生成
+    echo "IAM認証トークンを生成中..."
+    local token=$(aws rds generate-db-auth-token \
+        --profile "${profile}" \
+        --hostname "${endpoint}" \
+        --port "${port}" \
+        --username "${username}" \
+        --region $(aws configure get region --profile "${profile}") 2>/dev/null)
+
+    if [[ -z "$token" ]]; then
+        echo "❌ IAM認証トークンの生成に失敗しました。"
+        echo ""
+        echo "考えられる原因："
+        echo "• IAM認証が有効化されていない"
+        echo "• 適切なIAM権限がない (rds-db:connect)"
+        echo "• AWS CLI設定に問題がある"
+        echo "• ネットワーク接続の問題"
+        return 1
+    fi
+
+    echo "✅ IAM認証トークンを生成しました"
+
+    # データベースタイプに応じた接続コマンドの実行
+    case "$engine" in
+        "mysql"|"mariadb")
+            echo "MySQL/MariaDBに接続します..."
+            if command -v mysql >/dev/null 2>&1; then
+                local mysql_cmd="mysql -h ${endpoint} -P ${port} -u ${username} -p${token}"
+                if [[ -n "$database_name" ]]; then
+                    mysql_cmd="${mysql_cmd} ${database_name}"
+                fi
+                echo "実行中: $mysql_cmd"
+                eval "$mysql_cmd"
+            else
+                echo "❌ mysql クライアントが見つかりません。"
+                echo "インストール方法:"
+                echo "  Ubuntu/Debian: sudo apt-get install mysql-client"
+                echo "  macOS: brew install mysql-client"
+                return 1
+            fi
+            ;;
+        "postgres")
+            echo "PostgreSQLに接続します..."
+            if command -v psql >/dev/null 2>&1; then
+                local psql_cmd="psql -h ${endpoint} -p ${port} -U ${username} -d ${database_name:-postgres}"
+                echo "実行中: $psql_cmd"
+                echo "パスワードプロンプトが表示されたら、以下のトークンを入力してください:"
+                echo "${token}"
+                echo ""
+                eval "$psql_cmd"
+            else
+                echo "❌ psql クライアントが見つかりません。"
+                echo "インストール方法:"
+                echo "  Ubuntu/Debian: sudo apt-get install postgresql-client"
+                echo "  macOS: brew install postgresql"
+                return 1
+            fi
+            ;;
+        "aurora-mysql")
+            echo "Aurora MySQLに接続します..."
+            if command -v mysql >/dev/null 2>&1; then
+                local mysql_cmd="mysql -h ${endpoint} -P ${port} -u ${username} -p${token}"
+                if [[ -n "$database_name" ]]; then
+                    mysql_cmd="${mysql_cmd} ${database_name}"
+                fi
+                echo "実行中: $mysql_cmd"
+                eval "$mysql_cmd"
+            else
+                echo "❌ mysql クライアントが見つかりません。"
+                echo "インストール方法:"
+                echo "  Ubuntu/Debian: sudo apt-get install mysql-client"
+                echo "  macOS: brew install mysql-client"
+                return 1
+            fi
+            ;;
+        "aurora-postgresql")
+            echo "Aurora PostgreSQLに接続します..."
+            if command -v psql >/dev/null 2>&1; then
+                local psql_cmd="psql -h ${endpoint} -p ${port} -U ${username} -d ${database_name:-postgres}"
+                echo "実行中: $psql_cmd"
+                echo "パスワードプロンプトが表示されたら、以下のトークンを入力してください:"
+                echo "${token}"
+                echo ""
+                eval "$psql_cmd"
+            else
+                echo "❌ psql クライアントが見つかりません。"
+                echo "インストール方法:"
+                echo "  Ubuntu/Debian: sudo apt-get install postgresql-client"
+                echo "  macOS: brew install postgresql"
+                return 1
+            fi
+            ;;
+        *)
+            echo "❌ サポートされていないデータベースエンジンです: $engine"
+            echo "サポートされているエンジン: mysql, mariadb, postgres, aurora-mysql, aurora-postgresql"
+            return 1
+            ;;
+    esac
+}
+
