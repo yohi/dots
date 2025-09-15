@@ -1,0 +1,656 @@
+# ===================================================================
+# AWS関連カスタム関数
+# ===================================================================
+
+# EC2 SSM接続 (fzf版)
+function ec2-ssm() {
+    # .aws/credentialsからprofile一覧を取得
+    local profile=$(awk '/^\[/{gsub(/\[|\]/, ""); print}' ~/.aws/credentials | fzf --prompt="AWS Profile> " --height=40% --reverse)
+
+    if [[ -z "$profile" ]]; then
+        echo "profileが選択されませんでした。"
+        return 1
+    fi
+
+    echo "Profile: $profile を使用します"
+
+    # 選択されたprofileでEC2インスタンス一覧を取得
+    local instance_info=$(aws ec2 describe-instances \
+        --profile "${profile}" \
+        --filters "Name=instance-state-name,Values=running" \
+        --query 'Reservations[].Instances[].[InstanceId,Tags[?Key==`Name`].Value|[0],Placement.AvailabilityZone,InstanceType]' \
+        --output text | \
+        awk '{
+            name = ($2 == "None" || $2 == "") ? "(No Name)" : $2;
+            az = $3;
+            instance_type = $4;
+            printf "%-19s %-30s %-12s %s\n", $1, name, az, instance_type
+        }' | \
+        fzf --prompt="EC2 Instance> " --height=40% --reverse --header="Instance ID         Name                           AZ           Type")
+
+    if [[ -z "$instance_info" ]]; then
+        echo "インスタンスが選択されませんでした。"
+        return 1
+    fi
+
+    local instance_id=$(echo $instance_info | awk '{print $1}')
+    echo "Instance: $instance_id に接続します"
+
+    # SSM接続を実行
+    aws ssm start-session --profile "${profile}" --target ${instance_id}
+}
+
+# ECS タスク接続 (fzf版)
+function ecs-exec() {
+    # .aws/credentialsからprofile一覧を取得
+    local profile=$(awk '/^\[/{gsub(/\[|\]/, ""); print}' ~/.aws/credentials | fzf --prompt="AWS Profile> " --height=40% --reverse)
+
+    if [[ -z "$profile" ]]; then
+        echo "profileが選択されませんでした。"
+        return 1
+    fi
+
+    echo "Profile: $profile を使用します"
+
+    # ECSクラスター一覧を取得
+    local cluster_arn=$(aws --profile ${profile} ecs list-clusters \
+        --query 'clusterArns[]' \
+        --output text | \
+        sed 's|.*/||' | \
+        fzf --prompt="ECS Cluster> " --height=40% --reverse)
+
+    if [[ -z "$cluster_arn" ]]; then
+        echo "クラスターが選択されませんでした。"
+        return 1
+    fi
+
+    echo "Cluster: $cluster_arn を使用します"
+
+    # 選択されたクラスターでrunning状態のタスク一覧を取得（ECS Exec有効なもののみ）
+    echo "ECS Exec有効なタスクを検索中..."
+    local task_info=$(aws --profile ${profile} ecs list-tasks \
+        --cluster ${cluster_arn} \
+        --desired-status RUNNING \
+        --query 'taskArns[]' \
+        --output text | \
+        xargs -I {} aws --profile ${profile} ecs describe-tasks \
+        --cluster ${cluster_arn} \
+        --tasks {} \
+        --query 'tasks[].[taskArn,taskDefinitionArn,lastStatus,enableExecuteCommand]' \
+        --output text | \
+        awk '{
+            split($1, task_parts, "/"); task_id = task_parts[length(task_parts)];
+            split($2, td_parts, "/"); td_name = td_parts[length(td_parts)];
+            gsub(/:.*/, "", td_name);
+            exec_enabled = ($4 == "True") ? "✓" : "✗";
+            if($4 == "True") {
+                printf "%-32s %-30s %-8s %s\n", task_id, td_name, $3, exec_enabled
+            }
+        }' | \
+        fzf --prompt="ECS Task (Exec有効のみ)> " --height=40% --reverse --header="Task ID                         Task Definition            Status   Exec")
+
+    if [[ -z "$task_info" ]]; then
+        echo "ECS Exec有効なタスクが見つからないか、選択されませんでした。"
+        echo ""
+        echo "ECS Execを有効にするには："
+        echo "1. タスク定義で enableExecuteCommand を true に設定"
+        echo "2. タスク起動時に --enable-execute-command オプションを指定"
+        echo "3. 適切なIAMロールとポリシーを設定"
+        return 1
+    fi
+
+    local task_id=$(echo $task_info | awk '{print $1}')
+    echo "Task: $task_id に接続します"
+
+    # コンテナ一覧を取得（複数コンテナがある場合に対応）
+    local container_name=$(aws --profile ${profile} ecs describe-tasks \
+        --cluster ${cluster_arn} \
+        --tasks ${task_id} \
+        --query 'tasks[0].containers[].name' \
+        --output text | \
+        tr '\t' '\n' | \
+        fzf --prompt="Container> " --height=40% --reverse)
+
+    if [[ -z "$container_name" ]]; then
+        echo "コンテナが選択されませんでした。"
+        return 1
+    fi
+
+    echo "Container: $container_name に接続します"
+
+    # ECS Exec接続を実行（bashが利用可能か確認してからshにフォールバック）
+    echo "接続中..."
+    if ! aws --profile ${profile} ecs execute-command \
+        --cluster ${cluster_arn} \
+        --task ${task_id} \
+        --container ${container_name} \
+        --interactive \
+        --command "/bin/bash" 2>/dev/null; then
+
+        echo "/bin/bash が利用できません。/bin/sh で再試行します..."
+        if ! aws --profile ${profile} ecs execute-command \
+            --cluster ${cluster_arn} \
+            --task ${task_id} \
+            --container ${container_name} \
+            --interactive \
+            --command "/bin/sh" 2>/dev/null; then
+
+            echo ""
+            echo "❌ ECS Exec接続に失敗しました。"
+            echo ""
+            echo "考えられる原因："
+            echo "• タスクでECS Execが無効になっている"
+            echo "• Session Manager Pluginがインストールされていない"
+            echo "• IAMロールに必要な権限がない"
+            echo "• ネットワーク設定に問題がある"
+            echo ""
+            echo "解決方法："
+            echo "1. タスクを --enable-execute-command で再起動"
+            echo "2. Session Manager Plugin をインストール"
+            echo "3. IAMロールに ssmmessages:* 権限を追加"
+            return 1
+        fi
+    fi
+}
+
+# AWS CloudWatch ログ閲覧 (fzf版) - 階層構造ナビゲーション対応
+function awslogs() {
+    local level="${1:-group}"  # デフォルトはlog group選択まで
+    local help_msg="使用方法: awslogs [level]
+    level:
+      group  - ロググループ単位で選択 (デフォルト)
+      stream - ログストリーム単位で選択（階層構造対応）
+      help   - このヘルプを表示"
+
+    # ヘルプ表示
+    if [[ "$level" == "help" || "$level" == "--help" || "$level" == "-h" ]]; then
+        echo "$help_msg"
+        return 0
+    fi
+
+    # .aws/credentialsからprofile一覧を取得
+    local profile=$(awk '/^\[/{gsub(/\[|\]/, ""); print}' ~/.aws/credentials | fzf --prompt="AWS Profile> " --height=40% --reverse)
+
+    if [[ -z "$profile" ]]; then
+        echo "profileが選択されませんでした。"
+        return 1
+    fi
+
+    echo "Profile: $profile を使用します"
+
+    # 選択されたprofileでロググループ一覧を取得
+    local log_group_name=$(aws --profile ${profile} logs describe-log-groups \
+        --query 'logGroups[].[logGroupName,retentionInDays,storedBytes]' \
+        --output text | \
+        awk '{
+            retention = ($2 == "None" || $2 == "") ? "無期限" : $2"日";
+            size_mb = $3 > 0 ? sprintf("%.1fMB", $3/1024/1024) : "0MB";
+            printf "%-50s [保持:%s, サイズ:%s]\n", $1, retention, size_mb
+        }' | \
+        fzf --prompt="Log Group> " --height=40% --reverse --header="Log Group Name                                   [Retention, Size]")
+
+    if [[ -z "$log_group_name" ]]; then
+        echo "ロググループが選択されませんでした。"
+        return 1
+    fi
+
+    # ロググループ名だけを抽出（フォーマット情報を除去）
+    local clean_log_group_name=$(echo $log_group_name | awk '{print $1}')
+    echo "Log Group: $clean_log_group_name を選択しました"
+
+    local log_stream_name=""
+    local filter_pattern=""
+
+    # ログストリーム単位での選択が指定された場合（階層構造対応）
+    if [[ "$level" == "stream" ]]; then
+        echo "ログストリームを取得中..."
+
+        # 全ログストリーム一覧を取得
+        local all_streams=$(aws --profile ${profile} logs describe-log-streams \
+            --log-group-name "${clean_log_group_name}" \
+            --order-by LastEventTime \
+            --descending \
+            --max-items 200 \
+            --query 'logStreams[].[logStreamName,lastEventTime,storedBytes]' \
+            --output text)
+
+        if [[ -z "$all_streams" ]]; then
+            echo "ログストリームが見つかりませんでした。"
+            return 1
+        fi
+
+        # 階層構造ナビゲーション関数
+        function navigate_stream_hierarchy() {
+            local current_path="${1:-}"
+            local depth="${2:-0}"
+
+            # 現在のパスにマッチするストリームを抽出し、次のレベルの選択肢を作成
+            local stream_map_file=$(mktemp)
+
+            # 現在のパス配下のストリーム一覧を構築
+            while IFS=$'\t' read -r stream_name last_event stored_bytes; do
+                if [[ -z "$current_path" || "$stream_name" == "$current_path"* ]]; then
+                    # 現在のパス以降の部分を取得
+                    local remaining_path="${stream_name#$current_path}"
+                    [[ "$remaining_path" == "$stream_name" && -n "$current_path" ]] && continue
+
+                    # 次のスラッシュまでの部分を取得
+                    if [[ "$remaining_path" == */* ]]; then
+                        local next_segment="${remaining_path%%/*}"
+                        if [[ -n "$next_segment" ]]; then
+                            local display_name="$current_path$next_segment/"
+                            echo "$display_name" >> "$stream_map_file.dirs"
+                        fi
+                    else
+                        # 完全なストリーム名（終端）
+                        if [[ -n "$remaining_path" ]]; then
+                            local time_str="未記録"
+                            if [[ -n "$last_event" && "$last_event" != "None" ]]; then
+                                time_str=$(date -d "@$((last_event/1000))" "+%Y-%m-%d %H:%M:%S" 2>/dev/null || echo "未記録")
+                            fi
+                            local size_kb="0KB"
+                            if [[ -n "$stored_bytes" && "$stored_bytes" -gt 0 ]]; then
+                                size_kb=$(printf "%.1fKB" $((stored_bytes/1024)))
+                            fi
+                            printf "%-80s [最終:%s, サイズ:%s]\n" "$stream_name" "$time_str" "$size_kb" >> "$stream_map_file.streams"
+                        fi
+                    fi
+                fi
+            done <<< "$all_streams"
+
+            # ディレクトリレベルのオプションを作成（重複除去・ソート）
+            local dir_options=""
+            if [[ -f "$stream_map_file.dirs" ]]; then
+                dir_options=$(sort -u "$stream_map_file.dirs")
+            fi
+
+            # ストリームオプションを作成
+            local stream_options=""
+            if [[ -f "$stream_map_file.streams" ]]; then
+                stream_options=$(cat "$stream_map_file.streams")
+            fi
+
+            # 戻るオプションを追加（ルート以外）
+            local back_option=""
+            if [[ -n "$current_path" ]]; then
+                back_option="🔙 戻る (上位階層へ)"
+            fi
+
+            # 現在の階層以下のすべてを選択するオプション
+            local select_all_option=""
+            if [[ -n "$stream_options" || -n "$dir_options" ]]; then
+                local path_display="${current_path:-すべて}"
+                select_all_option="📁 この階層以下のすべてのストリームを表示 ($path_display*)"
+            fi
+
+            # 選択肢を統合
+            local all_options=""
+            [[ -n "$back_option" ]] && all_options="$back_option"
+            [[ -n "$select_all_option" ]] && {
+                [[ -n "$all_options" ]] && all_options="$all_options"$'\n'
+                all_options="$all_options$select_all_option"
+            }
+            if [[ -n "$dir_options" ]]; then
+                [[ -n "$all_options" ]] && all_options="$all_options"$'\n'
+                all_options="$all_options$dir_options"
+            fi
+            if [[ -n "$stream_options" ]]; then
+                [[ -n "$all_options" ]] && all_options="$all_options"$'\n'
+                all_options="$all_options$stream_options"
+            fi
+
+            # 一時ファイルをクリーンアップ
+            rm -f "$stream_map_file" "$stream_map_file.dirs" "$stream_map_file.streams"
+
+            if [[ -z "$all_options" ]]; then
+                echo "このパスにはログストリームがありません。"
+                return 1
+            fi
+
+            # fzfで選択
+            local path_display="${current_path:-/}"
+            local selection=$(echo "$all_options" | fzf \
+                --prompt="Path: $path_display > " \
+                --height=60% --reverse \
+                --header="階層を選択してください (ディレクトリ: /, 📁: 階層一括, ストリーム: 時間情報付き)")
+
+            if [[ -z "$selection" ]]; then
+                echo "選択がキャンセルされました。"
+                return 1
+            fi
+
+            # 選択結果の処理
+            if [[ "$selection" == "🔙 戻る (上位階層へ)" ]]; then
+                # 上位階層に戻る
+                local parent_path="${current_path%/}"
+                parent_path="${parent_path%/*}"
+                [[ -n "$parent_path" ]] && parent_path="$parent_path/"
+                navigate_stream_hierarchy "$parent_path" $((depth-1))
+            elif [[ "$selection" == "📁 この階層以下のすべてのストリームを表示"* ]]; then
+                # 現在の階層以下のすべてのストリームを選択
+                echo "階層 '$current_path' 以下のすべてのストリームを選択しました"
+                log_stream_name="$current_path*"
+                return 0
+            elif [[ "$selection" == */ ]]; then
+                # ディレクトリが選択された場合、さらに深く
+                navigate_stream_hierarchy "$selection" $((depth+1))
+            else
+                # ストリームが選択された場合
+                log_stream_name=$(echo "$selection" | awk '{print $1}')
+                echo "Log Stream: $log_stream_name を選択しました"
+                return 0
+            fi
+        }
+
+        # 階層ナビゲーションを開始
+        navigate_stream_hierarchy "" 0
+
+        if [[ -z "$log_stream_name" ]]; then
+            echo "ログストリームが選択されませんでした。"
+            return 1
+        fi
+
+        # フィルターパターンの選択
+        echo "フィルターパターンを選択してください："
+        local filter_option=$(echo -e "フィルターなし\nERRORレベルのみ\nWARNレベル以上\nカスタムフィルター\nJSON形式ログの特定フィールド" | \
+            fzf --prompt="Filter> " --height=40% --reverse)
+
+        case "$filter_option" in
+            "ERRORレベルのみ")
+                filter_pattern="ERROR"
+                ;;
+            "WARNレベル以上")
+                filter_pattern="?WARN ?ERROR"
+                ;;
+            "カスタムフィルター")
+                echo "フィルターパターンを入力してください（例: [timestamp, request_id, ERROR]）:"
+                read custom_filter
+                if [[ -n "$custom_filter" ]]; then
+                    filter_pattern="$custom_filter"
+                fi
+                ;;
+            "JSON形式ログの特定フィールド")
+                echo "JSONフィールドを指定してください（例: $.level = \"ERROR\"）:"
+                read json_filter
+                if [[ -n "$json_filter" ]]; then
+                    filter_pattern="$json_filter"
+                fi
+                ;;
+        esac
+    fi
+
+    # 表示方法の選択
+    echo "表示方法を選択してください："
+    local action=$(echo -e "リアルタイム表示 (--follow)\n過去1時間のログ\n過去24時間のログ\n指定時間範囲のログ" | \
+        fzf --prompt="表示方法> " --height=40% --reverse)
+
+    # AWS CLIコマンドの実行
+    if [[ "$level" == "stream" && -n "$log_stream_name" ]]; then
+        # ログストリーム指定の場合はfilter-log-eventsを使用
+        local aws_cmd=""
+
+        if [[ "$log_stream_name" == *"*" ]]; then
+            # 階層選択（ワイルドカード）の場合、プレフィックスフィルターを使用
+            local prefix="${log_stream_name%*}"
+
+            echo "階層プレフィックス: $prefix でフィルタリングします"
+
+            # log-stream-name-prefixを使用してプレフィックスマッチング
+            aws_cmd="aws --profile ${profile} logs filter-log-events --log-group-name \"${clean_log_group_name}\" --log-stream-name-prefix \"${prefix}\""
+        else
+            # 単一ストリームの場合
+            aws_cmd="aws --profile ${profile} logs filter-log-events --log-group-name \"${clean_log_group_name}\" --log-stream-names \"${log_stream_name}\""
+        fi
+
+        if [[ -n "$filter_pattern" ]]; then
+            aws_cmd="${aws_cmd} --filter-pattern \"${filter_pattern}\""
+        fi
+
+        case "$action" in
+            "リアルタイム表示 (--follow)")
+                if [[ "$log_stream_name" == *"*" ]]; then
+                    echo "複数ストリーム指定時はaws logs tailでリアルタイム表示を試行します..."
+                    # プレフィックスマッチングでaws logs tailを使用
+                    local prefix="${log_stream_name%*}"
+                    aws --profile ${profile} logs tail ${clean_log_group_name} --follow --log-stream-name-prefix "${prefix}"
+                    return 0
+                else
+                    echo "単一ストリーム指定時はリアルタイム表示ができません。最新のログを表示します。"
+                    aws_cmd="${aws_cmd} --start-time $(date -d '1 hour ago' +%s)000"
+                fi
+                ;;
+            "過去1時間のログ")
+                aws_cmd="${aws_cmd} --start-time $(date -d '1 hour ago' +%s)000"
+                ;;
+            "過去24時間のログ")
+                aws_cmd="${aws_cmd} --start-time $(date -d '1 day ago' +%s)000"
+                ;;
+            "指定時間範囲のログ")
+                echo "開始時間を入力してください (例: 2024-01-01T10:00:00):"
+                read start_time
+                echo "終了時間を入力してください (例: 2024-01-01T12:00:00):"
+                read end_time
+                if [[ -n "$start_time" && -n "$end_time" ]]; then
+                    start_ms=$(date -d "${start_time}" +%s)000
+                    end_ms=$(date -d "${end_time}" +%s)000
+                    aws_cmd="${aws_cmd} --start-time ${start_ms} --end-time ${end_ms}"
+                else
+                    echo "時間範囲が正しく指定されませんでした。"
+                    return 1
+                fi
+                ;;
+        esac
+
+        # フィルター結果を整形して表示
+        echo "実行中: $aws_cmd"
+        eval "$aws_cmd" | jq -r '.events[] | "\(.timestamp | strftime("%Y-%m-%d %H:%M:%S")) [\(.logStreamName)] \(.message)"' 2>/dev/null || \
+        eval "$aws_cmd" --query 'events[].[timestamp,logStreamName,message]' --output text | \
+        awk '{
+            if($1 > 0) {
+                timestamp = strftime("%Y-%m-%d %H:%M:%S", $1/1000);
+                stream = $2;
+                $1 = $2 = "";
+                message = substr($0, 3);
+                printf "%s [%s] %s\n", timestamp, stream, message;
+            }
+        }'
+
+    else
+        # 従来のtailコマンドを使用（ロググループレベル）
+        case "$action" in
+            "リアルタイム表示 (--follow)")
+                echo "リアルタイムでログを表示します (Ctrl+Cで終了)"
+                aws --profile ${profile} logs tail ${clean_log_group_name} --follow
+                ;;
+            "過去1時間のログ")
+                echo "過去1時間のログを表示します"
+                aws --profile ${profile} logs tail ${clean_log_group_name} --since 1h
+                ;;
+            "過去24時間のログ")
+                echo "過去24時間のログを表示します"
+                aws --profile ${profile} logs tail ${clean_log_group_name} --since 24h
+                ;;
+            "指定時間範囲のログ")
+                echo "開始時間を入力してください (例: 2024-01-01T10:00:00):"
+                read start_time
+                echo "終了時間を入力してください (例: 2024-01-01T12:00:00):"
+                read end_time
+                if [[ -n "$start_time" && -n "$end_time" ]]; then
+                    echo "指定された時間範囲のログを表示します"
+                    aws --profile ${profile} logs tail ${clean_log_group_name} --since "${start_time}" --until "${end_time}"
+                else
+                    echo "時間範囲が正しく指定されませんでした。"
+                    return 1
+                fi
+                ;;
+            *)
+                echo "操作がキャンセルされました。"
+                return 1
+                ;;
+        esac
+    fi
+}
+
+# RDS IAM認証接続 (fzf版)
+function rds-iam() {
+    local help_msg="使用方法: rds-iam [database_type]
+    database_type:
+      mysql     - MySQL/MariaDB接続 (デフォルト)
+      postgres  - PostgreSQL接続
+      aurora    - Aurora MySQL/PostgreSQL接続
+      help      - このヘルプを表示
+
+    必要な前提条件:
+    • AWS CLI設定済み
+    • RDS IAM認証が有効化されている
+    • 適切なIAM権限 (rds-db:connect)
+    • データベースクライアント (mysql, psql等) がインストール済み"
+
+    # ヘルプ表示
+    if [[ "$1" == "help" || "$1" == "--help" || "$1" == "-h" ]]; then
+        echo "$help_msg"
+        return 0
+    fi
+
+    local db_type="${1:-mysql}"  # デフォルトはMySQL
+
+    # .aws/credentialsからprofile一覧を取得
+    local profile=$(awk '/^\[/{gsub(/\[|\]/, ""); print}' ~/.aws/credentials | fzf --prompt="AWS Profile> " --height=40% --reverse)
+
+    if [[ -z "$profile" ]]; then
+        echo "profileが選択されませんでした。"
+        return 1
+    fi
+
+    echo "Profile: $profile を使用します"
+
+    # 選択されたprofileでRDSインスタンス一覧を取得
+    echo "RDSインスタンスを取得中..."
+    local rds_info=$(aws rds describe-db-instances \
+        --profile "${profile}" \
+        --query 'DBInstances[].[DBInstanceIdentifier,Engine,DBInstanceStatus,Endpoint.Address,Endpoint.Port,MasterUsername]' \
+        --output text | \
+        awk '{
+            status_icon = ($3 == "available") ? "🟢" : "🔴";
+            printf "%-30s %-15s %s %-15s %-5s %s\n", $1, $2, status_icon, $4, $5, $6
+        }' | \
+        fzf --prompt="RDS Instance> " --height=40% --reverse --header="Instance ID                    Engine          Status   Endpoint           Port   Username")
+
+    if [[ -z "$rds_info" ]]; then
+        echo "RDSインスタンスが選択されませんでした。"
+        return 1
+    fi
+
+    local instance_id=$(echo $rds_info | awk '{print $1}')
+    local engine=$(echo $rds_info | awk '{print $2}')
+    local endpoint=$(echo $rds_info | awk '{print $4}')
+    local port=$(echo $rds_info | awk '{print $5}')
+    local username=$(echo $rds_info | awk '{print $6}')
+
+    echo "Instance: $instance_id (${engine}) を選択しました"
+    echo "Endpoint: $endpoint:$port"
+    echo "Username: $username"
+
+    # データベース名の入力
+    echo "データベース名を入力してください (空の場合はデフォルトDBに接続):"
+    read database_name
+
+    # IAM認証トークンの生成
+    echo "IAM認証トークンを生成中..."
+    local token=$(aws rds generate-db-auth-token \
+        --profile "${profile}" \
+        --hostname "${endpoint}" \
+        --port "${port}" \
+        --username "${username}" \
+        --region $(aws configure get region --profile "${profile}") 2>/dev/null)
+
+    if [[ -z "$token" ]]; then
+        echo "❌ IAM認証トークンの生成に失敗しました。"
+        echo ""
+        echo "考えられる原因："
+        echo "• IAM認証が有効化されていない"
+        echo "• 適切なIAM権限がない (rds-db:connect)"
+        echo "• AWS CLI設定に問題がある"
+        echo "• ネットワーク接続の問題"
+        return 1
+    fi
+
+    echo "✅ IAM認証トークンを生成しました"
+
+    # データベースタイプに応じた接続コマンドの実行
+    case "$engine" in
+        "mysql"|"mariadb")
+            echo "MySQL/MariaDBに接続します..."
+            if command -v mysql >/dev/null 2>&1; then
+                local mysql_cmd="mysql -h ${endpoint} -P ${port} -u ${username} -p${token}"
+                if [[ -n "$database_name" ]]; then
+                    mysql_cmd="${mysql_cmd} ${database_name}"
+                fi
+                echo "実行中: $mysql_cmd"
+                eval "$mysql_cmd"
+            else
+                echo "❌ mysql クライアントが見つかりません。"
+                echo "インストール方法:"
+                echo "  Ubuntu/Debian: sudo apt-get install mysql-client"
+                echo "  macOS: brew install mysql-client"
+                return 1
+            fi
+            ;;
+        "postgres")
+            echo "PostgreSQLに接続します..."
+            if command -v psql >/dev/null 2>&1; then
+                local psql_cmd="psql -h ${endpoint} -p ${port} -U ${username} -d ${database_name:-postgres}"
+                echo "実行中: $psql_cmd"
+                echo "パスワードプロンプトが表示されたら、以下のトークンを入力してください:"
+                echo "${token}"
+                echo ""
+                eval "$psql_cmd"
+            else
+                echo "❌ psql クライアントが見つかりません。"
+                echo "インストール方法:"
+                echo "  Ubuntu/Debian: sudo apt-get install postgresql-client"
+                echo "  macOS: brew install postgresql"
+                return 1
+            fi
+            ;;
+        "aurora-mysql")
+            echo "Aurora MySQLに接続します..."
+            if command -v mysql >/dev/null 2>&1; then
+                local mysql_cmd="mysql -h ${endpoint} -P ${port} -u ${username} -p${token}"
+                if [[ -n "$database_name" ]]; then
+                    mysql_cmd="${mysql_cmd} ${database_name}"
+                fi
+                echo "実行中: $mysql_cmd"
+                eval "$mysql_cmd"
+            else
+                echo "❌ mysql クライアントが見つかりません。"
+                echo "インストール方法:"
+                echo "  Ubuntu/Debian: sudo apt-get install mysql-client"
+                echo "  macOS: brew install mysql-client"
+                return 1
+            fi
+            ;;
+        "aurora-postgresql")
+            echo "Aurora PostgreSQLに接続します..."
+            if command -v psql >/dev/null 2>&1; then
+                local psql_cmd="psql -h ${endpoint} -p ${port} -U ${username} -d ${database_name:-postgres}"
+                echo "実行中: $psql_cmd"
+                echo "パスワードプロンプトが表示されたら、以下のトークンを入力してください:"
+                echo "${token}"
+                echo ""
+                eval "$psql_cmd"
+            else
+                echo "❌ psql クライアントが見つかりません。"
+                echo "インストール方法:"
+                echo "  Ubuntu/Debian: sudo apt-get install postgresql-client"
+                echo "  macOS: brew install postgresql"
+                return 1
+            fi
+            ;;
+        *)
+            echo "❌ サポートされていないデータベースエンジンです: $engine"
+            echo "サポートされているエンジン: mysql, mariadb, postgres, aurora-mysql, aurora-postgresql"
+            return 1
+            ;;
+    esac
+}
