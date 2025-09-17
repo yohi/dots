@@ -530,43 +530,42 @@ setup-config-lazygit: setup-lazygit
 # Claude Code設定のセットアップ
 # ========================================
 
-setup-claude: ## Claude Code設定ファイルのセットアップ
+setup-claude:
 	@echo "🤖 Claude Code設定をセットアップ中..."
+	@mkdir -p $(HOME_DIR)/.claude
 
-	# Claude設定ディレクトリの作成
-	@mkdir -p $(HOME_DIR)/.config/claude
-
-	# Claude設定ファイルのコピー
-	@if [ -f "$(DOTFILES_DIR)/claude/claude-settings.json" ]; then \
-		echo "📋 Claude設定ファイルをコピー中..."; \
-		cp "$(DOTFILES_DIR)/claude/claude-settings.json" "$(HOME_DIR)/.config/claude/claude-settings.json" && \
-		echo "✅ Claude設定ファイルが正常にコピーされました"; \
-	else \
-		echo "⚠️ Claude設定ファイルが見つかりません: $(DOTFILES_DIR)/claude/claude-settings.json"; \
+	# claude-settings.jsonのシンボリックリンク作成
+	@echo "🔗 claude-settings.jsonを~/.claude/settings.jsonにリンク中..."
+	@if [ -f "$(HOME_DIR)/.claude/settings.json" ] && [ ! -L "$(HOME_DIR)/.claude/settings.json" ]; then \
+		echo "⚠️  既存のsettings.jsonをバックアップ中..."; \
+		mv $(HOME_DIR)/.claude/settings.json $(HOME_DIR)/.claude/settings.json.backup.$(date +%Y%m%d_%H%M%S); \
 	fi
+	@ln -sfn $(DOTFILES_DIR)/claude/claude-settings.json $(HOME_DIR)/.claude/settings.json
+	@echo "✅ settings.jsonがリンクされました"
 
-	# Claude CLIの設定確認
-	@if command -v claude >/dev/null 2>&1; then \
-		echo "✅ Claude CLIが利用可能です"; \
-		echo "   バージョン: $$(claude --version 2>/dev/null || echo '取得できませんでした')"; \
-		echo "   設定ディレクトリ: $(HOME_DIR)/.config/claude"; \
-	else \
-		echo "ℹ️ Claude CLIがインストールされていません"; \
-		echo "   'make install-claude-ecosystem' でClaude Code関連ツールをインストールできます"; \
+	# CLAUDE.mdのシンボリックリンク作成
+	@echo "🔗 CLAUDE.mdを~/.claude/CLAUDE.mdにリンク中..."
+	@if [ -f "$(HOME_DIR)/.claude/CLAUDE.md" ] && [ ! -L "$(HOME_DIR)/.claude/CLAUDE.md" ]; then \
+		echo "⚠️  既存のCLAUDE.mdをバックアップ中..."; \
+		mv $(HOME_DIR)/.claude/CLAUDE.md $(HOME_DIR)/.claude/CLAUDE.md.backup.$(date +%Y%m%d_%H%M%S); \
 	fi
+	@ln -sfn $(DOTFILES_DIR)/claude/CLAUDE.md $(HOME_DIR)/.claude/CLAUDE.md
+	@echo "✅ CLAUDE.mdがリンクされました"
 
-	# CLAUDE.mdファイルのリンク作成
-	@if [ -f "$(DOTFILES_DIR)/claude/CLAUDE.md" ]; then \
-		echo "📖 CLAUDE.mdドキュメントをホームディレクトリにリンク中..."; \
-		ln -sf "$(DOTFILES_DIR)/claude/CLAUDE.md" "$(HOME_DIR)/CLAUDE.md" && \
-		echo "✅ CLAUDE.mdドキュメントがリンクされました: ~/CLAUDE.md"; \
-	else \
-		echo "⚠️ CLAUDE.mdドキュメントが見つかりません: $(DOTFILES_DIR)/claude/CLAUDE.md"; \
+	# statusline.shのシンボリックリンク作成
+	@echo "🔗 statusline.shを~/.claude/statusline.shにリンク中..."
+	@if [ -f "$(HOME_DIR)/.claude/statusline.sh" ] && [ ! -L "$(HOME_DIR)/.claude/statusline.sh" ]; then \
+		echo "⚠️  既存のstatusline.shをバックアップ中..."; \
+		mv $(HOME_DIR)/.claude/statusline.sh $(HOME_DIR)/.claude/statusline.sh.backup.$(date +%Y%m%d_%H%M%S); \
 	fi
+	@ln -sfn $(DOTFILES_DIR)/claude/statusline.sh $(HOME_DIR)/.claude/statusline.sh
+	@chmod +x $(HOME_DIR)/.claude/statusline.sh
+	@echo "✅ statusline.shがリンクされ、実行権限が付与されました"
 
-	@echo "✅ Claude Code設定のセットアップが完了しました"
-	@echo "📚 詳細なガイドは ~/CLAUDE.md を参照してください"
-
+	@echo "✅ Claude設定が完了しました。"
+	@echo "   設定ファイル: ~/.claude/settings.json -> $(DOTFILES_DIR)/claude/claude-settings.json"
+	@echo "   設定ファイル: ~/.claude/CLAUDE.md -> $(DOTFILES_DIR)/claude/CLAUDE.md"
+	@echo "   スクリプト:   ~/.claude/statusline.sh -> $(DOTFILES_DIR)/claude/statusline.sh"
 # ========================================
 # 後方互換性のためのエイリアス
 # ========================================
@@ -576,41 +575,6 @@ setup-claude: ## Claude Code設定ファイルのセットアップ
 # setup-zsh: は既に実装済み
 # setup-wezterm: は既に実装済み
 # その他の既存ターゲットはそのまま
-
-# Claude設定をセットアップ
-setup-claude:
-	@echo "🤖 Claude設定をセットアップ中..."
-	@mkdir -p $(HOME_DIR)/.claude
-
-	# CLAUDE.mdのシンボリックリンク作成
-	@if [ -f "$(DOTFILES_DIR)/claude/CLAUDE.md" ]; then \
-		if [ -f "$(HOME_DIR)/.claude/CLAUDE.md" ] && [ ! -L "$(HOME_DIR)/.claude/CLAUDE.md" ]; then \
-			echo "⚠️  既存のCLAUDE.mdをバックアップ中..."; \
-			mv $(HOME_DIR)/.claude/CLAUDE.md $(HOME_DIR)/.claude/CLAUDE.md.backup.$$(date +%Y%m%d_%H%M%S); \
-		fi; \
-		echo "🔗 CLAUDE.mdのシンボリックリンクを作成中..."; \
-		ln -sfn $(DOTFILES_DIR)/claude/CLAUDE.md $(HOME_DIR)/.claude/CLAUDE.md && \
-		echo "✅ CLAUDE.mdがリンクされました"; \
-	else \
-		echo "⚠️ CLAUDE.mdが見つかりません: $(DOTFILES_DIR)/claude/CLAUDE.md"; \
-	fi
-
-	# claude-settings.jsonのシンボリックリンク作成
-	@if [ -f "$(DOTFILES_DIR)/claude/claude-settings.json" ]; then \
-		if [ -f "$(HOME_DIR)/.claude/claude-settings.json" ] && [ ! -L "$(HOME_DIR)/.claude/claude-settings.json" ]; then \
-			echo "⚠️  既存のclaude-settings.jsonをバックアップ中..."; \
-			mv $(HOME_DIR)/.claude/claude-settings.json $(HOME_DIR)/.claude/claude-settings.json.backup.$$(date +%Y%m%d_%H%M%S); \
-		fi; \
-		echo "🔗 claude-settings.jsonのシンボリックリンクを作成中..."; \
-		ln -sfn $(DOTFILES_DIR)/claude/claude-settings.json $(HOME_DIR)/.claude/claude-settings.json && \
-		echo "✅ claude-settings.jsonがリンクされました"; \
-	else \
-		echo "⚠️ claude-settings.jsonが見つかりません: $(DOTFILES_DIR)/claude/claude-settings.json"; \
-	fi
-
-	@echo "✅ Claude設定が完了しました。"
-	@echo "   設定ファイル: ~/.claude/CLAUDE.md -> $(DOTFILES_DIR)/claude/CLAUDE.md"
-	@echo "   設定ファイル: ~/.claude/claude-settings.json -> $(DOTFILES_DIR)/claude/claude-settings.json"
 
 
 # Lazygitの設定をセットアップ

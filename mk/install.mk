@@ -1384,6 +1384,22 @@ install-packages-claude-ecosystem: install-claude-ecosystem
 install-packages-cica-fonts: install-cica-fonts
 install-packages-mysql-workbench: install-mysql-workbench
 install-packages-playwright: install-playwright
+install-packages-gemini-cli: install-gemini-cli
+
+# ccusageのインストール
+install-packages-ccusage:
+	@echo "📦 ccusage をインストールしています..."
+	@if ! command -v bun >/dev/null 2>&1; then \
+		echo "bun が見つからないため、インストールします..."; \
+		curl -fsSL https://bun.sh/install | bash; \
+		export PATH="$(HOME)/.bun/bin:$PATH"; \
+		if ! command -v bun >/dev/null 2>&1; then \
+			echo "❌ bun のインストールに失敗しました。PATHを確認してください。"; \
+			exit 1; \
+		fi \
+	fi
+	@bun install -g ccusage
+	@echo "✅ ccusage のインストールが完了しました。"
 
 # 追加のブラウザインストール系
 install-packages-chrome-beta:
@@ -1423,6 +1439,9 @@ install-packages-vscode-supercopilot:
 
 # 後方互換性のためのエイリアス
 install-vscode-supercopilot: install-packages-vscode-supercopilot
+
+# ccusage の後方互換エイリアス
+install-ccusage: install-packages-ccusage
 
 # SuperCursor (Cursor Framework) のインストール
 install-supercursor:
@@ -1809,9 +1828,10 @@ shutdown-system:
 	@echo "⏹️ システムをシャットダウンしようとしています..."
 	@echo "⚠️  この操作により、すべての未保存の作業が失われます。"
 	@read -p "本当にシステムをシャットダウンしますか? (y/N): " confirm; \
-	if [ "$$confirm" = "y" ] || [ "$$confirm" = "Y" ]; then \
-		echo "システムをシャットダウンします..."; \
-		sudo shutdown now; \
-	else \
-		echo "シャットダウンをキャンセルしました。"; \
-	fi
+			if [ "$$confirm" = "y" ] || [ "$$confirm" = "Y" ]; then \
+				echo "システムをシャットダウンします..."; \
+				sudo shutdown now; \
+			else \
+				echo "シャットダウンをキャンセルしました。"; \
+			fi
+

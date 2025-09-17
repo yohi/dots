@@ -1,4 +1,8 @@
 {
   "output_language": "ja",
-  "opt_out": true
+  "opt_out": true,
+  "statusLine": {
+    "type": "command",
+    "command": "~/.claude/statusline.sh"
+  }
 }

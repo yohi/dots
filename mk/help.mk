@@ -24,6 +24,8 @@ help:
 	@echo "  make install-packages-mysql-workbench - MySQL Workbenchをインストール"
 	@echo "  make install-packages-chrome-beta     - Google Chrome Betaをインストール"
 	@echo "  make install-packages-playwright      - Playwright E2Eテストフレームワークをインストール"
+	@echo "  make install-packages-gemini-cli      - Gemini CLIをインストール"
+	@echo "  make install-packages-ccusage         - ccusage (bunx) をインストール"
 	@echo ""
 	@echo "⚙️  設定ファイル・コンフィグのセットアップ:"
 	@echo "  make setup-config-vim                 - VIMの設定をセットアップ"
