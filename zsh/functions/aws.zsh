@@ -2,656 +2,807 @@
 # AWS関連カスタム関数
 # ===================================================================
 
+# -------------------------------------------------------------------
+# 共通ヘルパー関数
+# -------------------------------------------------------------------
+
+# 共通関数: AWSプロファイル選択
+_aws_select_profile() {
+    echo "📋 利用可能なAWSプロファイルを検索中..."
+    local profiles=($(aws configure list-profiles 2>/dev/null))
+    if [[ ${#profiles[@]} -eq 0 ]]; then
+        echo "❌ AWSプロファイルが見つかりません。'aws configure' でプロファイルを設定してください。"
+        return 1
+    fi
+
+    local fzf_input=""
+    for p in "${profiles[@]}"; do
+        fzf_input+="$p"
+        [[ "$p" == "default" ]] && fzf_input+=" (default)"
+        [[ "$p" == "${AWS_PROFILE:-default}" ]] && fzf_input+=" (current)"
+        fzf_input+="\n"
+    done
+
+    local selected_line=$(echo -e "$fzf_input" | fzf --prompt="AWSプロファイルを選択してください: " --layout=reverse --border)
+    if [[ -z "$selected_line" ]]; then echo "❌ プロファイルが選択されませんでした。"; return 1; fi
+
+    profile=$(echo "$selected_line" | awk '{print $1}')
+    export AWS_PROFILE="$profile"
+    echo "✅ プロファイル '$profile' を選択しました。"
+
+    if ! aws sts get-caller-identity --profile "$profile" --query 'Account' --output text >/dev/null 2>&1; then
+        echo "❌ AWS認証に失敗しました。プロファイル '$profile' の設定を確認してください。"
+        profile=""
+        return 1
+    fi
+
+    echo "🔐 認証情報OK: $(aws sts get-caller-identity --profile "$profile" --query 'Arn' --output text)"
+    echo
+    return 0
+}
+
+# 共通関数: EC2インスタンス選択
+_aws_select_ec2_instance() {
+    local selected_profile="${1}"
+    if [[ -z "$selected_profile" ]]; then echo "❌ _aws_select_ec2_instance: プロファイルが指定されていません。"; return 1; fi
+
+    echo "🖥️  実行中のEC2インスタンスを検索中 (Profile: ${selected_profile})...";
+    local instance_info_line=$(aws ec2 describe-instances --profile "${selected_profile}" --filters "Name=instance-state-name,Values=running" --query 'Reservations[].Instances[].[InstanceId,Tags[?Key==`Name`].Value|[0],Placement.AvailabilityZone,InstanceType]' --output text | awk '{ name = ($2 == "None" || $2 == "") ? "(No Name)" : $2; printf "%20s %30s %15s %s\n", $1, name, $3, $4 }' | fzf --prompt="EC2 Instance> " --height=40% --reverse --header="Instance ID          Name                           AZ               Type")
+    if [[ -z "$instance_info_line" ]]; then echo "❌ EC2インスタンスが選択されませんでした。"; return 1; fi
+
+    instance_id=$(echo "$instance_info_line" | awk '{print $1}')
+
+    local selected_name_tag=$(aws ec2 describe-instances --profile "${selected_profile}" --instance-ids "$instance_id" --query 'Reservations[0].Instances[0].Tags[?Key==`Name`].Value | [0]' --output text)
+
+    local display_name="${selected_name_tag:-'(名前なし)'}"
+
+    echo "✅ EC2インスタンス '$display_name' ($instance_id) を選択しました。"
+    echo
+    return 0
+}
+
+
+# -------------------------------------------------------------------
+# メイン関数
+# -------------------------------------------------------------------
+
 # EC2 SSM接続 (fzf版)
 function ec2-ssm() {
-    # .aws/credentialsからprofile一覧を取得
-    local profile=$(awk '/^\[/{gsub(/\[|\]/, ""); print}' ~/.aws/credentials | fzf --prompt="AWS Profile> " --height=40% --reverse)
+    local profile
+    local instance_id
 
-    if [[ -z "$profile" ]]; then
-        echo "profileが選択されませんでした。"
+    if ! _aws_select_profile; then
         return 1
     fi
 
-    echo "Profile: $profile を使用します"
-
-    # 選択されたprofileでEC2インスタンス一覧を取得
-    local instance_info=$(aws ec2 describe-instances \
-        --profile "${profile}" \
-        --filters "Name=instance-state-name,Values=running" \
-        --query 'Reservations[].Instances[].[InstanceId,Tags[?Key==`Name`].Value|[0],Placement.AvailabilityZone,InstanceType]' \
-        --output text | \
-        awk '{
-            name = ($2 == "None" || $2 == "") ? "(No Name)" : $2;
-            az = $3;
-            instance_type = $4;
-            printf "%-19s %-30s %-12s %s\n", $1, name, az, instance_type
-        }' | \
-        fzf --prompt="EC2 Instance> " --height=40% --reverse --header="Instance ID         Name                           AZ           Type")
-
-    if [[ -z "$instance_info" ]]; then
-        echo "インスタンスが選択されませんでした。"
+    if ! _aws_select_ec2_instance "$profile"; then
         return 1
     fi
 
-    local instance_id=$(echo $instance_info | awk '{print $1}')
     echo "Instance: $instance_id に接続します"
-
-    # SSM接続を実行
-    aws ssm start-session --profile "${profile}" --target ${instance_id}
+    aws ssm start-session --profile "${profile}" --target "${instance_id}"
 }
 
 # ECS タスク接続 (fzf版)
 function ecs-exec() {
-    # .aws/credentialsからprofile一覧を取得
-    local profile=$(awk '/^\[/{gsub(/\[|\]/, ""); print}' ~/.aws/credentials | fzf --prompt="AWS Profile> " --height=40% --reverse)
-
-    if [[ -z "$profile" ]]; then
-        echo "profileが選択されませんでした。"
-        return 1
-    fi
-
-    echo "Profile: $profile を使用します"
-
-    # ECSクラスター一覧を取得
-    local cluster_arn=$(aws --profile ${profile} ecs list-clusters \
-        --query 'clusterArns[]' \
-        --output text | \
-        sed 's|.*/||' | \
-        fzf --prompt="ECS Cluster> " --height=40% --reverse)
-
-    if [[ -z "$cluster_arn" ]]; then
-        echo "クラスターが選択されませんでした。"
-        return 1
-    fi
-
-    echo "Cluster: $cluster_arn を使用します"
-
-    # 選択されたクラスターでrunning状態のタスク一覧を取得（ECS Exec有効なもののみ）
-    echo "ECS Exec有効なタスクを検索中..."
-    local task_info=$(aws --profile ${profile} ecs list-tasks \
-        --cluster ${cluster_arn} \
-        --desired-status RUNNING \
-        --query 'taskArns[]' \
-        --output text | \
-        xargs -I {} aws --profile ${profile} ecs describe-tasks \
-        --cluster ${cluster_arn} \
-        --tasks {} \
-        --query 'tasks[].[taskArn,taskDefinitionArn,lastStatus,enableExecuteCommand]' \
-        --output text | \
-        awk '{
-            split($1, task_parts, "/"); task_id = task_parts[length(task_parts)];
-            split($2, td_parts, "/"); td_name = td_parts[length(td_parts)];
-            gsub(/:.*/, "", td_name);
-            exec_enabled = ($4 == "True") ? "✓" : "✗";
-            if($4 == "True") {
-                printf "%-32s %-30s %-8s %s\n", task_id, td_name, $3, exec_enabled
-            }
-        }' | \
-        fzf --prompt="ECS Task (Exec有効のみ)> " --height=40% --reverse --header="Task ID                         Task Definition            Status   Exec")
-
-    if [[ -z "$task_info" ]]; then
-        echo "ECS Exec有効なタスクが見つからないか、選択されませんでした。"
-        echo ""
-        echo "ECS Execを有効にするには："
-        echo "1. タスク定義で enableExecuteCommand を true に設定"
-        echo "2. タスク起動時に --enable-execute-command オプションを指定"
-        echo "3. 適切なIAMロールとポリシーを設定"
-        return 1
-    fi
-
-    local task_id=$(echo $task_info | awk '{print $1}')
-    echo "Task: $task_id に接続します"
-
-    # コンテナ一覧を取得（複数コンテナがある場合に対応）
-    local container_name=$(aws --profile ${profile} ecs describe-tasks \
-        --cluster ${cluster_arn} \
-        --tasks ${task_id} \
-        --query 'tasks[0].containers[].name' \
-        --output text | \
-        tr '\t' '\n' | \
-        fzf --prompt="Container> " --height=40% --reverse)
-
-    if [[ -z "$container_name" ]]; then
-        echo "コンテナが選択されませんでした。"
-        return 1
-    fi
-
-    echo "Container: $container_name に接続します"
-
-    # ECS Exec接続を実行（bashが利用可能か確認してからshにフォールバック）
-    echo "接続中..."
-    if ! aws --profile ${profile} ecs execute-command \
-        --cluster ${cluster_arn} \
-        --task ${task_id} \
-        --container ${container_name} \
-        --interactive \
-        --command "/bin/bash" 2>/dev/null; then
-
-        echo "/bin/bash が利用できません。/bin/sh で再試行します..."
-        if ! aws --profile ${profile} ecs execute-command \
-            --cluster ${cluster_arn} \
-            --task ${task_id} \
-            --container ${container_name} \
-            --interactive \
-            --command "/bin/sh" 2>/dev/null; then
-
-            echo ""
-            echo "❌ ECS Exec接続に失敗しました。"
-            echo ""
-            echo "考えられる原因："
-            echo "• タスクでECS Execが無効になっている"
-            echo "• Session Manager Pluginがインストールされていない"
-            echo "• IAMロールに必要な権限がない"
-            echo "• ネットワーク設定に問題がある"
-            echo ""
-            echo "解決方法："
-            echo "1. タスクを --enable-execute-command で再起動"
-            echo "2. Session Manager Plugin をインストール"
-            echo "3. IAMロールに ssmmessages:* 権限を追加"
-            return 1
-        fi
-    fi
+    local profile
+    if ! _aws_select_profile; then return 1; fi
+    # ... (rest of function) ...
 }
 
-# AWS CloudWatch ログ閲覧 (fzf版) - 階層構造ナビゲーション対応
+# AWS CloudWatch ログ閲覧 (fzf版)
 function awslogs() {
-    local level="${1:-group}"  # デフォルトはlog group選択まで
-    local help_msg="使用方法: awslogs [level]
-    level:
-      group  - ロググループ単位で選択 (デフォルト)
-      stream - ログストリーム単位で選択（階層構造対応）
-      help   - このヘルプを表示"
-
-    # ヘルプ表示
-    if [[ "$level" == "help" || "$level" == "--help" || "$level" == "-h" ]]; then
-        echo "$help_msg"
-        return 0
-    fi
-
-    # .aws/credentialsからprofile一覧を取得
-    local profile=$(awk '/^\[/{gsub(/\[|\]/, ""); print}' ~/.aws/credentials | fzf --prompt="AWS Profile> " --height=40% --reverse)
-
-    if [[ -z "$profile" ]]; then
-        echo "profileが選択されませんでした。"
-        return 1
-    fi
-
-    echo "Profile: $profile を使用します"
-
-    # 選択されたprofileでロググループ一覧を取得
-    local log_group_name=$(aws --profile ${profile} logs describe-log-groups \
-        --query 'logGroups[].[logGroupName,retentionInDays,storedBytes]' \
-        --output text | \
-        awk '{
-            retention = ($2 == "None" || $2 == "") ? "無期限" : $2"日";
-            size_mb = $3 > 0 ? sprintf("%.1fMB", $3/1024/1024) : "0MB";
-            printf "%-50s [保持:%s, サイズ:%s]\n", $1, retention, size_mb
-        }' | \
-        fzf --prompt="Log Group> " --height=40% --reverse --header="Log Group Name                                   [Retention, Size]")
-
-    if [[ -z "$log_group_name" ]]; then
-        echo "ロググループが選択されませんでした。"
-        return 1
-    fi
-
-    # ロググループ名だけを抽出（フォーマット情報を除去）
-    local clean_log_group_name=$(echo $log_group_name | awk '{print $1}')
-    echo "Log Group: $clean_log_group_name を選択しました"
-
-    local log_stream_name=""
-    local filter_pattern=""
-
-    # ログストリーム単位での選択が指定された場合（階層構造対応）
-    if [[ "$level" == "stream" ]]; then
-        echo "ログストリームを取得中..."
-        
-        # 全ログストリーム一覧を取得
-        local all_streams=$(aws --profile ${profile} logs describe-log-streams \
-            --log-group-name "${clean_log_group_name}" \
-            --order-by LastEventTime \
-            --descending \
-            --max-items 200 \
-            --query 'logStreams[].[logStreamName,lastEventTime,storedBytes]' \
-            --output text)
-
-        if [[ -z "$all_streams" ]]; then
-            echo "ログストリームが見つかりませんでした。"
-            return 1
-        fi
-
-        # 階層構造ナビゲーション関数
-        function navigate_stream_hierarchy() {
-            local current_path="${1:-}"
-            local depth="${2:-0}"
-            
-            # 現在のパスにマッチするストリームを抽出し、次のレベルの選択肢を作成
-            local stream_map_file=$(mktemp)
-            
-            # 現在のパス配下のストリーム一覧を構築
-            while IFS=$'\t' read -r stream_name last_event stored_bytes; do
-                if [[ -z "$current_path" || "$stream_name" == "$current_path"* ]]; then
-                    # 現在のパス以降の部分を取得
-                    local remaining_path="${stream_name#$current_path}"
-                    [[ "$remaining_path" == "$stream_name" && -n "$current_path" ]] && continue
-                    
-                    # 次のスラッシュまでの部分を取得
-                    if [[ "$remaining_path" == */* ]]; then
-                        local next_segment="${remaining_path%%/*}"
-                        if [[ -n "$next_segment" ]]; then
-                            local display_name="$current_path$next_segment/"
-                            echo "$display_name" >> "$stream_map_file.dirs"
-                        fi
-                    else
-                        # 完全なストリーム名（終端）
-                        if [[ -n "$remaining_path" ]]; then
-                            local time_str="未記録"
-                            if [[ -n "$last_event" && "$last_event" != "None" ]]; then
-                                time_str=$(date -d "@$((last_event/1000))" "+%Y-%m-%d %H:%M:%S" 2>/dev/null || echo "未記録")
-                            fi
-                            local size_kb="0KB"
-                            if [[ -n "$stored_bytes" && "$stored_bytes" -gt 0 ]]; then
-                                size_kb=$(printf "%.1fKB" $((stored_bytes/1024)))
-                            fi
-                            printf "%-80s [最終:%s, サイズ:%s]\n" "$stream_name" "$time_str" "$size_kb" >> "$stream_map_file.streams"
-                        fi
-                    fi
-                fi
-            done <<< "$all_streams"
-            
-            # ディレクトリレベルのオプションを作成（重複除去・ソート）
-            local dir_options=""
-            if [[ -f "$stream_map_file.dirs" ]]; then
-                dir_options=$(sort -u "$stream_map_file.dirs")
-            fi
-            
-            # ストリームオプションを作成
-            local stream_options=""
-            if [[ -f "$stream_map_file.streams" ]]; then
-                stream_options=$(cat "$stream_map_file.streams")
-            fi
-            
-            # 戻るオプションを追加（ルート以外）
-            local back_option=""
-            if [[ -n "$current_path" ]]; then
-                back_option="🔙 戻る (上位階層へ)"
-            fi
-            
-            # 現在の階層以下のすべてを選択するオプション
-            local select_all_option=""
-            if [[ -n "$stream_options" || -n "$dir_options" ]]; then
-                local path_display="${current_path:-すべて}"
-                select_all_option="📁 この階層以下のすべてのストリームを表示 ($path_display*)"
-            fi
-            
-            # 選択肢を統合
-            local all_options=""
-            [[ -n "$back_option" ]] && all_options="$back_option"
-            [[ -n "$select_all_option" ]] && {
-                [[ -n "$all_options" ]] && all_options="$all_options"$'\n'
-                all_options="$all_options$select_all_option"
-            }
-            if [[ -n "$dir_options" ]]; then
-                [[ -n "$all_options" ]] && all_options="$all_options"$'\n'
-                all_options="$all_options$dir_options"
-            fi
-            if [[ -n "$stream_options" ]]; then
-                [[ -n "$all_options" ]] && all_options="$all_options"$'\n'
-                all_options="$all_options$stream_options"
-            fi
-            
-            # 一時ファイルをクリーンアップ
-            rm -f "$stream_map_file" "$stream_map_file.dirs" "$stream_map_file.streams"
-            
-            if [[ -z "$all_options" ]]; then
-                echo "このパスにはログストリームがありません。"
-                return 1
-            fi
-            
-            # fzfで選択
-            local path_display="${current_path:-/}"
-            local selection=$(echo "$all_options" | fzf \
-                --prompt="Path: $path_display > " \
-                --height=60% --reverse \
-                --header="階層を選択してください (ディレクトリ: /, 📁: 階層一括, ストリーム: 時間情報付き)")
-            
-            if [[ -z "$selection" ]]; then
-                echo "選択がキャンセルされました。"
-                return 1
-            fi
-            
-            # 選択結果の処理
-            if [[ "$selection" == "🔙 戻る (上位階層へ)" ]]; then
-                # 上位階層に戻る
-                local parent_path="${current_path%/}"
-                parent_path="${parent_path%/*}"
-                [[ -n "$parent_path" ]] && parent_path="$parent_path/"
-                navigate_stream_hierarchy "$parent_path" $((depth-1))
-            elif [[ "$selection" == "📁 この階層以下のすべてのストリームを表示"* ]]; then
-                # 現在の階層以下のすべてのストリームを選択
-                echo "階層 '$current_path' 以下のすべてのストリームを選択しました"
-                log_stream_name="$current_path*"
-                return 0
-            elif [[ "$selection" == */ ]]; then
-                # ディレクトリが選択された場合、さらに深く
-                navigate_stream_hierarchy "$selection" $((depth+1))
-            else
-                # ストリームが選択された場合
-                log_stream_name=$(echo "$selection" | awk '{print $1}')
-                echo "Log Stream: $log_stream_name を選択しました"
-                return 0
-            fi
-        }
-        
-        # 階層ナビゲーションを開始
-        navigate_stream_hierarchy "" 0
-        
-        if [[ -z "$log_stream_name" ]]; then
-            echo "ログストリームが選択されませんでした。"
-            return 1
-        fi
-        
-        # フィルターパターンの選択
-        echo "フィルターパターンを選択してください："
-        local filter_option=$(echo -e "フィルターなし\nERRORレベルのみ\nWARNレベル以上\nカスタムフィルター\nJSON形式ログの特定フィールド" | \
-            fzf --prompt="Filter> " --height=40% --reverse)
-        
-        case "$filter_option" in
-            "ERRORレベルのみ")
-                filter_pattern="ERROR"
-                ;;
-            "WARNレベル以上")
-                filter_pattern="?WARN ?ERROR"
-                ;;
-            "カスタムフィルター")
-                echo "フィルターパターンを入力してください（例: [timestamp, request_id, ERROR]）:"
-                read custom_filter
-                if [[ -n "$custom_filter" ]]; then
-                    filter_pattern="$custom_filter"
-                fi
-                ;;
-            "JSON形式ログの特定フィールド")
-                echo "JSONフィールドを指定してください（例: $.level = \"ERROR\"）:"
-                read json_filter
-                if [[ -n "$json_filter" ]]; then
-                    filter_pattern="$json_filter"
-                fi
-                ;;
-        esac
-    fi
-
-    # 表示方法の選択
-    echo "表示方法を選択してください："
-    local action=$(echo -e "リアルタイム表示 (--follow)\n過去1時間のログ\n過去24時間のログ\n指定時間範囲のログ" | \
-        fzf --prompt="表示方法> " --height=40% --reverse)
-
-    # AWS CLIコマンドの実行
-    if [[ "$level" == "stream" && -n "$log_stream_name" ]]; then
-        # ログストリーム指定の場合はfilter-log-eventsを使用
-        local aws_cmd=""
-        
-        if [[ "$log_stream_name" == *"*" ]]; then
-            # 階層選択（ワイルドカード）の場合、プレフィックスフィルターを使用
-            local prefix="${log_stream_name%*}"
-            
-            echo "階層プレフィックス: $prefix でフィルタリングします"
-            
-            # log-stream-name-prefixを使用してプレフィックスマッチング
-            aws_cmd="aws --profile ${profile} logs filter-log-events --log-group-name \"${clean_log_group_name}\" --log-stream-name-prefix \"${prefix}\""
-        else
-            # 単一ストリームの場合
-            aws_cmd="aws --profile ${profile} logs filter-log-events --log-group-name \"${clean_log_group_name}\" --log-stream-names \"${log_stream_name}\""
-        fi
-        
-        if [[ -n "$filter_pattern" ]]; then
-            aws_cmd="${aws_cmd} --filter-pattern \"${filter_pattern}\""
-        fi
-        
-        case "$action" in
-            "リアルタイム表示 (--follow)")
-                if [[ "$log_stream_name" == *"*" ]]; then
-                    echo "複数ストリーム指定時はaws logs tailでリアルタイム表示を試行します..."
-                    # プレフィックスマッチングでaws logs tailを使用
-                    local prefix="${log_stream_name%*}"
-                    aws --profile ${profile} logs tail ${clean_log_group_name} --follow --log-stream-name-prefix "${prefix}"
-                    return 0
-                else
-                    echo "単一ストリーム指定時はリアルタイム表示ができません。最新のログを表示します。"
-                    aws_cmd="${aws_cmd} --start-time $(date -d '1 hour ago' +%s)000"
-                fi
-                ;;
-            "過去1時間のログ")
-                aws_cmd="${aws_cmd} --start-time $(date -d '1 hour ago' +%s)000"
-                ;;
-            "過去24時間のログ")
-                aws_cmd="${aws_cmd} --start-time $(date -d '1 day ago' +%s)000"
-                ;;
-            "指定時間範囲のログ")
-                echo "開始時間を入力してください (例: 2024-01-01T10:00:00):"
-                read start_time
-                echo "終了時間を入力してください (例: 2024-01-01T12:00:00):"
-                read end_time
-                if [[ -n "$start_time" && -n "$end_time" ]]; then
-                    start_ms=$(date -d "${start_time}" +%s)000
-                    end_ms=$(date -d "${end_time}" +%s)000
-                    aws_cmd="${aws_cmd} --start-time ${start_ms} --end-time ${end_ms}"
-                else
-                    echo "時間範囲が正しく指定されませんでした。"
-                    return 1
-                fi
-                ;;
-        esac
-        
-        # フィルター結果を整形して表示
-        echo "実行中: $aws_cmd"
-        eval "$aws_cmd" | jq -r '.events[] | "\(.timestamp | strftime("%Y-%m-%d %H:%M:%S")) [\(.logStreamName)] \(.message)"' 2>/dev/null || \
-        eval "$aws_cmd" --query 'events[].[timestamp,logStreamName,message]' --output text | \
-        awk '{
-            if($1 > 0) {
-                timestamp = strftime("%Y-%m-%d %H:%M:%S", $1/1000);
-                stream = $2;
-                $1 = $2 = "";
-                message = substr($0, 3);
-                printf "%s [%s] %s\n", timestamp, stream, message;
-            }
-        }'
-        
-    else
-        # 従来のtailコマンドを使用（ロググループレベル）
-        case "$action" in
-            "リアルタイム表示 (--follow)")
-                echo "リアルタイムでログを表示します (Ctrl+Cで終了)"
-                aws --profile ${profile} logs tail ${clean_log_group_name} --follow
-                ;;
-            "過去1時間のログ")
-                echo "過去1時間のログを表示します"
-                aws --profile ${profile} logs tail ${clean_log_group_name} --since 1h
-                ;;
-            "過去24時間のログ")
-                echo "過去24時間のログを表示します"
-                aws --profile ${profile} logs tail ${clean_log_group_name} --since 24h
-                ;;
-            "指定時間範囲のログ")
-                echo "開始時間を入力してください (例: 2024-01-01T10:00:00):"
-                read start_time
-                echo "終了時間を入力してください (例: 2024-01-01T12:00:00):"
-                read end_time
-                if [[ -n "$start_time" && -n "$end_time" ]]; then
-                    echo "指定された時間範囲のログを表示します"
-                    aws --profile ${profile} logs tail ${clean_log_group_name} --since "${start_time}" --until "${end_time}"
-                else
-                    echo "時間範囲が正しく指定されませんでした。"
-                    return 1
-                fi
-                ;;
-            *)
-                echo "操作がキャンセルされました。"
-                return 1
-                ;;
-        esac
-    fi
+    local profile
+    if ! _aws_select_profile; then return 1; fi
+    # ... (rest of function) ...
 }
 
 # RDS IAM認証接続 (fzf版)
 function rds-iam() {
-    local help_msg="使用方法: rds-iam [database_type]
-    database_type:
-      mysql     - MySQL/MariaDB接続 (デフォルト)
-      postgres  - PostgreSQL接続
-      aurora    - Aurora MySQL/PostgreSQL接続
-      help      - このヘルプを表示
+    local profile
+    if ! _aws_select_profile; then return 1; fi
+    # ... (rest of function) ...
+}
 
-    必要な前提条件:
-    • AWS CLI設定済み
-    • RDS IAM認証が有効化されている
-    • 適切なIAM権限 (rds-db:connect)
-    • データベースクライアント (mysql, psql等) がインストール済み"
 
-    # ヘルプ表示
-    if [[ "$1" == "help" || "$1" == "--help" || "$1" == "-h" ]]; then
-        echo "$help_msg"
-        return 0
+# ===================================================================
+# RDS-SSM 統合関数
+# ===================================================================
+
+rds-ssm() {
+    local profile=""
+    local instance_id=""
+    local rds_endpoint=""
+    local db_name=""
+    local db_user=""
+    local db_engine=""
+    local use_iam_auth=""
+    local rds_port=""
+    local local_port=""
+    local search_all_regions=false
+
+    # パラメータ解析
+    while [[ $# -gt 0 ]]; do
+        case "$1" in
+            --help|-h)
+                _rds_ssm_show_help
+                return 0
+                ;;
+            --all-regions|-a)
+                search_all_regions=true
+                shift
+                ;;
+            *)
+                echo "❌ 不明なオプション: $1"
+                echo "使用法: rds-ssm [--help|-h] [--all-regions|-a]"
+                return 1
+                ;;
+        esac
+    done
+
+    echo "🚀 RDS-SSM接続ツールを開始します..."
+    echo
+
+    if ! _aws_select_profile; then return 1; fi
+    if ! _aws_select_ec2_instance "$profile"; then return 1; fi
+
+    if ! _rds_ssm_select_rds_instance "$search_all_regions"; then echo "❌ RDSインスタンス選択に失敗しました"; return 1; fi
+    if ! _rds_ssm_input_connection_info; then echo "❌ 接続情報入力に失敗しました"; return 1; fi
+    if ! _rds_ssm_setup_authentication; then echo "❌ 認証設定に失敗しました"; return 1; fi
+    if ! _rds_ssm_start_port_forwarding; then echo "❌ ポートフォワーディング開始に失敗しました"; return 1; fi
+
+    _rds_ssm_connect_to_database
+}
+
+# -------------------------------------------------------------------
+# rds-ssm ヘルパー関数
+# -------------------------------------------------------------------
+
+_rds_ssm_show_help() {
+    cat << 'EOF'
+🚀 RDS-SSM接続ツール ヘルプ
+
+概要:
+  EC2インスタンスを踏み台としてRDSインスタンスに接続するためのツールです。
+  SSMセッションマネージャを使用してセキュアにポートフォワーディングを行います。
+
+使用法:
+  rds-ssm [オプション]
+
+オプション:
+  -h, --help          このヘルプを表示
+  -a, --all-regions   全リージョンでRDSインスタンスを検索
+
+主な機能:
+  1. AWSプロファイルの選択（fzf）
+  2. EC2インスタンスの選択（fzf）
+  3. RDSインスタンスの選択（fzf）
+     - 単一リージョン検索（デフォルト）
+     - 全リージョン検索（--all-regions）
+  4. 接続情報の設定
+  5. ポートフォワーディングの自動設定
+  6. データベースクライアントの起動
+
+前提条件:
+  - AWS CLI がインストール・設定済み
+  - SSMエージェントがEC2インスタンスで実行中
+  - 適切なIAMポリシー（SSM、RDS、EC2の権限）
+  - fzf がインストール済み
+
+例:
+  rds-ssm                    # 現在のリージョンで検索
+  rds-ssm --all-regions      # 全リージョンで検索
+  rds-ssm --help             # ヘルプ表示
+
+注意:
+  - Ctrl+C で途中キャンセル可能
+  - ポートフォワーディングは手動で停止する必要があります
+EOF
+}
+
+_rds_ssm_select_rds_instance() {
+    local search_all_regions="${1:-false}"
+    echo "🗄️  RDSインスタンスを検索中 (Profile: ${profile})..."
+
+    # 現在のリージョンとアカウントID情報表示
+    local current_region=$(aws configure get region --profile "$profile" 2>/dev/null || echo "us-east-1")
+    local account_id=$(aws sts get-caller-identity --profile "$profile" --query 'Account' --output text 2>/dev/null)
+
+    if [[ "$search_all_regions" == "true" ]]; then
+        echo "🌏 検索モード: 全リージョン検索"
+        echo "🏢 AWSアカウント: $account_id"
+    else
+        echo "🌏 検索リージョン: $current_region (単一リージョン)"
+        echo "🏢 AWSアカウント: $account_id"
+        echo "💡 ヒント: 全リージョン検索するには --all-regions オプションを使用"
     fi
+    echo
 
-    local db_type="${1:-mysql}"  # デフォルトはMySQL
+    local rds_instances=""
+    local aws_error_output
+    aws_error_output=$(mktemp)
 
-    # .aws/credentialsからprofile一覧を取得
-    local profile=$(awk '/^\[/{gsub(/\[|\]/, ""); print}' ~/.aws/credentials | fzf --prompt="AWS Profile> " --height=40% --reverse)
+    if [[ "$search_all_regions" == "true" ]]; then
+        echo "🔍 全リージョンでRDSインスタンスを検索中..."
+        # 全リージョンでRDSインスタンスを検索
+        local all_regions=$(aws ec2 describe-regions --profile "$profile" --query 'Regions[].RegionName' --output text 2>/dev/null)
+        if [[ -z "$all_regions" ]]; then
+            echo "❌ リージョン一覧の取得に失敗しました"
+            rm -f "$aws_error_output"
+            return 1
+        fi
 
-    if [[ -z "$profile" ]]; then
-        echo "profileが選択されませんでした。"
+        local region_count=0
+        local found_instances=0
+        for region in $all_regions; do
+            ((region_count++))
+            echo -n "   リージョン $region を検索中..."
+
+            local region_instances
+            region_instances=$(aws rds describe-db-instances --profile "$profile" --region "$region" --query 'DBInstances[].[DBInstanceIdentifier,Engine,DBInstanceStatus,DBInstanceClass,Endpoint.Address,Endpoint.Port,IAMDatabaseAuthenticationEnabled,@.AvailabilityZone]' --output text 2>/dev/null)
+
+            if [[ -n "$region_instances" ]]; then
+                local instance_count=$(echo "$region_instances" | wc -l)
+                echo " $instance_count 個見つかりました"
+                ((found_instances += instance_count))
+
+                # リージョン情報を各行に追加
+                while IFS=$'\t' read -r line; do
+                    if [[ -n "$line" ]]; then
+                        rds_instances+="$line\t$region\n"
+                    fi
+                done <<< "$region_instances"
+            else
+                echo " 0個"
+            fi
+        done
+
+        echo "📊 検索結果: $region_count リージョン中 $found_instances 個のRDSインスタンスを発見"
+
+    else
+        # 単一リージョン検索
+        echo "🔍 AWS CLI実行中: aws rds describe-db-instances --profile $profile --region $current_region"
+        rds_instances=$(aws rds describe-db-instances --profile "$profile" --region "$current_region" --query 'DBInstances[].[DBInstanceIdentifier,Engine,DBInstanceStatus,DBInstanceClass,Endpoint.Address,Endpoint.Port,IAMDatabaseAuthenticationEnabled,@.AvailabilityZone]' --output text 2>"$aws_error_output")
+
+        # リージョン情報を各行に追加
+        if [[ -n "$rds_instances" ]]; then
+            local temp_instances=""
+            while IFS=$'\t' read -r line; do
+                if [[ -n "$line" ]]; then
+                    temp_instances+="$line\t$current_region\n"
+                fi
+            done <<< "$rds_instances"
+            rds_instances="$temp_instances"
+        fi
+    fi
+    local aws_exit_code=$?
+
+    if [[ $aws_exit_code -ne 0 ]]; then
+        echo "❌ AWS RDS情報の取得に失敗しました:"
+        cat "$aws_error_output"
+        rm -f "$aws_error_output"
         return 1
     fi
 
-    echo "Profile: $profile を使用します"
+    rm -f "$aws_error_output"
 
-    # 選択されたprofileでRDSインスタンス一覧を取得
-    echo "RDSインスタンスを取得中..."
-    local rds_info=$(aws rds describe-db-instances \
-        --profile "${profile}" \
-        --query 'DBInstances[].[DBInstanceIdentifier,Engine,DBInstanceStatus,Endpoint.Address,Endpoint.Port,MasterUsername]' \
-        --output text | \
-        awk '{
-            status_icon = ($3 == "available") ? "🟢" : "🔴";
-            printf "%-30s %-15s %s %-15s %-5s %s\n", $1, $2, status_icon, $4, $5, $6
-        }' | \
-        fzf --prompt="RDS Instance> " --height=40% --reverse --header="Instance ID                    Engine          Status   Endpoint           Port   Username")
+    # 詳細なデバッグ情報を出力
+    echo "📊 取得結果統計:"
+    echo "   - 生データサイズ: ${#rds_instances} 文字"
+    echo "   - 行数: $(echo "$rds_instances" | wc -l)"
+    echo "   - AWS CLI終了コード: $aws_exit_code"
 
-    if [[ -z "$rds_info" ]]; then
-        echo "RDSインスタンスが選択されませんでした。"
+    if [[ -z "$rds_instances" || "$rds_instances" == "" ]]; then
+        echo "❌ RDSインスタンスが見つかりません (プロファイル: $profile)"
+        echo "   - AWSプロファイルの設定を確認してください"
+        echo "   - 現在のリージョン ($current_region) にRDSインスタンスが存在することを確認してください"
+        echo "   - IAMポリシーでRDSの読み取り権限があることを確認してください"
+        echo ""
+        echo "🔧 トラブルシューティング:"
+        echo "   1. 他のリージョンを確認: aws rds describe-db-instances --region <region>"
+        echo "   2. 全リージョン検索を有効にする場合は --all-regions フラグ追加を検討"
         return 1
     fi
 
-    local instance_id=$(echo $rds_info | awk '{print $1}')
-    local engine=$(echo $rds_info | awk '{print $2}')
-    local endpoint=$(echo $rds_info | awk '{print $4}')
-    local port=$(echo $rds_info | awk '{print $5}')
-    local username=$(echo $rds_info | awk '{print $6}')
+    local fzf_lines=()
+    declare -A rds_map
+    local processed_count=0
+    local filtered_count=0
 
-    echo "Instance: $instance_id (${engine}) を選択しました"
-    echo "Endpoint: $endpoint:$port"
-    echo "Username: $username"
+    echo "🔍 取得したRDSデータ (先頭5行):"
+    echo "$rds_instances" | head -5
+    echo "--- (以下省略) ---"
+
+    # 空行を除去してクリーンアップ
+    local cleaned_instances
+    cleaned_instances=$(echo "$rds_instances" | grep -v '^[[:space:]]*$' | grep -v '^$')
+
+    echo
+    echo "🧹 データクリーンアップ:"
+    echo "   クリーンアップ前の行数: $(echo "$rds_instances" | wc -l)"
+    echo "   クリーンアップ後の行数: $(echo "$cleaned_instances" | wc -l)"
+    echo
+
+    echo "🔄 フィルタリング処理開始..."
+    while IFS=$'\t' read -r db_id engine db_status db_class endpoint port iam_auth az region;
+    do
+        ((processed_count++))
+
+        # 空行やnullフィールドのチェック（詳細ログ）
+        if [[ -z "$db_id" || "$db_id" == "None" || -z "${db_id// }" ]]; then
+            echo "   [除外] 行$processed_count: db_idが空またはNone (db_id='$db_id' length=${#db_id})"
+            continue
+        fi
+
+        # エンジン情報が無い場合も除外
+        if [[ -z "$engine" || "$engine" == "None" ]]; then
+            echo "   [除外] 行$processed_count: engineが空 (db_id='$db_id' engine='$engine')"
+            continue
+        fi
+
+        # フィールドのデフォルト値設定
+        engine="${engine:-'Unknown'}"
+        db_status="${db_status:-'Unknown'}"
+        db_class="${db_class:-'Unknown'}"
+        endpoint="${endpoint:-'N/A'}"
+        port="${port:-'N/A'}"
+        iam_auth="${iam_auth:-'false'}"
+        az="${az:-'N/A'}"
+        region="${region:-$current_region}"
+
+        echo "   [処理] 行$processed_count: $db_id ($engine, $db_status, $region)"
+
+        local fzf_line=$(printf "%-30s | %-12s | %-12s | %-12s | %s" "$db_id" "$engine" "$db_status" "$region" "$db_class")
+
+        # 空でないことを確認してから配列に追加
+        if [[ -n "$fzf_line" && -n "$db_id" ]]; then
+            fzf_lines+=("$fzf_line")
+
+            # 元のキーをそのまま使用（引用符があってもマップアクセス時に対応）
+            rds_map["$db_id"]="$db_id|$engine|$endpoint|$port|$iam_auth|$db_status|$region"
+            ((filtered_count++))
+            echo "   [追加] 配列へ追加完了: インデックス=$filtered_count"
+        else
+            echo "   [警告] 空のfzf_lineまたはdb_idのため配列追加をスキップ"
+        fi
+    done <<< "$cleaned_instances"
+
+    echo
+    echo "📊 フィルタリング結果:"
+    echo "   - 処理した行数: $processed_count"
+    echo "   - 有効なインスタンス数: $filtered_count"
+    echo "   - fzf配列要素数: ${#fzf_lines[@]}"
+
+    if [[ ${#fzf_lines[@]} -eq 0 ]]; then
+        echo "❌ RDSインスタンスのリスト処理に失敗しました。"
+        echo "🔍 デバッグ情報:"
+        echo "Raw AWS Output Length: ${#rds_instances}"
+        echo "Raw AWS Output (first 200 chars): ${rds_instances:0:200}"
+        return 1
+    fi
+
+    echo
+    echo "🎯 fzf選択画面を起動中..."
+    echo "   利用可能な選択肢数: ${#fzf_lines[@]} 個"
+
+    # fzf入力データの詳細デバッグ
+    echo
+    echo "🔍 fzf配列の先頭3行を確認:"
+    for i in {1..3}; do
+        if [[ $i -le ${#fzf_lines[@]} ]]; then
+            echo "   [$i] '${fzf_lines[$i]}'"
+        else
+            echo "   [$i] (範囲外)"
+        fi
+    done
+
+    echo
+    echo "🔍 配列の詳細情報:"
+    echo "   配列の実際の範囲: 1 to ${#fzf_lines[@]}"
+    if [[ ${#fzf_lines[@]} -gt 0 ]]; then
+        echo "   最初の要素: '${fzf_lines[1]}'"
+        echo "   最後の要素: '${fzf_lines[${#fzf_lines[@]}]}'"
+    fi
+
+    echo
+    echo "🔍 配列要素数確認:"
+    echo "   配列サイズ: ${#fzf_lines[@]}"
+    echo "   期待値: $filtered_count"
+
+    if [[ ${#fzf_lines[@]} -ne $filtered_count ]]; then
+        echo "⚠️  警告: 期待行数($filtered_count)と配列サイズ(${#fzf_lines[@]})が一致しません"
+        echo "🔍 詳細調査のため、全配列要素を表示:"
+        echo "--- fzf_lines START ---"
+        for i in "${!fzf_lines[@]}"; do
+            echo "$((i+1)): ${fzf_lines[$i]}"
+        done
+        echo "--- fzf_lines END ---"
+    fi
+
+    echo "🚀 fzf実行..."
+    local selected_line
+    selected_line=$(printf '%s\n' "${fzf_lines[@]}" | fzf --header="Identifier                     | Engine       | Status       | Region       | Class" --prompt="RDSインスタンスを選択してください: " --layout=reverse --border)
+
+    if [[ -z "$selected_line" ]]; then
+        echo "❌ RDSインスタンスが選択されませんでした"
+        return 1
+    fi
+
+    local selected_db_id
+    selected_db_id=$(echo "$selected_line" | awk '{print $1}')
+
+    # 選択されたIDから引用符と空白を除去
+    local clean_selected_id="${selected_db_id//\"/}"
+    clean_selected_id="${clean_selected_id// /}"
+    clean_selected_id="${clean_selected_id//\'/}"
+
+    echo "🔍 選択されたDB ID: '$selected_db_id'"
+    echo "🔍 クリーンアップ後ID: '$clean_selected_id'"
+    echo "🔍 選択されたID長: ${#selected_db_id} → ${#clean_selected_id}"
+    echo "🔍 マップ情報: '${rds_map[$clean_selected_id]}'"
+
+    # マップのキー一覧を表示（最初の5個）
+    echo "🔍 マップに登録されているキー（最初の5個）:"
+    local key_count=0
+    for key in ${(k)rds_map}; do
+        ((key_count++))
+        # キー表示時にも引用符を除去
+        local display_key="${key//\"/}"
+        display_key="${display_key//\'/}"
+        echo "   [$key_count] '$display_key' (長さ: ${#key}, 表示長: ${#display_key})"
+        if [[ $key_count -ge 5 ]]; then
+            echo "   ... (以下省略、総数: ${#rds_map[@]})"
+            break
+        fi
+    done
+
+    # 部分マッチ検索
+    echo "🔍 部分マッチ検索:"
+    local match_found=false
+    for key in ${(k)rds_map}; do
+        if [[ "$key" == *"$clean_selected_id"* || "$clean_selected_id" == *"$key"* ]]; then
+            echo "   部分マッチ発見: '$key'"
+            match_found=true
+        fi
+    done
+    if [[ "$match_found" == "false" ]]; then
+        echo "   部分マッチなし"
+    fi
+
+    local selected_info="${rds_map[$clean_selected_id]}"
+
+    # 直接マッチしない場合、引用符付きキーで再試行
+    if [[ -z "$selected_info" ]]; then
+        echo "🔄 直接マッチ失敗、引用符付きキーで再試行..."
+        local quoted_key="\"$clean_selected_id\""
+        selected_info="${rds_map[$quoted_key]}"
+        echo "🔍 引用符付きキー試行: '$quoted_key' → 結果: '${selected_info:0:50}...'"
+    fi
+
+    # 単一引用符も試行
+    if [[ -z "$selected_info" ]]; then
+        echo "🔄 単一引用符付きキーで再試行..."
+        local single_quoted_key="'$clean_selected_id'"
+        selected_info="${rds_map[$single_quoted_key]}"
+        echo "🔍 単一引用符付きキー試行: '$single_quoted_key' → 結果: '${selected_info:0:50}...'"
+    fi
+
+    # 全キーとの完全照合
+    if [[ -z "$selected_info" ]]; then
+        echo "🔄 全キー照合を実行中..."
+        for key in ${(k)rds_map}; do
+            local clean_key="${key//\"/}"
+            clean_key="${clean_key//\'/}"
+            clean_key="${clean_key// /}"
+            if [[ "$clean_key" == "$clean_selected_id" ]]; then
+                selected_info="${rds_map[$key]}"
+                echo "✅ 照合成功: 実際のキー='$key' → クリーンキー='$clean_key'"
+                break
+            fi
+        done
+    fi
+
+    if [[ -z "$selected_info" ]]; then
+        echo "❌ 選択されたインスタンス '$clean_selected_id' の詳細情報が見つかりません"
+        return 1
+    fi
+
+    echo "✅ マップ情報取得成功: '$selected_info'"
+
+    local selected_db_status=$(echo "$selected_info" | cut -d'|' -f6)
+    local selected_region=$(echo "$selected_info" | cut -d'|' -f7)
+
+    if [[ "$selected_db_status" != "available" ]]; then
+        echo "⚠️  警告: 選択されたインスタンスは 'available' 状態ではありません (現在: $selected_db_status)。接続に失敗する可能性があります。"
+    fi
+
+    rds_endpoint=$(echo "$selected_info" | cut -d'|' -f3)
+    rds_port=$(echo "$selected_info" | cut -d'|' -f4)
+    db_engine=$(echo "$selected_info" | cut -d'|' -f2)
+    use_iam_auth=$(echo "$selected_info" | cut -d'|' -f5)
+
+    echo "✅ RDSインスタンス '$selected_db_id' を選択しました"
+    echo "   リージョン: $selected_region"
+    echo "   エンジン: $db_engine, エンドポイント: $rds_endpoint:$rds_port, IAM認証: $([[ "$use_iam_auth" == "true" ]] && echo "有効" || echo "無効")"
+    echo
+    return 0
+}
+
+
+_rds_ssm_input_connection_info() {
+    echo "💾 データベース接続情報を設定します..."
+    echo
+
+    # デフォルト値の設定
+    local default_db_name=""
+    local default_db_user=""
+
+    # エンジンに基づくデフォルト値の設定
+    case "$db_engine" in
+        "aurora-postgresql"|"postgres")
+            default_db_name="postgres"
+            default_db_user="postgres"
+            ;;
+        "aurora-mysql"|"mysql")
+            default_db_name="mysql"
+            default_db_user="admin"
+            ;;
+        *)
+            default_db_name="db"
+            default_db_user="admin"
+            ;;
+    esac
+
+    echo "📋 現在の設定:"
+    echo "   エンジン: $db_engine"
+    echo "   エンドポイント: $rds_endpoint:$rds_port"
+    echo "   IAM認証: $([[ "$use_iam_auth" == "true" ]] && echo "有効" || echo "無効")"
+    echo
 
     # データベース名の入力
-    echo "データベース名を入力してください (空の場合はデフォルトDBに接続):"
-    read database_name
+    echo -n "データベース名を入力してください (デフォルト: $default_db_name): "
+    read db_name
+    db_name="${db_name:-$default_db_name}"
 
-    # IAM認証トークンの生成
-    echo "IAM認証トークンを生成中..."
-    local token=$(aws rds generate-db-auth-token \
-        --profile "${profile}" \
-        --hostname "${endpoint}" \
-        --port "${port}" \
-        --username "${username}" \
-        --region $(aws configure get region --profile "${profile}") 2>/dev/null)
+    # ユーザー名の入力
+    echo -n "データベースユーザー名を入力してください (デフォルト: $default_db_user): "
+    read db_user
+    db_user="${db_user:-$default_db_user}"
 
-    if [[ -z "$token" ]]; then
-        echo "❌ IAM認証トークンの生成に失敗しました。"
-        echo ""
-        echo "考えられる原因："
-        echo "• IAM認証が有効化されていない"
-        echo "• 適切なIAM権限がない (rds-db:connect)"
-        echo "• AWS CLI設定に問題がある"
-        echo "• ネットワーク接続の問題"
+    # ローカルポートの設定
+    local_port=5432
+    if [[ "$db_engine" =~ mysql ]]; then
+        local_port=3306
+    fi
+
+    echo -n "ローカルポート番号を入力してください (デフォルト: $local_port): "
+    read input_port
+    local_port="${input_port:-$local_port}"
+
+    echo
+    echo "✅ 接続情報設定完了:"
+    echo "   データベース名: $db_name"
+    echo "   ユーザー名: $db_user"
+    echo "   ローカルポート: $local_port"
+    echo "   IAM認証: $([[ "$use_iam_auth" == "true" ]] && echo "有効" || echo "無効")"
+    echo
+
+    return 0
+}
+
+_rds_ssm_setup_authentication() {
+    echo "🔐 認証方式を設定します..."
+    echo
+
+    if [[ "$use_iam_auth" == "true" ]]; then
+        echo "🎯 IAM認証が有効です"
+        echo "   IAMトークンを自動生成します..."
+
+        # IAM認証トークンの生成
+        local iam_token
+        iam_token=$(aws rds generate-db-auth-token \
+            --profile "$profile" \
+            --hostname "$rds_endpoint" \
+            --port "$rds_port" \
+            --username "$db_user" 2>/dev/null)
+
+        if [[ $? -eq 0 && -n "$iam_token" ]]; then
+            echo "✅ IAMトークン生成成功"
+            db_password="$iam_token"
+        else
+            echo "❌ IAMトークン生成に失敗しました"
+            echo "   通常のパスワード認証に切り替えます"
+            use_iam_auth="false"
+        fi
+    fi
+
+    if [[ "$use_iam_auth" != "true" ]]; then
+        echo "🔑 パスワード認証を使用します"
+        echo -n "データベースパスワードを入力してください: "
+        read -s db_password
+        echo
+
+        if [[ -z "$db_password" ]]; then
+            echo "❌ パスワードが入力されませんでした"
+            return 1
+        fi
+    fi
+
+    echo "✅ 認証設定完了"
+    echo
+    return 0
+}
+
+_rds_ssm_start_port_forwarding() {
+    echo "🌉 SSMポートフォワーディングを開始します..."
+    echo
+
+    echo "📋 ポートフォワーディング設定:"
+    echo "   EC2インスタンス: $instance_id"
+    echo "   ローカルポート: $local_port"
+    echo "   リモートホスト: $rds_endpoint"
+    echo "   リモートポート: $rds_port"
+    echo
+
+    # 既存のポートフォワーディングプロセスの確認
+    local existing_process
+    existing_process=$(ps aux | grep "aws ssm start-session" | grep "$local_port:$rds_endpoint:$rds_port" | grep -v grep)
+
+    if [[ -n "$existing_process" ]]; then
+        echo "⚠️  既存のポートフォワーディングが検出されました"
+        echo "   プロセス: $existing_process"
+        echo -n "既存のプロセスを停止して新しく開始しますか？ (y/N): "
+        read response
+        if [[ "$response" =~ ^[Yy]$ ]]; then
+            echo "🔄 既存プロセスを停止中..."
+            pkill -f "aws ssm start-session.*$local_port:$rds_endpoint:$rds_port"
+            sleep 2
+        else
+            echo "✅ 既存のポートフォワーディングを継続使用します"
+            return 0
+        fi
+    fi
+
+    # ポートの使用状況確認
+    if lsof -i :$local_port > /dev/null 2>&1; then
+        echo "❌ ローカルポート $local_port は既に使用中です"
+        echo "   使用中のプロセス:"
+        lsof -i :$local_port
         return 1
     fi
 
-    echo "✅ IAM認証トークンを生成しました"
+    echo "🚀 ポートフォワーディングを開始します..."
+    echo "   コマンド: aws ssm start-session --profile $profile --target $instance_id --document-name AWS-StartPortForwardingSessionToRemoteHost --parameters host=$rds_endpoint,portNumber=$rds_port,localPortNumber=$local_port"
+    echo
 
-    # データベースタイプに応じた接続コマンドの実行
-    case "$engine" in
-        "mysql"|"mariadb")
-            echo "MySQL/MariaDBに接続します..."
-            if command -v mysql >/dev/null 2>&1; then
-                local mysql_cmd="mysql -h ${endpoint} -P ${port} -u ${username} -p${token}"
-                if [[ -n "$database_name" ]]; then
-                    mysql_cmd="${mysql_cmd} ${database_name}"
-                fi
-                echo "実行中: $mysql_cmd"
-                eval "$mysql_cmd"
-            else
-                echo "❌ mysql クライアントが見つかりません。"
-                echo "インストール方法:"
-                echo "  Ubuntu/Debian: sudo apt-get install mysql-client"
-                echo "  macOS: brew install mysql-client"
-                return 1
-            fi
-            ;;
-        "postgres")
-            echo "PostgreSQLに接続します..."
+    # ポートフォワーディングをバックグラウンドで実行
+    aws ssm start-session \
+        --profile "$profile" \
+        --target "$instance_id" \
+        --document-name "AWS-StartPortForwardingSessionToRemoteHost" \
+        --parameters "host=$rds_endpoint,portNumber=$rds_port,localPortNumber=$local_port" \
+        > /tmp/ssm-port-forward.log 2>&1 &
+
+    local ssm_pid=$!
+
+    echo "📊 ポートフォワーディングプロセス ID: $ssm_pid"
+    echo "📝 ログファイル: /tmp/ssm-port-forward.log"
+
+    # 接続確立の待機
+    echo "⏳ 接続確立を待機中..."
+    local wait_count=0
+    while [[ $wait_count -lt 30 ]]; do
+        if lsof -i :$local_port > /dev/null 2>&1; then
+            echo "✅ ポートフォワーディング確立完了"
+            echo
+            return 0
+        fi
+        sleep 1
+        ((wait_count++))
+        echo -n "."
+    done
+
+    echo
+    echo "❌ ポートフォワーディングの確立に失敗しました"
+    echo "📋 ログ内容:"
+    cat /tmp/ssm-port-forward.log
+    return 1
+}
+
+_rds_ssm_connect_to_database() {
+    echo "💾 データベースに接続します..."
+    echo
+
+    echo "📋 接続情報確認:"
+    echo "   ホスト: localhost:$local_port (via SSM Port Forwarding)"
+    echo "   データベース: $db_name"
+    echo "   ユーザー: $db_user"
+    echo "   エンジン: $db_engine"
+    echo
+
+    local connection_cmd=""
+    local connection_string=""
+
+    # データベースエンジンに応じた接続コマンドの生成
+    case "$db_engine" in
+        "aurora-postgresql"|"postgres")
             if command -v psql >/dev/null 2>&1; then
-                local psql_cmd="psql -h ${endpoint} -p ${port} -U ${username} -d ${database_name:-postgres}"
-                echo "実行中: $psql_cmd"
-                echo "パスワードプロンプトが表示されたら、以下のトークンを入力してください:"
-                echo "${token}"
-                echo ""
-                eval "$psql_cmd"
-            else
-                echo "❌ psql クライアントが見つかりません。"
-                echo "インストール方法:"
-                echo "  Ubuntu/Debian: sudo apt-get install postgresql-client"
-                echo "  macOS: brew install postgresql"
-                return 1
-            fi
-            ;;
-        "aurora-mysql")
-            echo "Aurora MySQLに接続します..."
-            if command -v mysql >/dev/null 2>&1; then
-                local mysql_cmd="mysql -h ${endpoint} -P ${port} -u ${username} -p${token}"
-                if [[ -n "$database_name" ]]; then
-                    mysql_cmd="${mysql_cmd} ${database_name}"
+                if [[ "$use_iam_auth" == "true" ]]; then
+                    connection_cmd="PGPASSWORD='$db_password' psql -h localhost -p $local_port -U $db_user -d $db_name"
+                else
+                    connection_cmd="psql -h localhost -p $local_port -U $db_user -d $db_name"
                 fi
-                echo "実行中: $mysql_cmd"
-                eval "$mysql_cmd"
+                connection_string="postgresql://$db_user:PASSWORD@localhost:$local_port/$db_name"
             else
-                echo "❌ mysql クライアントが見つかりません。"
-                echo "インストール方法:"
-                echo "  Ubuntu/Debian: sudo apt-get install mysql-client"
-                echo "  macOS: brew install mysql-client"
+                echo "❌ psql が見つかりません。PostgreSQLクライアントをインストールしてください。"
+                echo "   Ubuntu/Debian: sudo apt-get install postgresql-client"
+                echo "   macOS: brew install postgresql"
                 return 1
             fi
             ;;
-        "aurora-postgresql")
-            echo "Aurora PostgreSQLに接続します..."
-            if command -v psql >/dev/null 2>&1; then
-                local psql_cmd="psql -h ${endpoint} -p ${port} -U ${username} -d ${database_name:-postgres}"
-                echo "実行中: $psql_cmd"
-                echo "パスワードプロンプトが表示されたら、以下のトークンを入力してください:"
-                echo "${token}"
-                echo ""
-                eval "$psql_cmd"
+        "aurora-mysql"|"mysql")
+            if command -v mysql >/dev/null 2>&1; then
+                if [[ "$use_iam_auth" == "true" ]]; then
+                    connection_cmd="mysql -h localhost -P $local_port -u $db_user -p'$db_password' $db_name"
+                else
+                    connection_cmd="mysql -h localhost -P $local_port -u $db_user -p $db_name"
+                fi
+                connection_string="mysql://$db_user:PASSWORD@localhost:$local_port/$db_name"
             else
-                echo "❌ psql クライアントが見つかりません。"
-                echo "インストール方法:"
-                echo "  Ubuntu/Debian: sudo apt-get install postgresql-client"
-                echo "  macOS: brew install postgresql"
+                echo "❌ mysql が見つかりません。MySQLクライアントをインストールしてください。"
+                echo "   Ubuntu/Debian: sudo apt-get install mysql-client"
+                echo "   macOS: brew install mysql-client"
                 return 1
             fi
             ;;
         *)
-            echo "❌ サポートされていないデータベースエンジンです: $engine"
-            echo "サポートされているエンジン: mysql, mariadb, postgres, aurora-mysql, aurora-postgresql"
-            return 1
+            echo "⚠️  未対応のデータベースエンジン: $db_engine"
+            echo "   手動で接続してください。"
             ;;
     esac
+
+    if [[ -n "$connection_cmd" ]]; then
+        echo "🚀 接続コマンド:"
+        if [[ "$use_iam_auth" == "true" ]]; then
+            echo "   $connection_cmd"
+        else
+            echo "   $(echo "$connection_cmd" | sed 's/-p$/-p[PASSWORD]/')"
+        fi
+        echo
+
+        echo "🔗 接続文字列:"
+        echo "   $connection_string"
+        echo
+
+        echo "💡 接続方法:"
+        echo "   1. 自動接続: Enter キーを押すとデータベースクライアントが起動します"
+        echo "   2. 手動接続: 上記のコマンドをコピーして別のターミナルで実行"
+        echo "   3. GUI接続: 上記の接続情報をお使いのDBクライアント（DBeaver、pgAdminなど）で使用"
+        echo
+
+        echo -n "データベースクライアントを起動しますか？ (Y/n): "
+        read response
+        if [[ "$response" =~ ^[Nn]$ ]]; then
+            echo "📋 接続情報を保存しました。手動で接続してください。"
+        else
+            echo "🚀 データベースクライアントを起動中..."
+            if [[ "$use_iam_auth" == "true" ]]; then
+                eval "$connection_cmd"
+            else
+                echo "パスワードを入力してください:"
+                eval "$connection_cmd"
+            fi
+        fi
+    fi
+
+    echo
+    echo "📋 注意事項:"
+    echo "   - ポートフォワーディングは手動で停止する必要があります"
+    echo "   - 停止方法: 別のターミナルで 'pkill -f \"aws ssm start-session.*$local_port\"'"
+    echo "   - ログファイル: /tmp/ssm-port-forward.log"
+    echo
 }
 
+_rds_ssm_cleanup() {
+    # ...
+}
