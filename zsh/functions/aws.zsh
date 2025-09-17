@@ -145,6 +145,7 @@ rds-ssm() {
     local local_port=""
     local search_all_regions=false
     local connectable_only=true  # デフォルトで接続可能のみ表示
+    local parallel_processing=true  # デフォルトで並列実行
 
     # ポートフォワーディングプロセス管理用グローバル変数
     export RDS_SSM_PORT_FORWARD_PID=""
@@ -173,9 +174,17 @@ rds-ssm() {
                 connectable_only=false
                 shift
                 ;;
+            --parallel|-p)
+                parallel_processing=true
+                shift
+                ;;
+            --sequential|--no-parallel)
+                parallel_processing=false
+                shift
+                ;;
             *)
                 echo "❌ 不明なオプション: $1"
-                echo "使用法: rds-ssm [--help|-h] [--all-regions|-a] [--connectable-only|-c] [--show-all|-s]"
+                echo "使用法: rds-ssm [--help|-h] [--all-regions|-a] [--connectable-only|-c] [--show-all|-s] [--parallel|-p] [--sequential]"
                 return 1
                 ;;
         esac
@@ -434,8 +443,10 @@ _rds_ssm_select_rds_instance() {
         return 1
     fi
 
-    local fzf_lines=()
-    declare -A rds_map
+    # グローバル配列の宣言（並列処理でも参照可能）
+    declare -ga fzf_lines
+    declare -gA rds_map
+    fzf_lines=()
     local processed_count=0
     local filtered_count=0
 
@@ -453,8 +464,28 @@ _rds_ssm_select_rds_instance() {
     echo "   クリーンアップ後の行数: $(echo "$cleaned_instances" | wc -l)"
     echo
 
-    echo "🔄 フィルタリング処理開始..."
-    while IFS=$'\t' read -r db_id engine db_status db_class endpoint port iam_auth az region;
+    # 並列処理または逐次処理の選択
+    if [[ "$parallel_processing" == "true" ]]; then
+        echo "⚡ 並列フィルタリング処理を開始..."
+        # cleaned_instancesをグローバル変数として利用可能にする
+        export RDS_SSM_CLEANED_INSTANCES="$cleaned_instances"
+        _rds_ssm_parallel_process_manager "$cleaned_instances"
+        local processed_count=$total_jobs
+        local filtered_count=${#fzf_lines[@]}
+
+        # 並列処理後のrds_map状態確認
+        echo "🔍 並列処理完了後のrds_map状態:"
+        echo "   rds_mapキー数: ${#rds_map[@]}"
+        local debug_count=0
+        for key in ${(k)rds_map}; do
+            ((debug_count++))
+            if [[ $debug_count -le 3 ]]; then
+                echo "   [$debug_count] キー='$key' 値先頭='${rds_map[$key]:0:50}...'"
+            fi
+        done
+    else
+        echo "🔄 逐次フィルタリング処理を開始..."
+        while IFS=$'\t' read -r db_id engine db_status db_class endpoint port iam_auth az region;
     do
         ((processed_count++))
 
@@ -548,6 +579,7 @@ _rds_ssm_select_rds_instance() {
             echo "   [警告] 配列追加をスキップ (空のfzf_line or db_id or フィルタ除外)"
         fi
     done <<< "$cleaned_instances"
+    fi  # 並列/逐次処理の終了
 
     echo
     echo "📊 フィルタリング結果:"
@@ -558,6 +590,11 @@ _rds_ssm_select_rds_instance() {
         echo "   - フィルタモード: 接続可能のみ [デフォルト]"
     else
         echo "   - フィルタモード: 全RDS表示 [--show-all]"
+    fi
+    if [[ "$parallel_processing" == "true" ]]; then
+        echo "   - 処理方式: ⚡ 並列実行 [高速モード]"
+    else
+        echo "   - 処理方式: 🔄 逐次実行 [デバッグモード]"
     fi
 
     # VPC最適化効果の表示
@@ -644,6 +681,7 @@ _rds_ssm_select_rds_instance() {
     echo "🔍 クリーンアップ後ID: '$clean_selected_id'"
     echo "🔍 選択されたID長: ${#selected_db_id} → ${#clean_selected_id}"
     echo "🔍 マップ情報: '${rds_map[$clean_selected_id]}'"
+    echo "🔍 総rds_mapキー数: ${#rds_map[@]}"
 
     # マップのキー一覧を表示（最初の5個）
     echo "🔍 マップに登録されているキー（最初の5個）:"
@@ -654,6 +692,11 @@ _rds_ssm_select_rds_instance() {
         local display_key="${key//\"/}"
         display_key="${display_key//\'/}"
         echo "   [$key_count] '$display_key' (長さ: ${#key}, 表示長: ${#display_key})"
+
+        # 完全一致チェック
+        if [[ "$key" == "$clean_selected_id" ]]; then
+            echo "       → ✅ 完全一致！ 値='${rds_map[$key]:0:80}...'"
+        fi
         if [[ $key_count -ge 5 ]]; then
             echo "   ... (以下省略、総数: ${#rds_map[@]})"
             break
@@ -940,9 +983,35 @@ _rds_ssm_input_connection_info() {
         local_port=3306
     fi
 
-    echo -n "ローカルポート番号を入力してください (デフォルト: $local_port): "
+    echo -n "ローカルポート番号を入力してください (デフォルト: $local_port, 'auto'で自動選択): "
     read input_port
-    local_port="${input_port:-$local_port}"
+
+    if [[ "$input_port" == "auto" ]]; then
+        echo "🔍 使用可能なポートを自動検索中..."
+        local auto_port=$local_port
+        local port_found=false
+
+        # 5432から5442まで順番にチェック
+        for ((port = $local_port; port <= $local_port + 10; port++)); do
+            if ! lsof -ti:$port >/dev/null 2>&1; then
+                auto_port=$port
+                port_found=true
+                echo "✅ 使用可能なポート $auto_port を発見"
+                break
+            else
+                echo "   ポート $port は使用中..."
+            fi
+        done
+
+        if [[ "$port_found" == "false" ]]; then
+            echo "⚠️  範囲内に使用可能なポートが見つかりません"
+            echo "   デフォルトポート $local_port を使用します（クリーンアップを試行）"
+        else
+            local_port=$auto_port
+        fi
+    else
+        local_port="${input_port:-$local_port}"
+    fi
 
     echo
     echo "✅ 接続情報設定完了:"
@@ -1047,12 +1116,77 @@ _rds_ssm_start_port_forwarding() {
         fi
     fi
 
-    # ポートの使用状況確認
-    if lsof -i :$local_port > /dev/null 2>&1; then
-        echo "❌ ローカルポート $local_port は既に使用中です"
+    # ポートの使用状況確認と自動クリーンアップ
+    echo "🔍 ローカルポート $local_port の使用状況を確認中..."
+    local existing_pids=$(lsof -ti:$local_port 2>/dev/null)
+
+    if [[ -n "$existing_pids" ]]; then
+        echo "⚠️  ローカルポート $local_port は既に使用中です"
         echo "   使用中のプロセス:"
-        lsof -i :$local_port
-        return 1
+        lsof -i:$local_port
+
+        # SSMセッションかどうかを確認
+        local ssm_processes=()
+        while IFS= read -r pid; do
+            if [[ -n "$pid" ]]; then
+                local cmd_line=$(ps -p "$pid" -o cmd= 2>/dev/null || echo "")
+                if [[ "$cmd_line" =~ "aws ssm start-session" || "$cmd_line" =~ "session-manager-plugin" ]]; then
+                    ssm_processes+=("$pid")
+                fi
+            fi
+        done <<< "$existing_pids"
+
+        if [[ ${#ssm_processes[@]} -gt 0 ]]; then
+            echo "🔄 既存のSSMセッションプロセスを検出: ${ssm_processes[*]}"
+            echo "   古いSSMセッションを自動クリーンアップします..."
+
+            for pid in "${ssm_processes[@]}"; do
+                echo "   🧹 プロセス $pid を停止中..."
+                if kill -TERM "$pid" 2>/dev/null; then
+                    echo "     ✅ プロセス $pid に終了シグナルを送信"
+                    sleep 2
+
+                    # プロセスがまだ存在するかチェック
+                    if kill -0 "$pid" 2>/dev/null; then
+                        echo "     🔨 強制終了を実行..."
+                        kill -KILL "$pid" 2>/dev/null
+                        sleep 1
+                    fi
+
+                    if ! kill -0 "$pid" 2>/dev/null; then
+                        echo "     ✅ プロセス $pid を正常に停止しました"
+                    fi
+                else
+                    echo "     ⚠️  プロセス $pid の停止に失敗"
+                fi
+            done
+
+            # ポートが解放されるまで待機
+            echo "   ⏳ ポート解放を待機中..."
+            local wait_count=0
+            while lsof -ti:$local_port >/dev/null 2>&1 && [[ $wait_count -lt 10 ]]; do
+                sleep 1
+                ((wait_count++))
+                echo -n "."
+            done
+            echo
+
+            # 最終チェック
+            if lsof -ti:$local_port >/dev/null 2>&1; then
+                echo "❌ ポート $local_port はまだ使用中です"
+                echo "   手動でプロセスを停止してください:"
+                echo "   sudo lsof -ti:$local_port | xargs kill -9"
+                return 1
+            else
+                echo "✅ ポート $local_port が解放されました"
+            fi
+        else
+            echo "❌ 非SSMプロセスがポートを使用中です"
+            echo "   手動でプロセスを確認・停止してください"
+            return 1
+        fi
+    else
+        echo "✅ ローカルポート $local_port は使用可能です"
     fi
 
     echo "🚀 ポートフォワーディングを開始します..."
@@ -1110,7 +1244,7 @@ _rds_ssm_connect_to_database() {
     echo
 
     # 🔧 PostgreSQL環境変数の自動設定
-    _rds_ssm_setup_database_env_vars
+    _rds_ssm_setup_database_env_vars "$db_name" "$db_user" "$db_password" "$db_engine" "$local_port"
 
     local connection_cmd=""
     local connection_string=""
@@ -1121,7 +1255,7 @@ _rds_ssm_connect_to_database() {
             if command -v psql >/dev/null 2>&1; then
                 # 環境変数が設定されているため、パスワード入力不要
                 connection_cmd="psql"
-                connection_string="postgresql://$db_user:PASSWORD@localhost:$local_port/$db_name"
+                connection_string="postgresql://$db_user@localhost:$local_port/$db_name"
             else
                 echo "❌ psql が見つかりません。PostgreSQLクライアントをインストールしてください。"
                 echo "   Ubuntu/Debian: sudo apt-get install postgresql-client"
@@ -1274,13 +1408,326 @@ _rds_ssm_cleanup_port_forwarding() {
 
 # 手動クリーンアップ関数（ユーザーが直接呼び出し可能）
 rds-ssm-cleanup() {
+    local target_port="${1:-all}"
+
     echo "🧹 手動クリーンアップを実行します..."
-    _rds_ssm_cleanup_port_forwarding
+
+    if [[ "$target_port" == "all" ]]; then
+        echo "   対象: 全てのSSMポートフォワーディングプロセス"
+        _rds_ssm_cleanup_port_forwarding
+
+        # 追加で一般的なポートもチェック
+        local common_ports=(5432 3306 5433 3307)
+        for port in "${common_ports[@]}"; do
+            local pids=$(lsof -ti:$port 2>/dev/null)
+            if [[ -n "$pids" ]]; then
+                echo "   🔍 ポート $port の使用状況:"
+                lsof -i:$port
+
+                while IFS= read -r pid; do
+                    if [[ -n "$pid" ]]; then
+                        local cmd_line=$(ps -p "$pid" -o cmd= 2>/dev/null || echo "")
+                        if [[ "$cmd_line" =~ "aws ssm start-session" || "$cmd_line" =~ "session-manager-plugin" ]]; then
+                            echo "   🧹 SSMプロセス $pid を停止中..."
+                            kill -TERM "$pid" 2>/dev/null
+                        fi
+                    fi
+                done <<< "$pids"
+            fi
+        done
+
+    else
+        echo "   対象ポート: $target_port"
+        local pids=$(lsof -ti:$target_port 2>/dev/null)
+        if [[ -n "$pids" ]]; then
+            echo "   使用中のプロセス:"
+            lsof -i:$target_port
+
+            while IFS= read -r pid; do
+                if [[ -n "$pid" ]]; then
+                    local cmd_line=$(ps -p "$pid" -o cmd= 2>/dev/null || echo "")
+                    if [[ "$cmd_line" =~ "aws ssm start-session" || "$cmd_line" =~ "session-manager-plugin" ]]; then
+                        echo "   🧹 SSMプロセス $pid を停止中..."
+                        kill -TERM "$pid" 2>/dev/null
+                        sleep 2
+                        if kill -0 "$pid" 2>/dev/null; then
+                            kill -KILL "$pid" 2>/dev/null
+                        fi
+                    fi
+                fi
+            done <<< "$pids"
+        else
+            echo "   ✅ ポート $target_port は使用されていません"
+        fi
+    fi
+
+    echo "🎉 クリーンアップ完了"
 }
 
 # -------------------------------------------------------------------
-# セキュリティグループ接続性チェック機能
+# セキュリティグループ接続性チェック機能（並列実行対応）
 # -------------------------------------------------------------------
+
+_rds_ssm_parallel_sg_check() {
+    local db_id="$1"
+    local engine="$2"
+    local region="$3"
+    local port="$4"
+    local temp_dir="$5"
+    local job_id="$6"
+
+    # 結果ファイルのパス
+    local result_file="$temp_dir/sg_check_${job_id}.result"
+    local error_file="$temp_dir/sg_check_${job_id}.error"
+
+    {
+        # RDSインスタンスまたはクラスターの情報を取得
+        local rds_sg_query_result=""
+
+        # DB インスタンスとして取得を試行
+        rds_sg_query_result=$(aws rds describe-db-instances \
+            --profile "$profile" \
+            --region "$region" \
+            --db-instance-identifier "$db_id" \
+            --query 'DBInstances[0].VpcSecurityGroups[].VpcSecurityGroupId' \
+            --output text 2>/dev/null)
+
+        # DB インスタンスで取得できない場合、クラスターとして取得を試行
+        if [[ -z "$rds_sg_query_result" || "$rds_sg_query_result" == "None" ]]; then
+            rds_sg_query_result=$(aws rds describe-db-clusters \
+                --profile "$profile" \
+                --region "$region" \
+                --db-cluster-identifier "$db_id" \
+                --query 'DBClusters[0].VpcSecurityGroups[].VpcSecurityGroupId' \
+                --output text 2>/dev/null)
+        fi
+
+        local connectivity_status="❓"
+        if [[ -n "$rds_sg_query_result" && "$rds_sg_query_result" != "None" ]]; then
+            # セキュリティグループ接続性チェック
+            if _rds_ssm_check_security_group_connectivity "$rds_sg_query_result" "$port"; then
+                connectivity_status="✅"
+            else
+                connectivity_status="❌"
+            fi
+        fi
+
+        # 結果をファイルに出力
+        echo "$job_id|$connectivity_status|$rds_sg_query_result" > "$result_file"
+
+    } 2>"$error_file" &
+
+    echo $!  # バックグラウンドプロセスのPIDを返す
+}
+
+_rds_ssm_parallel_process_manager() {
+    local rds_instances_data="$1"
+    local max_parallel_jobs="${2:-4}"  # 並列数を削減して安定性向上
+
+    echo "⚡ 並列セキュリティグループチェックを開始..."
+    echo "   最大並列数: $max_parallel_jobs"
+
+    # 一時ディレクトリの作成
+    local temp_dir=$(mktemp -d)
+    local job_pids=()
+    local job_count=0
+    local total_jobs=0
+
+    # 総ジョブ数を計算
+    while IFS=$'\t' read -r db_id engine db_status db_class endpoint port iam_auth az region; do
+        if [[ -n "$db_id" && "$db_id" != "None" && -n "$engine" && "$engine" != "None" ]]; then
+            ((total_jobs++))
+        fi
+    done <<< "$rds_instances_data"
+
+    echo "   総処理対象: $total_jobs 個のRDS"
+
+    # 並列処理の実行
+    while IFS=$'\t' read -r db_id engine db_status db_class endpoint port iam_auth az region; do
+        # 基本的なフィルタリング
+        if [[ -z "$db_id" || "$db_id" == "None" || -z "$engine" || "$engine" == "None" ]]; then
+            continue
+        fi
+
+        # デフォルト値設定
+        port="${port:-5432}"
+        region="${region:-$current_region}"
+
+        # 並列ジョブ数制限（シンプルな実装）
+        while [[ ${#job_pids[@]} -ge $max_parallel_jobs ]]; do
+            _rds_ssm_check_completed_jobs job_pids
+            sleep 0.1
+        done
+
+        # バックグラウンドジョブを開始
+        ((job_count++))
+        local job_pid
+        job_pid=$(_rds_ssm_parallel_sg_check "$db_id" "$engine" "$region" "$port" "$temp_dir" "$job_count")
+
+        job_pids+=($job_pid)
+        echo -n "."  # 進捗ドット表示
+
+    done <<< "$rds_instances_data"
+
+    echo
+    echo "⏳ 残りの並列ジョブ完了を待機中... (${#job_pids[@]} ジョブ)"
+
+    # 残りのジョブ完了を待機（シンプルな実装）
+    while [[ ${#job_pids[@]} -gt 0 ]]; do
+        _rds_ssm_check_completed_jobs job_pids
+        sleep 0.2
+    done
+
+    echo
+    echo "🎯 並列処理完了: $job_count 個のRDS処理完了"
+
+    # 結果を統合
+    _rds_ssm_merge_parallel_results "$temp_dir" "$job_count"
+
+    # 一時ディレクトリのクリーンアップ
+    rm -rf "$temp_dir"
+}
+
+_rds_ssm_check_completed_jobs() {
+    # 完了したジョブを配列から削除する関数
+    local new_pids=()
+    local completed_count=0
+
+    for i in {1..${#job_pids[@]}}; do
+        local pid=${job_pids[$i]}
+        if kill -0 "$pid" 2>/dev/null; then
+            # ジョブ実行中
+            new_pids+=($pid)
+        else
+            # ジョブ完了
+            ((completed_count++))
+            echo -n "✓"  # 完了マーク
+        fi
+    done
+
+    # 配列を更新
+    job_pids=("${new_pids[@]}")
+
+    if [[ $completed_count -gt 0 ]]; then
+        echo -n " "  # スペース区切り
+    fi
+}
+
+
+_rds_ssm_merge_parallel_results() {
+    local temp_dir="$1"
+    local total_jobs="$2"
+
+    echo "🔄 並列処理結果を統合中..."
+
+    # グローバルな結果保存配列をクリア
+    fzf_lines=()
+    # グローバルrds_mapをクリア（既に宣言済み）
+    rds_map=()
+    local filtered_count=0
+    local error_count=0
+
+    # 元のRDSデータを再読み込みするため、cleaned_instancesを再利用
+    declare -A job_data_map
+    local temp_job_id=0
+
+    # cleaned_instancesから元のRDS情報を復元
+    local source_data="$RDS_SSM_CLEANED_INSTANCES"
+    echo "🔍 ソースデータ確認: $(echo "$source_data" | wc -l) 行"
+
+    while IFS=$'\t' read -r db_id engine db_status db_class endpoint port iam_auth az region; do
+        if [[ -n "$db_id" && "$db_id" != "None" && -n "$engine" && "$engine" != "None" ]]; then
+            ((temp_job_id++))
+            job_data_map[$temp_job_id]="$temp_job_id|$db_id|$engine|$db_status|$db_class|$endpoint|$port|$iam_auth|$az|$region"
+            echo "   復元: [$temp_job_id] $db_id"
+        fi
+    done <<< "$source_data"
+
+    echo "🔍 デバッグ: job_data_map内容を確認"
+    for key in ${(k)job_data_map}; do
+        echo "   キー[$key]: ${job_data_map[$key]}"
+    done
+
+    for job_id in $(seq 1 $total_jobs); do
+        local result_file="$temp_dir/sg_check_${job_id}.result"
+        local error_file="$temp_dir/sg_check_${job_id}.error"
+
+        echo "🔍 ジョブ$job_id 処理中..."
+        echo "   結果ファイル: $result_file"
+        echo "   エラーファイル: $error_file"
+
+        if [[ -f "$result_file" ]]; then
+            local result_data
+            result_data=$(cat "$result_file")
+            echo "   result_data='$result_data'"
+            local connectivity_status=$(echo "$result_data" | cut -d'|' -f2)
+            echo "   接続性ステータス: $connectivity_status"
+
+            # 元のRDSデータを復元
+            local original_data="${job_data_map[$job_id]}"
+            echo "   元データ: $original_data"
+            if [[ -n "$original_data" ]]; then
+                local db_id=$(echo "$original_data" | cut -d'|' -f2)
+                local engine=$(echo "$original_data" | cut -d'|' -f3)
+                local db_status=$(echo "$original_data" | cut -d'|' -f4)
+                local db_class=$(echo "$original_data" | cut -d'|' -f5)
+                local endpoint=$(echo "$original_data" | cut -d'|' -f6)
+                local port=$(echo "$original_data" | cut -d'|' -f7)
+                local iam_auth=$(echo "$original_data" | cut -d'|' -f8)
+                local az=$(echo "$original_data" | cut -d'|' -f9)
+                local region=$(echo "$original_data" | cut -d'|' -f10)
+
+                # fzf表示用の行を生成
+                local fzf_line=$(printf "%-30s | %-12s | %-12s | %-12s | %-8s | %s" "$db_id" "$engine" "$db_status" "$region" "$connectivity_status" "$db_class")
+
+                # 接続可能フィルタのチェック
+                local should_add=true
+                if [[ "$connectable_only" == "true" && "$connectivity_status" != "✅" ]]; then
+                    should_add=false
+                fi
+
+                if [[ "$should_add" == "true" && -n "$fzf_line" && -n "$db_id" ]]; then
+                    fzf_lines+=("$fzf_line")
+
+                    # クラスターかインスタンスかを判定
+                    local resource_type="instance"
+                    if [[ "$engine" =~ ^aurora- && ("$db_class" == "Unknown" || "$db_class" == "N/A") ]]; then
+                        resource_type="cluster"
+                    fi
+
+                    # rds_mapに登録
+                    local map_value="$db_id|$engine|$endpoint|$port|$iam_auth|$db_status|$region|$connectivity_status|$resource_type"
+                    rds_map["$db_id"]="$map_value"
+                    echo "   ✅ rds_mapに登録: キー='$db_id' 値='$map_value'"
+                    ((filtered_count++))
+                else
+                    echo "   ❌ 登録スキップ: should_add=$should_add, fzf_line='$fzf_line', db_id='$db_id'"
+                fi
+            fi
+
+        elif [[ -f "$error_file" ]]; then
+            local error_msg=$(cat "$error_file" | head -1)
+            echo "   ⚠️  ジョブ$job_id でエラーが発生: $error_msg"
+            ((error_count++))
+        else
+            echo "   ❓ ジョブ$job_id の結果ファイルが見つかりません"
+            ((error_count++))
+        fi
+    done
+
+    echo "   ✅ $filtered_count 個のRDSの結果を統合完了"
+    if [[ $error_count -gt 0 ]]; then
+        echo "   ⚠️  $error_count 個のジョブでエラーが発生"
+    fi
+
+    echo "🔍 最終rds_map内容確認:"
+    local map_count=0
+    for key in ${(k)rds_map}; do
+        ((map_count++))
+        echo "   [$map_count] キー='$key' 値='${rds_map[$key]}'"
+    done
+    echo "   総キー数: $map_count"
+}
 
 _rds_ssm_check_security_group_connectivity() {
     local rds_sg_list="$1"
@@ -1356,7 +1803,19 @@ _rds_ssm_get_connectivity_status() {
 # -------------------------------------------------------------------
 
 _rds_ssm_setup_database_env_vars() {
+    local db_name="$1"
+    local db_user="$2"
+    local db_password="$3"
+    local db_engine="$4"
+    local local_port="$5"
+
     echo "🔧 データベース環境変数を設定中..."
+    echo "   パラメータ確認:"
+    echo "     - db_name: '$db_name'"
+    echo "     - db_user: '$db_user'"
+    echo "     - db_password: '${db_password:0:10}...' (長さ: ${#db_password}文字)"
+    echo "     - db_engine: '$db_engine'"
+    echo "     - local_port: '$local_port'"
 
     case "$db_engine" in
         "aurora-postgresql"|"postgres")
@@ -1366,16 +1825,17 @@ _rds_ssm_setup_database_env_vars() {
             export PGDATABASE="$db_name"
             export PGUSER="$db_user"
 
-            if [[ -n "$db_password" ]]; then
+            if [[ -n "$db_password" && "$db_password" != "null" ]]; then
                 export PGPASSWORD="$db_password"
                 echo "   ✅ PostgreSQL環境変数設定完了"
                 echo "      PGHOST=localhost"
                 echo "      PGPORT=$local_port"
                 echo "      PGDATABASE=$db_name"
                 echo "      PGUSER=$db_user"
-                echo "      PGPASSWORD=[設定済み]"
+                echo "      PGPASSWORD=${PGPASSWORD:0:10}... (長さ: ${#PGPASSWORD}文字)"
             else
-                echo "   ⚠️  パスワードが設定されていません"
+                echo "   ⚠️  パスワードが設定されていません (値: '$db_password')"
+                echo "   ❌ パスワードなしではPostgreSQL接続は失敗します"
                 echo "      PGHOST=localhost"
                 echo "      PGPORT=$local_port"
                 echo "      PGDATABASE=$db_name"
@@ -1391,16 +1851,17 @@ _rds_ssm_setup_database_env_vars() {
             export MYSQL_DATABASE="$db_name"
             export MYSQL_USER="$db_user"
 
-            if [[ -n "$db_password" ]]; then
+            if [[ -n "$db_password" && "$db_password" != "null" ]]; then
                 export MYSQL_PWD="$db_password"
                 echo "   ✅ MySQL環境変数設定完了"
                 echo "      MYSQL_HOST=localhost"
                 echo "      MYSQL_TCP_PORT=$local_port"
                 echo "      MYSQL_DATABASE=$db_name"
                 echo "      MYSQL_USER=$db_user"
-                echo "      MYSQL_PWD=[設定済み]"
+                echo "      MYSQL_PWD=${MYSQL_PWD:0:10}... (長さ: ${#MYSQL_PWD}文字)"
             else
-                echo "   ⚠️  パスワードが設定されていません"
+                echo "   ⚠️  パスワードが設定されていません (値: '$db_password')"
+                echo "   ❌ パスワードなしではMySQL接続は失敗します"
                 echo "      MYSQL_HOST=localhost"
                 echo "      MYSQL_TCP_PORT=$local_port"
                 echo "      MYSQL_DATABASE=$db_name"
