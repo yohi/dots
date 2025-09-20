@@ -54,16 +54,9 @@ if command -v SuperClaude >/dev/null 2>&1; then
     
     if [ "$CURRENT_VERSION" != "3.0.0.2" ]; then
         echo "🔄 バージョン3.0.0.2にアップデート中..."
-        if ! (uv tool upgrade SuperClaude==3.0.0.2 --verify-hashes 2>/dev/null || uv add SuperClaude==3.0.0.2 --upgrade 2>/dev/null); then
+        if ! uv tool upgrade SuperClaude==3.0.0.2 2>/dev/null; then
             echo "⚠️  uvでのアップデートに失敗。pipでのフォールバックを試行..."
-            pip install --upgrade --force-reinstall "SuperClaude==3.0.0.2" \
-                --hash=sha256:0bb45f9494eee17c950f17c94b6f7128ed7d1e71750c39f47da89023e812a031 \
-                --hash=md5:960654b5c8fc444d1f122fb55f285d5c \
-                --require-hashes || \
-            pip install --upgrade --force-reinstall "SuperClaude==3.0.0.2" \
-                --hash=sha256:3d30c60d06b7e7f430799adee4d7ac2575d3ea5b94d93771647965ee49aaf870 \
-                --hash=md5:9f3f6e3dc62e3b3a10a8833894d52f7c \
-                --require-hashes
+            pip install --upgrade --force-reinstall "SuperClaude==3.0.0.2"
         fi
         echo "✅ SuperClaude 3.0.0.2へのアップデートが完了しました"
     else
@@ -72,22 +65,11 @@ if command -v SuperClaude >/dev/null 2>&1; then
 else
     echo "📦 SuperClaude v3.0.0.2 をインストール中..."
     echo "🔐 強化セキュリティ機能を使用します"
-    if ! (uv tool install SuperClaude==3.0.0.2 --verify-hashes 2>/dev/null || uv add SuperClaude==3.0.0.2 2>/dev/null); then
+    if ! uv tool install SuperClaude==3.0.0.2 2>/dev/null; then
         echo "⚠️  uvでのインストールに失敗。pipでのフォールバックを試行..."
-        if ! (pip install "SuperClaude==3.0.0.2" \
-            --hash=sha256:0bb45f9494eee17c950f17c94b6f7128ed7d1e71750c39f47da89023e812a031 \
-            --hash=md5:960654b5c8fc444d1f122fb55f285d5c \
-            --require-hashes); then
-            
-            echo "↪️ pip (tar.gz)でのインストールに失敗。wheelでのインストールを試行..."
-            if ! (pip install "SuperClaude==3.0.0.2" \
-                --hash=sha256:3d30c60d06b7e7f430799adee4d7ac2575d3ea5b94d93771647965ee49aaf870 \
-                --hash=md5:9f3f6e3dc62e3b3a10a8833894d52f7c \
-                --require-hashes); then
-                
-                echo "❌ SuperClaude のセキュアインストールに失敗しました"
-                exit 1
-            fi
+        if ! pip install --upgrade --force-reinstall "SuperClaude==3.0.0.2"; then
+            echo "❌ SuperClaude のインストールに失敗しました"
+            exit 1
         fi
     fi
     echo "✅ SuperClaude 3.0.0.2 のパッケージインストールが完了しました"

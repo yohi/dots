@@ -114,8 +114,7 @@ aws_secret_access_key = YOUR_PROD_SECRET_ACCESS_KEY
     {
       "Effect": "Allow",
       "Action": [
-        "rds:DescribeDBInstances",
-        "rds:GenerateDataKeyWithoutPlaintext"
+        "rds:DescribeDBInstances"
       ],
       "Resource": "*"
     },

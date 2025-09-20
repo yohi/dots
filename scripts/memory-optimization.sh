@@ -65,16 +65,10 @@ echo "🌐 ブラウザメモリ最適化設定..."
 # Chrome用メモリ最適化フラグの設定
 mkdir -p ~/.config/chrome-flags.conf.d
 cat > ~/.config/chrome-flags.conf.d/memory-optimization.conf << 'EOF'
-# Chrome メモリ最適化フラグ
---memory-pressure-off
---max_old_space_size=4096
+# Chrome メモリ最適化フラグ（最小・安全）
 --js-flags="--max-old-space-size=4096"
 --enable-low-end-device-mode
---enable-aggressive-domstorage-flushing
---enable-memory-pressure-based-gc
 --enable-tab-audio-muting
---process-per-site
---site-per-process=false
 EOF
 
 echo "✅ Chromeメモリ最適化設定を作成しました"
@@ -99,8 +93,12 @@ echo "✅ systemd最適化設定を作成しました"
 echo "🖥️  GNOME設定最適化..."
 
 # GNOME Shell メモリリーク対策
-gsettings set org.gnome.mutter experimental-features "['scale-monitor-framebuffer']"
-gsettings set org.gnome.shell.extensions.dash-to-dock intellihide-mode 'ALL_WINDOWS'
+if gsettings writable org.gnome.mutter experimental-features >/dev/null 2>&1; then
+  gsettings set org.gnome.mutter experimental-features "['scale-monitor-framebuffer']" || true
+fi
+if gsettings writable org.gnome.shell.extensions.dash-to-dock intellihide-mode >/dev/null 2>&1; then
+  gsettings set org.gnome.shell.extensions.dash-to-dock intellihide-mode 'ALL_WINDOWS' || true
+fi
 
 echo "✅ GNOME設定を最適化しました"
 

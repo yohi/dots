@@ -44,7 +44,7 @@ echo "🔧 自動修復: $([ "$AUTO_FIX" == "true" ] && echo "有効" || echo "�
 echo "📊 チェック開始: $(date '+%Y-%m-%d %H:%M:%S')"
 echo ""
 
-cd "$DOTFILES_DIR"
+cd "$DOTFILES_DIR" || { echo "cd failed: $DOTFILES_DIR"; exit 1; }
 
 # チェック結果カウンタ
 TOTAL_CHECKS=0
@@ -181,14 +181,14 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 broken_links=$(find . -type l ! -exec test -e {} \; -print 2>/dev/null)
 if [[ ! -z "$broken_links" ]]; then
     echo -e "${RED}❌ 壊れたシンボリックリンク:${NC}"
-    echo "$broken_links" | while read link; do
+    while read -r link; do
         echo "    📄 $link"
         if [[ "$AUTO_FIX" == "true" ]]; then
             rm -f "$link"
             echo "      🔧 削除しました"
             ((FIXED_ISSUES++))
         fi
-    done
+    done <<< "$broken_links"
     ((FAILED_CHECKS++))
 else
     echo -e "${GREEN}✅ シンボリックリンク正常${NC}"
@@ -203,13 +203,14 @@ echo -e "${CYAN}🔐 ファイル権限チェック${NC}"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
 # 実行可能ファイルの権限チェック
-script_files=$(find scripts/ -name "*.sh" -type f 2>/dev/null)
-if [[ ! -z "$script_files" ]]; then
-    non_executable=$(echo "$script_files" | xargs ls -l | grep -v "^-rwxr" | wc -l)
+script_files=$(find scripts/ -name "*.sh" -type f -print0 2>/dev/null)
+if [[ -n "$script_files" ]]; then
+    non_exec_list=$(find scripts/ -name "*.sh" -type f ! -perm -u=x -print)
+    non_executable=$(printf "%s\n" "$non_exec_list" | sed '/^$/d' | wc -l)
     if [[ $non_executable -gt 0 ]]; then
         echo -e "${YELLOW}⚠️  実行権限なしスクリプト: $non_executable 個${NC}"
         if [[ "$AUTO_FIX" == "true" ]]; then
-            echo "$script_files" | xargs chmod +x
+            printf "%s\n" "$non_exec_list" | sed '/^$/d' | xargs -r chmod +x
             echo "    🔧 権限を修正しました"
             ((FIXED_ISSUES++))
         fi

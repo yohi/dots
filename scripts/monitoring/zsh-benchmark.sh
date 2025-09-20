@@ -26,7 +26,7 @@ for i in $(seq 1 $RUNS); do
 
     # zsh起動時間を測定（設定ファイル読み込み込み）
     start_time=$(date +%s.%3N)
-    zsh -i -c 'exit' 2>/dev/null
+    ZDOTDIR="$DOTFILES_DIR/zsh" zsh -i -c 'exit' 2>/dev/null
     end_time=$(date +%s.%3N)
 
     # 実行時間計算（ミリ秒）

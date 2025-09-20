@@ -42,7 +42,7 @@ echo "🔄 モード: $([ "$DRY_RUN" == "true" ] && echo "DRY-RUN (確認のみ)
 echo "📊 開始時刻: $(date '+%Y-%m-%d %H:%M:%S')"
 echo ""
 
-cd "$DOTFILES_DIR"
+cd "$DOTFILES_DIR" || { echo "ERROR: DOTFILES_DIR に移動できません: $DOTFILES_DIR" >&2; exit 1; }
 
 # クリーンアップカウンタ
 TOTAL_CLEANED=0
@@ -52,24 +52,27 @@ SIZE_SAVED=0
 
 # 実行関数
 execute_cleanup() {
-    local action="$1"
-    local target="$2"
-    local description="$3"
+    # 使い方: execute_cleanup rm -f -- "$file" "説明"
+    local -a cmd=()
+    while (( $# > 1 )); do cmd+=("$1"); shift; done
+    local description="$1"
+    local target="${cmd[-1]}"
 
     if [[ "$DRY_RUN" == "true" ]]; then
-        echo -e "${YELLOW}[DRY-RUN]${NC} $action: $target ($description)"
+        echo -e "${YELLOW}[DRY-RUN]${NC} ${cmd[*]}: $target ($description)"
     else
-        if [[ "$FORCE" == "true" ]] || read -p "$(echo -e "${GREEN}実行しますか?${NC} $action: $target ($description) [y/N]: ")" -n 1 -r && [[ $REPLY =~ ^[Yy]$ ]]; then
-            echo ""
-            eval "$action \"$target\""
-            if [[ $? -eq 0 ]]; then
+        if [[ "$FORCE" == "true" ]] || { printf "${GREEN}実行しますか?${NC} %s (%s) [y/N]: " "${cmd[*]}" "$description"; read -r -n 1 REPLY; echo; [[ $REPLY =~ ^[Yy]$ ]]; }; then
+            if "${cmd[@]}"; then
                 echo -e "${GREEN}✅ 完了:${NC} $target"
                 ((TOTAL_CLEANED++))
+                return 0
             else
                 echo -e "${RED}❌ 失敗:${NC} $target"
+                return 1
             fi
         else
             echo -e "\n${YELLOW}⏭️  スキップ:${NC} $target"
+            return 2
         fi
     fi
 }
@@ -92,18 +95,17 @@ TEMP_FILES=(
 
 echo "🗂️  一時ファイル検索:"
 for pattern in "${TEMP_FILES[@]}"; do
-    found_files=$(find . -name "$pattern" -type f ! -path "./.git/*" ! -path "./scripts/monitoring/*" 2>/dev/null)
-    if [[ ! -z "$found_files" ]]; then
-        count=$(echo "$found_files" | wc -l)
-        size=$(echo "$found_files" | xargs du -ch 2>/dev/null | tail -1 | cut -f1)
+    found_files=$(find . -type f -name "$pattern" ! -path "./.git/*" ! -path "./scripts/monitoring/*" -print0 2>/dev/null)
+    if [[ -n "$found_files" ]]; then
+        count=$(printf '%s' "$found_files" | tr -cd '\0' | wc -c)
+        size=$(printf '%s' "$found_files" | xargs -0 du -ch 2>/dev/null | tail -1 | cut -f1)
         echo "  📄 $pattern: $count ファイル ($size)"
 
-        echo "$found_files" | while read file; do
+        while IFS= read -r -d '' file; do
             if [[ -f "$file" ]]; then
-                execute_cleanup "rm -f" "$file" "一時ファイル"
-                ((FILES_REMOVED++))
+                execute_cleanup rm -f -- "$file" "一時ファイル" && ((FILES_REMOVED++))
             fi
-        done
+        done < <(printf '%s' "$found_files")
     fi
 done
 
@@ -115,12 +117,11 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 EMPTY_DIRS=$(find . -type d -empty ! -path "./.git/*" 2>/dev/null)
 if [[ ! -z "$EMPTY_DIRS" ]]; then
     echo "🗂️  空ディレクトリ:"
-    echo "$EMPTY_DIRS" | while read dir; do
+    while read -r dir; do
         if [[ -d "$dir" && ! "$dir" == "." ]]; then
-            execute_cleanup "rmdir" "$dir" "空ディレクトリ"
-            ((DIRS_REMOVED++))
+            execute_cleanup rmdir -- "$dir" "空ディレクトリ" && ((DIRS_REMOVED++))
         fi
-    done
+    done <<< "$EMPTY_DIRS"
 else
     echo "✨ 空ディレクトリは見つかりませんでした"
 fi
@@ -159,8 +160,7 @@ if [[ ! -z "$OLD_BACKUPS" ]]; then
         current=$(date +%s)
         days=$(( (current - age) / 86400 ))
         size=$(du -h "$backup" | cut -f1)
-        execute_cleanup "rm -f" "$backup" "$days日前のバックアップ ($size)"
-        ((FILES_REMOVED++))
+        execute_cleanup rm -f -- "$backup" "$days日前のバックアップ ($size)" && ((FILES_REMOVED++))
     done
 else
     echo "✨ 古いバックアップファイルは見つかりませんでした"

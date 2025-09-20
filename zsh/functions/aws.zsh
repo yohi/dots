@@ -115,17 +115,322 @@ function ecs-exec() {
 }
 
 # AWS CloudWatch ログ閲覧 (fzf版)
+# AWS CloudWatch ログ閲覧 (fzf版) - セキュリティ強化・コマンドインジェクション排除
 function awslogs() {
+    local level="${1:-group}"  # デフォルトはlog group選択まで
+    local help_msg="使用方法: awslogs [level]
+    level:
+      group  - ロググループ単位で選択 (デフォルト)
+      stream - ログストリーム単位で選択（階層構造対応）
+      help   - このヘルプを表示"
+
+    # ヘルプ表示
+    if [[ "$level" == "help" || "$level" == "--help" || "$level" == "-h" ]]; then
+        echo "$help_msg"
+        return 0
+    fi
+
     local profile
     if ! _aws_select_profile; then return 1; fi
-    # ... (rest of function) ...
+
+    # 選択されたprofileでロググループ一覧を取得
+    local log_group_name=$(aws --profile "${profile}" logs describe-log-groups \
+        --query 'logGroups[].[logGroupName,retentionInDays,storedBytes]' \
+        --output text | \
+        awk '{
+            retention = ($2 == "None" || $2 == "") ? "無期限" : $2"日";
+            size_mb = $3 > 0 ? sprintf("%.1fMB", $3/1024/1024) : "0MB";
+            printf "%-50s [保持:%s, サイズ:%s]\n", $1, retention, size_mb
+        }' | \
+        fzf --prompt="Log Group> " --height=40% --reverse --header="Log Group Name                                   [Retention, Size]")
+
+    if [[ -z "$log_group_name" ]]; then
+        echo "ロググループが選択されませんでした。"
+        return 1
+    fi
+
+    # ロググループ名だけを抽出（フォーマット情報を除去）
+    local clean_log_group_name=$(echo "$log_group_name" | awk '{print $1}')
+    echo "Log Group: $clean_log_group_name を選択しました"
+
+    local log_stream_name=""
+    local filter_pattern=""
+
+    # ログストリーム単位での選択が指定された場合
+    if [[ "$level" == "stream" ]]; then
+        echo "ログストリームを取得中..."
+        
+        # ログストリーム一覧を取得
+        local stream_info=$(aws --profile "${profile}" logs describe-log-streams \
+            --log-group-name "${clean_log_group_name}" \
+            --order-by LastEventTime \
+            --descending \
+            --max-items 50 \
+            --query 'logStreams[].[logStreamName,lastEventTime,storedBytes]' \
+            --output text | \
+            awk '{
+                if($2 > 0) {
+                    time_str = strftime("%Y-%m-%d %H:%M:%S", $2/1000);
+                } else {
+                    time_str = "未記録";
+                }
+                size_kb = $3 > 0 ? sprintf("%.1fKB", $3/1024) : "0KB";
+                printf "%-80s [最終:%s, サイズ:%s]\n", $1, time_str, size_kb
+            }' | \
+            fzf --prompt="Log Stream> " --height=60% --reverse --header="Log Stream Name                                                         [Last Event, Size]")
+
+        if [[ -z "$stream_info" ]]; then
+            echo "ログストリームが選択されませんでした。"
+            return 1
+        fi
+
+        log_stream_name=$(echo "$stream_info" | awk '{print $1}')
+        echo "Log Stream: $log_stream_name を選択しました"
+
+        # フィルターパターンの選択
+        echo "フィルターパターンを選択してください："
+        local filter_option=$(echo -e "フィルターなし\nERRORレベルのみ\nWARNレベル以上\nカスタムフィルター" | \
+            fzf --prompt="Filter> " --height=40% --reverse)
+        
+        case "$filter_option" in
+            "ERRORレベルのみ")
+                filter_pattern="ERROR"
+                ;;
+            "WARNレベル以上")
+                filter_pattern="?WARN ?ERROR"
+                ;;
+            "カスタムフィルター")
+                echo "フィルターパターンを入力してください："
+                read -r custom_filter
+                if [[ -n "$custom_filter" ]]; then
+                    filter_pattern="$custom_filter"
+                fi
+                ;;
+        esac
+    fi
+
+    # 表示方法の選択
+    echo "表示方法を選択してください："
+    local action=$(echo -e "リアルタイム表示 (--follow)\n過去1時間のログ\n過去24時間のログ\n指定時間範囲のログ" | \
+        fzf --prompt="表示方法> " --height=40% --reverse)
+
+    # AWS CLIコマンドの実行（配列ベース・セキュア実装）
+    if [[ "$level" == "stream" && -n "$log_stream_name" ]]; then
+        # ログストリーム指定の場合はfilter-log-eventsを使用
+        local -a cmd=(aws --profile "$profile" logs filter-log-events --log-group-name "$clean_log_group_name")
+        cmd+=(--log-stream-names "$log_stream_name")
+        
+        if [[ -n "$filter_pattern" ]]; then
+            cmd+=(--filter-pattern "$filter_pattern")
+        fi
+        
+        case "$action" in
+            "リアルタイム表示 (--follow)")
+                # 単一ストリームでもaws logs tailを使用（--log-stream-name-prefixで完全一致）
+                echo "リアルタイムでログを表示します (Ctrl+Cで終了)"
+                aws --profile "${profile}" logs tail "${clean_log_group_name}" --follow --log-stream-name-prefix "${log_stream_name}"
+                return 0
+                ;;
+            "過去1時間のログ")
+                cmd+=(--start-time "$(($(date -d '1 hour ago' +%s)*1000))")
+                ;;
+            "過去24時間のログ")
+                cmd+=(--start-time "$(($(date -d '1 day ago' +%s)*1000))")
+                ;;
+            "指定時間範囲のログ")
+                echo "開始時間を入力してください (例: 2024-01-01T10:00:00):"
+                read -r start_time
+                echo "終了時間を入力してください (例: 2024-01-01T12:00:00):"
+                read -r end_time
+                if [[ -n "$start_time" && -n "$end_time" ]]; then
+                    local start_ms=$(($(date -d "${start_time}" +%s)*1000))
+                    local end_ms=$(($(date -d "${end_time}" +%s)*1000))
+                    cmd+=(--start-time "$start_ms" --end-time "$end_ms")
+                else
+                    echo "時間範囲が正しく指定されませんでした。"
+                    return 1
+                fi
+                ;;
+        esac
+        
+        # フィルター結果を整形して表示（1回だけ実行）
+        if command -v jq >/dev/null 2>&1; then
+            echo "実行中: aws logs filter-log-events（詳細引数は省略表示）"
+            "${cmd[@]}" --output json | jq -r '
+              .events[] |
+              ((.timestamp/1000) | strftime("%Y-%m-%d %H:%M:%S")) + " [" + .logStreamName + "] " + .message
+            '
+        else
+            echo "実行中: aws logs filter-log-events（詳細引数は省略表示）"
+            "${cmd[@]}" --query 'events[].[timestamp,logStreamName,message]' --output text | awk '{
+                if($1 > 0) {
+                    timestamp = strftime("%Y-%m-%d %H:%M:%S", $1/1000);
+                    stream = $2;
+                    $1 = $2 = "";
+                    message = substr($0, 3);
+                    printf "%s [%s] %s\n", timestamp, stream, message;
+                }
+            }'
+        fi
+        
+    else
+        # 従来のtailコマンドを使用（ロググループレベル）
+        case "$action" in
+            "リアルタイム表示 (--follow)")
+                echo "リアルタイムでログを表示します (Ctrl+Cで終了)"
+                aws --profile "${profile}" logs tail "${clean_log_group_name}" --follow
+                ;;
+            "過去1時間のログ")
+                echo "過去1時間のログを表示します"
+                aws --profile "${profile}" logs tail "${clean_log_group_name}" --since 1h
+                ;;
+            "過去24時間のログ")
+                echo "過去24時間のログを表示します"
+                aws --profile "${profile}" logs tail "${clean_log_group_name}" --since 24h
+                ;;
+            "指定時間範囲のログ")
+                echo "開始時間を入力してください (例: 2024-01-01T10:00:00):"
+                read -r start_time
+                echo "終了時間を入力してください (例: 2024-01-01T12:00:00):"
+                read -r end_time
+                if [[ -n "$start_time" && -n "$end_time" ]]; then
+                    echo "指定された時間範囲のログを表示します"
+                    aws --profile "${profile}" logs tail "${clean_log_group_name}" --since "${start_time}" --until "${end_time}"
+                else
+                    echo "時間範囲が正しく指定されませんでした。"
+                    return 1
+                fi
+                ;;
+            *)
+                echo "操作がキャンセルされました。"
+                return 1
+                ;;
+        esac
+    fi
 }
 
-# RDS IAM認証接続 (fzf版)
+# RDS IAM認証接続 (fzf版) - セキュリティ強化・IAMトークン保護・TLS強制
 function rds-iam() {
+    local help_msg="使用方法: rds-iam [database_type]
+    database_type:
+      mysql     - MySQL/MariaDB接続 (デフォルト)
+      postgres  - PostgreSQL接続
+      aurora    - Aurora MySQL/PostgreSQL接続
+      help      - このヘルプを表示
+
+    必要な前提条件:
+    • AWS CLI設定済み
+    • RDS IAM認証が有効化されている
+    • 適切なIAM権限 (rds-db:connect)
+    • データベースクライアント (mysql, psql等) がインストール済み
+    
+    セキュリティ強化:
+    • IAMトークンは環境変数で安全に渡される
+    • TLS接続が強制される
+    • コマンドインジェクション対策済み"
+
+    # ヘルプ表示
+    if [[ "$1" == "help" || "$1" == "--help" || "$1" == "-h" ]]; then
+        echo "$help_msg"
+        return 0
+    fi
+
+    local db_type="${1:-mysql}"  # デフォルトはMySQL
+
     local profile
     if ! _aws_select_profile; then return 1; fi
-    # ... (rest of function) ...
+
+    # 選択されたprofileでRDSインスタンス一覧を取得
+    echo "RDSインスタンスを取得中..."
+    local rds_info=$(aws rds describe-db-instances \
+        --profile "${profile}" \
+        --query 'DBInstances[].[DBInstanceIdentifier,Engine,DBInstanceStatus,Endpoint.Address,Endpoint.Port,MasterUsername]' \
+        --output text | \
+        awk '{
+            status_icon = ($3 == "available") ? "🟢" : "🔴";
+            printf "%-30s %-15s %s %-15s %-5s %s\n", $1, $2, status_icon, $4, $5, $6
+        }' | \
+        fzf --prompt="RDS Instance> " --height=40% --reverse --header="Instance ID                    Engine          Status   Endpoint           Port   Username")
+
+    if [[ -z "$rds_info" ]]; then
+        echo "RDSインスタンスが選択されませんでした。"
+        return 1
+    fi
+
+    local instance_id=$(echo "$rds_info" | awk '{print $1}')
+    local engine=$(echo "$rds_info" | awk '{print $2}')
+    local endpoint=$(echo "$rds_info" | awk '{print $4}')
+    local port=$(echo "$rds_info" | awk '{print $5}')
+    local username=$(echo "$rds_info" | awk '{print $6}')
+
+    echo "Instance: $instance_id (${engine}) を選択しました"
+    echo "Endpoint: $endpoint:$port"
+    echo "Username: $username"
+
+    # データベース名の入力
+    echo "データベース名を入力してください (空の場合はデフォルトDBに接続):"
+    read -r database_name
+
+    # IAM認証トークンの生成
+    echo "IAM認証トークンを生成中..."
+    local token=$(aws rds generate-db-auth-token \
+        --profile "${profile}" \
+        --hostname "${endpoint}" \
+        --port "${port}" \
+        --username "${username}" \
+        --region "$(aws configure get region --profile "${profile}")" 2>/dev/null)
+
+    if [[ -z "$token" ]]; then
+        echo "❌ IAM認証トークンの生成に失敗しました。"
+        echo ""
+        echo "考えられる原因："
+        echo "• IAM認証が有効化されていない"
+        echo "• 適切なIAM権限がない (rds-db:connect)"
+        echo "• AWS CLI設定に問題がある"
+        echo "• ネットワーク接続の問題"
+        return 1
+    fi
+
+    echo "✅ IAM認証トークンを生成しました"
+
+    # データベースタイプに応じた接続コマンドの実行（セキュア・TLS強制）
+    case "$engine" in
+        "mysql"|"mariadb"|"aurora-mysql")
+            echo "MySQL/MariaDBに接続します..."
+            if command -v mysql >/dev/null 2>&1; then
+                echo "接続コマンドを実行します（資格情報は環境変数で安全に渡します）"
+                if [[ -n "$database_name" ]]; then
+                    MYSQL_PWD="${token}" mysql --ssl-mode=REQUIRED -h "${endpoint}" -P "${port}" -u "${username}" --database="${database_name}"
+                else
+                    MYSQL_PWD="${token}" mysql --ssl-mode=REQUIRED -h "${endpoint}" -P "${port}" -u "${username}"
+                fi
+            else
+                echo "❌ mysql クライアントが見つかりません。"
+                echo "インストール方法:"
+                echo "  Ubuntu/Debian: sudo apt-get install mysql-client"
+                echo "  macOS: brew install mysql-client"
+                return 1
+            fi
+            ;;
+        "postgres"|"aurora-postgresql")
+            echo "PostgreSQLに接続します..."
+            if command -v psql >/dev/null 2>&1; then
+                echo "接続コマンドを実行します（資格情報は環境変数で安全に渡します）"
+                PGPASSWORD="${token}" PGSSLMODE=require psql -h "${endpoint}" -p "${port}" -U "${username}" -d "${database_name:-postgres}" -w
+            else
+                echo "❌ psql クライアントが見つかりません。"
+                echo "インストール方法:"
+                echo "  Ubuntu/Debian: sudo apt-get install postgresql-client"
+                echo "  macOS: brew install postgresql"
+                return 1
+            fi
+            ;;
+        *)
+            echo "❌ サポートされていないデータベースエンジンです: $engine"
+            echo "サポートされているエンジン: mysql, mariadb, postgres, aurora-mysql, aurora-postgresql"
+            return 1
+            ;;
+    esac
 }
 
 
@@ -1099,7 +1404,9 @@ _rds_ssm_start_port_forwarding() {
 
     # 既存のポートフォワーディングプロセスの確認
     local existing_process
-    existing_process=$(ps aux | grep "aws ssm start-session" | grep "$local_port:$rds_endpoint:$rds_port" | grep -v grep)
+    existing_process=$(ps aux | grep "aws ssm start-session" \
+        | grep -E "host=${rds_endpoint}.*portNumber=${rds_port}.*localPortNumber=${local_port}" \
+        | grep -v grep)
 
     if [[ -n "$existing_process" ]]; then
         echo "⚠️  既存のポートフォワーディングが検出されました"
@@ -1108,7 +1415,7 @@ _rds_ssm_start_port_forwarding() {
         read response
         if [[ "$response" =~ ^[Yy]$ ]]; then
             echo "🔄 既存プロセスを停止中..."
-            pkill -f "aws ssm start-session.*$local_port:$rds_endpoint:$rds_port"
+            pkill -f "aws ssm start-session.*host=${rds_endpoint}.*portNumber=${rds_port}.*localPortNumber=${local_port}"
             sleep 2
         else
             echo "✅ 既存のポートフォワーディングを継続使用します"

@@ -5,19 +5,23 @@
 # または: cursor [ディレクトリパス]
 
 function cursor() {
-    # 引数が指定されている場合はそのディレクトリで起動
-    if [ $# -gt 0 ]; then
+    local cursor_bin="${CURSOR_BIN:-$(command -v cursor 2>/dev/null)}"
+    if [[ -z "${cursor_bin}" ]]; then
+        echo "エラー: Cursor 実行ファイルが見つかりません（PATH または CURSOR_BIN を確認してください）"
+        return 127
+    fi
+
+    if [[ $# -gt 0 ]]; then
         local target_dir="$1"
-        if [ -d "$target_dir" ]; then
-            echo "Opening Cursor IDE in directory: $target_dir"
-            /home/y_ohi/.local/bin/cursor "$target_dir"
+        if [[ -d "$target_dir" ]]; then
+            echo "Cursor を次のディレクトリで起動します: $target_dir"
+            "${cursor_bin}" -- "$target_dir"
         else
-            echo "Error: Directory '$target_dir' does not exist"
+            echo "エラー: ディレクトリが存在しません: $target_dir"
             return 1
         fi
     else
-        # 引数がない場合はカレントディレクトリで起動
-        echo "Opening Cursor IDE in current directory: $(pwd)"
-        /home/y_ohi/.local/bin/cursor .
+        echo "Cursor をカレントディレクトリで起動します: $(pwd)"
+        "${cursor_bin}" -- .
     fi
 }

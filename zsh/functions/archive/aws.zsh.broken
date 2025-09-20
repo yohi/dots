@@ -440,7 +440,7 @@ function awslogs() {
         
         # フィルター結果を整形して表示
         echo "実行中: $aws_cmd"
-        eval "$aws_cmd" | jq -r '.events[] | "\(.timestamp | strftime("%Y-%m-%d %H:%M:%S")) [\(.logStreamName)] \(.message)"' 2>/dev/null || \
+        eval "$aws_cmd" | jq -r '.events[] | "\(.timestamp/1000 | strftime("%Y-%m-%d %H:%M:%S")) [\\(.logStreamName)] \\(.message)"' 2>/dev/null || \
         eval "$aws_cmd" --query 'events[].[timestamp,logStreamName,message]' --output text | \
         awk '{
             if($1 > 0) {
@@ -579,12 +579,12 @@ function rds-iam() {
         "mysql"|"mariadb")
             echo "MySQL/MariaDBに接続します..."
             if command -v mysql >/dev/null 2>&1; then
-                local mysql_cmd="mysql -h ${endpoint} -P ${port} -u ${username} -p${token}"
+                echo "接続コマンドを実行します（資格情報は環境変数で安全に渡します）"
                 if [[ -n "$database_name" ]]; then
-                    mysql_cmd="${mysql_cmd} ${database_name}"
+                    MYSQL_PWD="${token}" mysql --ssl-mode=REQUIRED -h "${endpoint}" -P "${port}" -u "${username}" --database="${database_name}"
+                else
+                    MYSQL_PWD="${token}" mysql --ssl-mode=REQUIRED -h "${endpoint}" -P "${port}" -u "${username}"
                 fi
-                echo "実行中: $mysql_cmd"
-                eval "$mysql_cmd"
             else
                 echo "❌ mysql クライアントが見つかりません。"
                 echo "インストール方法:"
@@ -596,12 +596,8 @@ function rds-iam() {
         "postgres")
             echo "PostgreSQLに接続します..."
             if command -v psql >/dev/null 2>&1; then
-                local psql_cmd="psql -h ${endpoint} -p ${port} -U ${username} -d ${database_name:-postgres}"
-                echo "実行中: $psql_cmd"
-                echo "パスワードプロンプトが表示されたら、以下のトークンを入力してください:"
-                echo "${token}"
-                echo ""
-                eval "$psql_cmd"
+                echo "接続コマンドを実行します（資格情報は環境変数で安全に渡します）"
+                PGPASSWORD="${token}" PGSSLMODE=require psql -h "${endpoint}" -p "${port}" -U "${username}" -d "${database_name:-postgres}" -w
             else
                 echo "❌ psql クライアントが見つかりません。"
                 echo "インストール方法:"

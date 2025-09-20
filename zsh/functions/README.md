@@ -52,8 +52,7 @@ rds-ssm --help
           "ssm:StartSession",
           "ssm:DescribeInstanceInformation",
           "ec2:DescribeInstances",
-          "rds:DescribeDBInstances",
-          "rds:GenerateDataKeyWithoutPlaintext"
+          "rds:DescribeDBInstances"
         ],
         "Resource": "*"
       }

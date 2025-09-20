@@ -359,7 +359,7 @@ alias kgnome='killall -3 gnome-shell'
 # カスタム関数の読み込み（サイレント版 - Powerlevel10k instant prompt対応）
 if [ -d "$HOME/dotfiles/zsh/functions" ]; then
     # デバッグモード時のみ詳細出力
-    local debug_functions=${ZSH_FUNCTIONS_DEBUG:-false}
+    typeset debug_functions=${ZSH_FUNCTIONS_DEBUG:-false}
 
     for func_file in "$HOME/dotfiles/zsh/functions"/*.zsh; do
         if [ -r "$func_file" ]; then

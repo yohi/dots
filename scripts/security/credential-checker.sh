@@ -18,7 +18,7 @@ echo "📁 対象ディレクトリ: $DOTFILES_DIR"
 echo "📊 チェック開始: $(date '+%Y-%m-%d %H:%M:%S')"
 echo ""
 
-cd "$DOTFILES_DIR"
+cd "$DOTFILES_DIR" || { echo "cd failed: $DOTFILES_DIR"; exit 1; }
 
 # 検出カウンタ
 ISSUES_FOUND=0
@@ -49,7 +49,7 @@ declare -a MEDIUM_RISK_PATTERNS=(
 
 echo "🔴 高リスク検出:"
 for pattern in "${HIGH_RISK_PATTERNS[@]}"; do
-    results=$(grep -r -i -n --exclude-dir=.git --exclude="*.backup.*" "$pattern" . 2>/dev/null)
+    results=$(grep -r -I -n -P --exclude-dir=.git --exclude="*.backup.*" "$pattern" . 2>/dev/null)
     if [[ ! -z "$results" ]]; then
         echo -e "${RED}  ⚠️  パターン: $pattern${NC}"
         echo "$results" | while read line; do
@@ -63,7 +63,7 @@ done
 echo ""
 echo "🟡 中リスク検出:"
 for pattern in "${MEDIUM_RISK_PATTERNS[@]}"; do
-    results=$(grep -r -i -n --exclude-dir=.git --exclude="*.backup.*" "$pattern" . 2>/dev/null)
+    results=$(grep -r -I -n -P --exclude-dir=.git --exclude="*.backup.*" "$pattern" . 2>/dev/null)
     if [[ ! -z "$results" ]]; then
         echo -e "${YELLOW}  ⚠️  パターン: $pattern${NC}"
         echo "$results" | while read line; do
@@ -134,14 +134,16 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 
 # 実行可能ファイルのチェック
 echo "🔍 実行権限ファイル:"
-find . -type f -executable ! -path "./.git/*" | while read file; do
+find . -type f -executable ! -path "./.git/*" | while read -r file; do
     perm=$(stat -c "%a" "$file")
-    if [[ "$perm" =~ ^7[0-7][0-7]$ ]]; then
-        echo -e "  ✅ $file ${GREEN}($perm)${NC}"
-    elif [[ "$perm" =~ ^[0-9][0-9][0-9]$ ]] && [[ "${perm:1:1}" -ge "7" || "${perm:2:1}" -ge "7" ]]; then
-        echo -e "  ${YELLOW}⚠️  $file ($perm) - 他者実行権限あり${NC}"
-        ((LOW_RISK++))
-        ((ISSUES_FOUND++))
+    owner_exec=${perm:0:1}
+    group_exec=${perm:1:1}
+    other_exec=${perm:2:1}
+    if [[ "$other_exec" -ge 1 ]]; then
+      echo -e "  ${YELLOW}⚠️  $file ($perm) - others に実行権限${NC}"
+      ((LOW_RISK++)); ((ISSUES_FOUND++))
+    else
+      echo -e "  ✅ $file ${GREEN}($perm)${NC}"
     fi
 done
 

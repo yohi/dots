@@ -1,4 +1,11 @@
 #!/bin/bash
+set -euo pipefail
+
+if ! command -v bc >/dev/null 2>&1; then
+  echo "bc が見つかりません。インストールしてください。" >&2
+  exit 1
+fi
+
 # Makefile実行時間プロファイラー
 # 使用方法: ./makefile-profiler.sh [ターゲット名]
 
@@ -29,6 +36,7 @@ end_time=$(date +%s.%3N)
 
 # 実行時間計算（ミリ秒）
 execution_time=$(echo "($end_time - $start_time) * 1000" | bc)
+execution_time_ms=$(printf "%.0f" "$execution_time")
 
 echo ""
 echo "📊 実行結果"
@@ -70,7 +78,7 @@ done
 # パフォーマンス改善提案
 echo ""
 echo "💡 最適化提案:"
-if (( execution_time > 500 )); then
+if (( execution_time_ms > 500 )); then
     echo "  • include順序の最適化"
     echo "  • 不要な依存関係の削除"
     echo "  • 条件分岐による処理軽量化"

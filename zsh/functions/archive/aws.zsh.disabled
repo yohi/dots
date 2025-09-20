@@ -443,7 +443,7 @@ function awslogs() {
 
         # フィルター結果を整形して表示
         echo "実行中: $aws_cmd"
-        eval "$aws_cmd" | jq -r '.events[] | "\(.timestamp | strftime("%Y-%m-%d %H:%M:%S")) [\(.logStreamName)] \(.message)"' 2>/dev/null || \
+        eval "$aws_cmd" | jq -r '.events[] | "\(.timestamp/1000 | strftime("%Y-%m-%d %H:%M:%S")) [\\(.logStreamName)] \\(.message)"' 2>/dev/null || \
         eval "$aws_cmd" --query 'events[].[timestamp,logStreamName,message]' --output text | \
         awk '{
             if($1 > 0) {

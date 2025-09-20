@@ -777,7 +777,7 @@ install-superclaude:
 			fi; \
 		}; \
 	else \
-		echo "✅ uv が見つかりました: $(uv --version)"; \
+		echo "✅ uv が見つかりました: $$(uv --version)"; \
 	fi
 
 	# SuperClaude の既存インストール確認
