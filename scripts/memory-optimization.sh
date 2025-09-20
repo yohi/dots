@@ -50,9 +50,6 @@ vm.min_free_kbytes = 131072
 # Out-of-Memory Killerの設定
 vm.oom_kill_allocating_task = 1
 
-# ページアロケーション警告の閾値
-vm.warn_on_page_allocation = 1
-
 # Transparent Huge Pages の設定
 # kernel.mm.transparent_hugepage.enabled = madvise
 EOF
@@ -104,7 +101,7 @@ echo "✅ GNOME設定を最適化しました"
 
 # 設定の適用
 echo "🔄 設定を適用中..."
-sudo sysctl -p /etc/sysctl.d/99-memory-optimization.conf
+sudo sysctl -e -p /etc/sysctl.d/99-memory-optimization.conf
 
 echo ""
 echo "✅ メモリ最適化設定が完了しました！"

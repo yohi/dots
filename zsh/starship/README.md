@@ -12,7 +12,7 @@ zsh/starship/
 
 ## 設定ファイル
 - **設定ファイル**: `starship.toml`
-- **シンボリックリンク**: `~/.config/starship.toml` → `dotfiles/zsh/starship/starship.toml`
+- **シンボリックリンク**: `~/.config/starship.toml` → `~/.dotfiles/zsh/starship/starship.toml`
 
 ## 特徴
 - **軽量**: Powerlevel10kより高速起動
