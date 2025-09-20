@@ -64,5 +64,3 @@ eval "$(starship init zsh)"
 ## 関連ドキュメント
 - [Starship 公式サイト](https://starship.rs/)
 - [設定ガイド](https://starship.rs/config/)
-
-

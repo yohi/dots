@@ -24,8 +24,9 @@ echo "⏱️  測定中..."
 for i in $(seq 1 $RUNS); do
     echo -n "  Run $i/$RUNS: "
 
-    # zsh起動時間を測定（設定ファイル読み込み込み）
+    # zsh起動時間を測定（リポジトリのzshrcを使用）
     start_time=$(date +%s.%3N)
+    # ZDOTDIRを明示的に設定してリポジトリのzshrcをベンチマーク
     ZDOTDIR="$DOTFILES_DIR/zsh" zsh -i -c 'exit' 2>/dev/null
     end_time=$(date +%s.%3N)
 

@@ -361,7 +361,8 @@ if [ -d "$HOME/dotfiles/zsh/functions" ]; then
     # デバッグモード時のみ詳細出力
     typeset debug_functions=${ZSH_FUNCTIONS_DEBUG:-false}
 
-    for func_file in "$HOME/dotfiles/zsh/functions"/*.zsh; do
+    # サブディレクトリを含む全てのzshファイルを再帰的に読み込み
+    for func_file in "$HOME/dotfiles/zsh/functions"/**/*.zsh; do
         if [ -r "$func_file" ]; then
             # .broken, .disabled, .tmp ファイルをスキップ
             case "$(basename "$func_file")" in

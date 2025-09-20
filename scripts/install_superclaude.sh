@@ -31,10 +31,10 @@ fi
 echo "🔍 uv (Python パッケージマネージャー) の確認中..."
 if ! command -v uv >/dev/null 2>&1; then
     echo "📦 uv をインストール中..."
-    
+
     # セキュアなインストール方法を試行（優先順位順）
     UV_INSTALLED=false
-    
+
     # 1. システムパッケージマネージャーでの安全なインストールを試行
     if command -v apt >/dev/null 2>&1; then
         echo "🔒 APTパッケージマネージャーでのインストールを試行中..."
@@ -55,20 +55,20 @@ if ! command -v uv >/dev/null 2>&1; then
             echo "✅ Homebrew経由でuvをインストールしました"
         fi
     fi
-    
+
     # 2. パッケージマネージャーが失敗した場合、ハッシュ検証付きダウンロードを実行
     if [ "$UV_INSTALLED" = false ]; then
         echo "🔐 セキュアダウンロード（ハッシュ検証付き）を実行中..."
-        
+
         # 一時ディレクトリ作成
         UV_TEMP_DIR=$(mktemp -d)
         trap "rm -rf '$UV_TEMP_DIR'" EXIT
-        
+
         # 最新のuv公式リリースのハッシュを取得（例：v0.1.x系の安定版）
         UV_VERSION="0.1.45"  # 検証済み安定版
         UV_SCRIPT_URL="https://github.com/astral-sh/uv/releases/download/${UV_VERSION}/install.sh"
         UV_EXPECTED_SHA256="d60b42c1ad33e73dd9b5baedfa5b2cdf4ac8b7b6be29d1e23e4e0e18e9b60ff1"  # 公式ハッシュ
-        
+
         echo "🔍 インストールスクリプトをダウンロード中... (バージョン: $UV_VERSION)"
         if curl -LsSf "$UV_SCRIPT_URL" -o "$UV_TEMP_DIR/install.sh"; then
             # ハッシュ検証
@@ -89,7 +89,7 @@ if ! command -v uv >/dev/null 2>&1; then
             echo "❌ インストールスクリプトのダウンロードに失敗しました"
         fi
     fi
-    
+
     # 3. 全て失敗した場合は手動インストール案内
     if [ "$UV_INSTALLED" = false ]; then
         echo "❌ セキュアなuvインストールに失敗しました"
@@ -110,7 +110,7 @@ if ! command -v uv >/dev/null 2>&1; then
         echo ""
         exit 1
     fi
-    
+
     export PATH="$HOME/.local/bin:$PATH"
     if ! command -v uv >/dev/null 2>&1; then
         echo "⚠️  uvのインストールが完了しましたが、現在のセッションで認識されていません"
