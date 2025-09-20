@@ -97,5 +97,3 @@ echo "$(date '+%Y-%m-%d %H:%M:%S'),$TARGET,$execution_time,$make_exit_code,$incl
 echo ""
 echo "📝 ログ保存: $LOG_FILE"
 echo "🏁 プロファイリング完了"
-
-

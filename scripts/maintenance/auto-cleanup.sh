@@ -232,5 +232,3 @@ echo "  • プロジェクト更新時のメンテナンス"
 echo ""
 echo "📝 ログ保存: $SCRIPT_DIR/cleanup-$(date +%Y%m%d_%H%M%S).log"
 echo "🏁 クリーンアップ完了"
-
-

@@ -95,5 +95,3 @@ echo "$(date '+%Y-%m-%d %H:%M:%S'),$average,$min,$max,$RUNS" >> "$LOG_FILE"
 echo ""
 echo "📝 ログ保存: $LOG_FILE"
 echo "🏁 ベンチマーク完了"
-
-

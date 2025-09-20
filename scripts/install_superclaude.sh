@@ -51,7 +51,7 @@ export PATH="$HOME/.local/bin:$PATH"
 if command -v SuperClaude >/dev/null 2>&1; then
     CURRENT_VERSION=$(SuperClaude --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+(\.[0-9]+)?' || echo "不明")
     echo "✅ SuperClaude は既にインストールされています (バージョン: $CURRENT_VERSION)"
-    
+
     if [ "$CURRENT_VERSION" != "3.0.0.2" ]; then
         echo "🔄 バージョン3.0.0.2にアップデート中..."
         if ! uv tool upgrade SuperClaude==3.0.0.2 2>/dev/null; then

@@ -159,7 +159,7 @@ function awslogs() {
     # ログストリーム単位での選択が指定された場合
     if [[ "$level" == "stream" ]]; then
         echo "ログストリームを取得中..."
-        
+
         # ログストリーム一覧を取得
         local stream_info=$(aws --profile "${profile}" logs describe-log-streams \
             --log-group-name "${clean_log_group_name}" \
@@ -191,7 +191,7 @@ function awslogs() {
         echo "フィルターパターンを選択してください："
         local filter_option=$(echo -e "フィルターなし\nERRORレベルのみ\nWARNレベル以上\nカスタムフィルター" | \
             fzf --prompt="Filter> " --height=40% --reverse)
-        
+
         case "$filter_option" in
             "ERRORレベルのみ")
                 filter_pattern="ERROR"
@@ -219,11 +219,11 @@ function awslogs() {
         # ログストリーム指定の場合はfilter-log-eventsを使用
         local -a cmd=(aws --profile "$profile" logs filter-log-events --log-group-name "$clean_log_group_name")
         cmd+=(--log-stream-names "$log_stream_name")
-        
+
         if [[ -n "$filter_pattern" ]]; then
             cmd+=(--filter-pattern "$filter_pattern")
         fi
-        
+
         case "$action" in
             "リアルタイム表示 (--follow)")
                 # 単一ストリームでもaws logs tailを使用（--log-stream-name-prefixで完全一致）
@@ -252,7 +252,7 @@ function awslogs() {
                 fi
                 ;;
         esac
-        
+
         # フィルター結果を整形して表示（1回だけ実行）
         if command -v jq >/dev/null 2>&1; then
             echo "実行中: aws logs filter-log-events（詳細引数は省略表示）"
@@ -272,7 +272,7 @@ function awslogs() {
                 }
             }'
         fi
-        
+
     else
         # 従来のtailコマンドを使用（ロググループレベル）
         case "$action" in
@@ -323,7 +323,7 @@ function rds-iam() {
     • RDS IAM認証が有効化されている
     • 適切なIAM権限 (rds-db:connect)
     • データベースクライアント (mysql, psql等) がインストール済み
-    
+
     セキュリティ強化:
     • IAMトークンは環境変数で安全に渡される
     • TLS接続が強制される

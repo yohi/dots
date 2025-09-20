@@ -214,5 +214,3 @@ LOG_FILE="$SCRIPT_DIR/security-scan-$(date +%Y%m%d_%H%M%S).log"
     echo "Low Risk: $LOW_RISK"
     echo "Total Issues: $ISSUES_FOUND"
 } > "$LOG_FILE"
-
-
