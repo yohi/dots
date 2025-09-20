@@ -40,13 +40,18 @@ existing_bindings=$(gsettings get org.gnome.settings-daemon.plugins.media-keys c
 # 新しいパスを追加
 new_path="/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/fix-sticky-keys/"
 
-if [[ "$existing_bindings" == "@as []" ]]; then
-    # 空の場合
-    gsettings set org.gnome.settings-daemon.plugins.media-keys custom-keybindings "['${new_path}']"
+# GVariant 先頭の型注釈 @as を除去して統一
+bindings="${existing_bindings#@as }"
+if [[ "$bindings" == "[]" ]]; then
+  # 配列が空なら新規作成
+  gsettings set org.gnome.settings-daemon.plugins.media-keys custom-keybindings "['${new_path}']"
+elif grep -Fq "${new_path}" <<< "$bindings"; then
+  # 既に登録済みなら何もしない
+  echo "  (既にカスタムキーバインドに登録済み)"
 else
-    # 既存の設定がある場合、新しいパスを追加
-    updated_bindings=$(echo "$existing_bindings" | sed "s/]$/, '${new_path//\//\\\/}']/" | sed "s/@as //" | sed "s/\['/['/")
-    gsettings set org.gnome.settings-daemon.plugins.media-keys custom-keybindings "$updated_bindings"
+  # 末尾の ] を取り除いて新要素を追記
+  trimmed="${bindings%]}"
+  gsettings set org.gnome.settings-daemon.plugins.media-keys custom-keybindings "${trimmed}, '${new_path}']"
 fi
 
 # キーバインドの詳細設定

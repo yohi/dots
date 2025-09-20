@@ -44,7 +44,15 @@ echo "stickykeys-modifier-beep: $(gsettings get org.gnome.desktop.a11y.keyboard 
 
 echo ""
 echo "🔧 書き込み可否確認:"
-echo "stickykeys-enable: $(gsettings writable org.gnome.desktop.a11y.keyboard stickykeys-enable 2>/dev/null && echo '書き込み可能' || echo '書き込み不可')"
+if out="$(gsettings writable org.gnome.desktop.a11y.keyboard stickykeys-enable 2>/dev/null)"; then
+  if [ "$out" = "true" ]; then
+    echo "stickykeys-enable: 書き込み可能"
+  else
+    echo "stickykeys-enable: 書き込み不可"
+  fi
+else
+  echo "stickykeys-enable: キーが存在しません"
+fi
 
 echo ""
 echo "✅ 検証完了"

@@ -19,14 +19,14 @@ sticky-keys/
 ### dotfiles経由（推奨）
 
 ```bash
-cd ~/dotfiles
+cd ~/dots
 make setup-sticky-keys
 ```
 
 ### 手動インストール
 
 ```bash
-cd ~/dotfiles/sticky-keys
+cd ~/dots/sticky-keys
 ./install.sh
 ```
 

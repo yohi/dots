@@ -59,7 +59,26 @@ uninstall-sticky-keys: ## SHIFTキー固定モード対策をアンインスト�
 	@rm -f "$(HOME)/.config/autostart/disable-sticky-keys.desktop"
 	@rm -f "$(HOME)/Desktop/Fix-Sticky-Keys.desktop"
 	@echo "🔧 カスタムキーバインドを削除中..."
-	@gsettings reset org.gnome.settings-daemon.plugins.media-keys custom-keybindings 2>/dev/null || true
+	@{ \
+	  SCHEMA="org.gnome.settings-daemon.plugins.media-keys"; \
+	  KEY="custom-keybindings"; \
+	  TARGET="/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/fix-sticky-keys/"; \
+	  EXISTING=$$(gsettings get $$SCHEMA $$KEY | sed 's/^@as //'); \
+	  if echo "$$EXISTING" | grep -Fq "$$TARGET"; then \
+	    PRUNED=$$(python3 - "$$EXISTING" "$$TARGET" <<'PY'
+import ast, sys
+lst = ast.literal_eval(sys.argv[1])
+target = sys.argv[2]
+lst = [x for x in lst if x != target]
+print("[" + ",".join(f"'{x}'" for x in lst) + "]")
+PY
+); \
+	    gsettings set $$SCHEMA $$KEY "$$PRUNED"; \
+	  fi; \
+	  gsettings reset org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:$$TARGET name 2>/dev/null || true; \
+	  gsettings reset org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:$$TARGET command 2>/dev/null || true; \
+	  gsettings reset org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:$$TARGET binding 2>/dev/null || true; \
+	}
 	@echo "✅ SHIFTキー固定モード対策のアンインストールが完了しました"
 
 .PHONY: sticky-keys-menu

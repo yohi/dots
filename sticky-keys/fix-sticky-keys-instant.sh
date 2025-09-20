@@ -10,10 +10,10 @@ gsettings set org.gnome.desktop.a11y.keyboard stickykeys-enable false
 # 2. dconf経由で直接設定
 dconf write /org/gnome/desktop/a11y/keyboard/stickykeys-enable false
 
-# 3. （任意）GNOME Shellへの明示通知は不要。gsettings/dconfで反映されます。
-# 4. キーボード入力をリセット（XWaylandとWayland両方）
-setxkbmap -option '' 2>/dev/null || true
-setxkbmap us 2>/dev/null || true
+# 3. キーボード入力をリセット（X11/XWaylandのみ。ユーザーのレイアウトは維持）
+if [ "${XDG_SESSION_TYPE:-}" = "x11" ] || [ -n "${DISPLAY:-}" ]; then
+    setxkbmap -option '' 2>/dev/null || true
+fi
 
 # 5. GNOME Settings Daemonのキーボードサービスにリセット信号を送信
 gdbus call --session --dest org.gnome.SettingsDaemon.Keyboard \
@@ -26,7 +26,7 @@ echo "Sticky Keys状態: $current_state"
 
 if [ "$current_state" = "false" ]; then
     echo "✅ SHIFTキー固定モードが正常に解除されました"
-    
+
     # 通知を表示
     notify-send "キーボード" "SHIFTキー固定モードが解除されました" --urgency=normal --expire-time=3000 2>/dev/null || true
 else
