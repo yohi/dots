@@ -10,6 +10,7 @@ Ubuntu開発環境のセットアップ用dotfilesリポジトリです。日本
 - 🌏 **日本語環境完全対応**: フォント・入力メソッド・ロケール設定
 - 🛠️ **モダン開発環境**: Neovim, Zsh, Docker, 最新言語環境
 - 🎨 **GUI環境最適化**: GNOME Extensions, テーマ, ショートカット
+- ⌨️ **キーボード問題対策**: SHIFTキー固定モード自動解除（詳細: [sticky-keys/README.md](sticky-keys/README.md)）
 - 🔧 **カスタマイズ可能**: モジュラー設計で必要な部分のみ選択可能
 
 ---
@@ -78,6 +79,7 @@ make setup-all         # すべての設定をセットアップ
 - **GNOME Extensions**: 生産性向上拡張機能
 - **テーマ・外観**: モダンなデスクトップ環境
 - **ショートカット**: 効率的なキーボード操作
+- **SHIFTキー固定モード対策**: 自動解除・ホットキー・デスクトップショートカット（詳細: [sticky-keys/README.md](sticky-keys/README.md)）
 
 ---
 
