@@ -133,6 +133,31 @@ rm -f ~/.local/bin/disable-sticky-keys.sh
 rm -f ~/.config/autostart/disable-sticky-keys.desktop
 rm -f ~/Desktop/Fix-Sticky-Keys.desktop
 
-# カスタムキーバインドの削除
-gsettings reset org.gnome.settings-daemon.plugins.media-keys custom-keybindings
+# カスタムキーバインドの安全な削除
+# ⚠️ 警告: 全体リセット (gsettings reset ... custom-keybindings) は
+#          ユーザーの他のカスタムショートカットも全削除するため危険です
+
+# 1. 現在のカスタムキーバインド配列を取得
+EXISTING=$(gsettings get org.gnome.settings-daemon.plugins.media-keys custom-keybindings)
+
+# 2. このツール固有のパスを除外
+TARGET_PATH="/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/fix-sticky-keys/"
+FILTERED=$(python3 -c "
+import ast, sys
+bindings = '${EXISTING#@as }'
+if bindings != '[]':
+    lst = ast.literal_eval(bindings)
+    lst = [x for x in lst if x != '$TARGET_PATH']
+    print('[' + ','.join(f\"'{x}'\" for x in lst) + ']')
+else:
+    print('[]')
+")
+
+# 3. フィルタ済み配列を書き戻し
+gsettings set org.gnome.settings-daemon.plugins.media-keys custom-keybindings "$FILTERED"
+
+# 4. 削除したバインディングの個別キーをリセット
+gsettings reset org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:${TARGET_PATH} name 2>/dev/null || true
+gsettings reset org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:${TARGET_PATH} command 2>/dev/null || true
+gsettings reset org.gnome.settings-daemon.plugins.media-keys.custom-keybinding:${TARGET_PATH} binding 2>/dev/null || true
 ```
