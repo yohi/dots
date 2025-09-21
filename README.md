@@ -4,6 +4,64 @@
 
 Ubuntu開発環境のセットアップ用dotfilesリポジトリです。日本語環境完全対応、モダンな開発ツール、GUI設定まで含む包括的なセットアップスクリプト群を提供します。
 
+<!-- TODO: スクリーンショット・デモ画像の追加
+## 📸 スクリーンショット
+
+### セットアップ前後の比較
+![Before and After](docs/images/before-after-comparison.png)
+
+### 完成した開発環境
+![Development Environment](docs/images/development-environment.png)
+
+### ターミナル環境（Zsh + Powerlevel10k）
+![Terminal Setup](docs/images/terminal-setup.png)
+
+### エディタ環境（Neovim + VS Code + Cursor）
+![Editor Setup](docs/images/editor-setup.png)
+
+### GNOME環境とExtensions
+![GNOME Setup](docs/images/gnome-setup.png)
+
+## 🎬 デモ動画
+
+### ワンライナーインストールのデモ
+![Installation Demo](docs/gifs/installation-demo.gif)
+
+### 日本語入力のデモ
+![Japanese Input Demo](docs/gifs/japanese-input-demo.gif)
+
+### 開発環境の使用例
+![Development Workflow](docs/gifs/development-workflow.gif)
+
+---
+
+**📝 注意**: 上記の画像・GIFファイルは今後追加予定です。
+実際の環境セットアップ後にスクリーンショットを撮影し、
+`docs/images/` および `docs/gifs/` ディレクトリに配置してください。
+
+推奨画像サイズ:
+- スクリーンショット: 1920x1080 (PNG形式)
+- GIFアニメーション: 1280x720, 10-30秒, 最大5MB
+-->
+
+## 📚 目次
+
+- [✨ 特徴](#-特徴)
+- [🚀 クイックスタート](#-クイックスタート)
+- [📋 手動インストール](#-手動インストール)
+- [🛠️ 主な機能](#️-主な機能)
+- [📦 インストールされるアプリケーション](#-インストールされるアプリケーション)
+- [🔐 機密情報の設定](#-機密情報の設定)
+- [🔧 詳細設定](#-詳細設定)
+- [💡 使用例](#-使用例)
+- [🔤 フォント管理機能](#-フォント管理機能)
+- [🧪 テスト・検証](#-テスト検証)
+- [🐛 トラブルシューティング](#-トラブルシューティング)
+- [🤝 貢献](#-貢献)
+- [📄 ライセンス](#-ライセンス)
+- [🌟 対応環境](#-対応環境)
+- [📱 アプリケーション設定](#-アプリケーション設定)
+
 ## ✨ 特徴
 
 - 📱 **ワンライナーインストール**: `curl | bash`で完全自動セットアップ
@@ -17,13 +75,25 @@ Ubuntu開発環境のセットアップ用dotfilesリポジトリです。日本
 
 ## 🚀 クイックスタート
 
-### ワンライナーインストール
+> **⚡ 3分で完了！** Ubuntu開発環境を即座にセットアップ
+
+### 🎯 推奨：ワンライナーインストール
+
+**初回ユーザーはこちら** - 完全自動セットアップ：
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/yohi/dots/main/install.sh | bash
 ```
 
-### オプション指定
+**✨ このコマンド1つで以下が自動実行されます：**
+- 📦 システムパッケージの更新・インストール
+- 🍺 Homebrewとモダン開発ツールのセットアップ
+- 🎨 GNOME環境の最適化
+- 🌏 日本語環境の完全設定
+- ⌨️ 開発者向けキーボード設定
+- 🔧 エディタ・ターミナル・シェルの設定
+
+### 🔧 カスタムオプション
 
 ```bash
 # 特定のブランチを指定
@@ -34,6 +104,13 @@ curl -fsSL https://raw.githubusercontent.com/yohi/dots/main/install.sh | bash -s
 
 # ヘルプを表示
 curl -fsSL https://raw.githubusercontent.com/yohi/dots/main/install.sh | bash -s -- --help
+```
+
+### ✅ インストール完了後の確認
+
+```bash
+# 環境が正しくセットアップされたかチェック
+cd ~/dots && ./scripts/check-setup.sh
 ```
 
 ---
@@ -301,6 +378,51 @@ make fonts-backup     # フォント設定バックアップ
 
 ---
 
+## 🧪 テスト・検証
+
+### 環境確認スクリプト
+
+セットアップが正しく完了したかを確認するための包括的なテストスクリプトが用意されています：
+
+```bash
+# 環境全体の健全性チェック
+./scripts/check-setup.sh
+```
+
+**チェック項目**:
+- ✅ システム情報（OS、アーキテクチャ）
+- ✅ 基本コマンド（git, make, curl, gcc等）
+- ✅ Homebrew環境とパッケージ
+- ✅ フォント設定（日本語フォント、Nerd Fonts）
+- ✅ エディタ設定（Neovim, VS Code, Cursor）
+- ✅ シェル環境（Zsh, Powerlevel10k）
+- ✅ Docker環境
+- ✅ 日本語環境（ロケール、入力メソッド）
+- ✅ GNOME環境とExtensions
+- ✅ dotfiles設定
+- ✅ システムパフォーマンス
+
+### 個別テストコマンド
+
+```bash
+# 特定の機能をテスト
+make fonts-list          # インストール済みフォント確認
+make fonts-debug         # フォント環境デバッグ
+brew doctor              # Homebrew環境診断
+nvim --version           # Neovimバージョン確認
+zsh --version            # Zshバージョン確認
+docker --version         # Dockerバージョン確認
+```
+
+### テスト結果の解釈
+
+スクリプト実行後の終了コード：
+- **0**: 全てのテストが成功
+- **1**: 重要な機能に問題あり（要修正）
+- **2**: 警告レベルの問題あり（推奨改善）
+
+---
+
 ## 🐛 トラブルシューティング
 
 ### よくある問題
@@ -333,6 +455,154 @@ journalctl -f
 # インストールログ
 tail -f /var/log/apt/history.log
 ```
+
+### 💬 FAQ（よくある質問）
+
+<details>
+<summary><strong>Q: インストールが途中で止まってしまいました</strong></summary>
+
+**A:** 以下の手順で復旧してください：
+
+```bash
+# 1. 一時ファイルをクリーンアップ
+cd ~/dots && make clean
+
+# 2. システムパッケージを更新
+sudo apt update && sudo apt upgrade
+
+# 3. 再度セットアップを実行
+make setup-all
+```
+</details>
+
+<details>
+<summary><strong>Q: 日本語入力ができません</strong></summary>
+
+**A:** 以下を確認してください：
+
+```bash
+# 1. Mozcがインストールされているか確認
+ibus list-engines | grep mozc
+
+# 2. IBusの再起動
+ibus restart
+
+# 3. 入力メソッドの設定
+im-config -n ibus
+
+# 4. システム再起動後に設定を確認
+```
+</details>
+
+<details>
+<summary><strong>Q: フォントが正しく表示されません</strong></summary>
+
+**A:** フォント関連の問題を解決：
+
+```bash
+# 1. フォントキャッシュを更新
+make fonts-refresh
+
+# 2. フォントの再インストール
+make fonts-install
+
+# 3. フォント設定のデバッグ
+make fonts-debug
+```
+</details>
+
+<details>
+<summary><strong>Q: VS Code/Cursorの設定が反映されません</strong></summary>
+
+**A:** エディタ設定を再適用：
+
+```bash
+# VS Code設定の再適用
+make setup-vscode
+
+# Cursor設定の再適用
+make setup-cursor
+
+# 設定ファイルの確認
+ls -la ~/.config/Code/User/
+ls -la ~/.config/Cursor/User/
+```
+</details>
+
+<details>
+<summary><strong>Q: Dockerが動作しません</strong></summary>
+
+**A:** Docker関連の問題を解決：
+
+```bash
+# 1. Dockerサービスの状態確認
+sudo systemctl status docker
+
+# 2. Dockerサービスの開始
+sudo systemctl start docker
+
+# 3. ユーザーをdockerグループに追加
+sudo usermod -aG docker $USER
+
+# 4. ログアウト・ログインして設定を反映
+```
+</details>
+
+<details>
+<summary><strong>Q: SHIFTキーが固定されて困ります</strong></summary>
+
+**A:** SHIFTキー固定モード（Sticky Keys）を無効化：
+
+```bash
+# 1. 即座に無効化
+./sticky-keys/fix-sticky-keys-instant.sh
+
+# 2. 恒久的な無効化設定
+make setup-sticky-keys-fix
+
+# 詳細は sticky-keys/README.md を参照
+```
+</details>
+
+<details>
+<summary><strong>Q: 特定の機能だけをインストールしたい</strong></summary>
+
+**A:** 部分的なセットアップが可能です：
+
+```bash
+# 利用可能なコマンドを確認
+make help
+
+# 例：Vim設定のみ
+make setup-vim
+
+# 例：フォントのみ
+make fonts-install
+
+# 例：GNOME設定のみ
+make setup-gnome-extensions
+```
+</details>
+
+<details>
+<summary><strong>Q: 設定をカスタマイズしたい</strong></summary>
+
+**A:** 各設定ファイルを直接編集できます：
+
+```bash
+# Vim/Neovim設定
+~/.config/nvim/
+
+# Zsh設定
+~/.zshrc
+
+# VS Code設定
+~/.config/Code/User/settings.json
+
+# 変更後は設定を再適用
+make setup-all
+```
+</details>
 
 ---
 
