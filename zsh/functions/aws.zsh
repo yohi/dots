@@ -92,9 +92,6 @@ _aws_select_ec2_instance() {
 
 # EC2 SSM接続 (fzf版)
 function ec2-ssm() {
-    local profile
-    local instance_id
-
     if ! _aws_select_profile; then
         return 1
     fi
@@ -109,7 +106,6 @@ function ec2-ssm() {
 
 # ECS タスク接続 (fzf版)
 function ecs-exec() {
-    local profile
     if ! _aws_select_profile; then return 1; fi
     # ... (rest of function) ...
 }
@@ -130,7 +126,6 @@ function awslogs() {
         return 0
     fi
 
-    local profile
     if ! _aws_select_profile; then return 1; fi
 
     # 選択されたprofileでロググループ一覧を取得
@@ -337,7 +332,6 @@ function rds-iam() {
 
     local db_type="${1:-mysql}"  # デフォルトはMySQL
 
-    local profile
     if ! _aws_select_profile; then return 1; fi
 
     # 選択されたprofileでRDSインスタンス一覧を取得

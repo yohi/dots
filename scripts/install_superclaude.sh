@@ -38,9 +38,25 @@ if ! command -v uv >/dev/null 2>&1; then
     # 1. システムパッケージマネージャーでの安全なインストールを試行
     if command -v apt >/dev/null 2>&1; then
         echo "🔒 APTパッケージマネージャーでのインストールを試行中..."
-        if sudo apt update >/dev/null 2>&1 && sudo apt install -y python3-uv 2>/dev/null; then
-            UV_INSTALLED=true
-            echo "✅ APT経由でuvをインストールしました"
+        # Debian/Ubuntuでuvパッケージが利用可能かチェック
+        if apt-cache search "^uv$" | grep -q "^uv "; then
+            if sudo apt update >/dev/null 2>&1 && sudo apt install -y uv 2>/dev/null; then
+                UV_INSTALLED=true
+                echo "✅ APT経由でuvをインストールしました"
+            else
+                echo "⚠️ APT経由でのインストールに失敗しました"
+            fi
+        else
+            echo "⚠️ APTリポジトリにuvパッケージが見つかりません。snapまたは公式インストーラーを使用します"
+            # snapでの代替インストール
+            if command -v snap >/dev/null 2>&1; then
+                if sudo snap install astral-uv --classic 2>/dev/null; then
+                    UV_INSTALLED=true
+                    echo "✅ Snap経由でuvをインストールしました"
+                else
+                    echo "⚠️ Snap経由でのインストールに失敗しました"
+                fi
+            fi
         fi
     elif command -v dnf >/dev/null 2>&1; then
         echo "🔒 DNFパッケージマネージャーでのインストールを試行中..."
@@ -135,7 +151,7 @@ if command -v SuperClaude >/dev/null 2>&1; then
         echo "🔄 バージョン3.0.0.2にアップデート中..."
         if ! uv tool upgrade SuperClaude==3.0.0.2 2>/dev/null; then
             echo "⚠️  uvでのアップデートに失敗。pipでのフォールバックを試行..."
-            pip install --upgrade --force-reinstall "SuperClaude==3.0.0.2"
+            python3 -m pip install --upgrade --force-reinstall "SuperClaude==3.0.0.2"
         fi
         echo "✅ SuperClaude 3.0.0.2へのアップデートが完了しました"
     else
@@ -146,7 +162,7 @@ else
     echo "🔐 強化セキュリティ機能を使用します"
     if ! uv tool install SuperClaude==3.0.0.2 2>/dev/null; then
         echo "⚠️  uvでのインストールに失敗。pipでのフォールバックを試行..."
-        if ! pip install --upgrade --force-reinstall "SuperClaude==3.0.0.2"; then
+        if ! python3 -m pip install --upgrade --force-reinstall "SuperClaude==3.0.0.2"; then
             echo "❌ SuperClaude のインストールに失敗しました"
             exit 1
         fi

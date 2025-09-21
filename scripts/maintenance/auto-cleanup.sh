@@ -95,17 +95,18 @@ TEMP_FILES=(
 
 echo "🗂️  一時ファイル検索:"
 for pattern in "${TEMP_FILES[@]}"; do
-    found_files=$(find . -type f -name "$pattern" ! -path "./.git/*" ! -path "./scripts/monitoring/*" -print0 2>/dev/null)
-    if [[ -n "$found_files" ]]; then
-        count=$(printf '%s' "$found_files" | tr -cd '\0' | wc -c)
-        size=$(printf '%s' "$found_files" | xargs -0 du -ch 2>/dev/null | tail -1 | cut -f1)
+    # ファイル数とサイズを計算
+    if find . -type f -name "$pattern" ! -path "./.git/*" ! -path "./scripts/monitoring/*" -print0 2>/dev/null | head -c1 | grep -q .; then
+        count=$(find . -type f -name "$pattern" ! -path "./.git/*" ! -path "./scripts/monitoring/*" -print0 2>/dev/null | tr -cd '\0' | wc -c)
+        size=$(find . -type f -name "$pattern" ! -path "./.git/*" ! -path "./scripts/monitoring/*" -print0 2>/dev/null | xargs -0 du -ch 2>/dev/null | tail -1 | cut -f1)
         echo "  📄 $pattern: $count ファイル ($size)"
 
+        # ファイルを削除
         while IFS= read -r -d '' file; do
             if [[ -f "$file" ]]; then
                 execute_cleanup rm -f -- "$file" "一時ファイル" && ((FILES_REMOVED++))
             fi
-        done < <(printf '%s' "$found_files")
+        done < <(find . -type f -name "$pattern" ! -path "./.git/*" ! -path "./scripts/monitoring/*" -print0 2>/dev/null)
     fi
 done
 

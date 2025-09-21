@@ -82,7 +82,7 @@ Ubuntu開発環境のセットアップ用dotfilesリポジトリです。日本
 **初回ユーザーはこちら** - 完全自動セットアップ：
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/yohi/dots/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/yohi/dots/master/install.sh | bash
 ```
 
 **✨ このコマンド1つで以下が自動実行されます：**
@@ -97,13 +97,28 @@ curl -fsSL https://raw.githubusercontent.com/yohi/dots/main/install.sh | bash
 
 ```bash
 # 特定のブランチを指定
-curl -fsSL https://raw.githubusercontent.com/yohi/dots/main/install.sh | bash -s -- --branch develop
+curl -fsSL https://raw.githubusercontent.com/yohi/dots/master/install.sh | bash -s -- --branch develop
 
 # インストール先ディレクトリを指定
-curl -fsSL https://raw.githubusercontent.com/yohi/dots/main/install.sh | bash -s -- --dir ~/my-dots
+curl -fsSL https://raw.githubusercontent.com/yohi/dots/master/install.sh | bash -s -- --dir ~/my-dots
 
 # ヘルプを表示
-curl -fsSL https://raw.githubusercontent.com/yohi/dots/main/install.sh | bash -s -- --help
+curl -fsSL https://raw.githubusercontent.com/yohi/dots/master/install.sh | bash -s -- --help
+```
+
+### 🔒 セキュリティ強化オプション（推奨）
+
+**サプライチェーン攻撃対策** - 固定コミットSHAでの検証：
+
+```bash
+# 1. スクリプトをダウンロード
+curl -fsSL https://raw.githubusercontent.com/yohi/dots/<COMMIT_SHA>/install.sh -o /tmp/install.sh
+
+# 2. ハッシュ値を確認（READMEに記載されているハッシュと照合）
+sha256sum /tmp/install.sh
+
+# 3. 検証後に実行
+bash /tmp/install.sh
 ```
 
 ### ✅ インストール完了後の確認
@@ -250,6 +265,9 @@ cat > .env << 'EOF'
 BITBUCKET_USERNAME=your_username_here
 BITBUCKET_APP_PASSWORD=your_app_password_here
 EOF
+
+# 機密ファイルの権限を制限（重要）
+chmod 600 .env
 ```
 
 #### 2. 環境変数の読み込み
@@ -268,7 +286,11 @@ echo "source ~/dots/.env" >> ~/.zshrc
 - `cursor/mcp.json` - 環境変数を参照するように設定済み
 - `.env` - .gitignoreに追加済み
 
-**注意**: `.env`ファイルは絶対に公開リポジトリにコミットしないでください。
+**⚠️ セキュリティ重要事項**:
+- `.env`ファイルは絶対に公開リポジトリにコミットしないでください
+- `chmod 600 .env` で権限を制限し、所有者のみ読み書き可能にしてください
+- 代替案：Bitwarden/OSキーリング/Pass等の秘匿ストレージ併用を推奨
+- 定期的なアプリパスワードのローテーション・破棄を実施してください
 
 ---
 

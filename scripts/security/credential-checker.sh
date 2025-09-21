@@ -20,6 +20,53 @@ echo ""
 
 cd "$DOTFILES_DIR" || { echo "cd failed: $DOTFILES_DIR"; exit 1; }
 
+# ログファイル設定
+TS="$(date +%Y%m%d_%H%M%S)"
+LOG_FILE="$SCRIPT_DIR/security-scan-${TS}.log"
+
+# 全出力をログファイルにも保存
+exec > >(tee -a "$LOG_FILE") 2>&1
+
+# GREP コマンド解決（PCRE優先）
+resolve_grep() {
+    if command -v rg >/dev/null 2>&1; then
+        # ripgrep: オプション整合
+        printf 'rg --pcre2 -n -i --no-messages -S'
+    elif echo "" | grep -P "" >/dev/null 2>&1; then
+        printf 'grep -r -I -n -i -P'
+    elif command -v ggrep >/dev/null 2>&1 && echo "" | ggrep -P "" >/dev/null 2>&1; then
+        printf 'ggrep -r -I -n -i -P'
+    else
+        # 最低限のフォールバック（POSIX EREに合わせてパターン要調整）
+        printf 'grep -r -I -n -i -E'
+    fi
+}
+
+# ポータブルな8進数権限取得関数
+get_octal_perm() {
+    local file="$1"
+    if stat -c "%a" "$file" 2>/dev/null; then
+        # GNU stat (Linux)
+        return 0
+    elif stat -f "%OLp" "$file" 2>/dev/null; then
+        # BSD stat (macOS)
+        return 0
+    else
+        # フォールバック: ls -l から推定
+        local perms=$(ls -l "$file" | cut -c2-10)
+        local octal=""
+        for i in 0 3 6; do
+            local rwx=${perms:$i:3}
+            local val=0
+            [[ ${rwx:0:1} == "r" ]] && ((val += 4))
+            [[ ${rwx:1:1} == "w" ]] && ((val += 2))
+            [[ ${rwx:2:1} == "x" || ${rwx:2:1} == "s" || ${rwx:2:1} == "t" ]] && ((val += 1))
+            octal+="$val"
+        done
+        printf "%s" "$octal"
+    fi
+}
+
 # 検出カウンタ
 ISSUES_FOUND=0
 HIGH_RISK=0
@@ -48,13 +95,13 @@ declare -a MEDIUM_RISK_PATTERNS=(
 )
 
 echo "🔴 高リスク検出:"
+CMD="$(resolve_grep)"
 for pattern in "${HIGH_RISK_PATTERNS[@]}"; do
-    results=$(grep -r -I -n -P --exclude-dir=.git --exclude="*.backup.*" "$pattern" . 2>/dev/null)
-    if [[ ! -z "$results" ]]; then
+    if $CMD --exclude-dir=.git --exclude="*.backup.*" "$pattern" . >/dev/null 2>&1; then
         echo -e "${RED}  ⚠️  パターン: $pattern${NC}"
-        echo "$results" | while read line; do
-            echo "    📄 $line"
-        done
+        while IFS= read -r line; do
+            echo "    📄 ${line}"
+        done < <($CMD --exclude-dir=.git --exclude="*.backup.*" "$pattern" . 2>/dev/null)
         ((HIGH_RISK++))
         ((ISSUES_FOUND++))
     fi
@@ -63,12 +110,11 @@ done
 echo ""
 echo "🟡 中リスク検出:"
 for pattern in "${MEDIUM_RISK_PATTERNS[@]}"; do
-    results=$(grep -r -I -n -P --exclude-dir=.git --exclude="*.backup.*" "$pattern" . 2>/dev/null)
-    if [[ ! -z "$results" ]]; then
+    if $CMD --exclude-dir=.git --exclude="*.backup.*" "$pattern" . >/dev/null 2>&1; then
         echo -e "${YELLOW}  ⚠️  パターン: $pattern${NC}"
-        echo "$results" | while read line; do
-            echo "    📄 $line"
-        done
+        while IFS= read -r line; do
+            echo "    📄 ${line}"
+        done < <($CMD --exclude-dir=.git --exclude="*.backup.*" "$pattern" . 2>/dev/null)
         ((MEDIUM_RISK++))
         ((ISSUES_FOUND++))
     fi
@@ -134,10 +180,8 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 
 # 実行可能ファイルのチェック
 echo "🔍 実行権限ファイル:"
-find . -type f -executable ! -path "./.git/*" | while read -r file; do
-    perm=$(stat -c "%a" "$file")
-    owner_exec=${perm:0:1}
-    group_exec=${perm:1:1}
+find . -type f -perm -111 ! -path "./.git/*" | while read -r file; do
+    perm=$(get_octal_perm "$file")
     other_exec=${perm:2:1}
     if [[ "$other_exec" -ge 1 ]]; then
       echo -e "  ${YELLOW}⚠️  $file ($perm) - others に実行権限${NC}"
@@ -201,16 +245,5 @@ if [[ $LOW_RISK -gt 0 ]]; then
 fi
 
 echo ""
-echo "📝 ログ保存: $SCRIPT_DIR/security-scan-$(date +%Y%m%d_%H%M%S).log"
+echo "📝 ログ保存: $LOG_FILE"
 echo "🏁 セキュリティチェック完了"
-
-# 結果をログファイルに保存
-LOG_FILE="$SCRIPT_DIR/security-scan-$(date +%Y%m%d_%H%M%S).log"
-{
-    echo "Security Scan Report - $(date)"
-    echo "Score: $SCORE/100"
-    echo "High Risk: $HIGH_RISK"
-    echo "Medium Risk: $MEDIUM_RISK"
-    echo "Low Risk: $LOW_RISK"
-    echo "Total Issues: $ISSUES_FOUND"
-} > "$LOG_FILE"

@@ -6,6 +6,23 @@ if ! command -v bc >/dev/null 2>&1; then
   exit 1
 fi
 
+# ポータブルなミリ秒取得関数
+now_ms() {
+    if date +%s.%3N >/dev/null 2>&1; then
+        # GNU date (Linux)
+        date +%s.%3N
+    elif command -v python3 >/dev/null 2>&1; then
+        # Python fallback
+        python3 -c "import time; print('%.3f' % time.time())"
+    elif command -v perl >/dev/null 2>&1; then
+        # Perl fallback
+        perl -MTime::HiRes=time -E 'say time'
+    else
+        # POSIX fallback (秒単位)
+        date +%s
+    fi
+}
+
 # Makefile実行時間プロファイラー
 # 使用方法: ./makefile-profiler.sh [ターゲット名]
 
@@ -26,13 +43,13 @@ cd "$DOTFILES_DIR"
 
 # Make実行時間を測定
 echo "⏱️  実行中: make $TARGET"
-start_time=$(date +%s.%3N)
+start_time=$(now_ms)
 
 # 実際のmake実行（出力をキャプチャ）
 make_output=$(make $TARGET 2>&1)
 make_exit_code=$?
 
-end_time=$(date +%s.%3N)
+end_time=$(now_ms)
 
 # 実行時間計算（ミリ秒）
 execution_time=$(echo "($end_time - $start_time) * 1000" | bc)

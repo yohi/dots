@@ -17,19 +17,28 @@ region = ap-northeast-1
 output = json
 ```
 
-### ~/.aws/credentials
+# 推奨: IAM Identity Center(SSO) の例（~/.aws/config）
+# aws configure sso で自動生成される内容の参考
+# [profile dev]
+# sso_session = my-sso
+# sso_account_id = 111122223333
+# sso_role_name  = Developer
+# region = ap-northeast-1
+#
+# [sso-session my-sso]
+# sso_region     = ap-northeast-1
+# sso_start_url  = https://example.awsapps.com/start
+
+### ~/.aws/credentials (非推奨: 長期キーより一時認証/SSOを推奨)
 ```ini
-[default]
-aws_access_key_id = YOUR_ACCESS_KEY_ID
-aws_secret_access_key = YOUR_SECRET_ACCESS_KEY
+# 注意: 長期アクセスキーは非推奨です
+# 代わりに以下を実行してください:
+# aws configure sso
+# または credential_process/aws-vault を使用
 
-[dev]
-aws_access_key_id = YOUR_DEV_ACCESS_KEY_ID
-aws_secret_access_key = YOUR_DEV_SECRET_ACCESS_KEY
-
-[prod]
-aws_access_key_id = YOUR_PROD_ACCESS_KEY_ID
-aws_secret_access_key = YOUR_PROD_SECRET_ACCESS_KEY
+# [default]
+# aws_access_key_id = YOUR_ACCESS_KEY_ID
+# aws_secret_access_key = YOUR_SECRET_ACCESS_KEY
 ```
 
 ## IAMポリシー例
@@ -97,12 +106,20 @@ aws_secret_access_key = YOUR_PROD_SECRET_ACCESS_KEY
       "Effect": "Allow",
       "Action": [
         "ssm:StartSession",
-        "ssm:DescribeInstanceInformation"
+        "ssm:ResumeSession",
+        "ssm:TerminateSession"
       ],
       "Resource": [
         "arn:aws:ec2:*:*:instance/*",
         "arn:aws:ssm:*:*:document/AWS-StartPortForwardingSessionToRemoteHost"
       ]
+    },
+    {
+      "Effect": "Allow",
+      "Action": [
+        "ssm:DescribeInstanceInformation"
+      ],
+      "Resource": "*"
     },
     {
       "Effect": "Allow",
@@ -124,7 +141,7 @@ aws_secret_access_key = YOUR_PROD_SECRET_ACCESS_KEY
         "rds-db:connect"
       ],
       "Resource": [
-        "arn:aws:rds-db:*:*:dbuser:*/your-db-username"
+        "arn:aws:rds-db:*:*:dbuser:DBI_RESOURCE_ID/your-db-username"
       ]
     }
   ]
@@ -156,11 +173,13 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO "iam-user
 ### EC2セキュリティグループ
 ```
 インバウンドルール:
-- SSH (22): 0.0.0.0/0 (または特定IP範囲)
-- HTTPS (443): 0.0.0.0/0 (SSM用)
+- SSM-only運用の場合: なし（SSMはアウトバウンド443のみで動作）
+- SSH必要な場合: SSH (22): 管理者用CIDR（例: 10.0.0.0/8, 192.168.1.0/24）
+  ⚠️ 0.0.0.0/0 は避けてください
 
 アウトバウンドルール:
-- すべてのトラフィック: 0.0.0.0/0
+- HTTPS (443): 0.0.0.0/0 (SSM通信用)
+- その他必要に応じて
 ```
 
 ### RDSセキュリティグループ
@@ -196,14 +215,15 @@ rds-ssm
 
 ### 手動接続コマンド例
 ```bash
-# MySQL (IAM認証)
-mysql --host=localhost --port=13306 --user=iam-user --database=myapp --ssl-mode=REQUIRED --password="GENERATED_TOKEN"
+# MySQL (IAM認証; TLS/プラグイン必須)
+mysql --host=localhost --port=13306 --user=iam-user --database=myapp \
+  --ssl-ca=global-bundle.pem --enable-cleartext-plugin --password="GENERATED_TOKEN"
 
 # MySQL (パスワード認証)
 mysql --host=localhost --port=13306 --user=app_user --database=myapp --password
 
-# PostgreSQL (IAM認証)
-PGPASSWORD="GENERATED_TOKEN" psql --host=localhost --port=15432 --username=iam-user --dbname=myapp
+# PostgreSQL (IAM認証; TLS必須)
+PGPASSWORD="GENERATED_TOKEN" psql "host=localhost port=15432 dbname=myapp user=iam-user sslmode=verify-full sslrootcert=global-bundle.pem"
 
 # PostgreSQL (パスワード認証)
 PGPASSWORD="your_password" psql --host=localhost --port=15432 --username=app_user --dbname=myapp
