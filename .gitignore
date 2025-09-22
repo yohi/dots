@@ -55,3 +55,6 @@ cursor/mcp.local.json
 __pycache__/
 *.py[codz]
 *$py.class
+
+# MCP関連
+.serena/
