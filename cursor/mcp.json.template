@@ -17,21 +17,21 @@
     },
     "github": {
       "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-github"],
+      "args": ["-y", "@modelcontextprotocol/server-github@0.7.0"],
       "env": {
         "GITHUB_PERSONAL_ACCESS_TOKEN": ""
       }
     },
     "aws-cloudformation-mcp-server": {
       "command": "npx",
-      "args": ["-y", "@gmkirkpatrick/aws-cloudformation-mcp-server"],
+      "args": ["-y", "@gmkirkpatrick/aws-cloudformation-mcp-server@1.0.0"],
       "env": {
         "Authorization": "Bearer YOUR_GITHUB_TOKEN_HERE"
       }
     },
     "terraform": {
       "command": "npx",
-      "args": ["-y", "@fermyon/mcp-server-terraform"]
+      "args": ["-y", "@fermyon/mcp-server-terraform@0.1.0"]
     },
     "backlog-dhead": {
       "command": "node",
@@ -55,11 +55,11 @@
     },
     "awslabs/core-mcp-server": {
       "command": "npx",
-      "args": ["-y", "@awslabs/core-mcp-server"]
+      "args": ["-y", "@awslabs/core-mcp-server@0.1.0"]
     },
     "awslabs/aws-pricing-mcp-server": {
       "command": "npx",
-      "args": ["-y", "@awslabs/aws-pricing-mcp-server"]
+      "args": ["-y", "@awslabs/aws-pricing-mcp-server@0.1.0"]
     }
   }
 }
