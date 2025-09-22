@@ -1,10 +1,12 @@
 tap "code-hex/tap"
 tap "hashicorp/tap"
 tap "homebrew/bundle"
+# tap "homebrew/cask-fonts" # macOSブロック内に移動
 tap "homebrew/core"
 tap "knqyf263/utern"
-tap "linuxbrew/fonts"
-tap "linuxbrew/xorg"
+# tap "linuxbrew/fonts" # 未使用のため削除
+# tap "linuxbrew/xorg" # Linux専用ブロックに移動
+tap "oven-sh/bun"
 tap "rcmdnk/file"
 tap "romkatv/powerlevel10k"
 tap "waltarix/customs"
@@ -17,202 +19,116 @@ brew "libedit"
 brew "openssl@3"
 # Extraction utility for .zip compressed archives
 brew "unzip"
-# Highly capable, feature-rich programming language
-brew "perl"
-# Core application library for C
-brew "glib"
-# Advanced Package Tool
-brew "apt"
-# Extendable version manager with support for Ruby, Node.js, Erlang & more
 brew "asdf"
-# Official Amazon AWS command-line interface
+# brew "at-spi2-core" # Linux専用ブロックに移動
 brew "awscli"
-# Platform built on V8 to build network applications
-brew "node"
-# Secure and free password manager for all of your devices
 brew "bitwarden-cli"
-# Vector graphics library with cross-device output support
 brew "cairo"
-# Formatting tools for C, C++, Obj-C, Java, JavaScript, TypeScript
 brew "clang-format"
-# Cross-platform make
 brew "cmake"
-# General-purpose scripting language
-brew "php"
-# Dependency Manager for PHP
-brew "composer"
-# Top-like interface for container metrics
-brew "ctop"
-# Compiler for writing C extensions for the Python language
-brew "cython"
-# Portable devkit for CI/CD pipelines
-brew "dagger"
-# Secure runtime for JavaScript and TypeScript
-brew "deno"
-# Load/unload environment variables based on $PWD
-brew "direnv"
-# GNU compiler collection
-brew "gcc"
-# C++ library for machine learning
-brew "dlib"
-# Pack, ship and run any application as a lightweight container
-brew "docker"
-# Docker CLI plugin for extended build capabilities with BuildKit
-brew "docker-buildx"
-# Isolated development environments using Docker
-brew "docker-compose"
-# Simple, fast and user-friendly alternative to find
-brew "fd"
-# Lint your Python code for style and logical errors
-brew "flake8"
-# Lightweight scripting language for querying databases
-brew "flux"
-# Cica
-brew "font-cica"
-# Noto Sans CJK JP
-brew "font-noto-sans-cjk-jp", args: ["HEAD"]
-# Interpreted, interactive, object-oriented programming language
-brew "python@3.12"
-# Command-line fuzzy finder written in Go
-brew "fzf"
-# GitHub command-line tool
-brew "gh"
-# Glorious Glasgow Haskell Compilation System
-brew "ghc"
-# Git extension for versioning large files
-brew "git-lfs"
-# Open source programming language to build simple/reliable/efficient software
-brew "go"
-# Package compiler and linker metadata toolkit
-brew "pkgconf"
-# Generate introspection data for GObject libraries
-brew "gobject-introspection"
-# Library to render SVG files using Cairo
-brew "librsvg"
-# Graph visualization software from AT&T and Bell Labs
-brew "graphviz"
-# GUI toolkit
-brew "gtk+"
-# Cryptography and SSL/TLS Toolkit
-brew "openssl@1.1"
-# Toolkit for creating graphical user interfaces
-brew "gtk+3"
-# Smarter Dockerfile linter to validate best practices
-brew "hadolint"
-# Simple .INI file parser in C
-brew "inih"
-# Development kit for the Java programming language
-brew "openjdk"
-# Load testing and performance measurement application
-brew "jmeter"
-# Lightweight and flexible command-line JSON processor
-brew "jq"
-# Lazier way to manage everything docker
-brew "lazydocker"
-# Simple terminal UI for git commands
-brew "lazygit"
-# Configuration file processing library
-brew "libconfig"
-# Parsing Expression Grammars For Lua
-brew "lpeg"
-# Clone of ls with colorful output, file type icons, and more
-brew "lsd"
-# Powerful, lightweight programming language
-brew "lua"
-# Package manager for the Lua programming language
-brew "luarocks"
-# Scalable distributed version control system
-brew "mercurial"
-# Remote CLI tool for Mattermost server
-brew "mmctl"
-# Experimental optional static type checker for Python
-brew "mypy"
-# Open source relational database management system
-brew "mysql"
-# Open source relational database management system
-brew "mysql-client@8.0"
-# Open source relational database management system
-brew "mysql@8.0"
-# Parser generator tool and incremental parsing library
-brew "tree-sitter"
-# Ambitious Vim-fork focused on extensibility and agility
-brew "neovim"
-# Command-line interface for New Relic
-brew "newrelic-cli"
-# HTTP/2 C Library
-brew "nghttp2"
-# Install NodeJS versions
-brew "node-build"
-# Manage multiple NodeJS versions
-brew "nodenv"
-# Package for scientific computing with Python
-brew "numpy", link: false
-# 7-Zip (high compression file archiver) implementation
-brew "p7zip"
-# Simplistic interactive filtering tool
-brew "peco"
-# PGP packet visualizer
-brew "pgpdump"
-# Python dependency management tool
-brew "pipenv"
-# Object-relational database system
-brew "postgresql@14"
-# Theme for zsh
-brew "powerlevel10k"
-# Monitor data's progress through a pipe
-brew "pv"
-# Python 3 bindings for the Cairo graphics library
-brew "py3cairo"
-# GNOME Python bindings (based on GObject Introspection)
-brew "pygobject3"
-# Python interface to gdbm
-brew "python-gdbm@3.11"
-# Python interface to Tcl/Tk
-brew "python-tk@3.11"
-# Interpreted, interactive, object-oriented programming language
-brew "python@3.9"
-# Python interface to Tcl/Tk
-brew "python-tk@3.9"
-# Command-line YAML and XML processor that wraps jq
-brew "python-yq"
-# Search tool like grep and The Silver Searcher
-brew "ripgrep"
-# Powerful, clean, object-oriented scripting language
-brew "ruby"
-# Safe, concurrent, practical language
-brew "rust"
-# Secure Reliable Transport
-brew "srt"
-# Audio metadata library
-brew "taglib"
-# Terminal emulator widget used by GNOME terminal
-brew "vte3"
-# Multiple GNOME terminals in one window
-brew "terminator", link: false
-# Display directories as trees (with optional color/HTML output)
-brew "tree"
-# Extremely fast Python package installer and resolver, written in Rust
-brew "uv", link: false
-# Watch files and take action when they change
-brew "watchman"
-# Access X11 clipboards from the command-line
-brew "xclip"
-# Command-line program for getting and setting the contents of the X selection
-brew "xsel"
-# JavaScript package manager
-brew "yarn"
-# UNIX shell (command interpreter)
-brew "zsh"
-# Fish-like fast/unobtrusive autosuggestions for zsh
-brew "zsh-autosuggestions"
-# Fast, funny, everyone wanted? new cowsay!!
 brew "code-hex/tap/neo-cowsay"
-# Terraform
-brew "hashicorp/tap/terraform"
-# Multi group and stream log tailing for AWS CloudWatch Logs
-brew "knqyf263/utern/utern"
-# Wrapper library for evdev devices
-brew "linuxbrew/xorg/libevdev"
+brew "composer"
+brew "ctop"
+brew "cython"
+brew "dagger"
+brew "deno"
+brew "direnv"
+brew "dlib"
+brew "docker"
+brew "docker-buildx"
+brew "docker-compose"
+brew "fd"
+brew "flake8"
+brew "flux"
+# フォントはcaskで管理
+brew "fontforge"
+# brew "freeglut" # Linux専用ブロックに移動
+brew "fzf"
+brew "gcc"
+brew "gemini-cli"
+brew "gh"
+brew "ghc"
+brew "git-lfs"
+brew "glib"
+brew "go"
+brew "gobject-introspection"
+brew "graphviz"
+# brew "gtk+" # GTK2は旧式、GTK3のみで十分
+brew "gtk+3"
+brew "hadolint"
+brew "terraform"
+brew "inih"
+brew "jmeter"
+brew "jq"
+brew "just"
+brew "utern"
+brew "lazydocker"
+brew "lazygit"
+brew "libconfig"
+brew "librsvg"
+# brew "linuxbrew/xorg/libevdev" # Linux専用ブロックに移動
+brew "lpeg"
+brew "lsd"
+brew "lua"
+brew "luajit"
+brew "luarocks"
+brew "maven"
+brew "mercurial"
+# brew "mesa" # Linux専用ブロックに移動
+brew "mmctl"
+brew "mypy"
+# MySQL Server (統一バージョン)
+brew "mysql@8.0"
+brew "neovim"
+brew "netpbm"
+brew "newrelic-cli"
+brew "nghttp2"
+# Node.js version manager (nodenv-first approach)
+brew "node", link: false  # Homebrewのnodeはリンクしない（nodenv shimsを優先）
+brew "node-build"
+brew "nodenv"
+brew "numpy", link: false
+brew "openjdk"
+brew "oven-sh/bun/bun"
+brew "p7zip"
+brew "pango"
+brew "peco"
+brew "perl"
+brew "pgpdump"
+brew "php"
+brew "pipenv"
+brew "pipx"
+brew "pkgconf"
+brew "postgresql@14"
+brew "powerlevel10k"
+brew "pv"
+brew "py3cairo"
+brew "pygobject3"
+brew "python-gdbm@3.12"
+brew "python-tk@3.12"
+# brew "python-tk@3.9" # python@3.12に統一
+# brew "python-yq" # Go版のyqと競合するため削除
+brew "python@3.12"
+# brew "python@3.9" # python@3.12に統一
+brew "ripgrep"
+brew "ruby"
+brew "rust"
+brew "srt"
+brew "starship"
+brew "taglib"
+brew "tree"
+brew "tree-sitter"
+brew "uv", link: false
+# brew "vte3" # Linux専用ブロックに移動
+brew "watchman"
+# Package manager for Node.js (nodenv経由のnodeを使用)
+# NOTE: yarnをHomebrewでインストールするより、corepackで管理することを推奨
+# corepack enable後にyarn使用可能。この行は必要に応じて削除を検討
+brew "yarn"
+brew "yq"
+brew "zsh"
+brew "zsh-autosuggestions"
+vscode "4ops.terraform"
 vscode "asciidoctor.asciidoctor-vscode"
 vscode "atlassian.atlascode"
 vscode "batisteo.vscode-django"
@@ -223,20 +139,22 @@ vscode "coderabbit.coderabbit-vscode"
 vscode "cweijan.dbclient-jdbc"
 vscode "cweijan.vscode-database-client2"
 vscode "davidanson.vscode-markdownlint"
-vscode "docker.docker"
+# vscode "docker.docker" # 旧ID、ms-azuretools.vscode-dockerに統一
 vscode "eamodio.gitlens"
 vscode "formulahendry.auto-close-tag"
 vscode "formulahendry.auto-rename-tag"
 vscode "github.copilot"
 vscode "github.copilot-chat"
-vscode "github.copilot-workspace"
+vscode "GitHub.copilot-workspace"
 vscode "github.vscode-pull-request-github"
+vscode "Google.geminicodeassist"
 vscode "grapecity.gc-excelviewer"
+vscode "hashicorp.terraform"
 vscode "kevinrose.vsc-python-indent"
 vscode "linjun.ftp-support"
 vscode "mechatroner.rainbow-csv"
 vscode "mhutchie.git-graph"
-vscode "ms-azuretools.vscode-containers"
+# vscode "ms-azuretools.vscode-containers" # 旧称、ms-vscode-remote.remote-containersに統一
 vscode "ms-azuretools.vscode-docker"
 vscode "ms-ceintl.vscode-language-pack-ja"
 vscode "ms-python.black-formatter"
@@ -268,3 +186,23 @@ vscode "thebarkman.vscode-djaneiro"
 vscode "vscode-icons-team.vscode-icons"
 vscode "yzhang.markdown-all-in-one"
 vscode "zhuangtongfa.material-theme"
+
+# フォント (macOS のみ)
+if OS.mac?
+  tap "homebrew/cask-fonts"
+  cask "font-cica"
+  cask "font-noto-sans-cjk-jp"
+end
+
+# Linux専用パッケージ
+if OS.linux?
+  tap "linuxbrew/xorg"
+  brew "at-spi2-core"
+  brew "freeglut"
+  brew "linuxbrew/xorg/libevdev"
+  brew "mesa"
+  brew "terminator", link: false
+  brew "vte3"
+  brew "xclip"
+  brew "xsel"
+end

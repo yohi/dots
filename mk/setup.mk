@@ -60,10 +60,10 @@ setup-zsh:
 		echo "" >> $(DOTFILES_DIR)/zsh/zshrc; \
 		echo "# Homebrew PATH" >> $(DOTFILES_DIR)/zsh/zshrc; \
 		echo 'export PATH="/home/linuxbrew/.linuxbrew/bin:$$PATH"' >> $(DOTFILES_DIR)/zsh/zshrc; \
-		echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"' >> $(DOTFILES_DIR)/zsh/zshrc; \
+		echo 'eval "$$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"' >> $(DOTFILES_DIR)/zsh/zshrc; \
 		echo "" >> $(DOTFILES_DIR)/zsh/zshrc; \
 		echo "# Zinit" >> $(DOTFILES_DIR)/zsh/zshrc; \
-		echo 'ZINIT_HOME="$${XDG_DATA_HOME:-$${HOME}/.local/share}/zinit/zinit.git"' >> $(DOTFILES_DIR)/zsh/zshrc; \
+		echo 'ZINIT_HOME="$${XDG_DATA_HOME:-$$HOME/.local/share}/zinit/zinit.git"' >> $(DOTFILES_DIR)/zsh/zshrc; \
 		echo 'source "$${ZINIT_HOME}/zinit.zsh"' >> $(DOTFILES_DIR)/zsh/zshrc; \
 		echo "" >> $(DOTFILES_DIR)/zsh/zshrc; \
 		echo "# Load Powerlevel10k theme" >> $(DOTFILES_DIR)/zsh/zshrc; \
@@ -370,7 +370,7 @@ setup-docker:
 	@echo "🐙 Docker Composeの設定中..."
 	@mkdir -p $(HOME_DIR)/.docker/cli-plugins
 	@if command -v brew >/dev/null 2>&1; then \
-		eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"; \
+		eval "$$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"; \
 		ln -sfn $$(brew --prefix)/opt/docker-compose/bin/docker-compose $(HOME_DIR)/.docker/cli-plugins/docker-compose || true; \
 	fi
 

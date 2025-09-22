@@ -50,6 +50,8 @@ nvim/plugin/packer_compiled.lua
 .env.local
 .env.secret
 cursor/mcp.local.json
+cursor/mcp.json
+cursor/mcp*.json
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -57,4 +59,4 @@ __pycache__/
 *$py.class
 
 # MCP関連
-.serena/
+/.serena/
