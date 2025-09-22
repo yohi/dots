@@ -107,7 +107,7 @@ brew "pygobject3"
 brew "python-gdbm@3.12"
 brew "python-tk@3.12"
 # brew "python-tk@3.9" # python@3.12に統一
-brew "python-yq"
+# brew "python-yq" # Go版のyqと競合するため削除
 brew "python@3.12"
 # brew "python@3.9" # python@3.12に統一
 brew "ripgrep"
