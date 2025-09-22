@@ -8,11 +8,9 @@ system-setup:
 	@echo "tzdata tzdata/Zones/Asia select Tokyo" | sudo debconf-set-selections
 	@export DEBIAN_FRONTEND=noninteractive
 
-	# 問題のあるリポジトリの事前修正
+	# 問題のあるリポジトリの事前修正（CopyQは除外）
 	@echo "🔧 問題のあるリポジトリを修正中..."
-	@if [ -f /etc/apt/sources.list.d/hluk-ubuntu-copyq-plucky.list ]; then \
-		sudo mv /etc/apt/sources.list.d/hluk-ubuntu-copyq-plucky.list /etc/apt/sources.list.d/hluk-ubuntu-copyq-plucky.list.disabled 2>/dev/null || true; \
-	fi
+	# CopyQ PPAは正常なPPAなので無効化しない
 	@if [ -f /etc/apt/sources.list.d/remmina-ppa-team-ubuntu-remmina-next-plucky.list ]; then \
 		sudo mv /etc/apt/sources.list.d/remmina-ppa-team-ubuntu-remmina-next-plucky.list /etc/apt/sources.list.d/remmina-ppa-team-ubuntu-remmina-next-plucky.list.disabled 2>/dev/null || true; \
 	fi
@@ -57,8 +55,8 @@ system-setup:
 	@systemctl --user enable ibus-daemon || true
 	@systemctl --user start ibus-daemon || true
 
-	# IBM Plex Sans フォントのインストール
-	@$(MAKE) install-ibm-plex-fonts
+	# フォント環境のセットアップ
+	@$(MAKE) fonts-setup
 
 	# 基本開発ツール
 	@echo "🔧 基本開発ツールをインストール中..."

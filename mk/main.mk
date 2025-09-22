@@ -7,8 +7,9 @@ setup-all:
 	@echo "   1. システムセットアップ"
 	@echo "   2. Homebrewインストール"
 	@echo "   3. アプリケーションインストール"
-	@echo "   4. 設定セットアップ"
-	@echo "   5. 拡張機能インストール"
+	@echo "   4. Claude Codeエコシステムインストール"
+	@echo "   5. 設定セットアップ"
+	@echo "   6. 拡張機能インストール"
 	@echo ""
 
 	# 各セットアップを順次実行
@@ -24,19 +25,25 @@ setup-all:
 	@$(MAKE) install-apps
 	@echo ""
 
-	@echo "📋 4. 設定セットアップ実行中..."
+	@echo "📋 4. Claude Codeエコシステムインストール実行中..."
+	@$(MAKE) install-claude-ecosystem
+	@echo ""
+
+	@echo "📋 5. 設定セットアップ実行中..."
 	@$(MAKE) setup-vim
 	@$(MAKE) setup-zsh
 	@$(MAKE) setup-git
 	@$(MAKE) setup-wezterm
 	@$(MAKE) setup-vscode
 	@$(MAKE) setup-cursor
+	@$(MAKE) setup-mcp-tools
 	@$(MAKE) setup-docker
 	@$(MAKE) setup-development
 	@$(MAKE) setup-shortcuts
+	@$(MAKE) setup-claude
 	@echo ""
 
-	@echo "📋 5. 拡張機能インストール実行中..."
+	@echo "📋 6. 拡張機能インストール実行中..."
 	@$(MAKE) install-extensions-simple
 	@echo ""
 
@@ -72,7 +79,16 @@ debug:
 	@echo -n "Neovim: "; command -v nvim >/dev/null 2>&1 && echo "✅ インストール済み" || echo "❌ 未インストール"
 	@echo -n "Docker: "; command -v docker >/dev/null 2>&1 && echo "✅ インストール済み" || echo "❌ 未インストール"
 	@echo -n "VS Code: "; command -v code >/dev/null 2>&1 && echo "✅ インストール済み" || echo "❌ 未インストール"
-	@echo -n "Cursor: "; command -v cursor >/dev/null 2>&1 && echo "✅ インストール済み" || echo "❌ 未インストール"
+	@echo -n "Cursor: "; \
+	if [ -f /opt/cursor/cursor.AppImage ]; then \
+		FILE_DATE=$$(stat -c%Y /opt/cursor/cursor.AppImage 2>/dev/null || echo "0"); \
+		FORMATTED_DATE=$$(date -d @$$FILE_DATE '+%Y-%m-%d' 2>/dev/null || echo '不明'); \
+		echo "✅ インストール済み (更新日: $$FORMATTED_DATE)"; \
+	elif command -v cursor >/dev/null 2>&1; then \
+		echo "✅ インストール済み"; \
+	else \
+		echo "❌ 未インストール"; \
+	fi
 	@echo -n "GNOME Extensions: "; command -v gnome-extensions >/dev/null 2>&1 && echo "✅ インストール済み" || echo "❌ 未インストール"
 	@echo ""
 
@@ -123,3 +139,25 @@ install-wezterm:
 	fi
 
 	@echo "✅ WEZTERMのインストールが完了しました。"
+
+# ========================================
+# 新しい階層的な命名規則のターゲット
+# ========================================
+
+# システム設定系
+setup-system: system-setup
+
+# 統合セットアップ系
+setup-config-all: setup-all
+
+# ========================================
+# 後方互換性のためのエイリアス
+# ========================================
+
+# 古いターゲット名を維持（既に実装済み）
+# setup-all: は既に実装済み
+# system-setup: は既に実装済み
+
+# Playwright エイリアス（短縮形）
+playwright: install-packages-playwright  ## Playwright E2Eテストフレームワークをインストール
+pw: install-packages-playwright          ## Playwright E2Eテストフレームワークをインストール（短縮形）

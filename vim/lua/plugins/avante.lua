@@ -1,7 +1,7 @@
 return {
     "yetone/avante.nvim",
     event = "VeryLazy",
-    lazy = false,
+    lazy = true,
     version = false, -- Set this to "*" to always pull the latest release version, or set it to false to update to the latest code changes.
     opts = {
         -- add any opts here
@@ -32,8 +32,8 @@ return {
                 timeout = 30000, -- timeout in milliseconds
                 extra_request_body = {
                     temperature = 0, -- adjust if needed
-                    max_tokens = 4096,
-                }
+                },
+                max_tokens = 4096,
                 -- reasoning_effort = "high" -- only supported for reasoning models (o1, etc.)
             },
         },
@@ -52,7 +52,18 @@ return {
         "hrsh7th/nvim-cmp", -- autocompletion for avante commands and mentions
         "ibhagwan/fzf-lua", -- for file_selector provider fzf
         "nvim-tree/nvim-web-devicons", -- or echasnovski/mini.icons
-        "zbirenbaum/copilot.lua", -- for providers='copilot'
+        {
+            "zbirenbaum/copilot.lua", -- for providers='copilot'
+            cmd = "Copilot",
+            event = "InsertEnter",
+            config = function()
+                require("copilot").setup({
+                    suggestion = { enabled = false },
+                    panel = { enabled = false },
+                    copilot_node_command = 'node',
+                })
+            end,
+        },
         {
             -- support for image pasting
             "HakonHarnes/img-clip.nvim",

@@ -1,0 +1,98 @@
+# Lazygit設定ファイル
+# ~/.config/lazygit/config.yml
+#
+# カスタムコマンド設定:
+# - output: 'logWithPty' - コマンド出力を疑似ターミナルでログに記録（色付き出力対応）
+# - stream: false - ストリーミング出力無効
+# - prompts - インタラクティブプロンプト設定
+
+gui:
+  theme:
+    lightTheme: false
+  commitLength:
+    show: true
+  splitDiff: "auto"
+  mainPanelSplitMode: "flexible"
+  expandFocusedSidePanel: false
+customCommands:
+  - key: "<c-g>"
+    context: "files"
+    description: "🎯 AI統合コミット"
+    loadingText: "🤖 Gemini AI でコミットメッセージ生成中..."
+    prompts:
+      - type: "menu"
+        title: "🎯 実行したい操作を選択してください"
+        key: "Action"
+        options:
+          - name: "ai_comment_only"
+            description: "🤖 生成AIがコメントを生成"
+            value: "ai_comment_only"
+          - name: "ai_commit"
+            description: "🤖✅ 生成AIがコメントを生成してコミット"
+            value: "ai_commit"
+          - name: "ai_commit_push"
+            description: "🤖✅🚀 生成AIがコメントを生成してコミット・プッシュ"
+            value: "ai_commit_push"
+      
+      - type: "confirm"
+        title: "🤖 AI生成コメント確認"
+        body: |
+          🎯 選択した操作: {{.Form.Action}}
+          
+          {{runCommand "/home/y_ohi/dots/lazygit/ai-commit-generator/scripts/instant_feedback.sh"}}
+          
+                    この内容で実行しますか？
+          [Enter] 実行 / [Esc] キャンセル
+    command: |
+       echo "🚀 確認後の実行を開始します..."
+       echo "⏳ 選択された操作: {{.Form.Action}}"
+       
+       case "{{.Form.Action}}" in
+         "ai_comment_only")
+           echo "🤖 AIコメント生成完了"
+           ;;
+         "ai_commit")
+           echo "📝 AIコメントでコミット実行中..."
+           /home/y_ohi/dots/lazygit/ai-commit-generator/scripts/ai_commit_integrated.sh commit --quiet
+           echo "✅ コミット完了"
+           ;;
+         "ai_commit_push")
+           echo "🚀 AIコメントでコミット・プッシュ実行中..."
+           /home/y_ohi/dots/lazygit/ai-commit-generator/scripts/ai_commit_integrated.sh commit_push --quiet
+           echo "✅ コミット・プッシュ完了"
+           ;;
+       esac
+
+# customCommands:
+#   - key: '<c-g>'
+#     context: 'files'
+#     command: '/home/y_ohi/.local/bin/ai-commit-generator --lazygit-mode'
+#     description: 'AIコミットメッセージ生成'
+#     output: 'logWithPty'
+#     prompts:
+#       - type: 'confirm'
+#         title: 'AIコミットメッセージ生成'
+#         body: '生成AIがコミットメッセージを作成します。続行しますか？'
+#   - key: '<c-a>'
+#     context: 'files'
+#     command: '/home/y_ohi/.local/bin/ai-commit-generator --lazygit-commit'
+#     description: 'AI生成 + 自動コミット画面'
+#     output: 'logWithPty'
+#     prompts:
+#       - type: 'confirm'
+#         title: 'AI生成 + 自動コミット'
+#         body: 'AIが生成したメッセージで自動的にコミット画面を開きます。続行しますか？'
+#   - key: '<c-d>'
+#     context: 'files'
+#     command: '/home/y_ohi/.local/bin/ai-commit-generator --direct-commit'
+#     description: 'AI生成 + 確認付き直接コミット（Wayland対応）'
+#     prompts:
+#       - type: 'confirm'
+#         title: 'AI生成 + 直接コミット'
+#         body: 'AIが生成したメッセージを確認後、直接コミットします。続行しますか？'
+#     output: terminal
+#   - key: '<c-x>'
+#     context: 'files'
+#     command: '/home/y_ohi/.local/bin/ai-commit-generator --check-env'
+#     description: '環境変数チェック'
+#     output: 'logWithPty'

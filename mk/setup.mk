@@ -184,6 +184,32 @@ setup-vscode:
 
 	@echo "✅ VS Codeの設定が完了しました。"
 
+# VS Code用のSuperCopilotフレームワークをセットアップ
+setup-vscode-copilot:
+	@echo "🧠 VS Code用のSuperCopilotフレームワークをセットアップ中..."
+	@mkdir -p $(HOME_DIR)/.vscode/copilot-instructions
+
+	# シンボリックリンクを作成
+	@ln -sfn $(DOTFILES_DIR)/vscode/copilot-instructions/personas.md $(HOME_DIR)/.vscode/copilot-instructions/personas.md
+	@ln -sfn $(DOTFILES_DIR)/vscode/copilot-instructions/commands.md $(HOME_DIR)/.vscode/copilot-instructions/commands.md
+	@ln -sfn $(DOTFILES_DIR)/vscode/copilot-instructions/rules.md $(HOME_DIR)/.vscode/copilot-instructions/rules.md
+
+	@echo "✅ VS Code用のSuperCopilotフレームワークのセットアップが完了しました"
+	@echo ""
+	@echo "📝 VS Code settings.jsonに以下の設定が追加されています:"
+	@echo "\"github.copilot.chat.codeGeneration.instructions\": ["
+	@echo "  {"
+	@echo "    \"file\": \"~/.vscode/copilot-instructions/personas.md\""
+	@echo "  },"
+	@echo "  {"
+	@echo "    \"file\": \"~/.vscode/copilot-instructions/commands.md\""
+	@echo "  },"
+	@echo "  {"
+	@echo "    \"file\": \"~/.vscode/copilot-instructions/rules.md\""
+	@echo "  }"
+	@echo "]"
+	@echo ""
+
 # Cursorの設定をセットアップ
 setup-cursor:
 	@echo "🖱️  Cursorの設定をセットアップ中..."
@@ -204,6 +230,42 @@ setup-cursor:
 	@ln -sfn $(DOTFILES_DIR)/cursor/keybindings.json $(CONFIG_DIR)/Cursor/User/keybindings.json
 
 	@echo "✅ Cursorの設定が完了しました。"
+
+# Cursor MCP Toolsの設定をセットアップ
+setup-mcp-tools:
+	@echo "🔧 Cursor MCP Toolsの設定をセットアップ中..."
+	@mkdir -p $(HOME_DIR)/.cursor
+
+	# 既存設定のバックアップ
+	@if [ -f "$(HOME_DIR)/.cursor/mcp.json" ] && [ ! -L "$(HOME_DIR)/.cursor/mcp.json" ]; then \
+		echo "⚠️  既存のMCP設定をバックアップ中..."; \
+		mv $(HOME_DIR)/.cursor/mcp.json $(HOME_DIR)/.cursor/mcp.json.backup.$$(date +%Y%m%d_%H%M%S); \
+	fi
+
+	# シンボリックリンクを作成
+	@ln -sfn $(DOTFILES_DIR)/cursor/mcp.json $(HOME_DIR)/.cursor/mcp.json
+
+	# 必要な依存関係をインストール
+	@echo "📦 MCP Tools必要な依存関係をチェック中..."
+	@if ! command -v uvx >/dev/null 2>&1; then \
+		echo "⚠️  uvxが見つかりません。インストールしてください:"; \
+		echo "   pip install uv"; \
+		echo "   または:"; \
+		echo "   curl -LsSf https://astral.sh/uv/install.sh | sh"; \
+	fi
+
+	@if ! command -v npx >/dev/null 2>&1; then \
+		echo "⚠️  npxが見つかりません。Node.jsをインストールしてください"; \
+	fi
+
+	@echo "✅ Cursor MCP Toolsの設定が完了しました。"
+	@echo "ℹ️  設定されたMCPサーバー:"
+	@echo "  - Bitbucket MCP Server: BitbucketのPR管理・コメント機能"
+	@echo "  - Playwright MCP Server: ウェブブラウザの自動化"
+	@echo "  - AWS Documentation MCP Server: AWS文書の検索・参照"
+	@echo "  - Terraform MCP Server: Terraform設定の管理"
+	@echo "  - ECS MCP Server: AWS ECSの管理"
+	@echo "ℹ️  Cursorを再起動してMCPツールを有効化してください。"
 
 # Git設定のセットアップ
 setup-git:
@@ -408,3 +470,142 @@ setup-shortcuts:
 
 	@echo "✅ キーボードショートカットの設定が完了しました。"
 	@echo "⚠️  設定を反映するため、一度ログアウト・ログインすることを推奨します。"
+
+# 日本語入力環境の設定
+setup-ime:
+	@echo "🈹 日本語入力環境をセットアップ中..."
+
+	# IBusの設定確認
+	@if ! command -v ibus >/dev/null 2>&1; then \
+		echo "❌ IBusがインストールされていません。"; \
+		echo "   インストールコマンド: sudo apt install -y ibus ibus-mozc"; \
+		exit 1; \
+	fi
+
+	# Mozcエンジンの確認
+	@if ! ibus list-engine | grep -q mozc; then \
+		echo "❌ Mozcエンジンが見つかりません。"; \
+		echo "   インストールコマンド: sudo apt install -y ibus-mozc"; \
+		exit 1; \
+	fi
+
+	# IBusデーモンの再起動
+	@echo "🔄 IBusデーモンを再起動中..."
+	@pkill -f ibus-daemon || true
+	@sleep 2
+	@ibus-daemon -drx || true
+
+	# 設定確認とアドバイス
+	@echo "✅ 日本語入力環境のセットアップが完了しました。"
+	@echo ""
+	@echo "📋 追加で必要な設定:"
+	@echo "   1. システム設定 > 地域と言語 > 入力ソース でMozcを追加"
+	@echo "   2. ターミナルを再起動して環境変数を適用"
+	@echo "   3. WezTermでCtrl+SpaceまたはAlt+半角/全角で日本語入力を切り替え"
+	@echo ""
+	@echo "🔧 手動で日本語入力を設定する場合:"
+	@echo "   ibus-setup を実行して手動設定してください"
+
+# ========================================
+# 新しい階層的な命名規則のターゲット
+# ========================================
+
+# 設定ファイル・コンフィグセットアップ系
+setup-config-vim: setup-vim
+setup-config-zsh: setup-zsh
+setup-config-wezterm: setup-wezterm
+setup-config-vscode: setup-vscode
+setup-config-vscode-copilot: setup-vscode-copilot
+setup-config-cursor: setup-cursor
+setup-config-mcp-tools: setup-mcp-tools
+setup-config-git: setup-git
+setup-config-docker: setup-docker
+setup-config-development: setup-development
+setup-config-shortcuts: setup-shortcuts
+setup-config-ime: setup-ime
+setup-config-claude: setup-claude
+setup-config-lazygit: setup-lazygit
+
+# ========================================
+# Claude Code設定のセットアップ
+# ========================================
+
+setup-claude:
+	@echo "🤖 Claude Code設定をセットアップ中..."
+	@mkdir -p $(HOME_DIR)/.claude
+
+	# claude-settings.jsonのシンボリックリンク作成
+	@echo "🔗 claude-settings.jsonを~/.claude/settings.jsonにリンク中..."
+	@if [ -f "$(HOME_DIR)/.claude/settings.json" ] && [ ! -L "$(HOME_DIR)/.claude/settings.json" ]; then \
+		echo "⚠️  既存のsettings.jsonをバックアップ中..."; \
+		mv $(HOME_DIR)/.claude/settings.json $(HOME_DIR)/.claude/settings.json.backup.$$(date +%Y%m%d_%H%M%S); \
+	fi
+	@if [ -f "$(DOTFILES_DIR)/claude/claude-settings.json" ]; then \
+		ln -sfn $(DOTFILES_DIR)/claude/claude-settings.json $(HOME_DIR)/.claude/settings.json; \
+		echo "✅ リンク作成: claude-settings.json"; \
+	else \
+		echo "⚠️ missing: $(DOTFILES_DIR)/claude/claude-settings.json（リンクをスキップ）"; \
+	fi
+
+	# CLAUDE.mdのシンボリックリンク作成
+	@echo "🔗 CLAUDE.mdを~/.claude/CLAUDE.mdにリンク中..."
+	@if [ -f "$(HOME_DIR)/.claude/CLAUDE.md" ] && [ ! -L "$(HOME_DIR)/.claude/CLAUDE.md" ]; then \
+		echo "⚠️  既存のCLAUDE.mdをバックアップ中..."; \
+		mv $(HOME_DIR)/.claude/CLAUDE.md $(HOME_DIR)/.claude/CLAUDE.md.backup.$$(date +%Y%m%d_%H%M%S); \
+	fi
+	@if [ -f "$(DOTFILES_DIR)/claude/CLAUDE.md" ]; then \
+		ln -sfn $(DOTFILES_DIR)/claude/CLAUDE.md $(HOME_DIR)/.claude/CLAUDE.md; \
+		echo "✅ リンク作成: CLAUDE.md"; \
+	else \
+		echo "⚠️ missing: $(DOTFILES_DIR)/claude/CLAUDE.md（リンクをスキップ）"; \
+	fi
+
+	# statusline.shのシンボリックリンク作成
+	@echo "🔗 statusline.shを~/.claude/statusline.shにリンク中..."
+	@if [ -f "$(HOME_DIR)/.claude/statusline.sh" ] && [ ! -L "$(HOME_DIR)/.claude/statusline.sh" ]; then \
+		echo "⚠️  既存のstatusline.shをバックアップ中..."; \
+		mv $(HOME_DIR)/.claude/statusline.sh $(HOME_DIR)/.claude/statusline.sh.backup.$$(date +%Y%m%d_%H%M%S); \
+	fi
+	@if [ -f "$(DOTFILES_DIR)/claude/statusline.sh" ]; then \
+		ln -sfn $(DOTFILES_DIR)/claude/statusline.sh $(HOME_DIR)/.claude/statusline.sh; \
+		chmod +x $(HOME_DIR)/.claude/statusline.sh; \
+		echo "✅ リンク作成: statusline.sh（実行権限付与）"; \
+	else \
+		echo "⚠️ missing: $(DOTFILES_DIR)/claude/statusline.sh（リンクをスキップ）"; \
+	fi
+
+	@echo "✅ Claude設定が完了しました。"
+	@echo "   設定ファイル: ~/.claude/settings.json -> $(DOTFILES_DIR)/claude/claude-settings.json"
+	@echo "   設定ファイル: ~/.claude/CLAUDE.md -> $(DOTFILES_DIR)/claude/CLAUDE.md"
+	@echo "   スクリプト:   ~/.claude/statusline.sh -> $(DOTFILES_DIR)/claude/statusline.sh"
+# ========================================
+# 後方互換性のためのエイリアス
+# ========================================
+
+# 古いターゲット名を維持（既に実装済み）
+# setup-vim: は既に実装済み
+# setup-zsh: は既に実装済み
+# setup-wezterm: は既に実装済み
+# その他の既存ターゲットはそのまま
+
+
+# Lazygitの設定をセットアップ
+setup-lazygit:
+	@echo "📦 Lazygitの設定をセットアップ中..."
+	@mkdir -p $(CONFIG_DIR)/lazygit
+
+	# 既存設定のバックアップ
+	@if [ -f "$(CONFIG_DIR)/lazygit/config.yml" ] && [ ! -L "$(CONFIG_DIR)/lazygit/config.yml" ]; then \
+		echo "⚠️  既存のlazygit設定をバックアップ中..."; \
+		mv $(CONFIG_DIR)/lazygit/config.yml $(CONFIG_DIR)/lazygit/config.yml.backup.$$(date +%Y%m%d_%H%M%S); \
+	fi
+
+	# シンボリックリンクを作成
+	@ln -sfn $(DOTFILES_DIR)/lazygit/config.yml $(CONFIG_DIR)/lazygit/config.yml
+
+	@echo "✅ Lazygitの設定が完了しました。"
+	@echo "   設定ファイル: ~/.config/lazygit/config.yml -> $(DOTFILES_DIR)/lazygit/config.yml"
+
+
+
+# （重複定義削除）上部の階層ターゲット群（lines 513-527）に集約済み
