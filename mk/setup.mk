@@ -538,29 +538,41 @@ setup-claude:
 	@echo "🔗 claude-settings.jsonを~/.claude/settings.jsonにリンク中..."
 	@if [ -f "$(HOME_DIR)/.claude/settings.json" ] && [ ! -L "$(HOME_DIR)/.claude/settings.json" ]; then \
 		echo "⚠️  既存のsettings.jsonをバックアップ中..."; \
-		mv $(HOME_DIR)/.claude/settings.json $(HOME_DIR)/.claude/settings.json.backup.$(date +%Y%m%d_%H%M%S); \
+		mv $(HOME_DIR)/.claude/settings.json $(HOME_DIR)/.claude/settings.json.backup.$$(date +%Y%m%d_%H%M%S); \
 	fi
-	@ln -sfn $(DOTFILES_DIR)/claude/claude-settings.json $(HOME_DIR)/.claude/settings.json
-	@echo "✅ settings.jsonがリンクされました"
+	@if [ -f "$(DOTFILES_DIR)/claude/claude-settings.json" ]; then \
+		ln -sfn $(DOTFILES_DIR)/claude/claude-settings.json $(HOME_DIR)/.claude/settings.json; \
+		echo "✅ リンク作成: claude-settings.json"; \
+	else \
+		echo "⚠️ missing: $(DOTFILES_DIR)/claude/claude-settings.json（リンクをスキップ）"; \
+	fi
 
 	# CLAUDE.mdのシンボリックリンク作成
 	@echo "🔗 CLAUDE.mdを~/.claude/CLAUDE.mdにリンク中..."
 	@if [ -f "$(HOME_DIR)/.claude/CLAUDE.md" ] && [ ! -L "$(HOME_DIR)/.claude/CLAUDE.md" ]; then \
 		echo "⚠️  既存のCLAUDE.mdをバックアップ中..."; \
-		mv $(HOME_DIR)/.claude/CLAUDE.md $(HOME_DIR)/.claude/CLAUDE.md.backup.$(date +%Y%m%d_%H%M%S); \
+		mv $(HOME_DIR)/.claude/CLAUDE.md $(HOME_DIR)/.claude/CLAUDE.md.backup.$$(date +%Y%m%d_%H%M%S); \
 	fi
-	@ln -sfn $(DOTFILES_DIR)/claude/CLAUDE.md $(HOME_DIR)/.claude/CLAUDE.md
-	@echo "✅ CLAUDE.mdがリンクされました"
+	@if [ -f "$(DOTFILES_DIR)/claude/CLAUDE.md" ]; then \
+		ln -sfn $(DOTFILES_DIR)/claude/CLAUDE.md $(HOME_DIR)/.claude/CLAUDE.md; \
+		echo "✅ リンク作成: CLAUDE.md"; \
+	else \
+		echo "⚠️ missing: $(DOTFILES_DIR)/claude/CLAUDE.md（リンクをスキップ）"; \
+	fi
 
 	# statusline.shのシンボリックリンク作成
 	@echo "🔗 statusline.shを~/.claude/statusline.shにリンク中..."
 	@if [ -f "$(HOME_DIR)/.claude/statusline.sh" ] && [ ! -L "$(HOME_DIR)/.claude/statusline.sh" ]; then \
 		echo "⚠️  既存のstatusline.shをバックアップ中..."; \
-		mv $(HOME_DIR)/.claude/statusline.sh $(HOME_DIR)/.claude/statusline.sh.backup.$(date +%Y%m%d_%H%M%S); \
+		mv $(HOME_DIR)/.claude/statusline.sh $(HOME_DIR)/.claude/statusline.sh.backup.$$(date +%Y%m%d_%H%M%S); \
 	fi
-	@ln -sfn $(DOTFILES_DIR)/claude/statusline.sh $(HOME_DIR)/.claude/statusline.sh
-	@chmod +x $(HOME_DIR)/.claude/statusline.sh
-	@echo "✅ statusline.shがリンクされ、実行権限が付与されました"
+	@if [ -f "$(DOTFILES_DIR)/claude/statusline.sh" ]; then \
+		ln -sfn $(DOTFILES_DIR)/claude/statusline.sh $(HOME_DIR)/.claude/statusline.sh; \
+		chmod +x $(HOME_DIR)/.claude/statusline.sh; \
+		echo "✅ リンク作成: statusline.sh（実行権限付与）"; \
+	else \
+		echo "⚠️ missing: $(DOTFILES_DIR)/claude/statusline.sh（リンクをスキップ）"; \
+	fi
 
 	@echo "✅ Claude設定が完了しました。"
 	@echo "   設定ファイル: ~/.claude/settings.json -> $(DOTFILES_DIR)/claude/claude-settings.json"
@@ -596,6 +608,4 @@ setup-lazygit:
 
 
 
-# 設定ファイル・コンフィグセットアップ系
-setup-config-claude: setup-claude
-setup-config-lazygit: setup-lazygit
+# （重複定義削除）上部の階層ターゲット群（lines 513-527）に集約済み

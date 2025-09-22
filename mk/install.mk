@@ -1392,13 +1392,22 @@ install-packages-ccusage:
 	@if ! command -v bun >/dev/null 2>&1; then \
 		echo "bun が見つからないため、インストールします..."; \
 		curl -fsSL https://bun.sh/install | bash; \
-		export PATH="$(HOME)/.bun/bin:$PATH"; \
+		export PATH="$$HOME/.bun/bin:$$PATH"; \
 		if ! command -v bun >/dev/null 2>&1; then \
 			echo "❌ bun のインストールに失敗しました。PATHを確認してください。"; \
 			exit 1; \
 		fi \
 	fi
-	@bun install -g ccusage
+	@echo "🔧 ccusage をグローバル導入中..."
+	@export PATH="$$HOME/.bun/bin:$$PATH"; \
+	if ! bun add -g ccusage; then \
+		echo "⚠️ bun add -g に失敗。bunx での実行にフォールバックします"; \
+	fi
+	@echo "🔍 動作確認: ccusage --version"
+	@export PATH="$$HOME/.bun/bin:$$PATH"; \
+	if ! bunx -y ccusage --version >/dev/null 2>&1; then \
+		echo "⚠️ bunx 実行確認に失敗しました（ネットワーク状況を確認してください）"; \
+	fi
 	@echo "✅ ccusage のインストールが完了しました。"
 
 # 追加のブラウザインストール系
@@ -1834,4 +1843,3 @@ shutdown-system:
 			else \
 				echo "シャットダウンをキャンセルしました。"; \
 			fi
-
