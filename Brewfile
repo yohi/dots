@@ -1,10 +1,10 @@
 tap "code-hex/tap"
 tap "hashicorp/tap"
 tap "homebrew/bundle"
-tap "homebrew/cask-fonts"
+# tap "homebrew/cask-fonts" # macOSブロック内に移動
 tap "homebrew/core"
 tap "knqyf263/utern"
-tap "linuxbrew/fonts"
+# tap "linuxbrew/fonts" # 未使用のため削除
 tap "linuxbrew/xorg"
 tap "oven-sh/bun"
 tap "rcmdnk/file"
@@ -21,7 +21,7 @@ brew "openssl@3"
 brew "unzip"
 brew "apt"
 brew "asdf"
-brew "at-spi2-core"
+# brew "at-spi2-core" # Linux専用ブロックに移動
 brew "awscli"
 brew "bitwarden-cli"
 brew "cairo"
@@ -43,7 +43,7 @@ brew "flake8"
 brew "flux"
 # フォントはcaskで管理
 brew "fontforge"
-brew "freeglut"
+# brew "freeglut" # Linux専用ブロックに移動
 brew "fzf"
 brew "gcc"
 brew "gemini-cli", link: false
@@ -67,7 +67,7 @@ brew "lazydocker"
 brew "lazygit"
 brew "libconfig"
 brew "librsvg"
-brew "linuxbrew/xorg/libevdev"
+# brew "linuxbrew/xorg/libevdev" # Linux専用ブロックに移動
 brew "lpeg"
 brew "lsd"
 brew "lua"
@@ -75,17 +75,17 @@ brew "luajit"
 brew "luarocks"
 brew "maven"
 brew "mercurial"
-brew "mesa"
+# brew "mesa" # Linux専用ブロックに移動
 brew "mmctl"
 brew "mypy"
-brew "mysql"
+# brew "mysql" # mysql@8.0に統一
 brew "mysql-client@8.0"
 brew "mysql@8.0"
 brew "neovim"
 brew "netpbm"
 brew "newrelic-cli"
 brew "nghttp2"
-brew "node"
+brew "node", link: false
 brew "node-build"
 brew "nodenv"
 brew "numpy", link: false
@@ -105,12 +105,12 @@ brew "powerlevel10k"
 brew "pv"
 brew "py3cairo"
 brew "pygobject3"
-brew "python-gdbm@3.11"
-brew "python-tk@3.11"
-brew "python-tk@3.9"
+brew "python-gdbm@3.12"
+brew "python-tk@3.12"
+# brew "python-tk@3.9" # python@3.12に統一
 brew "python-yq"
 brew "python@3.12"
-brew "python@3.9"
+# brew "python@3.9" # python@3.12に統一
 brew "ripgrep"
 brew "ruby"
 brew "rust"
@@ -121,7 +121,7 @@ brew "terminator", link: false
 brew "tree"
 brew "tree-sitter"
 brew "uv", link: false
-brew "vte3"
+# brew "vte3" # Linux専用ブロックに移動
 brew "watchman"
 brew "xclip"
 brew "xsel"
@@ -188,6 +188,19 @@ vscode "vscode-icons-team.vscode-icons"
 vscode "yzhang.markdown-all-in-one"
 vscode "zhuangtongfa.material-theme"
 
-# フォント (Cask形式)
-cask "font-cica"
-cask "font-noto-sans-cjk-jp"
+# フォント (macOS のみ)
+if OS.mac?
+  tap "homebrew/cask-fonts"
+  cask "font-cica"
+  cask "font-noto-sans-cjk-jp"
+end
+
+# Linux専用パッケージ
+if OS.linux?
+  tap "linuxbrew/xorg"
+  brew "at-spi2-core"
+  brew "freeglut"
+  brew "linuxbrew/xorg/libevdev"
+  brew "mesa"
+  brew "vte3"
+end
