@@ -78,11 +78,9 @@ install-fuse:
 		sudo rm -f /etc/apt/sources.list.d/google-chrome-beta.list 2>/dev/null || true; \
 	fi
 
-	# Ubuntu 25.04で利用できないPPAの無効化
+	# Ubuntu 25.04で利用できないPPAの無効化（CopyQは除外）
 	@echo "🔧 Ubuntu 25.04で利用できないPPAを一時的に無効化中..."
-	@if [ -f /etc/apt/sources.list.d/hluk-ubuntu-copyq-plucky.list ]; then \
-		sudo mv /etc/apt/sources.list.d/hluk-ubuntu-copyq-plucky.list /etc/apt/sources.list.d/hluk-ubuntu-copyq-plucky.list.disabled 2>/dev/null || true; \
-	fi
+	# CopyQ PPAは正常なPPAなので無効化しない
 	@if [ -f /etc/apt/sources.list.d/remmina-ppa-team-ubuntu-remmina-next-plucky.list ]; then \
 		sudo mv /etc/apt/sources.list.d/remmina-ppa-team-ubuntu-remmina-next-plucky.list /etc/apt/sources.list.d/remmina-ppa-team-ubuntu-remmina-next-plucky.list.disabled 2>/dev/null || true; \
 	fi
@@ -141,7 +139,7 @@ install-cursor:
 	@echo "📝 Cursor IDEのインストールを開始します..."
 	@CURSOR_INSTALLED=false && \
 	\
-	echo "🔍 既存のCursor IDEを確認中..." && \
+	@echo "🔍 既存のCursor IDEを確認中..." && \
 	if [ -f /opt/cursor/cursor.AppImage ]; then \
 		echo "✅ Cursor IDEは既にインストールされています"; \
 		CURSOR_INSTALLED=true; \
@@ -250,14 +248,14 @@ install-cursor:
 		echo "StartupWMClass=cursor" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
 		sudo chmod +x /usr/share/applications/cursor.desktop && \
 		sudo update-desktop-database 2>/dev/null || true && \
-		echo "✅ Cursor IDEのインストールが完了しました"; \
-	else \
-		echo "❌ Cursor IDEのインストールに失敗しました"; \
-		echo ""; \
-		echo "📥 手動インストール手順:"; \
-		echo "1. ブラウザで https://cursor.sh/ を開く"; \
-		echo "2. 'Download for Linux' をクリック"; \
-		echo "3. ダウンロード後、再度このコマンドを実行"; \
+		echo "✅ Cursor IDEのインストールが完了しました"; 
+	else 
+		echo "❌ Cursor IDEのインストールに失敗しました"; 
+		echo ""; 
+		echo "📥 手動インストール手順:"; 
+		echo "1. ブラウザで https://cursor.sh/ を開く"; 
+		echo "2. 'Download for Linux' をクリック"; 
+		echo "3. ダウンロード後、再度このコマンドを実行"; 
 	fi
 
 # Cursor IDEのアップデート
@@ -265,7 +263,7 @@ update-cursor:
 	@echo "🔄 Cursor IDEのアップデートを開始します..."
 	@CURSOR_UPDATED=false && \
 	\
-	echo "🔍 現在のCursor IDEを確認中..." && \
+	@echo "🔍 現在のCursor IDEを確認中..." && \
 	if [ -f /opt/cursor/cursor.AppImage ]; then \
 		echo "🔄 Cursor IDEの実行状況を確認中..." && \
 		if pgrep -f "^/opt/cursor/cursor.AppImage" >/dev/null 2>&1; then \
@@ -431,7 +429,7 @@ check-cursor-version:
 			echo "❌ 最新バージョンの確認に失敗しました"; \
 		fi; \
 	else \
-		echo "⚠️  jqがインストールされていないため、最新バージョンを確認できません"; \
+			echo "⚠️  jqがインストールされていないため、最新バージョンを確認できません"; \
 		echo "   'sudo apt install jq' でjqをインストールしてください"; \
 	fi
 
@@ -554,7 +552,7 @@ install-claude-code:
 		exit 1; \
 	fi
 
-	@echo ""
+	@echo ""; \
 	@echo "🎉 Claude Code のセットアップガイド:"
 	@echo "1. プロジェクトディレクトリに移動: cd your-project-directory"
 	@echo "2. Claude Code を開始: claude"
@@ -565,7 +563,7 @@ install-claude-code:
 	@echo "4. 初回セットアップコマンド:"
 	@echo "   > summarize this project"
 	@echo "   > /init"
-	@echo ""
+	@echo ""; \
 	@echo "📚 詳細なドキュメント: https://docs.anthropic.com/claude-code"
 	@echo "✅ Claude Code のインストールが完了しました"
 
@@ -596,8 +594,8 @@ install-claudia:
 	else \
 		RUST_VERSION=$$(rustc --version | grep -o '[0-9]\+\.[0-9]\+' | head -1); \
 		echo "✅ Rust が見つかりました: $$(rustc --version)"; \
-		if [ "$$(echo "$$RUST_VERSION" | cut -d'.' -f1)" -lt 1 ] || \
-		   [ "$$(echo "$$RUST_VERSION" | cut -d'.' -f1)" -eq 1 -a "$$(echo "$$RUST_VERSION" | cut -d'.' -f2)" -lt 70 ]; then \
+		if [ "$$($$(echo "$$RUST_VERSION" | cut -d'.' -f1))" -lt 1 ] || \
+		   [ "$$($$(echo "$$RUST_VERSION" | cut -d'.' -f1))" -eq 1 -a "$$($$(echo "$$RUST_VERSION" | cut -d'.' -f2))" -lt 70 ]; then \
 			echo "⚠️  Rust 1.70.0+ が推奨されています (現在: $$RUST_VERSION)"; \
 			echo "💡 アップデート: rustup update または brew upgrade rust"; \
 		fi; \
@@ -682,10 +680,10 @@ install-claudia:
 				echo "Terminal=false" | sudo tee -a /usr/share/applications/claudia.desktop > /dev/null; \
 				echo "Type=Application" | sudo tee -a /usr/share/applications/claudia.desktop > /dev/null; \
 				echo "Categories=Development;IDE;Utility;" | sudo tee -a /usr/share/applications/claudia.desktop > /dev/null; \
-				echo "StartupWMClass=claudia" | sudo tee -a /usr/share/applications/claudia.desktop > /dev/null; \
-				sudo chmod +x /usr/share/applications/claudia.desktop; \
-				sudo update-desktop-database 2>/dev/null || true; \
-				\
+			echo "StartupWMClass=claudia" | sudo tee -a /usr/share/applications/claudia.desktop > /dev/null; \
+			sudo chmod +x /usr/share/applications/claudia.desktop; \
+			sudo update-desktop-database 2>/dev/null || true; \
+			\
 				echo "✅ Claudia が /opt/claudia にインストールされました"; \
 			else \
 				echo "❌ ビルドされた実行ファイルが見つかりません"; \
@@ -709,28 +707,28 @@ install-claudia:
 	@echo "🧹 一時ファイルをクリーンアップ中..."
 	@rm -rf /tmp/claudia-build 2>/dev/null || true
 
-	@echo ""
-	@echo "🎉 Claudia のセットアップが完了しました！"
-	@echo ""
-	@echo "🚀 使用方法:"
-	@echo "1. アプリケーションメニューから 'Claudia' を起動"
-	@echo "2. または、ターミナルから: /opt/claudia/claudia"
-	@echo "3. 初回起動時にClaude Codeディレクトリ（~/.claude）が自動検出されます"
-	@echo ""
-	@echo "✨ Claudia の主要機能:"
-	@echo "- 📁 プロジェクト & セッション管理（~/.claude/projects/）"
-	@echo "- 🤖 カスタムAIエージェント作成・実行"
-	@echo "- 📊 使用状況分析ダッシュボード（コスト・トークン追跡）"
-	@echo "- 🔌 MCP サーバー管理（Model Context Protocol）"
-	@echo "- ⏰ タイムライン & チェックポイント（セッション履歴）"
-	@echo "- 📝 CLAUDE.md ファイル管理・編集"
-	@echo ""
-	@echo "📚 詳細なドキュメント: https://github.com/getAsterisk/claudia"
-	@echo "🔗 公式サイト: https://claudiacode.com"
-	@echo ""
-	@echo "💡 次のステップ:"
-	@echo "- Claude Code でプロジェクトを作成してから Claudia で管理"
-	@echo "- カスタムエージェントを作成して開発タスクを自動化"
+	@echo ""; \
+	@echo "🎉 Claudia のセットアップが完了しました！" \
+	@echo ""; \
+	@echo "🚀 使用方法:" \
+	@echo "1. アプリケーションメニューから 'Claudia' を起動" \
+	@echo "2. または、ターミナルから: /opt/claudia/claudia" \
+	@echo "3. 初回起動時にClaude Codeディレクトリ（~/.claude）が自動検出されます" \
+	@echo ""; \
+	@echo "✨ Claudia の主要機能:" \
+	@echo "- 📁 プロジェクト & セッション管理（~/.claude/projects/）" \
+	@echo "- 🤖 カスタムAIエージェント作成・実行" \
+	@echo "- 📊 使用状況分析ダッシュボード（コスト・トークン追跡）" \
+	@echo "- 🔌 MCP サーバー管理（Model Context Protocol）" \
+	@echo "- ⏰ タイムライン & チェックポイント（セッション履歴）" \
+	@echo "- 📝 CLAUDE.md ファイル管理・編集" \
+	@echo ""; \
+	@echo "📚 詳細なドキュメント: https://github.com/getAsterisk/claudia" \
+	@echo "🔗 公式サイト: https://claudiacode.com" \
+	@echo ""; \
+	@echo "💡 次のステップ:" \
+	@echo "- Claude Code でプロジェクトを作成してから Claudia で管理" \
+	@echo "- カスタムエージェントを作成して開発タスクを自動化" \
 	@echo "✅ Claudia のインストールが完了しました"
 
 # SuperClaude (Claude Code Framework) のインストール
@@ -765,15 +763,17 @@ install-superclaude:
 	# uv の確認とインストール
 	@echo "🔍 uv (Python パッケージマネージャー) の確認中..."
 	@if ! command -v uv >/dev/null 2>&1; then \
-		echo "📦 uv をインストール中..."; \
-		curl -LsSf https://astral.sh/uv/install.sh | sh; \
-		echo "🔄 uvのパスを更新中..."; \
-		export PATH="$(HOME_DIR)/.local/bin:$$PATH"; \
-		if ! command -v uv >/dev/null 2>&1; then \
-			echo "⚠️  uvのインストールが完了しましたが、現在のセッションで認識されていません"; \
-			echo "   新しいターミナルセッションで再実行するか、以下を実行してください:"; \
-			echo "   source $(HOME_DIR)/.bashrc"; \
-		fi; \
+		{ \
+			echo "📦 uv をインストール中..."; \
+			curl -LsSf https://astral.sh/uv/install.sh | sh; \
+			echo "🔄 uvのパスを更新中..."; \
+			export PATH="$(HOME_DIR)/.local/bin:$PATH"; \
+			if ! command -v uv >/dev/null 2>&1; then \
+				echo "⚠️  uvのインストールが完了しましたが、現在のセッションで認識されていません"; \
+				echo "   新しいターミナルセッションで再実行するか、以下を実行してください:"; \
+				echo "   source $(HOME_DIR)/.bashrc"; \
+			fi; \
+		}; \
 	else \
 		echo "✅ uv が見つかりました: $$(uv --version)"; \
 	fi
@@ -889,15 +889,15 @@ install-superclaude:
 		fi; \
 	fi
 
-	@echo ""
-	@echo "🛡️  セキュリティ検証状況:"
-	@echo "   ✓ PyPI公式リポジトリからのダウンロード"
-	@echo "   ✓ バージョン3.0.0.2固定 (CVE対策)"
-	@echo "   ✓ SHA256ハッシュ検証 (パッケージ整合性)"
-	@echo "   ✓ MD5追加検証 (二重整合性チェック)"
-	@echo "   ✓ --require-hashes 強制検証モード"
-	@echo "   ✓ 認証済みメンテナー: mithungowda.b"
-	@echo "   ⚠️ GPG署名: PyPIでは現在未提供 (Trusted Publishingで代替)"
+	@echo ""; \
+	@echo "🛡️  セキュリティ検証状況:" \
+	@echo "   ✓ PyPI公式リポジトリからのダウンロード" \
+	@echo "   ✓ バージョン3.0.0.2固定 (CVE対策)" \
+	@echo "   ✓ SHA256ハッシュ検証 (パッケージ整合性)" \
+	@echo "   ✓ MD5追加検証 (二重整合性チェック)" \
+	@echo "   ✓ --require-hashes 強制検証モード" \
+	@echo "   ✓ 認証済みメンテナー: mithungowda.b" \
+	@echo "   ⚠️ GPG署名: PyPIでは現在未提供 (Trusted Publishingで代替)" \
 	@echo "   ℹ️  PyPIのTrusted Publishingによる署名済み配信"
 
 	# SuperClaude フレームワークのセットアップ
@@ -958,41 +958,41 @@ install-superclaude:
 		exit 1; \
 	fi
 
-	@echo ""
-	@echo "🎉 SuperClaude v3 のセットアップが完了しました！"
-	@echo ""
-	@echo "🚀 使用方法:"
-	@echo "1. Claude Code を起動: claude"
-	@echo "2. SuperClaude コマンドを使用:"
-	@echo ""
-	@echo "📋 利用可能なコマンド例:"
-	@echo "   /sc:implement <feature>    - 機能の実装"
-	@echo "   /sc:build                  - ビルド・パッケージング"
-	@echo "   /sc:design <ui>            - UI/UXデザイン"
-	@echo "   /sc:analyze <code>         - コード分析"
-	@echo "   /sc:troubleshoot <issue>   - 問題のデバッグ"
-	@echo "   /sc:test <suite>           - テストスイート"
-	@echo "   /sc:improve <code>         - コード改善"
-	@echo "   /sc:cleanup                - コードクリーンアップ"
-	@echo "   /sc:document <code>        - ドキュメント生成"
-	@echo "   /sc:git <operation>        - Git操作"
-	@echo "   /sc:estimate <task>        - 時間見積もり"
-	@echo "   /sc:task <management>      - タスク管理"
-	@echo ""
-	@echo "🎭 スマートペルソナ:"
-	@echo "   🏗️  architect   - システム設計・アーキテクチャ"
-	@echo "   🎨 frontend    - UI/UX・アクセシビリティ"
-	@echo "   ⚙️  backend     - API・インフラストラクチャ"
-	@echo "   🔍 analyzer    - デバッグ・問題解決"
-	@echo "   🛡️  security    - セキュリティ・脆弱性評価"
-	@echo "   ✍️  scribe      - ドキュメント・技術文書"
-	@echo ""
-	@echo "🔌 MCP サーバー統合:"
-	@echo "   - Context7 (公式ドキュメント)"
-	@echo "   - Sequential (マルチステップ思考)"
-	@echo "   - Magic (UIコンポーネント)"
-	@echo ""
-	@echo "📚 詳細なドキュメント: https://superclaude-org.github.io/"
+	@echo ""; \
+	@echo "🎉 SuperClaude v3 のセットアップが完了しました！" \
+	@echo ""; \
+	@echo "🚀 使用方法:" \
+	@echo "1. Claude Code を起動: claude" \
+	@echo "2. SuperClaude コマンドを使用:" \
+	@echo ""; \
+	@echo "📋 利用可能なコマンド例:" \
+	@echo "   /sc:implement <feature>    - 機能の実装" \
+	@echo "   /sc:build                  - ビルド・パッケージング" \
+	@echo "   /sc:design <ui>            - UI/UXデザイン" \
+	@echo "   /sc:analyze <code>         - コード分析" \
+	@echo "   /sc:troubleshoot <issue>   - 問題のデバッグ" \
+	@echo "   /sc:test <suite>           - テストスイート" \
+	@echo "   /sc:improve <code>         - コード改善" \
+	@echo "   /sc:cleanup                - コードクリーンアップ" \
+	@echo "   /sc:document <code>        - ドキュメント生成" \
+	@echo "   /sc:git <operation>        - Git操作" \
+	@echo "   /sc:estimate <task>        - 時間見積もり" \
+	@echo "   /sc:task <management>      - タスク管理" \
+	@echo ""; \
+	@echo "🎭 スマートペルソナ:" \
+	@echo "   🏗️  architect   - システム設計・アーキテクチャ" \
+	@echo "   🎨 frontend    - UI/UX・アクセシビリティ" \
+	@echo "   ⚙️  backend     - API・インフラストラクチャ" \
+	@echo "   🔍 analyzer    - デバッグ・問題解決" \
+	@echo "   🛡️  security    - セキュリティ・脆弱性評価" \
+	@echo "   ✍️  scribe      - ドキュメント・技術文書" \
+	@echo ""; \
+	@echo "🔌 MCP サーバー統合:" \
+	@echo "   - Context7 (公式ドキュメント)" \
+	@echo "   - Sequential (マルチステップ思考)" \
+	@echo "   - Magic (UIコンポーネント)" \
+	@echo ""; \
+	@echo "📚 詳細なドキュメント: https://superclaude-org.github.io/" \
 	@echo "✅ SuperClaude v3 のインストールが完了しました"
 
 # SuperClaude 設定修復ヘルパー
@@ -1035,7 +1035,7 @@ fix-superclaude:
 		echo "ℹ️  先に 'make install-packages-superclaude' を実行してください"; \
 	fi
 
-	@echo ""
+	@echo ""; \
 	@echo "✅ SuperClaude 修復プロセスが完了しました"
 
 # Claude Code エコシステム一括インストール
@@ -1069,51 +1069,49 @@ install-claude-ecosystem:
 	@echo "🔍 インストール結果の確認中..."
 	@export PATH="$(HOME_DIR)/.local/bin:$$PATH" && \
 	echo "Claude Code: $$(command -v claude >/dev/null 2>&1 && echo "✅ $$(claude --version 2>/dev/null)" || echo "❌ 未確認")" && \
-	echo "SuperClaude: $$(command -v SuperClaude >/dev/null 2>&1 && echo "✅ $$(SuperClaude --version 2>/dev/null || echo "インストール済み")" || echo "❌ 未確認")" && \
-	echo "Claudia: $$([ -f /opt/claudia/claudia ] && echo "✅ インストール済み (/opt/claudia/claudia)" || echo "❌ 未確認")"
+	echo "SuperClaude: $$([ -f /opt/claudia/claudia ] && echo "✅ インストール済み (/opt/claudia/claudia)" || echo "❌ 未確認")"
 
-	@echo ""
-	@echo "🎉 Claude Code エコシステムのインストールが完了しました！"
-	@echo ""
-	@echo "🚀 使用開始ガイド:"
-	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-	@echo ""
-	@echo "💻 Claude Code (CLI):"
-	@echo "  コマンド: claude"
-	@echo "  使用例: プロジェクトディレクトリで 'claude' を実行"
-	@echo ""
-	@echo "🚀 SuperClaude (フレームワーク):"
-	@echo "  Claude Code内で以下のコマンドが利用可能:"
-	@echo "    /sc:implement <機能>     - 機能実装"
-	@echo "    /sc:design <UI>          - UI/UXデザイン"
-	@echo "    /sc:analyze <コード>     - コード分析"
-	@echo "    /sc:test <テスト>        - テストスイート"
-	@echo "    /sc:improve <コード>     - コード改善"
-	@echo "    /sc:document <コード>    - ドキュメント生成"
-	@echo ""
-	@echo "🖥️  Claudia (GUI):"
-	@echo "  起動方法: アプリケーションメニューから 'Claudia' を選択"
-	@echo "  または: /opt/claudia/claudia"
-	@echo "  機能: プロジェクト管理、使用状況分析、MCPサーバー管理等"
-	@echo ""
-	@echo "🎭 利用可能なペルソナ (SuperClaude):"
-	@echo "  🏗️  architect - システム設計"
-	@echo "  🎨 frontend  - UI/UX開発"
-	@echo "  ⚙️  backend   - API/インフラ"
-	@echo "  🔍 analyzer  - デバッグ・分析"
-	@echo "  🛡️  security  - セキュリティ"
-	@echo "  ✍️  scribe    - ドキュメント"
-	@echo ""
-	@echo "📚 ドキュメント:"
-	@echo "  Claude Code: https://docs.anthropic.com/claude-code"
-	@echo "  SuperClaude: https://superclaude-org.github.io/"
-	@echo "  Claudia: https://github.com/getAsterisk/claudia"
-	@echo ""
-	@echo "✨ おすすめワークフロー:"
-	@echo "  1. 'claude' でプロジェクトを開始"
-	@echo "  2. '/sc:implement' で機能を実装"
-	@echo "  3. Claudia でプロジェクト管理・分析"
-	@echo ""
+	@echo ""; \
+	@echo "🎉 Claude Code エコシステムのインストールが完了しました！" \
+	@echo ""; \
+	@echo "🚀 使用開始ガイド:" \
+	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" \
+	@echo "" \
+	@echo "💻 Claude Code (CLI):" \
+	@echo "  コマンド: claude" \
+	@echo "  使用例: プロジェクトディレクトリで 'claude' を実行" \
+	@echo ""; \
+	@echo "🚀 SuperClaude (フレームワーク):" \
+	@echo "  Claude Code内で以下のコマンドが利用可能:" \
+	@echo "    /sc:implement <機能>     - 機能実装" \
+	@echo "    /sc:design <UI>          - UI/UXデザイン" \
+	@echo "    /sc:analyze <コード>     - コード分析" \
+	@echo "    /sc:test <テスト>        - テストスイート" \
+	@echo "    /sc:improve <コード>     - コード改善" \
+	@echo ""; \
+	@echo "🖥️  Claudia (GUI):" \
+	@echo "  起動方法: アプリケーションメニューから 'Claudia' を選択" \
+	@echo "  または: /opt/claudia/claudia" \
+	@echo "  機能: プロジェクト管理、使用状況分析、MCPサーバー管理等" \
+	@echo ""; \
+	@echo "🎭 利用可能なペルソナ (SuperClaude):" \
+	@echo "  🏗️  architect - システム設計" \
+	@echo "  🎨 frontend  - UI/UX開発" \
+	@echo "  ⚙️  backend   - API/インフラ" \
+	@echo "  🔍 analyzer  - デバッグ・分析" \
+	@echo "  🛡️  security  - セキュリティ" \
+	@echo "  ✍️  scribe    - ドキュメント" \
+	@echo ""; \
+	@echo "📚 ドキュメント:" \
+	@echo "  Claude Code: https://docs.anthropic.com/claude-code" \
+	@echo "  SuperClaude: https://superclaude-org.github.io/" \
+	@echo "  Claudia: https://github.com/getAsterisk/claudia" \
+	@echo ""; \
+	@echo "✨ おすすめワークフロー:" \
+	@echo "  1. 'claude' でプロジェクトを開始" \
+	@echo "  2. '/sc:implement' で機能を実装" \
+	@echo "  3. Claudia でプロジェクト管理・分析" \
+	@echo ""; \
 	@echo "✅ Claude Code エコシステムの一括インストールが完了しました"
 
 # DEBパッケージをインストール（IDE・ブラウザ含む）
@@ -1316,58 +1314,58 @@ install-playwright:
 		exit 1; \
 	fi
 
-	@echo ""
-	@echo "🎉 Playwright のセットアップガイド:"
-	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-	@echo ""
-	@echo "🚀 基本的な使用方法:"
-	@echo "1. プロジェクトディレクトリに移動: cd your-project-directory"
-	@echo "2. Playwright 設定ファイルを生成: npx playwright init"
-	@echo "3. テストファイルを作成: npx playwright codegen"
-	@echo "4. テストを実行: npx playwright test"
-	@echo ""
-	@echo "📋 主要なコマンド:"
-	@echo "   npx playwright test              - すべてのテストを実行"
-	@echo "   npx playwright test --ui         - UIモードでテストを実行"
-	@echo "   npx playwright test --headed     - ブラウザ表示モードで実行"
-	@echo "   npx playwright test --debug      - デバッグモードで実行"
-	@echo "   npx playwright codegen <URL>     - テストコードを生成"
-	@echo "   npx playwright show-report       - テストレポートを表示"
-	@echo "   npx playwright install           - ブラウザバイナリを再インストール"
-	@echo ""
-	@echo "🌐 対応ブラウザ:"
-	@echo "   ✓ Chromium (Chrome、Microsoft Edge)"
-	@echo "   ✓ Firefox"
-	@echo "   ✓ WebKit (Safari)"
-	@echo ""
-	@echo "📱 対応プラットフォーム:"
-	@echo "   ✓ デスクトップ (Windows、macOS、Linux)"
-	@echo "   ✓ モバイル (Android、iOS シミュレータ)"
-	@echo ""
-	@echo "🎯 主要機能:"
-	@echo "   - クロスブラウザテスト自動化"
-	@echo "   - モバイルデバイステスト"
-	@echo "   - スクリーンショット・動画記録"
-	@echo "   - パフォーマンステスト"
-	@echo "   - APIテスト"
-	@echo "   - 視覚的回帰テスト"
-	@echo ""
-	@echo "📚 詳細なドキュメント:"
-	@echo "   公式サイト: https://playwright.dev/"
-	@echo "   ガイド: https://playwright.dev/docs/intro"
-	@echo "   API リファレンス: https://playwright.dev/docs/api/class-playwright"
-	@echo ""
-	@echo "💡 おすすめワークフロー:"
-	@echo "   1. 'npx playwright init' でプロジェクトをセットアップ"
-	@echo "   2. 'npx playwright codegen' でテストを録画生成"
-	@echo "   3. 'npx playwright test --ui' でテストをデバッグ・実行"
-	@echo "   4. CI/CDパイプラインに組み込んで継続的テスト"
-	@echo ""
+	@echo ""; \
+	@echo "🎉 Playwright のセットアップガイド:" \
+	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" \
+	@echo "" \
+	@echo "🚀 基本的な使用方法:" \
+	@echo "1. プロジェクトディレクトリに移動: cd your-project-directory" \
+	@echo "2. Playwright 設定ファイルを生成: npx playwright init" \
+	@echo "3. テストファイルを作成: npx playwright codegen" \
+	@echo "4. テストを実行: npx playwright test" \
+	@echo ""; \
+	@echo "📋 主要なコマンド:" \
+	@echo "   npx playwright test              - すべてのテストを実行" \
+	@echo "   npx playwright test --ui         - UIモードでテストを実行" \
+	@echo "   npx playwright test --headed     - ブラウザ表示モードで実行" \
+	@echo "   npx playwright test --debug      - デバッグモードで実行" \
+	@echo "   npx playwright codegen <URL>     - テストコードを生成" \
+	@echo "   npx playwright show-report       - テストレポートを表示" \
+	@echo "   npx playwright install           - ブラウザバイナリを再インストール" \
+	@echo ""; \
+	@echo "🌐 対応ブラウザ:" \
+	@echo "   ✓ Chromium (Chrome、Microsoft Edge)" \
+	@echo "   ✓ Firefox" \
+	@echo "   ✓ WebKit (Safari)" \
+	@echo ""; \
+	@echo "📱 対応プラットフォーム:" \
+	@echo "   ✓ デスクトップ (Windows、macOS、Linux)" \
+	@echo "   ✓ モバイル (Android、iOS シミュレータ)" \
+	@echo ""; \
+	@echo "🎯 主要機能:" \
+	@echo "   - クロスブラウザテスト自動化" \
+	@echo "   - モバイルデバイステスト" \
+	@echo "   - スクリーンショット・動画記録" \
+	@echo "   - パフォーマンステスト" \
+	@echo "   - APIテスト" \
+	@echo "   - 視覚的回帰テスト" \
+	@echo ""; \
+	@echo "📚 詳細なドキュメント:" \
+	@echo "   公式サイト: https://playwright.dev/" \
+	@echo "   ガイド: https://playwright.dev/docs/intro" \
+	@echo "   API リファレンス: https://playwright.dev/docs/api/class-playwright" \
+	@echo ""; \
+	@echo "💡 おすすめワークフロー:" \
+	@echo "   1. 'npx playwright init' でプロジェクトをセットアップ" \
+	@echo "   2. 'npx playwright codegen' でテストを録画生成" \
+	@echo "   3. 'npx playwright test --ui' でテストをデバッグ・実行" \
+	@echo "   4. CI/CDパイプラインに組み込んで継続的テスト" \
+	@echo ""; \
 	@echo "✅ Playwright のインストールが完了しました"
 
-# ========================================
+# ======================================== 
 # 新しい階層的な命名規則のターゲット
-# ========================================
+# ======================================== 
 
 # パッケージ・ソフトウェアインストール系
 install-packages-homebrew: install-homebrew
@@ -1386,7 +1384,7 @@ install-packages-mysql-workbench: install-mysql-workbench
 install-packages-playwright: install-playwright
 install-packages-gemini-cli: install-gemini-cli
 
-# ccusageのインストール
+# ccusage のインストール
 install-packages-ccusage:
 	@echo "📦 ccusage をインストールしています..."
 	@if ! command -v bun >/dev/null 2>&1; then \
@@ -1394,11 +1392,20 @@ install-packages-ccusage:
 		curl -fsSL https://bun.sh/install | bash; \
 		export PATH="$(HOME)/.bun/bin:$PATH"; \
 		if ! command -v bun >/dev/null 2>&1; then \
-			echo "❌ bun のインストールに失敗しました。PATHを確認してください。"; \
+			echo "❌ bun のインストールに失敗しました。PATH を確認してください。"; \
 			exit 1; \
 		fi \
 	fi
-	@bun install -g ccusage
+	@echo "🔧 ccusage をグローバル導入中..."
+	@export PATH="$(HOME)/.bun/bin:$$PATH"; \
+	if ! bun add -g ccusage; then \
+		echo "⚠️ bun add -g に失敗。bunx での実行にフォールバックします"; \
+	fi
+	@echo "🔍 動作確認: ccusage --version"
+	@export PATH="$(HOME)/.bun/bin:$$PATH"; \
+	if ! bunx -y ccusage --version >/dev/null 2>&1; then \
+		echo "⚠️ bunx 実行確認に失敗しました（ネットワーク状況を確認してください）"; \
+	fi
 	@echo "✅ ccusage のインストールが完了しました。"
 
 # 追加のブラウザインストール系
@@ -1418,9 +1425,9 @@ install-packages-chrome-beta:
 	fi
 	@echo "✅ Google Chrome Beta のインストールが完了しました"
 
-# ========================================
+# ======================================== 
 # 後方互換性のためのエイリアス
-# ========================================
+# ======================================== 
 
 # 古いターゲット名を維持（新しいターゲットを呼び出すエイリアス）
 # install-homebrew: は既に実装済み
@@ -1459,9 +1466,9 @@ install-supercursor:
 	# SuperCursorフレームワークのセットアップ
 	@echo "⚙️  SuperCursor フレームワークをセットアップ中..."
 	@echo "🔧 SuperCursor セットアップ準備中..."; \
-	echo "ℹ️   フレームワークファイル、ペルソナ、コマンドをシンボリックリンクで構成します"; \
+	@echo "ℹ️   フレームワークファイル、ペルソナ、コマンドをシンボリックリンクで構成します"; \
 	\
-	# 必要な変数の確認 \
+	# 必要な変数の確認 
 	if [ -z "$(DOTFILES_DIR)" ]; then \
 		echo "❌ DOTFILES_DIR is not set"; \
 		exit 1; \
@@ -1471,10 +1478,10 @@ install-supercursor:
 		exit 1; \
 	fi; \
 	\
-	echo "📁 必要なディレクトリを作成中..."; \
+	@echo "📁 必要なディレクトリを作成中..."; \
 	mkdir -p $(HOME_DIR)/.cursor/ || true; \
 	\
-	echo "🔗 シンボリックリンクを作成中..."; \
+	@echo "🔗 シンボリックリンクを作成中..."; \
 	# SuperCursor本体へのリンク \
 	rm -rf $(HOME_DIR)/.cursor/supercursor; \
 	ln -sT $(DOTFILES_DIR)/cursor/supercursor $(HOME_DIR)/.cursor/supercursor || true; \
@@ -1489,36 +1496,36 @@ install-supercursor:
 	rm -f $(HOME_DIR)/.cursor/CURSOR.md; \
 	ln -sf $(DOTFILES_DIR)/cursor/supercursor/README.md $(HOME_DIR)/.cursor/CURSOR.md || true; \
 	\
-	echo "✅ SuperCursor フレームワークのシンボリックリンク設定が完了しました"
+	@echo "✅ SuperCursor フレームワークのシンボリックリンク設定が完了しました"
 
-	@echo ""
-	@echo "🎉 SuperCursor のセットアップが完了しました！"
-	@echo ""
-	@echo "🚀 使用方法:"
-	@echo "1. Cursor IDEを起動"
-	@echo "2. SuperCursor コマンドを使用:"
-	@echo ""
-	@echo "📋 利用可能なコマンド例:"
-	@echo "   /sc:implement <feature>    - 機能の実装"
-	@echo "   /sc:build                  - ビルド・パッケージング"
-	@echo "   /sc:design <ui>            - UI/UXデザイン"
-	@echo "   /sc:analyze <code>         - コード分析"
-	@echo "   /sc:troubleshoot <issue>   - 問題のデバッグ"
-	@echo "   /sc:test <suite>           - テストスイート"
-	@echo "   /sc:improve <code>         - コード改善"
-	@echo "   /sc:cleanup                - コードクリーンアップ"
-	@echo "   /sc:document <code>        - ドキュメント生成"
-	@echo "   /sc:git <operation>        - Git操作"
-	@echo "   /sc:estimate <task>        - 時間見積もり"
-	@echo "   /sc:task <management>      - タスク管理"
-	@echo ""
-	@echo "🎭 スマートペルソナ:"
-	@echo "   🏗️  architect   - システム設計・アーキテクチャ"
-	@echo "   🎨 developer   - 実装開発"
-	@echo "   📊 analyst     - コード分析・評価"
-	@echo "   🧪 tester      - テスト設計・実装"
-	@echo "   🚀 devops      - インフラ・デプロイ"
-	@echo ""
+	@echo ""; \
+	@echo "🎉 SuperCursor のセットアップが完了しました！" \
+	@echo ""; \
+	@echo "🚀 使用方法:" \
+	@echo "1. Cursor IDEを起動" \
+	@echo "2. SuperCursor コマンドを使用:" \
+	@echo ""; \
+	@echo "📋 利用可能なコマンド例:" \
+	@echo "   /sc:implement <feature>    - 機能の実装" \
+	@echo "   /sc:build                  - ビルド・パッケージング" \
+	@echo "   /sc:design <ui>            - UI/UXデザイン" \
+	@echo "   /sc:analyze <code>         - コード分析" \
+	@echo "   /sc:troubleshoot <issue>   - 問題のデバッグ" \
+	@echo "   /sc:test <suite>           - テストスイート" \
+	@echo "   /sc:improve <code>         - コード改善" \
+	@echo "   /sc:cleanup                - コードクリーンアップ" \
+	@echo "   /sc:document <code>        - ドキュメント生成" \
+	@echo "   /sc:git <operation>        - Git操作" \
+	@echo "   /sc:estimate <task>        - 時間見積もり" \
+	@echo "   /sc:task <management>      - タスク管理" \
+	@echo ""; \
+	@echo "🎭 スマートペルソナ:" \
+	@echo "   🏗️  architect   - システム設計・アーキテクチャ" \
+	@echo "   🎨 developer   -実装開発" \
+	@echo "   📊 analyst     - コード分析・評価" \
+	@echo "   🧪 tester      - テスト設計・実装" \
+	@echo "   🚀 devops      - インフラ・デプロイ" \
+	@echo ""; \
 	@echo "✅ SuperCursor のインストールが完了しました"
 
 # Gemini CLI のインストール
@@ -1595,15 +1602,15 @@ install-gemini-cli:
 		exit 1; \
 	fi
 
-	@echo ""
-	@echo "🎉 Gemini CLI のセットアップガイド:"
-	@echo "1. プロジェクトディレクトリに移動: cd your-project-directory"
-	@echo "2. Gemini CLI を開始: gemini"
-	@echo "3. 認証方法を選択: Google Cloud認証"
-	@echo "4. 初回セットアップコマンド:"
-	@echo "   > summarize this project"
-	@echo "   > /help"
-	@echo ""
+	@echo ""; \
+	@echo "🎉 Gemini CLI のセットアップガイド:" \
+	@echo "1. プロジェクトディレクトリに移動: cd your-project-directory" \
+	@echo "2. Gemini CLI を開始: gemini" \
+	@echo "3. 認証方法を選択: Google Cloud認証" \
+	@echo "4. 初回セットアップコマンド:" \
+	@echo "   > summarize this project" \
+	@echo "   > /help" \
+	@echo ""; \
 	@echo "✅ Gemini CLI のインストールが完了しました"
 
 # SuperGemini (Gemini CLI Framework) のインストール
@@ -1624,13 +1631,13 @@ install-supergemini:
 	@echo "⚙️  SuperGemini フレームワークをセットアップ中..."
 	@export PATH="$(HOME_DIR)/.local/bin:$$PATH" && \
 	echo "🔧 SuperGemini セットアップ準備中..."; \
-	echo "ℹ️  フレームワークファイル、ユーザーツール、Gemini CLI設定をシンボリックリンクで構成します"; \
+	@echo "ℹ️  フレームワークファイル、ユーザーツール、Gemini CLI設定をシンボリックリンクで構成します"; \
 	\
-	echo "📁 必要なディレクトリを作成中..."; \
+	@echo "📁 必要なディレクトリを作成中..."; \
 	mkdir -p $(HOME_DIR)/.gemini/ || true; \
 	mkdir -p $(HOME_DIR)/.gemini/user-tools/ || true; \
 	\
-	echo "🔗 シンボリックリンクを作成中..."; \
+	@echo "🔗 シンボリックリンクを作成中..."; \
 	# SuperGemini本体へのリンク \
 	ln -sf $(DOTFILES_DIR)/gemini/supergemini $(HOME_DIR)/.gemini/supergemini || true; \
 	# 各種ディレクトリへのリンク \
@@ -1639,7 +1646,7 @@ install-supergemini:
 	# 重要なファイルへの直接リンク \
 	ln -sf $(DOTFILES_DIR)/gemini/supergemini/GEMINI.md $(HOME_DIR)/.gemini/GEMINI.md || true; \
 	\
-	echo "📝 カスタムツールファイルを作成中..."; \
+	@echo "📝 カスタムツールファイルを作成中..."; \
 	cp -f $(DOTFILES_DIR)/gemini/supergemini/Commands/help.md $(HOME_DIR)/.gemini/user-tools/user-help.md 2>/dev/null || \
 	echo "import-help: # /user-help コマンド\n\nSuperGeminiフレームワークのコマンド一覧を表示します。" > $(HOME_DIR)/.gemini/user-tools/user-help.md; \
 	\
@@ -1649,60 +1656,65 @@ install-supergemini:
 	cp -f $(DOTFILES_DIR)/gemini/supergemini/Commands/implement.md $(HOME_DIR)/.gemini/user-tools/user-implement.md 2>/dev/null || \
 	echo "import-implement: # /user-implement コマンド\n\n新機能を実装します。" > $(HOME_DIR)/.gemini/user-tools/user-implement.md; \
 	\
-	echo "🔧 Gemini CLI設定ファイルを更新中..."; \
-	echo '{\n  "selectedAuthType": "oauth-personal",\n  "usageStatisticsEnabled": false,\n  "customToolsDirectory": "~/.gemini/user-tools",\n  "enableCustomTools": true\n}' > $(HOME_DIR)/.gemini/settings.json || true; \
+	@echo "🔧 Gemini CLI設定ファイルを更新中..."; \
+	echo '{
+  "selectedAuthType": "oauth-personal",
+  "usageStatisticsEnabled": false,
+  "customToolsDirectory": "~/.gemini/user-tools",
+  "enableCustomTools": true
+}' > $(HOME_DIR)/.gemini/settings.json || true; \
 	\
-	echo "✅ SuperGemini フレームワークのシンボリックリンク設定が完了しました"
+	@echo "✅ SuperGemini フレームワークのシンボリックリンク設定が完了しました"
 
-	@echo ""
-	@echo "🎉 SuperGemini のセットアップが完了しました！"
-	@echo ""
-	@echo "🚀 使用方法:"
-	@echo "1. Gemini CLI を起動: gemini"
-	@echo "2. SuperGemini コマンドを使用:"
-	@echo ""
-	@echo "📋 利用可能なコマンド例:"
-	@echo "   /user-implement <feature>    - 機能の実装"
-	@echo "   /user-build                  - ビルド・パッケージング"
-	@echo "   /user-design <ui>            - UI/UXデザイン"
-	@echo "   /user-analyze <code>         - コード分析"
-	@echo "   /user-troubleshoot <issue>   - 問題のデバッグ"
-	@echo "   /user-test <suite>           - テストスイート"
-	@echo "   /user-improve <code>         - コード改善"
-	@echo "   /user-cleanup                - コードクリーンアップ"
-	@echo "   /user-document <code>        - ドキュメント生成"
-	@echo "   /user-git <operation>        - Git操作"
-	@echo "   /user-estimate <task>        - 時間見積もり"
-	@echo "   /user-task <management>      - タスク管理"
-	@echo ""
-	@echo "🎭 スマートペルソナ:"
-	@echo "   🏗️  architect   - システム設計・アーキテクチャ"
-	@echo "   🎨 frontend    - UI/UX・アクセシビリティ"
-	@echo "   ⚙️  backend     - API・インフラストラクチャ"
-	@echo "   🔍 analyzer    - デバッグ・問題解決"
-	@echo "   🛡️  security    - セキュリティ・脆弱性評価"
-	@echo "   ✍️  scribe      - ドキュメント・技術文書"
-	@echo ""
-	@echo "📝 注意: カスタムツールを再読み込みするには /reload-user-tools コマンドを使用します"
-	@echo ""
+	@echo ""; \
+	@echo "🎉 SuperGemini のセットアップが完了しました！" \
+	@echo ""; \
+	@echo "🚀 使用方法:" \
+	@echo "1. Gemini CLI を起動: gemini" \
+	@echo "2. SuperGemini コマンドを使用:" \
+	@echo ""; \
+	@echo "📋 利用可能なコマンド例:" \
+	@echo "   /user-implement <feature>    - 機能の実装" \
+	@echo "   /user-build                  - ビルド・パッケージング" \
+	@echo "   /user-design <ui>            - UI/UXデザイン" \
+	@echo "   /user-analyze <code>         - コード分析" \
+	@echo "   /user-troubleshoot <issue>   - 問題のデバッグ" \
+	@echo "   /user-test <suite>           - テストスイート" \
+	@echo "   /user-improve <code>         - コード改善" \
+	@echo "   /user-cleanup                - コードクリーンアップ" \
+	@echo "   /user-document <code>        - ドキュメント生成" \
+	@echo "   /user-git <operation>        - Git操作" \
+	@echo "   /user-estimate <task>        - 時間見積もり" \
+	@echo "   /user-task <management>      - タスク管理" \
+	@echo ""; \
+	@echo "🎭 スマートペルソナ:" \
+	@echo "   🏗️  architect   - システム設計・アーキテクチャ" \
+	@echo "   🎨 frontend    - UI/UX・アクセシビリティ" \
+	@echo "   ⚙️  backend     - API・インフラストラクチャ" \
+	@echo "   🔍 analyzer    - デバッグ・問題解決" \
+	@echo "   🛡️  security    - セキュリティ・脆弱性評価" \
+	@echo "   ✍️  scribe      - ドキュメント・技術文書" \
+	@echo ""; \
+	@echo "📝 注意: カスタムツールを再読み込みするには /reload-user-tools コマンドを使用します" \
+	@echo ""; \
 	@echo "✅ SuperGemini のインストールが完了しました"
 
 # Gemini エコシステム一括インストール
 install-gemini-ecosystem:
 	@echo "🌟 Gemini エコシステム一括インストールを開始..."
-	@echo ""
+	@echo "";
 
 	# Step 1: Gemini CLI のインストール
 	@echo "📋 Step 1/2: Gemini CLI をインストール中..."
 	@$(MAKE) install-gemini-cli
 	@echo "✅ Gemini CLI のインストールが完了しました"
-	@echo ""
+	@echo "";
 
 	# Step 2: SuperGemini のインストール
 	@echo "📋 Step 2/2: SuperGemini をインストール中..."
 	@$(MAKE) install-supergemini
 	@echo "✅ SuperGemini のインストールが完了しました"
-	@echo ""
+	@echo "";
 
 	# 最終確認
 	@echo "🔍 インストール結果の確認中..."
@@ -1710,43 +1722,30 @@ install-gemini-ecosystem:
 	echo "Gemini CLI: $$(command -v gemini >/dev/null 2>&1 && echo "✅ $$(gemini --version 2>/dev/null || echo "インストール済み")" || echo "❌ 未確認")" && \
 	echo "SuperGemini: $$([ -f $(HOME_DIR)/.gemini/GEMINI.md ] && echo "✅ インストール済み" || echo "❌ 未確認")"
 
-	@echo ""
-	@echo "🎉 Gemini エコシステムのインストールが完了しました！"
-	@echo ""
-	@echo "🚀 使用開始ガイド:"
-	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-	@echo ""
-	@echo "💻 Gemini CLI:"
-	@echo "  コマンド: gemini"
-	@echo "  使用例: プロジェクトディレクトリで 'gemini' を実行"
-	@echo ""
-	@echo "🚀 SuperGemini (フレームワーク):"
-	@echo "  Gemini CLI内で以下のコマンドが利用可能:"
-	@echo "    /user-implement <機能>     - 機能実装"
-	@echo "    /user-build                  - ビルド・パッケージング"
-	@echo "    /user-design <UI>            - UI/UXデザイン"
-	@echo "    /user-analyze <コード>       - コード分析"
-	@echo "    /user-troubleshoot <issue>   - 問題のデバッグ"
-	@echo "    /user-test <テスト>          - テストスイート"
-	@echo "    /user-improve <コード>       - コード改善"
-	@echo "    /user-cleanup                - コードクリーンアップ"
-	@echo "    /user-document <コード>      - ドキュメント生成"
-	@echo "    /user-git <operation>        - Git操作"
-	@echo "    /user-estimate <task>        - 時間見積もり"
-	@echo "    /user-task <management>      - タスク管理"
-	@echo ""
-	@echo "🎭 利用可能なペルソナ (SuperGemini):"
-	@echo "  🏗️  architect - システム設計"
-	@echo "  🎨 frontend  - UI/UX開発"
-	@echo "  ⚙️  backend   - API/インフラ"
-	@echo "  🔍 analyzer  - デバッグ・分析"
-	@echo "  🛡️  security  - セキュリティ"
-	@echo "  ✍️  scribe    - ドキュメント"
-	@echo ""
-	@echo "✨ おすすめワークフロー:"
-	@echo "  1. 'gemini' でプロジェクトを開始"
-	@echo "  2. '/user-implement' で機能を実装"
-	@echo ""
+	@echo ""; \
+	@echo "🎉 Gemini エコシステムのインストールが完了しました！" \
+	@echo ""; \
+	@echo "🚀 使用開始ガイド:" \
+	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" \
+	@echo ""; \
+	@echo "💻 Gemini CLI:" \
+	@echo "  コマンド: gemini" \
+	@echo "  使用例: プロジェクトディレクトリで 'gemini' を実行" \
+	@echo ""; \
+	@echo "🚀 SuperGemini (フレームワーク):" \
+	@echo "  Gemini CLI内で以下のコマンドが利用可能:" \
+	@echo "    /user-implement <機能>     - 機能実装" \
+	@echo "    /user-build                  - ビルド・パッケージング" \
+	@echo "    /user-design <UI>            - UI/UXデザイン" \
+	@echo "    /user-analyze <コード>       - コード分析" \
+	@echo "    /user-troubleshoot <issue>   - 問題のデバッグ" \
+	@echo "    /user-test <テスト>          - テストスイート" \
+	@echo "    /user-improve <コード>       - コード改善" \
+	@echo ""; \
+	@echo "✨ おすすめワークフロー:" \
+	@echo "  1. 'gemini' でプロジェクトを開始" \
+	@echo "  2. '/user-implement' で機能を実装" \
+	@echo ""; \
 	@echo "✅ Gemini エコシステムの一括インストールが完了しました"
 
 # ImageMagick のインストール（アイコン変換用）
@@ -1761,29 +1760,29 @@ install-imagemagick:
 		echo "✅ ImageMagickのインストールが完了しました"; \
 	fi
 
-# ========================================
+# ======================================== 
 # テスト用ターゲット
-# ========================================
+# ======================================== 
 
 # システム情報の表示
 system-info:
 	@echo "🖥️ システム情報:"
 	@uname -a
-	@echo ""
+	@echo ""; \
 	@echo "📦 パッケージ管理システム:"
 	@command -v apt-get && echo "APT (Debian/Ubuntu)" || echo "APT not found"
 	@command -v brew && echo "Homebrew (Linuxbrew)" || echo "Homebrew not found"
 	@command -v dnf && echo "DNF (Fedora)" || echo "DNF not found"
 	@command -v pacman && echo "Pacman (Arch Linux)" || echo "Pacman not found"
-	@echo ""
+	@echo ""; \
 	@echo "🔧 シェル情報:"
 	@echo "   SHELL: $$SHELL"
 	@echo "   BASH_VERSION: $$BASH_VERSION"
 	@echo "   ZSH_VERSION: $$ZSH_VERSION"
-	@echo ""
+	@echo ""; \
 	@echo "📂 ホームディレクトリ: $$HOME"
 	@echo "📂 カレントディレクトリ: $$PWD"
-	@echo ""
+	@echo ""; \
 	@echo "🔄 環境変数:"
 	@printenv | sort
 
@@ -1834,4 +1833,3 @@ shutdown-system:
 			else \
 				echo "シャットダウンをキャンセルしました。"; \
 			fi
-
