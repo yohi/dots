@@ -3,7 +3,7 @@
 # 使用方法: ./auto-cleanup.sh [--dry-run] [--force]
 
 # クロスプラットフォーム mtime 取得関数
-get_mtime() { 
+get_mtime() {
   if stat -c %Y "$1" >/dev/null 2>&1; then
     stat -c %Y "$1"
   else

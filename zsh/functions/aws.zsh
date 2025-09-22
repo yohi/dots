@@ -6,6 +6,37 @@
 # 共通ヘルパー関数
 # -------------------------------------------------------------------
 
+# クロスプラットフォーム対応date関数
+portable_date() {
+    local relative_time="$1"
+    if command -v gdate >/dev/null 2>&1; then
+        # GNU date (macOSでbrew install coreutilsしている場合)
+        gdate -d "$relative_time" +%s
+    elif date -v-1H >/dev/null 2>&1; then
+        # BSD date (macOS標準)
+        case "$relative_time" in
+            "1 hour ago") date -v-1H +%s ;;
+            "1 day ago") date -v-1d +%s ;;
+            *) 
+                # 複雑な日時はPythonで処理
+                python3 -c "
+import datetime
+try:
+    from dateutil.parser import parse
+    dt = parse('$relative_time')
+    print(int(dt.timestamp()))
+except:
+    # フォールバック: 現在時刻を返す
+    print(int(datetime.datetime.now().timestamp()))
+" 2>/dev/null || date +%s
+                ;;
+        esac
+    else
+        # GNU date (Linux標準)
+        date -d "$relative_time" +%s
+    fi
+}
+
 # 共通関数: AWSプロファイル選択
 _aws_select_profile() {
     echo "📋 利用可能なAWSプロファイルを検索中..."
@@ -227,10 +258,10 @@ function awslogs() {
                 return 0
                 ;;
             "過去1時間のログ")
-                cmd+=(--start-time "$(($(date -d '1 hour ago' +%s)*1000))")
+                cmd+=(--start-time "$(($(portable_date '1 hour ago')*1000))")
                 ;;
             "過去24時間のログ")
-                cmd+=(--start-time "$(($(date -d '1 day ago' +%s)*1000))")
+                cmd+=(--start-time "$(($(portable_date '1 day ago')*1000))")
                 ;;
             "指定時間範囲のログ")
                 echo "開始時間を入力してください (例: 2024-01-01T10:00:00):"
@@ -238,8 +269,8 @@ function awslogs() {
                 echo "終了時間を入力してください (例: 2024-01-01T12:00:00):"
                 read -r end_time
                 if [[ -n "$start_time" && -n "$end_time" ]]; then
-                    local start_ms=$(($(date -d "${start_time}" +%s)*1000))
-                    local end_ms=$(($(date -d "${end_time}" +%s)*1000))
+                    local start_ms=$(($(portable_date "${start_time}")*1000))
+                    local end_ms=$(($(portable_date "${end_time}")*1000))
                     cmd+=(--start-time "$start_ms" --end-time "$end_ms")
                 else
                     echo "時間範囲が正しく指定されませんでした。"
