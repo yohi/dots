@@ -45,7 +45,7 @@ brew "fontforge"
 # brew "freeglut" # Linux専用ブロックに移動
 brew "fzf"
 brew "gcc"
-brew "gemini-cli", link: false
+brew "gemini-cli"
 brew "gh"
 brew "ghc"
 brew "git-lfs"
@@ -122,6 +122,8 @@ brew "uv", link: false
 # brew "vte3" # Linux専用ブロックに移動
 brew "watchman"
 # Package manager for Node.js (nodenv経由のnodeを使用)
+# NOTE: yarnをHomebrewでインストールするより、corepackで管理することを推奨
+# corepack enable後にyarn使用可能。この行は必要に応じて削除を検討
 brew "yarn"
 brew "yq"
 brew "zsh"
@@ -143,7 +145,7 @@ vscode "formulahendry.auto-close-tag"
 vscode "formulahendry.auto-rename-tag"
 vscode "github.copilot"
 vscode "github.copilot-chat"
-vscode "github.copilot-workspace"
+vscode "GitHub.copilot-workspace"
 vscode "github.vscode-pull-request-github"
 vscode "Google.geminicodeassist"
 vscode "grapecity.gc-excelviewer"
