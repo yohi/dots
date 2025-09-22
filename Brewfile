@@ -1,6 +1,7 @@
 tap "code-hex/tap"
 tap "hashicorp/tap"
 tap "homebrew/bundle"
+tap "homebrew/cask-fonts"
 tap "homebrew/core"
 tap "knqyf263/utern"
 tap "linuxbrew/fonts"
@@ -40,8 +41,7 @@ brew "docker-compose"
 brew "fd"
 brew "flake8"
 brew "flux"
-brew "font-cica"
-brew "font-noto-sans-cjk-jp", args: ["HEAD"]
+# フォントはcaskで管理
 brew "fontforge"
 brew "freeglut"
 brew "fzf"
@@ -90,7 +90,6 @@ brew "node-build"
 brew "nodenv"
 brew "numpy", link: false
 brew "openjdk"
-brew "openssl@1.1"
 brew "oven-sh/bun/bun"
 brew "p7zip"
 brew "pango"
@@ -188,3 +187,7 @@ vscode "thebarkman.vscode-djaneiro"
 vscode "vscode-icons-team.vscode-icons"
 vscode "yzhang.markdown-all-in-one"
 vscode "zhuangtongfa.material-theme"
+
+# フォント (Cask形式)
+cask "font-cica"
+cask "font-noto-sans-cjk-jp"

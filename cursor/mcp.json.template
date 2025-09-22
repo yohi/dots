@@ -2,7 +2,7 @@
   "mcpServers": {
     "bitbucket-mcp-server": {
       "command": "node",
-      "args": ["$HOME/.cursor/mcp-servers/bitbucket-mcp-server/build/src/index.js"],
+      "args": ["${HOME}/.cursor/mcp-servers/bitbucket-mcp-server/build/src/index.js"],
       "env": {
         "BITBUCKET_USERNAME": "",
         "BITBUCKET_APP_PASSWORD": ""
@@ -10,7 +10,7 @@
     },
     "playwright": {
       "command": "node",
-      "args": ["$HOME/.cursor/mcp-servers/mcp-playwright/dist/index.js"],
+      "args": ["${HOME}/.cursor/mcp-servers/mcp-playwright/dist/index.js"],
       "env": {
         "DISPLAY": ":0"
       }
@@ -35,7 +35,7 @@
     },
     "backlog-dhead": {
       "command": "node",
-      "args": ["$HOME/.cursor/mcp-servers/backlog-mcp-server/build/src/index.js"],
+      "args": ["${HOME}/.cursor/mcp-servers/backlog-mcp-server/build/src/index.js"],
       "env": {
         "BACKLOG_SPACE_ID": "d-head",
         "BACKLOG_API_KEY": "YOUR_D_HEAD_BACKLOG_API_KEY_HERE"
@@ -43,7 +43,7 @@
     },
     "backlog-prescec": {
       "command": "node",
-      "args": ["$HOME/.cursor/mcp-servers/backlog-mcp-server/build/src/index.js"],
+      "args": ["${HOME}/.cursor/mcp-servers/backlog-mcp-server/build/src/index.js"],
       "env": {
         "BACKLOG_SPACE_ID": "presc-ec",
         "BACKLOG_API_KEY": "YOUR_PRESC_EC_BACKLOG_API_KEY_HERE"
@@ -51,7 +51,7 @@
     },
     "serena": {
       "command": "node",
-      "args": ["$HOME/.cursor/mcp-servers/serena/dist/index.js"]
+      "args": ["${HOME}/.cursor/mcp-servers/serena/dist/index.js"]
     },
     "awslabs/core-mcp-server": {
       "command": "npx",
