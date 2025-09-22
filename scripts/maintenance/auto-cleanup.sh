@@ -65,7 +65,8 @@ execute_cleanup() {
     local -a cmd=()
     while (( $# > 1 )); do cmd+=("$1"); shift; done
     local description="$1"
-    local target="${cmd[-1]}"
+    # Bash 3.2互換: 末尾要素の取得
+    local target="${cmd[@]: -1}"
 
     if [[ "$DRY_RUN" == "true" ]]; then
         echo -e "${YELLOW}[DRY-RUN]${NC} ${cmd[*]}: $target ($description)"

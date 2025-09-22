@@ -87,7 +87,7 @@ if ! command -v uv >/dev/null 2>&1; then
 
         # 一時ディレクトリ作成
         UV_TEMP_DIR=$(mktemp -d)
-        trap "rm -rf '$UV_TEMP_DIR'" EXIT
+        trap 'rm -rf "$UV_TEMP_DIR"' EXIT
 
         # 最新のuv公式リリースのハッシュを取得（例：v0.1.x系の安定版）
         UV_VERSION="0.1.45"  # 検証済み安定版
@@ -160,7 +160,10 @@ if command -v SuperClaude >/dev/null 2>&1; then
         echo "🔄 バージョン3.0.0.2にアップデート中..."
         if ! uv tool upgrade SuperClaude==3.0.0.2 2>/dev/null; then
             echo "⚠️  uvでのアップデートに失敗。pipでのフォールバックを試行..."
-            python3 -m pip install --upgrade --force-reinstall "SuperClaude==3.0.0.2"
+            if ! python3 -m pip install --upgrade --force-reinstall "SuperClaude==3.0.0.2"; then
+                echo "❌ SuperClaude のアップデートに失敗しました"
+                exit 1
+            fi
         fi
         echo "✅ SuperClaude 3.0.0.2へのアップデートが完了しました"
     else
