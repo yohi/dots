@@ -19,7 +19,6 @@ brew "libedit"
 brew "openssl@3"
 # Extraction utility for .zip compressed archives
 brew "unzip"
-brew "apt"
 brew "asdf"
 # brew "at-spi2-core" # Linux専用ブロックに移動
 brew "awscli"
@@ -78,14 +77,14 @@ brew "mercurial"
 # brew "mesa" # Linux専用ブロックに移動
 brew "mmctl"
 brew "mypy"
-# brew "mysql" # mysql@8.0に統一
-brew "mysql-client@8.0"
+# MySQL Server (統一バージョン)
 brew "mysql@8.0"
 brew "neovim"
 brew "netpbm"
 brew "newrelic-cli"
 brew "nghttp2"
-brew "node", link: false
+# Node.js version manager (nodenv-first approach)
+brew "node", link: false  # Homebrewのnodeはリンクしない（nodenv shimsを優先）
 brew "node-build"
 brew "nodenv"
 brew "numpy", link: false
@@ -122,6 +121,7 @@ brew "tree-sitter"
 brew "uv", link: false
 # brew "vte3" # Linux専用ブロックに移動
 brew "watchman"
+# Package manager for Node.js (nodenv経由のnodeを使用)
 brew "yarn"
 brew "yq"
 brew "zsh"
