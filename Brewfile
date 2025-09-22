@@ -117,14 +117,11 @@ brew "rust"
 brew "srt"
 brew "starship"
 brew "taglib"
-brew "terminator", link: false
 brew "tree"
 brew "tree-sitter"
 brew "uv", link: false
 # brew "vte3" # Linux専用ブロックに移動
 brew "watchman"
-brew "xclip"
-brew "xsel"
 brew "yarn"
 brew "yq"
 brew "zsh"
@@ -148,7 +145,7 @@ vscode "github.copilot"
 vscode "github.copilot-chat"
 vscode "github.copilot-workspace"
 vscode "github.vscode-pull-request-github"
-vscode "google.geminicodeassist"
+vscode "Google.geminicodeassist"
 vscode "grapecity.gc-excelviewer"
 vscode "hashicorp.terraform"
 vscode "kevinrose.vsc-python-indent"
@@ -202,5 +199,8 @@ if OS.linux?
   brew "freeglut"
   brew "linuxbrew/xorg/libevdev"
   brew "mesa"
+  brew "terminator", link: false
   brew "vte3"
+  brew "xclip"
+  brew "xsel"
 end
