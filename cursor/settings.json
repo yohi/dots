@@ -152,10 +152,13 @@
     },
     "database-client.autoSync": true,
     "yaml.schemas": {
-        "file:///home/y_ohi/.cursor/extensions/atlassian.atlascode-3.8.6-universal/resources/schemas/pipelines-schema.json": "bitbucket-pipelines.yml"
+        "file:///home/y_ohi/.cursor/extensions/atlassian.atlascode-3.8.3/resources/schemas/pipelines-schema.json": "bitbucket-pipelines.yml"
     },
     "atlascode.jira.enabled": false,
     "atlascode.bitbucket.enabled": true,
     "geminicodeassist.project": "dh-0001-319210",
-    "window.restoreWindows": "none"
+    "window.restoreWindows": "none",
+    "diffEditor.ignoreTrimWhitespace": false,
+    "cursor.general.disableHttp2": true,
+    "cursor.general.disableHttp1SSE": true
 }

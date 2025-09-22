@@ -8,7 +8,7 @@ NERD_FONTS_VERSION := v3.1.1
 GOOGLE_FONTS_API := https://fonts.google.com/download?family=
 
 # PHONYターゲット
-.PHONY: fonts-setup fonts-install fonts-install-nerd fonts-install-google fonts-install-japanese fonts-clean fonts-update fonts-list
+.PHONY: fonts-setup fonts-install fonts-install-nerd fonts-install-japanese fonts-clean fonts-update fonts-list
 
 # セキュリティ機能: zipファイル検証
 define verify_zip_file
@@ -30,7 +30,7 @@ endef
 fonts-setup: fonts-install ## フォント環境の完全セットアップ
 
 # 全フォントインストール
-fonts-install: fonts-install-nerd fonts-install-google fonts-install-japanese ## 全種類のフォントをインストール
+fonts-install: fonts-install-nerd fonts-install-japanese ## 全種類のフォントをインストール
 	@echo "✅ 全フォントのインストールが完了しました"
 	@$(MAKE) fonts-refresh
 
@@ -76,8 +76,18 @@ fonts-install-nerd: ## Nerd Fonts (開発者向けアイコンフォント) を�
 		echo "URL: https://github.com/ryanoasis/nerd-fonts/releases/download/$(NERD_FONTS_VERSION)/DejaVuSansMono.zip"; \
 		exit 1; \
 	fi && \
+	echo "📥 RobotoMono Nerd Fontをダウンロード中..." && \
+	if curl -fLo RobotoMono.zip "https://github.com/ryanoasis/nerd-fonts/releases/download/$(NERD_FONTS_VERSION)/RobotoMono.zip"; then \
+		echo "✅ RobotoMono ダウンロード完了"; \
+	else \
+		echo "❌ エラー: RobotoMono Nerd Fontのダウンロードに失敗しました"; \
+		echo "URL: https://github.com/ryanoasis/nerd-fonts/releases/download/$(NERD_FONTS_VERSION)/RobotoMono.zip"; \
+		exit 1; \
+	fi && \
+    echo "🔍 ダウンロードされたファイルを確認します..."; \
+    ls -l && \
 	echo "📂 フォントファイルを個別に展開中..." && \
-	for zipfile in JetBrainsMono.zip FiraCode.zip Hack.zip DejaVuSansMono.zip; do \
+	for zipfile in JetBrainsMono.zip FiraCode.zip Hack.zip DejaVuSansMono.zip RobotoMono.zip; do \
 		if [ -f "$$zipfile" ]; then \
 			echo "🔍 $$zipfile を検証中..."; \
 			if unzip -t "$$zipfile" >/dev/null 2>&1; then \
@@ -91,75 +101,14 @@ fonts-install-nerd: ## Nerd Fonts (開発者向けアイコンフォント) を�
 				fi; \
 			else \
 				echo "❌ エラー: $$zipfile は破損しています"; \
-				exit 1; \
+					exit 1; \
 			fi; \
 		else \
-			echo "❌ エラー: $$zipfile が見つかりません（ダウンロード失敗の可能性）"; \
-			exit 1; \
+				echo "❌ エラー: $$zipfile が見つかりません（ダウンロード失敗の可能性）"; \
+				exit 1; \
 		fi; \
 	done && \
 	echo "✅ Nerd Fontsのインストールが完了しました"
-
-# Google Fontsのインストール
-fonts-install-google: ## Google Fonts (ウェブフォント) をインストール
-	@echo "🌐 Google Fontsをインストール中..."
-	@mkdir -p $(FONTS_DIR) $(FONTS_TEMP_DIR)
-	@cd $(FONTS_TEMP_DIR) && \
-	echo "📥 Robotoをダウンロード中..." && \
-	if curl -fLo Roboto.zip "$(GOOGLE_FONTS_API)Roboto"; then \
-		echo "✅ Roboto ダウンロード完了"; \
-	else \
-		echo "❌ エラー: Robotoのダウンロードに失敗しました"; \
-		echo "URL: $(GOOGLE_FONTS_API)Roboto"; \
-		exit 1; \
-	fi && \
-	echo "📥 Open Sansをダウンロード中..." && \
-	if curl -fLo OpenSans.zip "$(GOOGLE_FONTS_API)Open+Sans"; then \
-		echo "✅ Open Sans ダウンロード完了"; \
-	else \
-		echo "❌ エラー: Open Sansのダウンロードに失敗しました"; \
-		echo "URL: $(GOOGLE_FONTS_API)Open+Sans"; \
-		exit 1; \
-	fi && \
-	echo "📥 Source Code Proをダウンロード中..." && \
-	if curl -fLo SourceCodePro.zip "$(GOOGLE_FONTS_API)Source+Code+Pro"; then \
-		echo "✅ Source Code Pro ダウンロード完了"; \
-	else \
-		echo "❌ エラー: Source Code Proのダウンロードに失敗しました"; \
-		echo "URL: $(GOOGLE_FONTS_API)Source+Code+Pro"; \
-		exit 1; \
-	fi && \
-	echo "📥 IBM Plex Monoをダウンロード中..." && \
-	if curl -fLo IBMPlexMono.zip "$(GOOGLE_FONTS_API)IBM+Plex+Mono"; then \
-		echo "✅ IBM Plex Mono ダウンロード完了"; \
-	else \
-		echo "❌ エラー: IBM Plex Monoのダウンロードに失敗しました"; \
-		echo "URL: $(GOOGLE_FONTS_API)IBM+Plex+Mono"; \
-		exit 1; \
-	fi && \
-	echo "📂 フォントファイルを個別に展開中..." && \
-	for zipfile in Roboto.zip OpenSans.zip SourceCodePro.zip IBMPlexMono.zip; do \
-		if [ -f "$$zipfile" ]; then \
-			echo "🔍 $$zipfile を検証中..."; \
-			if unzip -t "$$zipfile" >/dev/null 2>&1; then \
-				echo "✅ $$zipfile 検証完了"; \
-				echo "🔓 $$zipfile を展開中..."; \
-				if unzip -o "$$zipfile" -d $(FONTS_DIR)/; then \
-					echo "✅ $$zipfile 展開完了"; \
-				else \
-					echo "❌ エラー: $$zipfile の展開に失敗しました"; \
-					exit 1; \
-				fi; \
-			else \
-				echo "❌ エラー: $$zipfile は破損しています"; \
-				exit 1; \
-			fi; \
-		else \
-			echo "❌ エラー: $$zipfile が見つかりません（ダウンロード失敗の可能性）"; \
-			exit 1; \
-		fi; \
-	done && \
-	echo "✅ Google Fontsのインストールが完了しました"
 
 # 日本語フォントのインストール
 fonts-install-japanese: ## 日本語フォントをインストール
@@ -173,21 +122,21 @@ fonts-install-japanese: ## 日本語フォントをインストール
 
 	# IBM Plex Sans JP (手動ダウンロード)
 	@cd $(FONTS_TEMP_DIR) && \
-	echo "📥 IBM Plex Sans JPをダウンロード中..." && \
-	if curl -fLo IBMPlexSansJP.zip "$(GOOGLE_FONTS_API)IBM+Plex+Sans+JP"; then \
-		echo "✅ IBM Plex Sans JP ダウンロード完了"; \
-	else \
-		echo "❌ エラー: IBM Plex Sans JPのダウンロードに失敗しました"; \
-		echo "URL: $(GOOGLE_FONTS_API)IBM+Plex+Sans+JP"; \
-		exit 1; \
-	fi && \
-	echo "📂 フォントファイルを展開中..." && \
-	if unzip -o IBMPlexSansJP.zip -d $(FONTS_DIR)/; then \
-		echo "✅ 日本語フォントのインストールが完了しました"; \
-	else \
-		echo "❌ エラー: フォントファイルの展開に失敗しました"; \
-		exit 1; \
-	fi
+		echo "📥 IBM Plex Sans JPをダウンロード中..." && \
+		if curl -fLo IBMPlexSansJP.zip "https://github.com/IBM/plex/releases/download/%40ibm%2Fplex-sans-jp%402.0.0/ibm-plex-sans-jp.zip"; then \
+			echo "✅ IBM Plex Sans JP ダウンロード完了"; \
+		else \
+			echo "❌ エラー: IBM Plex Sans JPのダウンロードに失敗しました"; \
+			echo "URL: https://github.com/IBM/plex/releases/download/%40ibm%2Fplex-sans-jp%402.0.0/ibm-plex-sans-jp.zip"; \
+			exit 1; \
+		fi && \
+		echo "📂 フォントファイルを展開中..." && \
+		if unzip -o IBMPlexSansJP.zip -d $(FONTS_DIR)/; then \
+			echo "✅ 日本語フォントのインストールが完了しました"; \
+		else \
+			echo "❌ エラー: フォントファイルの展開に失敗しました"; \
+				exit 1; \
+		fi
 
 # フォントキャッシュの更新
 fonts-refresh: ## フォントキャッシュを更新
@@ -200,10 +149,10 @@ fonts-list: ## インストール済みフォントを一覧表示
 	@echo "📝 インストール済みフォント一覧:"
 	@echo ""
 	@echo "🔤 Nerd Fonts:"
-	@fc-list | grep -i "nerd\|jetbrains\|fira\|hack\|dejavu" | cut -d: -f2 | sort | uniq || echo "  なし"
+	@fc-list | grep -i "nerd\|jetbrains\|fira\|hack\|dejavu\|roboto" | cut -d: -f2 | sort | uniq || echo "  なし"
 	@echo ""
 	@echo "🌐 Google Fonts:"
-	@fc-list | grep -i "roboto\|open sans\|source code\|ibm plex" | cut -d: -f2 | sort | uniq || echo "  なし"
+	@fc-list | grep -i "open sans\|source code\|ibm plex" | cut -d: -f2 | sort | uniq || echo "  なし"
 	@echo ""
 	@echo "🇯🇵 日本語フォント:"
 	@fc-list | grep -i "noto\|cjk\|japanese\|jp" | cut -d: -f2 | sort | uniq || echo "  なし"
@@ -263,7 +212,7 @@ fonts-configure: ## 推奨フォント設定を適用
 	@echo '<?xml version="1.0"?>' > $(HOME)/.config/fontconfig/fonts.conf
 	@echo '<!DOCTYPE fontconfig SYSTEM "fonts.dtd">' >> $(HOME)/.config/fontconfig/fonts.conf
 	@echo '<fontconfig>' >> $(HOME)/.config/fontconfig/fonts.conf
-	@echo '  <!-- 日本語フォント優先順位 -->' >> $(HOME)/.config/fontconfig/fonts.conf
+	@echo '  <!-- 日本語フォント優先順位ச்சி -->' >> $(HOME)/.config/fontconfig/fonts.conf
 	@echo '  <alias>' >> $(HOME)/.config/fontconfig/fonts.conf
 	@echo '    <family>serif</family>' >> $(HOME)/.config/fontconfig/fonts.conf
 	@echo '    <prefer>' >> $(HOME)/.config/fontconfig/fonts.conf
@@ -283,6 +232,7 @@ fonts-configure: ## 推奨フォント設定を適用
 	@echo '    <prefer>' >> $(HOME)/.config/fontconfig/fonts.conf
 	@echo '      <family>JetBrainsMono Nerd Font</family>' >> $(HOME)/.config/fontconfig/fonts.conf
 	@echo '      <family>FiraCode Nerd Font</family>' >> $(HOME)/.config/fontconfig/fonts.conf
+	@echo '      <family>RobotoMono Nerd Font</family>' >> $(HOME)/.config/fontconfig/fonts.conf
 	@echo '      <family>Noto Sans Mono CJK JP</family>' >> $(HOME)/.config/fontconfig/fonts.conf
 	@echo '      <family>DejaVu Sans Mono</family>' >> $(HOME)/.config/fontconfig/fonts.conf
 	@echo '    </prefer>' >> $(HOME)/.config/fontconfig/fonts.conf

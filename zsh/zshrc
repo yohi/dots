@@ -1,6 +1,6 @@
-if [ "$TERM_PROGRAM" = "vscode" ]; then
-  return
-fi
+# if [ "$TERM_PROGRAM" = "vscode" ]; then
+#   return
+# fi
 
 
 # Fig pre block. Keep at the top of this file.
@@ -257,24 +257,11 @@ unset LESSEDIT
 export GOPATH=$HOME/.go
 export PATH=$PATH:$GOPATH/bin
 
-# eval export PATH="/home/y_ohi/.nodenv/shims:${PATH}"
-# export NODENV_SHELL=zsh
-# source '/home/linuxbrew/.linuxbrew/Cellar/nodenv/1.4.0/libexec/../completions/nodenv.zsh'
-# command nodenv rehash 2>/dev/null
-# nodenv() {
-#   local command
-#   command="${1:-}"
-#   if [ "$#" -gt 0 ]; then
-#     shift
-#   fi
-#
-#   case "$command" in
-#   rehash|shell)
-#     eval "$(nodenv "sh-$command" "$@")";;
-#   *)
-#     command nodenv "$command" "$@";;
-#   esac
-# }
+# nodenv initialization (ensure shims are prioritized in PATH)
+if command -v nodenv 1>/dev/null 2>&1; then
+  export PATH="$HOME/.nodenv/shims:${PATH}"
+  eval "$(nodenv init -)"
+fi
 #
 
 
@@ -356,10 +343,34 @@ zinit light romkatv/powerlevel10k
 
 alias kgnome='killall -3 gnome-shell'
 
-# カスタム関数の読み込み
-if [ -d "$HOME/dots/zsh/functions" ]; then
-    for func_file in "$HOME/dots/zsh/functions"/*.zsh; do
-        [ -r "$func_file" ] && source "$func_file"
+# カスタム関数の読み込み（サイレント版 - Powerlevel10k instant prompt対応）
+if [ -d "$HOME/dotfiles/zsh/functions" ]; then
+    # デバッグモード時のみ詳細出力
+    typeset debug_functions=${ZSH_FUNCTIONS_DEBUG:-false}
+
+    # サブディレクトリを含む全てのzshファイルを再帰的に読み込み
+    for func_file in "$HOME/dotfiles/zsh/functions"/**/*.zsh; do
+        if [ -r "$func_file" ]; then
+            # .broken, .disabled, .tmp ファイルをスキップ
+            case "$(basename "$func_file")" in
+                *.broken|*.disabled|*.tmp)
+                    [[ "$debug_functions" == "true" ]] && echo "⚠️  スキップ: $(basename "$func_file") (無効化)"
+                    continue
+                    ;;
+            esac
+
+            # 関数ファイルを安全に読み込み（サイレント）
+            if source "$func_file" 2>/dev/null; then
+                [[ "$debug_functions" == "true" ]] && echo "✅ 読み込み成功: $(basename "$func_file")"
+            else
+                # エラー時のみ出力（instant prompt後に表示）
+                {
+                    echo "❌ zsh関数読み込み失敗: $func_file"
+                    echo "   構文エラーまたは依存関係の問題があります"
+                    echo "   デバッグ: ZSH_FUNCTIONS_DEBUG=true で詳細確認可能"
+                } >&2
+            fi
+        fi
     done
 fi
 
@@ -372,3 +383,5 @@ fi
 # bun
 export BUN_INSTALL="$HOME/.bun"
 export PATH="$BUN_INSTALL/bin:$PATH"
+
+eval ""

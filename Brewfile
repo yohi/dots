@@ -1,154 +1,208 @@
-# Ubuntu開発環境用Brewfile
-# 自動生成されるファイルではないため、手動で管理
-
-# ========================================
-# Homebrew Taps
-# ========================================
 tap "code-hex/tap"
+tap "hashicorp/tap"
+tap "homebrew/bundle"
+# tap "homebrew/cask-fonts" # macOSブロック内に移動
+tap "homebrew/core"
 tap "knqyf263/utern"
+# tap "linuxbrew/fonts" # 未使用のため削除
+# tap "linuxbrew/xorg" # Linux専用ブロックに移動
+tap "oven-sh/bun"
 tap "rcmdnk/file"
 tap "romkatv/powerlevel10k"
 tap "waltarix/customs"
-
-# ========================================
-# システムライブラリ・基盤
-# ========================================
+tap "wezterm/wezterm-linuxbrew"
+# Text-based UI library
 brew "ncurses"
+# BSD-style licensed readline alternative
 brew "libedit"
+# Cryptography and SSL/TLS Toolkit
 brew "openssl@3"
+# Extraction utility for .zip compressed archives
 brew "unzip"
-brew "glib"
-brew "at-spi2-core"
-brew "pkgconf"
-brew "cairo"
-brew "mesa"
-brew "freeglut"
-brew "pango"
-brew "gtk+"
-brew "gtk+3"
-brew "librsvg"
-brew "vte3"
-brew "gobject-introspection"
-brew "netpbm"
-brew "dlib"
-
-# ========================================
-# フォント（Linuxbrewでは別途手動インストール）
-# ========================================
-# cask "font-cica" # Linuxbrewではcaskはサポートされていません
-# cask "font-noto-sans-cjk-jp" # Linuxbrewではcaskはサポートされていません
-
-# ========================================
-# 開発ツール・バージョン管理
-# ========================================
-brew "git-lfs"
 brew "asdf"
-brew "direnv"
-brew "nodenv"
-brew "node-build"
-brew "gcc"
-brew "cmake"
+# brew "at-spi2-core" # Linux専用ブロックに移動
+brew "awscli"
+brew "bitwarden-cli"
+brew "cairo"
 brew "clang-format"
-brew "tree-sitter"
-
-# ========================================
-# プログラミング言語・ランタイム
-# ========================================
+brew "cmake"
+brew "code-hex/tap/neo-cowsay"
+brew "composer"
+brew "ctop"
+brew "cython"
+brew "dagger"
+brew "deno"
+brew "direnv"
+brew "dlib"
+brew "docker"
+brew "docker-buildx"
+brew "docker-compose"
+brew "fd"
+brew "flake8"
+brew "flux"
+# フォントはcaskで管理
+brew "fontforge"
+# brew "freeglut" # Linux専用ブロックに移動
+brew "fzf"
+brew "gcc"
+brew "gemini-cli"
+brew "gh"
+brew "ghc"
+brew "git-lfs"
+brew "glib"
 brew "go"
-brew "rust"
+brew "gobject-introspection"
+brew "graphviz"
+# brew "gtk+" # GTK2は旧式、GTK3のみで十分
+brew "gtk+3"
+brew "hadolint"
+brew "terraform"
+brew "inih"
+brew "jmeter"
+brew "jq"
+brew "just"
+brew "utern"
+brew "lazydocker"
+brew "lazygit"
+brew "libconfig"
+brew "librsvg"
+# brew "linuxbrew/xorg/libevdev" # Linux専用ブロックに移動
+brew "lpeg"
+brew "lsd"
 brew "lua"
 brew "luajit"
 brew "luarocks"
-brew "deno"
-brew "yarn"
-brew "php"
-brew "composer"
-brew "ruby"
-brew "perl"
-
-# ========================================
-# Python関連
-# ========================================
-brew "python-tk@3.9"
-brew "python-yq"
-brew "cython"
-brew "flake8"
-brew "mypy"
-brew "pipenv"
-brew "uv"
-brew "pygobject3"
-
-# ========================================
-# データベース
-# ========================================
-brew "mysql"
-brew "postgresql@14"
-
-# ========================================
-# コンテナ・インフラ
-# ========================================
-brew "docker"
-# brew "docker-compose" # 非推奨: dockerパッケージに'docker compose'サブコマンドが含まれています
-brew "flux"
-brew "dagger"
-
-# ========================================
-# ネットワーク・クラウド
-# ========================================
-brew "awscli"
-brew "nghttp2"
-brew "newrelic-cli"
-
-# ========================================
-# 監視・管理ツール
-# ========================================
-brew "ctop"
-brew "lazydocker"
-brew "lazygit"
-brew "watchman"
+brew "maven"
+brew "mercurial"
+# brew "mesa" # Linux専用ブロックに移動
 brew "mmctl"
-
-# ========================================
-# ファイル操作・検索
-# ========================================
-brew "fd"
-brew "ripgrep"
-brew "tree"
-brew "fzf"
-brew "peco"
-brew "p7zip"
-brew "pv"
-
-# ========================================
-# エディタ・ターミナル
-# ========================================
+brew "mypy"
+# MySQL Server (統一バージョン)
+brew "mysql@8.0"
 brew "neovim"
-brew "terminator", link: false
+brew "netpbm"
+brew "newrelic-cli"
+brew "nghttp2"
+# Node.js version manager (nodenv-first approach)
+brew "node", link: false  # Homebrewのnodeはリンクしない（nodenv shimsを優先）
+brew "node-build"
+brew "nodenv"
+brew "numpy", link: false
+brew "openjdk"
+brew "oven-sh/bun/bun"
+brew "p7zip"
+brew "pango"
+brew "peco"
+brew "perl"
+brew "pgpdump"
+brew "php"
+brew "pipenv"
+brew "pipx"
+brew "pkgconf"
+brew "postgresql@14"
+brew "powerlevel10k"
+brew "pv"
+brew "py3cairo"
+brew "pygobject3"
+brew "python-gdbm@3.12"
+brew "python-tk@3.12"
+# brew "python-tk@3.9" # python@3.12に統一
+# brew "python-yq" # Go版のyqと競合するため削除
+brew "python@3.12"
+# brew "python@3.9" # python@3.12に統一
+brew "ripgrep"
+brew "ruby"
+brew "rust"
+brew "srt"
+brew "starship"
+brew "taglib"
+brew "tree"
+brew "tree-sitter"
+brew "uv", link: false
+# brew "vte3" # Linux専用ブロックに移動
+brew "watchman"
+# Package manager for Node.js (nodenv経由のnodeを使用)
+# NOTE: yarnをHomebrewでインストールするより、corepackで管理することを推奨
+# corepack enable後にyarn使用可能。この行は必要に応じて削除を検討
+brew "yarn"
+brew "yq"
 brew "zsh"
 brew "zsh-autosuggestions"
-brew "powerlevel10k"
+vscode "4ops.terraform"
+vscode "asciidoctor.asciidoctor-vscode"
+vscode "atlassian.atlascode"
+vscode "batisteo.vscode-django"
+vscode "bigonesystems.django"
+vscode "bradlc.vscode-tailwindcss"
+vscode "christian-kohler.path-intellisense"
+vscode "coderabbit.coderabbit-vscode"
+vscode "cweijan.dbclient-jdbc"
+vscode "cweijan.vscode-database-client2"
+vscode "davidanson.vscode-markdownlint"
+# vscode "docker.docker" # 旧ID、ms-azuretools.vscode-dockerに統一
+vscode "eamodio.gitlens"
+vscode "formulahendry.auto-close-tag"
+vscode "formulahendry.auto-rename-tag"
+vscode "github.copilot"
+vscode "github.copilot-chat"
+vscode "GitHub.copilot-workspace"
+vscode "github.vscode-pull-request-github"
+vscode "Google.geminicodeassist"
+vscode "grapecity.gc-excelviewer"
+vscode "hashicorp.terraform"
+vscode "kevinrose.vsc-python-indent"
+vscode "linjun.ftp-support"
+vscode "mechatroner.rainbow-csv"
+vscode "mhutchie.git-graph"
+# vscode "ms-azuretools.vscode-containers" # 旧称、ms-vscode-remote.remote-containersに統一
+vscode "ms-azuretools.vscode-docker"
+vscode "ms-ceintl.vscode-language-pack-ja"
+vscode "ms-python.black-formatter"
+vscode "ms-python.debugpy"
+vscode "ms-python.flake8"
+vscode "ms-python.mypy-type-checker"
+vscode "ms-python.python"
+vscode "ms-python.vscode-pylance"
+vscode "ms-toolsai.jupyter"
+vscode "ms-toolsai.jupyter-keymap"
+vscode "ms-toolsai.jupyter-renderers"
+vscode "ms-toolsai.vscode-jupyter-cell-tags"
+vscode "ms-toolsai.vscode-jupyter-slideshow"
+vscode "ms-vscode-remote.remote-containers"
+vscode "ms-vscode-remote.remote-ssh"
+vscode "ms-vscode-remote.remote-ssh-edit"
+vscode "ms-vscode.cmake-tools"
+vscode "ms-vscode.cpptools"
+vscode "ms-vscode.makefile-tools"
+vscode "ms-vscode.remote-explorer"
+vscode "ms-vscode.vscode-typescript-next"
+vscode "njpwerner.autodocstring"
+vscode "njqdev.vscode-python-typehint"
+vscode "pkief.material-icon-theme"
+vscode "redhat.vscode-yaml"
+vscode "shd101wyy.markdown-preview-enhanced"
+vscode "streetsidesoftware.code-spell-checker"
+vscode "thebarkman.vscode-djaneiro"
+vscode "vscode-icons-team.vscode-icons"
+vscode "yzhang.markdown-all-in-one"
+vscode "zhuangtongfa.material-theme"
 
-# ========================================
-# セキュリティ
-# ========================================
-brew "bitwarden-cli"
+# フォント (macOS のみ)
+if OS.mac?
+  tap "homebrew/cask-fonts"
+  cask "font-cica"
+  cask "font-noto-sans-cjk-jp"
+end
 
-# ========================================
-# 開発・テスト
-# ========================================
-brew "openjdk"
-brew "jmeter"
-
-# ========================================
-# ユーティリティ
-# ========================================
-brew "jq"
-brew "xclip"
-brew "srt"
-brew "mercurial"
-
-# ========================================
-# 追加ツール（サードパーティ）
-# ========================================
-brew "code-hex/tap/neo-cowsay"
-brew "knqyf263/utern/utern"
+# Linux専用パッケージ
+if OS.linux?
+  tap "linuxbrew/xorg"
+  brew "at-spi2-core"
+  brew "freeglut"
+  brew "linuxbrew/xorg/libevdev"
+  brew "mesa"
+  brew "terminator", link: false
+  brew "vte3"
+  brew "xclip"
+  brew "xsel"
+end
