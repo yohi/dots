@@ -765,15 +765,17 @@ install-superclaude:
 	# uv の確認とインストール
 	@echo "🔍 uv (Python パッケージマネージャー) の確認中..."
 	@if ! command -v uv >/dev/null 2>&1; then \
-		echo "📦 uv をインストール中..."; \
-		curl -LsSf https://astral.sh/uv/install.sh | sh; \
-		echo "🔄 uvのパスを更新中..."; \
-		export PATH="$(HOME_DIR)/.local/bin:$$PATH"; \
-		if ! command -v uv >/dev/null 2>&1; then \
-			echo "⚠️  uvのインストールが完了しましたが、現在のセッションで認識されていません"; \
-			echo "   新しいターミナルセッションで再実行するか、以下を実行してください:"; \
-			echo "   source $(HOME_DIR)/.bashrc"; \
-		fi; \
+		{ \
+			echo "📦 uv をインストール中..."; \
+			curl -LsSf https://astral.sh/uv/install.sh | sh; \
+			echo "🔄 uvのパスを更新中..."; \
+			export PATH="$(HOME_DIR)/.local/bin:$PATH"; \
+			if ! command -v uv >/dev/null 2>&1; then \
+				echo "⚠️  uvのインストールが完了しましたが、現在のセッションで認識されていません"; \
+				echo "   新しいターミナルセッションで再実行するか、以下を実行してください:"; \
+				echo "   source $(HOME_DIR)/.bashrc"; \
+			fi; \
+		}; \
 	else \
 		echo "✅ uv が見つかりました: $$(uv --version)"; \
 	fi
