@@ -121,7 +121,6 @@ brew "taglib"
 brew "terminator", link: false
 brew "tree"
 brew "tree-sitter"
-brew "uv"
 brew "uv", link: false
 brew "vte3"
 brew "watchman"

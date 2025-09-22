@@ -65,13 +65,13 @@ uninstall-sticky-keys: ## SHIFTキー固定モード対策をアンインスト�
 	  TARGET="/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/fix-sticky-keys/"; \
 	  EXISTING=$$(gsettings get $$SCHEMA $$KEY | sed 's/^@as //'); \
 	  if echo "$$EXISTING" | grep -Fq "$$TARGET"; then \
-	    PRUNED=$$(python3 - "$$EXISTING" "$$TARGET" <<'PY'
-import ast, sys
-lst = ast.literal_eval(sys.argv[1])
-target = sys.argv[2]
-lst = [x for x in lst if x != target]
-print("[" + ",".join(f"'{x}'" for x in lst) + "]")
-PY
+	    PRUNED=$$(python3 - "$$EXISTING" "$$TARGET" <<'PY' \
+import ast, sys \
+lst = ast.literal_eval(sys.argv[1]) \
+target = sys.argv[2] \
+lst = [x for x in lst if x != target] \
+print("[" + ",".join(f"'{x}'" for x in lst) + "]") \
+PY \
 ); \
 	    gsettings set $$SCHEMA $$KEY "$$PRUNED"; \
 	  fi; \

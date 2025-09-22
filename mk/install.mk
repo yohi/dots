@@ -131,6 +131,7 @@ install-apps:
 	else \
 		echo "❌ Homebrewがインストールされていません。先に 'make install-homebrew' を実行してください。"; \
 		exit 1; \
+		exit 1; \
 	fi
 	@echo "✅ アプリケーションのインストールが完了しました。"
 
@@ -594,9 +595,10 @@ install-claudia:
 	else \
 		RUST_VERSION=$$(rustc --version | grep -o '[0-9]\+\.[0-9]\+' | head -1); \
 		echo "✅ Rust が見つかりました: $$(rustc --version)"; \
-		if [ "$$($$(echo "$$RUST_VERSION" | cut -d'.' -f1))" -lt 1 ] || \
-		   [ "$$($$(echo "$$RUST_VERSION" | cut -d'.' -f1))" -eq 1 -a "$$($$(echo "$$RUST_VERSION" | cut -d'.' -f2))" -lt 70 ]; then \
-			echo "⚠️  Rust 1.70.0+ が推奨されています (現在: $$RUST_VERSION)"; \
+		MAJOR=$(echo "$RUST_VERSION" | cut -d'.' -f1); \
+		MINOR=$(echo "$RUST_VERSION" | cut -d'.' -f2); \
+		if [ "$MAJOR" -lt 1 ] || { [ "$MAJOR" -eq 1 ] && [ "$MINOR" -lt 70 ]; }; then \
+			echo "⚠️  Rust 1.70.0+ が推奨されています (現在: $RUST_VERSION)"; \
 			echo "💡 アップデート: rustup update または brew upgrade rust"; \
 		fi; \
 	fi
@@ -734,7 +736,7 @@ install-claudia:
 # SuperClaude (Claude Code Framework) のインストール
 # セキュリティ強化 2025年1月実装:
 # - バージョン3.0.0.2の厳格指定によるCVE対策
-# - SHA256 + MD5の多重ハッシュ検証 (PyPI公式ハッシュ値使用)
+# - SHA256ハッシュ検証 (PyPI公式ハッシュ値使用)
 # - --require-hashes フラグによる強制整合性チェック
 # - PyPI Trusted Publishing対応パッケージ (GPG署名の代替)
 install-superclaude:
@@ -767,7 +769,7 @@ install-superclaude:
 			echo "📦 uv をインストール中..."; \
 			curl -LsSf https://astral.sh/uv/install.sh | sh; \
 			echo "🔄 uvのパスを更新中..."; \
-			export PATH="$(HOME_DIR)/.local/bin:$PATH"; \
+			export PATH="$(HOME_DIR)/.local/bin:$$PATH"; \
 			if ! command -v uv >/dev/null 2>&1; then \
 				echo "⚠️  uvのインストールが完了しましたが、現在のセッションで認識されていません"; \
 				echo "   新しいターミナルセッションで再実行するか、以下を実行してください:"; \
@@ -801,11 +803,9 @@ install-superclaude:
 				echo "⚠️  標準アップデートに失敗しました。pipでの多重セキュリティ検証インストールを試行中..."; \
 				pip install --upgrade --force-reinstall "SuperClaude==3.0.0.2" \
 					--hash=sha256:0bb45f9494eee17c950f17c94b6f7128ed7d1e71750c39f47da89023e812a031 \
-					--hash=md5:960654b5c8fc444d1f122fb55f285d5c \
 					--require-hashes || \
 				pip install --upgrade --force-reinstall "SuperClaude==3.0.0.2" \
 					--hash=sha256:3d30c60d06b7e7f430799adee4d7ac2575d3ea5b94d93771647965ee49aaf870 \
-					--hash=md5:9f3f6e3dc62e3b3a10a8833894d52f7c \
 					--require-hashes; \
 			fi; \
 		else \
@@ -816,7 +816,6 @@ install-superclaude:
 		echo "🔐 強化セキュリティ機能:"; \
 		echo "   ✓ バージョン固定: 3.0.0.2 (2025年7月23日リリース)"; \
 		echo "   ✓ SHA256ハッシュ検証有効 (PyPI公式)"; \
-		echo "   ✓ MD5追加検証 (整合性確認)"; \
 		echo "   ✓ --require-hashes フラグ (強制検証)"; \
 		echo "   ✓ PyPI公式パッケージからのインストール"; \
 		echo "   ✓ 署名者: mithungowda.b (PyPI verified)"; \
@@ -828,25 +827,21 @@ install-superclaude:
 		   uv add SuperClaude==3.0.0.2; then \
 			echo "✅ SuperClaude 3.0.0.2 のパッケージインストールが完了しました"; \
 		else \
-			echo "⚠️  uvでのインストールに失敗しました。pipでの多重ハッシュ検証インストールを試行中..."; \
-			echo "🔐 SHA256 + MD5 + 強制検証モードでインストールします"; \
+			echo "⚠️  uvでのインストールに失敗しました。pipでのSHA256ハッシュ検証インストールを試行中..."; \
+			echo "🔐 SHA256強制検証モードでインストールします"; \
 			\
-			# pipでの多重ハッシュ検証付きインストール（tar.gz形式）
+			# pipでのSHA256ハッシュ検証付きインストール（tar.gz形式）
 			if pip install "SuperClaude==3.0.0.2" \
 				--hash=sha256:0bb45f9494eee17c950f17c94b6f7128ed7d1e71750c39f47da89023e812a031 \
-				--hash=md5:960654b5c8fc444d1f122fb55f285d5c \
 				--require-hashes; then \
 				echo "✅ SuperClaude 3.0.0.2 のセキュアインストールが完了しました (source distribution)"; \
 				echo "   ✓ SHA256検証済み: 0bb45f9494eee17c950f17c94b6f7128ed7d1e71750c39f47da89023e812a031"; \
-				echo "   ✓ MD5検証済み: 960654b5c8fc444d1f122fb55f285d5c"; \
-			# フォールバック: wheel形式での多重ハッシュ検証
+			# フォールバック: wheel形式でのSHA256ハッシュ検証
 			elif pip install "SuperClaude==3.0.0.2" \
 				--hash=sha256:3d30c60d06b7e7f430799adee4d7ac2575d3ea5b94d93771647965ee49aaf870 \
-				--hash=md5:9f3f6e3dc62e3b3a10a8833894d52f7c \
 				--require-hashes; then \
 				echo "✅ SuperClaude 3.0.0.2 のセキュアインストールが完了しました (wheel distribution)"; \
 				echo "   ✓ SHA256検証済み: 3d30c60d06b7e7f430799adee4d7ac2575d3ea5b94d93771647965ee49aaf870"; \
-				echo "   ✓ MD5検証済み: 9f3f6e3dc62e3b3a10a8833894d52f7c"; \
 			else \
 				echo "❌ SuperClaude のセキュアインストールに失敗しました"; \
 				echo ""; \
@@ -894,7 +889,6 @@ install-superclaude:
 	@echo "   ✓ PyPI公式リポジトリからのダウンロード" \
 	@echo "   ✓ バージョン3.0.0.2固定 (CVE対策)" \
 	@echo "   ✓ SHA256ハッシュ検証 (パッケージ整合性)" \
-	@echo "   ✓ MD5追加検証 (二重整合性チェック)" \
 	@echo "   ✓ --require-hashes 強制検証モード" \
 	@echo "   ✓ 認証済みメンテナー: mithungowda.b" \
 	@echo "   ⚠️ GPG署名: PyPIでは現在未提供 (Trusted Publishingで代替)" \
@@ -1069,7 +1063,7 @@ install-claude-ecosystem:
 	@echo "🔍 インストール結果の確認中..."
 	@export PATH="$(HOME_DIR)/.local/bin:$$PATH" && \
 	echo "Claude Code: $$(command -v claude >/dev/null 2>&1 && echo "✅ $$(claude --version 2>/dev/null)" || echo "❌ 未確認")" && \
-	echo "SuperClaude: $$([ -f /opt/claudia/claudia ] && echo "✅ インストール済み (/opt/claudia/claudia)" || echo "❌ 未確認")"
+	echo "SuperClaude: $$(command -v SuperClaude >/dev/null 2>&1 && echo "✅ $$(SuperClaude --version 2>/dev/null)" || echo "❌ 未確認")"
 
 	@echo ""; \
 	@echo "🎉 Claude Code エコシステムのインストールが完了しました！" \
@@ -1140,9 +1134,10 @@ install-deb:
 	# Google Chrome Stable のインストール
 	@echo "🌐 Google Chrome Stable のインストール中..."
 	@if ! command -v google-chrome-stable >/dev/null 2>&1; then \
-		echo "📥 Google Chrome キーを追加中..."; \
-		wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | sudo apt-key add -; \
-		sudo sh -c 'echo "deb [arch=amd64] https://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list'; \
+		echo "📥 Google GPGキーをダウンロード・設定中..."; \
+		sudo mkdir -p /usr/share/keyrings; \
+		curl -fsSL https://dl.google.com/linux/linux_signing_key.pub | sudo gpg --dearmor -o /usr/share/keyrings/google-chrome.gpg; \
+		echo "deb [arch=amd64 signed-by=/usr/share/keyrings/google-chrome.gpg] https://dl.google.com/linux/chrome/deb/ stable main" | sudo tee /etc/apt/sources.list.d/google-chrome.list; \
 		sudo apt update -q 2>/dev/null || echo "⚠️  一部のリポジトリで問題がありますが、処理を続行します"; \
 		sudo DEBIAN_FRONTEND=noninteractive apt install -y google-chrome-stable; \
 	else \
@@ -1154,9 +1149,10 @@ install-deb:
 	@if ! command -v google-chrome-beta >/dev/null 2>&1; then \
 		echo "📥 Google Chrome リポジトリの確認中..."; \
 		if ! grep -q "chrome/deb" /etc/apt/sources.list.d/google-chrome.list 2>/dev/null; then \
-			echo "📥 Google Chrome キーを追加中..."; \
-			wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | sudo apt-key add -; \
-			sudo sh -c 'echo "deb [arch=amd64] https://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list'; \
+			echo "📥 Google GPGキーをダウンロード・設定中..."; \
+			sudo mkdir -p /usr/share/keyrings; \
+			curl -fsSL https://dl.google.com/linux/linux_signing_key.pub | sudo gpg --dearmor -o /usr/share/keyrings/google-chrome.gpg; \
+			sudo sh -c 'echo "deb [arch=amd64 signed-by=/usr/share/keyrings/google-chrome.gpg] https://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list'; \
 			sudo apt update -q 2>/dev/null || echo "⚠️  一部のリポジトリで問題がありますが、処理を続行します"; \
 		fi; \
 		sudo DEBIAN_FRONTEND=noninteractive apt install -y google-chrome-beta; \
@@ -1390,7 +1386,7 @@ install-packages-ccusage:
 	@if ! command -v bun >/dev/null 2>&1; then \
 		echo "bun が見つからないため、インストールします..."; \
 		curl -fsSL https://bun.sh/install | bash; \
-		export PATH="$(HOME)/.bun/bin:$PATH"; \
+		export PATH="$(HOME)/.bun/bin:$$PATH"; \
 		if ! command -v bun >/dev/null 2>&1; then \
 			echo "❌ bun のインストールに失敗しました。PATH を確認してください。"; \
 			exit 1; \
@@ -1414,9 +1410,10 @@ install-packages-chrome-beta:
 	@if ! command -v google-chrome-beta >/dev/null 2>&1; then \
 		echo "📥 Google Chrome リポジトリの確認中..."; \
 		if ! grep -q "chrome/deb" /etc/apt/sources.list.d/google-chrome.list 2>/dev/null; then \
-			echo "📥 Google Chrome キーを追加中..."; \
-			wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | sudo apt-key add -; \
-			sudo sh -c 'echo "deb [arch=amd64] https://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list'; \
+			echo "📥 Google GPGキーをダウンロード・設定中..."; \
+			sudo mkdir -p /usr/share/keyrings; \
+			curl -fsSL https://dl.google.com/linux/linux_signing_key.pub | sudo gpg --dearmor -o /usr/share/keyrings/google-chrome.gpg; \
+			sudo sh -c 'echo "deb [arch=amd64 signed-by=/usr/share/keyrings/google-chrome.gpg] https://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list'; \
 			sudo apt update -q 2>/dev/null || echo "⚠️  一部のリポジトリで問題がありますが、処理を続行します"; \
 		fi; \
 		sudo DEBIAN_FRONTEND=noninteractive apt install -y google-chrome-beta; \
@@ -1657,15 +1654,9 @@ install-supergemini:
 	echo "import-implement: # /user-implement コマンド\n\n新機能を実装します。" > $(HOME_DIR)/.gemini/user-tools/user-implement.md; \
 	\
 	@echo "🔧 Gemini CLI設定ファイルを更新中..."; \
-	echo '{
-  "selectedAuthType": "oauth-personal",
-  "usageStatisticsEnabled": false,
-  "customToolsDirectory": "~/.gemini/user-tools",
-  "enableCustomTools": true
-}' > $(HOME_DIR)/.gemini/settings.json || true; \
+	echo '{"selectedAuthType":"oauth-personal","usageStatisticsEnabled":false,"customToolsDirectory":"~/.gemini/user-tools","enableCustomTools":true}' > $(HOME_DIR)/.gemini/settings.json || true; \
 	\
-	@echo "✅ SuperGemini フレームワークのシンボリックリンク設定が完了しました"
-
+	@echo "✅ SuperGemini フレームワークのシンボリックリンク設定が完了しました"; \
 	@echo ""; \
 	@echo "🎉 SuperGemini のセットアップが完了しました！" \
 	@echo ""; \
