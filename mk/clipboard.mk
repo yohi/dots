@@ -22,7 +22,13 @@ install-packages-clipboard: ## クリップボード管理ツール（CopyQ + Wa
 	
 	# CopyQ PPAの追加
 	@echo "📦 CopyQ PPAを追加中..."
-	@sudo add-apt-repository -y ppa:hluk/copyq 2>/dev/null || echo "⚠️  PPA追加でエラーが発生しましたが、処理を続行します"
+	@if ! sudo add-apt-repository -y ppa:hluk/copyq 2>/dev/null; then \
+		echo "⚠️  PPA追加でエラーが発生しました"; \
+		echo "💡 代替手段: 手動でPPAを追加してください:"; \
+		echo "    sudo add-apt-repository ppa:hluk/copyq"; \
+		echo "    sudo apt update"; \
+		exit 1; \
+	fi
 	
 	# パッケージリストの更新
 	@echo "📦 パッケージリストを更新中..."
@@ -105,8 +111,13 @@ setup-copyq-wayland: ## CopyQのWayland対応設定を適用
 	
 	# CopyQの再起動
 	@echo "🔄 CopyQを再起動中..."
-	@$(HOME)/.local/bin/copyq-wayland &
-	@sleep 3
+	@nohup $(HOME)/.local/bin/copyq-wayland > /dev/null 2>&1 & \
+	PID=$$!; \
+	sleep 3; \
+	if ! kill -0 $$PID 2>/dev/null; then \
+		echo "❌ CopyQの起動に失敗しました"; \
+		exit 1; \
+	fi
 	
 	# 動作確認
 	@echo "🔍 CopyQ動作確認中..."
@@ -183,13 +194,26 @@ test-clipboard: ## クリップボード機能のテスト
 	# テストデータでの動作確認
 	@echo "🧪 実動作テスト:"
 	@echo "  テストデータをクリップボードに書き込み中..."
-	@TEST_DATA="テスト_$$(date +%s)"; \
-	if command -v wl-copy >/dev/null 2>&1; then \
+	@if command -v wl-copy >/dev/null 2>&1; then \
+		TEST_DATA="テスト_$$(date +%s)"; \
 		echo "$$TEST_DATA" | wl-copy && \
-		echo "  ✅ wl-copyでの書き込み成功"; \
+		echo "  ✅ wl-copyでの書き込み成功: $$TEST_DATA" && \
+		WRITTEN_DATA=$$(wl-paste 2>/dev/null) && \
+		if [ "$$WRITTEN_DATA" = "$$TEST_DATA" ]; then \
+			echo "  ✅ クリップボードへの書き込みを確認"; \
+		else \
+			echo "  ❌ クリップボードの内容が一致しません"; \
+		fi; \
 	elif command -v xclip >/dev/null 2>&1; then \
+		TEST_DATA="テスト_$$(date +%s)"; \
 		echo "$$TEST_DATA" | xclip -selection clipboard && \
-		echo "  ✅ xclipでの書き込み成功"; \
+		echo "  ✅ xclipでの書き込み成功: $$TEST_DATA" && \
+		WRITTEN_DATA=$$(xclip -selection clipboard -o 2>/dev/null) && \
+		if [ "$$WRITTEN_DATA" = "$$TEST_DATA" ]; then \
+			echo "  ✅ クリップボードへの書き込みを確認"; \
+		else \
+			echo "  ❌ クリップボードの内容が一致しません"; \
+		fi; \
 	else \
 		echo "  ❌ クリップボードツールが利用できません"; \
 	fi
@@ -262,8 +286,13 @@ fix-copyq-wayland: ## CopyQのWayland問題を修正（トラブルシューテ�
 	
 	# CopyQの再起動
 	@echo "🔄 CopyQを再起動中..."
-	@$(HOME)/.local/bin/copyq-wayland &
-	@sleep 5
+	@nohup $(HOME)/.local/bin/copyq-wayland > /dev/null 2>&1 & \
+	PID=$$!; \
+	sleep 5; \
+	if ! kill -0 $$PID 2>/dev/null; then \
+		echo "❌ CopyQの起動に失敗しました"; \
+		exit 1; \
+	fi
 	
 	# 最終確認
 	@echo "✅ 修正作業完了。動作確認中..."
