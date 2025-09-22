@@ -1386,6 +1386,31 @@ install-packages-claude-ecosystem: install-claude-ecosystem
 install-packages-cica-fonts: install-cica-fonts
 install-packages-mysql-workbench: install-mysql-workbench
 install-packages-playwright: install-playwright
+install-packages-gemini-cli: install-gemini-cli
+
+# ccusageのインストール
+install-packages-ccusage:
+	@echo "📦 ccusage をインストールしています..."
+	@if ! command -v bun >/dev/null 2>&1; then \
+		echo "bun が見つからないため、インストールします..."; \
+		curl -fsSL https://bun.sh/install | bash; \
+		export PATH="$$HOME/.bun/bin:$$PATH"; \
+		if ! command -v bun >/dev/null 2>&1; then \
+			echo "❌ bun のインストールに失敗しました。PATHを確認してください。"; \
+			exit 1; \
+		fi \
+	fi
+	@echo "🔧 ccusage をグローバル導入中..."
+	@export PATH="$$HOME/.bun/bin:$$PATH"; \
+	if ! bun add -g ccusage; then \
+		echo "⚠️ bun add -g に失敗。bunx での実行にフォールバックします"; \
+	fi
+	@echo "🔍 動作確認: ccusage --version"
+	@export PATH="$$HOME/.bun/bin:$$PATH"; \
+	if ! bunx -y ccusage --version >/dev/null 2>&1; then \
+		echo "⚠️ bunx 実行確認に失敗しました（ネットワーク状況を確認してください）"; \
+	fi
+	@echo "✅ ccusage のインストールが完了しました。"
 
 # 追加のブラウザインストール系
 install-packages-chrome-beta:
@@ -1425,6 +1450,9 @@ install-packages-vscode-supercopilot:
 
 # 後方互換性のためのエイリアス
 install-vscode-supercopilot: install-packages-vscode-supercopilot
+
+# ccusage の後方互換エイリアス
+install-ccusage: install-packages-ccusage
 
 # SuperCursor (Cursor Framework) のインストール
 install-supercursor:
@@ -1811,9 +1839,9 @@ shutdown-system:
 	@echo "⏹️ システムをシャットダウンしようとしています..."
 	@echo "⚠️  この操作により、すべての未保存の作業が失われます。"
 	@read -p "本当にシステムをシャットダウンしますか? (y/N): " confirm; \
-	if [ "$$confirm" = "y" ] || [ "$$confirm" = "Y" ]; then \
-		echo "システムをシャットダウンします..."; \
-		sudo shutdown now; \
-	else \
-		echo "シャットダウンをキャンセルしました。"; \
-	fi
+			if [ "$$confirm" = "y" ] || [ "$$confirm" = "Y" ]; then \
+				echo "システムをシャットダウンします..."; \
+				sudo shutdown now; \
+			else \
+				echo "シャットダウンをキャンセルしました。"; \
+			fi
