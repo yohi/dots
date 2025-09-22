@@ -46,8 +46,10 @@ echo "⏱️  実行中: make $TARGET"
 start_time=$(now_ms)
 
 # 実際のmake実行（出力をキャプチャ）
-make_output=$(make $TARGET 2>&1)
+set +e
+make_output=$(make "$TARGET" 2>&1)
 make_exit_code=$?
+set -e
 
 end_time=$(now_ms)
 
@@ -77,7 +79,7 @@ echo ""
 echo "🔍 Makefile構造分析"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-include_count=$(grep -c "^include" Makefile 2>/dev/null || echo "0")
+include_count=$(awk 'BEGIN{c=0} /^[[:space:]]*#/ {next} /^[[:space:]]*include\b/ {c++} END{print c}' Makefile 2>/dev/null || echo 0)
 mk_files=$(find mk/ -name "*.mk" 2>/dev/null | wc -l)
 total_lines=$(find . -name "*.mk" -o -name "Makefile" | xargs wc -l | tail -1 | awk '{print $1}')
 

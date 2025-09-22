@@ -2,6 +2,15 @@
 # 定期クリーンアップスクリプト
 # 使用方法: ./auto-cleanup.sh [--dry-run] [--force]
 
+# クロスプラットフォーム mtime 取得関数
+get_mtime() { 
+  if stat -c %Y "$1" >/dev/null 2>&1; then
+    stat -c %Y "$1"
+  else
+    stat -f %m "$1"
+  fi
+}
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DOTFILES_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
@@ -157,7 +166,7 @@ OLD_BACKUPS=$(find . -name "*.backup.*" -type f -mtime +30 ! -path "./.git/*" 2>
 if [[ ! -z "$OLD_BACKUPS" ]]; then
     echo "🗂️  30日以上前のバックアップ:"
     echo "$OLD_BACKUPS" | while read backup; do
-        age=$(stat -c %Y "$backup")
+        age=$(get_mtime "$backup")
         current=$(date +%s)
         days=$(( (current - age) / 86400 ))
         size=$(du -h "$backup" | cut -f1)

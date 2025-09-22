@@ -44,27 +44,21 @@ resolve_grep() {
 
 # ポータブルな8進数権限取得関数
 get_octal_perm() {
-    local file="$1"
-    if stat -c "%a" "$file" 2>/dev/null; then
-        # GNU stat (Linux)
-        return 0
-    elif stat -f "%OLp" "$file" 2>/dev/null; then
-        # BSD stat (macOS)
-        return 0
-    else
-        # フォールバック: ls -l から推定
-        local perms=$(ls -l "$file" | cut -c2-10)
-        local octal=""
-        for i in 0 3 6; do
-            local rwx=${perms:$i:3}
-            local val=0
-            [[ ${rwx:0:1} == "r" ]] && ((val += 4))
-            [[ ${rwx:1:1} == "w" ]] && ((val += 2))
-            [[ ${rwx:2:1} == "x" || ${rwx:2:1} == "s" || ${rwx:2:1} == "t" ]] && ((val += 1))
-            octal+="$val"
-        done
-        printf "%s" "$octal"
-    fi
+    local file="$1" out
+    out=$(stat -c '%a' "$file" 2>/dev/null) && { printf '%s\n' "${out: -3}"; return 0; }
+    out=$(stat -f '%OLp' "$file" 2>/dev/null) && { printf '%s\n' "${out: -3}"; return 0; }
+    # フォールバック: ls -l から推定
+    local perms; perms=$(ls -l "$file" | cut -c2-10)
+    local octal=""
+    for i in 0 3 6; do
+        local rwx=${perms:$i:3}
+        local val=0
+        [[ ${rwx:0:1} == "r" ]] && ((val += 4))
+        [[ ${rwx:1:1} == "w" ]] && ((val += 2))
+        [[ ${rwx:2:1} == "x" || ${rwx:2:1} == "s" || ${rwx:2:1} == "t" ]] && ((val += 1))
+        octal+="$val"
+    done
+    printf '%s\n' "$octal"
 }
 
 # 検出カウンタ
@@ -182,7 +176,7 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 echo "🔍 実行権限ファイル:"
 find . -type f -perm -111 ! -path "./.git/*" | while read -r file; do
     perm=$(get_octal_perm "$file")
-    other_exec=${perm:2:1}
+    other_exec=${perm: -1}
     if [[ "$other_exec" -ge 1 ]]; then
       echo -e "  ${YELLOW}⚠️  $file ($perm) - others に実行権限${NC}"
       ((LOW_RISK++)); ((ISSUES_FOUND++))

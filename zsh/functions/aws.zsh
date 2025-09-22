@@ -433,8 +433,7 @@ function rds-iam() {
 # ===================================================================
 
 rds-ssm() {
-    local profile=""
-    local instance_id=""
+    # _aws_select_profile/_aws_select_ec2_instance が設定するグローバル変数を使用する
     local rds_endpoint=""
     local db_name=""
     local db_user=""

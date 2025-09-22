@@ -3,6 +3,15 @@
 set -e
 set -o pipefail
 
+# クロスプラットフォームSHA256関数
+sha256_file() {
+  if command -v sha256sum >/dev/null 2>&1; then
+    sha256sum "$1" | awk '{print $1}'
+  else
+    shasum -a 256 "$1" | awk '{print $1}'
+  fi
+}
+
 echo "🚀 SuperClaude v3 (Claude Code Framework) のインストールを開始..."
 
 # Claude Code の確認
@@ -88,7 +97,7 @@ if ! command -v uv >/dev/null 2>&1; then
         echo "🔍 インストールスクリプトをダウンロード中... (バージョン: $UV_VERSION)"
         if curl -LsSf "$UV_SCRIPT_URL" -o "$UV_TEMP_DIR/install.sh"; then
             # ハッシュ検証
-            ACTUAL_SHA256=$(sha256sum "$UV_TEMP_DIR/install.sh" | cut -d' ' -f1)
+            ACTUAL_SHA256="$(sha256_file "$UV_TEMP_DIR/install.sh")"
             if [ "$ACTUAL_SHA256" = "$UV_EXPECTED_SHA256" ]; then
                 echo "✅ ハッシュ検証成功: $ACTUAL_SHA256"
                 echo "🔧 セキュア検証済みスクリプトを実行中..."
