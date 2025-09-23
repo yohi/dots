@@ -141,7 +141,7 @@ cd ~/dots
 make help
 
 # 3. 推奨セットアップ手順
-make system-setup      # システムレベルの基本設定
+make system-setup      # システムレベルの基本設定（メモリ最適化含む）
 make install-homebrew  # Homebrewをインストール
 make setup-all         # すべての設定をセットアップ
 ```
@@ -397,6 +397,80 @@ make fonts-configure  # 推奨フォント設定適用
 make fonts-debug      # フォント環境デバッグ情報
 make fonts-backup     # フォント設定バックアップ
 ```
+
+---
+
+## 🧠 メモリ最適化・パフォーマンス
+
+**⚡ 統合メモリ最適化システム**
+- リアルタイムメモリ監視
+- 安全なスワップクリア機能
+- システムキャッシュ最適化
+- Chrome/ブラウザ最適化支援
+
+### 基本的な使用方法
+
+```bash
+# 現在のメモリ状況を確認
+make memory-status
+
+# 包括的なメモリ最適化（推奨）
+make memory-optimize
+
+# スワップを安全にクリア
+make memory-clear-swap
+```
+
+### メモリ最適化コマンド
+
+```bash
+# 状況確認
+make memory-status              # 現在のメモリ使用状況を表示
+make memory-help                # 詳細ヘルプを表示
+
+# 基本最適化
+make memory-optimize            # 包括的なメモリ最適化（推奨）
+make memory-clear-swap          # スワップを安全にクリア
+make memory-clear-cache         # システムキャッシュをクリア
+make memory-optimize-swappiness # スワップ積極度を最適化
+
+# アプリケーション最適化
+make memory-optimize-chrome     # Chrome関連最適化情報を表示
+
+# 監視システム
+make memory-setup-monitoring    # メモリ監視システムをセットアップ
+make memory-start-monitoring    # メモリ監視サービスを開始
+make memory-stop-monitoring     # メモリ監視サービスを停止
+
+# 緊急時
+make memory-emergency-cleanup   # 緊急メモリクリーンアップ
+```
+
+### 推奨メンテナンスフロー
+
+```bash
+# 1. 定期的な状況確認（週次推奨）
+make memory-status
+
+# 2. 包括的最適化（週次推奨）
+make memory-optimize
+
+# 3. 必要に応じてスワップクリア
+make memory-clear-swap
+
+# 4. 監視システム設定（初回のみ）
+make memory-setup-monitoring
+make memory-start-monitoring
+```
+
+### 特徴
+
+- **安全性**: スワップクリア前に利用可能メモリを自動チェック
+- **包括性**: システムキャッシュ、スワップ、アプリケーション最適化を統合
+- **監視**: バックグラウンドでのメモリ使用量監視とアラート
+- **Chrome最適化**: メモリを大量消費するChromeプロセスの最適化支援
+
+詳細は [`docs/MEMORY_OPTIMIZATION.md`](docs/MEMORY_OPTIMIZATION.md) を参照してください。
 
 ---
 
