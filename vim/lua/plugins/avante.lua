@@ -9,7 +9,7 @@ return {
         provider = "gemini",
         -- mode = "agentic",
         mode = "legacy",
-        auto_suggestions_provider = "gemini",
+        -- auto_suggestions_provider = "gemini", -- auto_suggestions=false のため未使用
         behaviour = {
             auto_suggestions = false,
             auto_set_highlight_group = false,
@@ -50,7 +50,7 @@ return {
             bedrock = {
                 model = "us.anthropic.claude-sonnet-4-20250514-v1:0",
                 aws_region = "us-east-1",
-                aws_profile = 'poc',
+                aws_profile = os.getenv("AWS_PROFILE") or 'poc',
                 timeout = 30000,
                 extra_request_body = {
                     temperature = 0,
@@ -62,7 +62,7 @@ return {
                 timeout = 30000,
                 extra_request_body = {
                     temperature = 0,
-                    max_tokens = 4096,
+                    max_output_tokens = 4096,
                 },
             }
         },
@@ -81,18 +81,7 @@ return {
         "hrsh7th/nvim-cmp", -- autocompletion for avante commands and mentions
         "ibhagwan/fzf-lua", -- for file_selector provider fzf
         "nvim-tree/nvim-web-devicons", -- or echasnovski/mini.icons
-        {
-            "zbirenbaum/copilot.lua", -- for providers='copilot'
-            cmd = "Copilot",
-            event = "InsertEnter",
-            config = function()
-                require("copilot").setup({
-                    suggestion = { enabled = false },
-                    panel = { enabled = false },
-                    copilot_node_command = 'node',
-                })
-            end,
-        },
+        -- Copilot setup moved to dedicated lua/plugins/copilot.lua
         {
             -- support for image pasting
             "HakonHarnes/img-clip.nvim",

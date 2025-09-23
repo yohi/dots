@@ -8,9 +8,9 @@ return {
                 provider_options = {
                     gemini = {
                         model = 'gemini-2.0-flash',
-                        -- system = <your system prompt>,
-                        -- few_shots = <your few-shot examples>,
-                        -- chat_input = <your chat input template>,
+                        -- system = 'your system prompt',
+                        -- few_shots = 'your few-shot examples',
+                        -- chat_input = 'your chat input template',
                         stream = true,
                         api_key = vim.env.GEMINI_API_KEY or "",
                         endpoint = vim.env.GEMINI_API_ENDPOINT or 'https://generativelanguage.googleapis.com/v1/models',
