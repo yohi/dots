@@ -8,12 +8,12 @@ return {
                 provider_options = {
                     gemini = {
                         model = 'gemini-2.0-flash',
-                        system = "see [Prompt] section for the default value",
-                        few_shots = "see [Prompt] section for the default value",
-                        chat_input = "See [Prompt Section for default value]",
+                        -- system = <your system prompt>,
+                        -- few_shots = <your few-shot examples>,
+                        -- chat_input = <your chat input template>,
                         stream = true,
-                        api_key = 'AIzaSyAbpdEzp2aKKd3_KdtPd4bEJSCOaFUj3Lg',
-                        end_point = 'https://generativelanguage.googleapis.com/v1beta/models',
+                        api_key = vim.env.GEMINI_API_KEY or "",
+                        endpoint = vim.env.GEMINI_API_ENDPOINT or 'https://generativelanguage.googleapis.com/v1/models',
                         optional = {},
                     },
                 }

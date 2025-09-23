@@ -40,7 +40,7 @@ return {
             },
             claude = {
                 endpoint = "https://api.anthropic.com",
-                model = "claude-4-sonnet-20250514",
+                model = "claude-sonnet-4-20250514",
                 timeout = 30000,
                 extra_request_body = {
                     temperature = 0,
@@ -66,16 +66,6 @@ return {
                 },
             }
         },
-        -- openai provider removed for v0.1.0 compatibility
-        -- openai = {
-        --     endpoint = "https://api.openai.com/v1",
-        --     model = "gpt-4o",
-        --     timeout = 30000,
-        --     extra_request_body = {
-        --         temperature = 0,
-        --     },
-        --     max_tokens = 4096,
-        -- },
     },
     -- if you want to build from source then do `make BUILD_FROM_SOURCE=true`
     build = "make",
