@@ -111,7 +111,7 @@ system-setup:
 
 	# メモリ最適化設定
 	@echo "🧠 メモリ最適化設定を適用中..."
-	@CURRENT_SWAPPINESS=$$(cat /proc/sys/vm/swappiness 2>/dev/null || echo "60"); \
+	@CURRENT_SWAPPINESS=$$(cat /proc/sys/vm/swappiness 2>/dev/null || echo 60); \
 	if [ $$CURRENT_SWAPPINESS -ne 10 ]; then \
 		echo "📊 現在のスワップ積極度: $$CURRENT_SWAPPINESS"; \
 		echo "⚙️  推奨値（vm.swappiness=10）を設定中..."; \

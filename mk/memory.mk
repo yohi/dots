@@ -20,7 +20,7 @@ memory-cleanup:
 	@echo "🧹 Memory Cleanup Starting..."
 	@echo "Clearing page cache, dentries and inodes..."
 	@sudo sync
-	@echo 3 | sudo tee /proc/sys/vm/drop_caches > /dev/null
+	@echo 3 | sudo tee /proc/sys/vm/drop_caches >/dev/null
 	@echo "✅ Memory cleanup completed"
 	@echo ""
 	@$(MAKE) memory-check
@@ -47,13 +47,25 @@ memory-optimize:
 	
 	# Swappiness設定（デフォルト60→10に変更してSSDを保護）
 	@echo "Setting swappiness to 10..."
-	@echo 'vm.swappiness=10' | sudo tee -a /etc/sysctl.conf > /dev/null
+	@if ! grep -q "^vm.swappiness=" /etc/sysctl.conf 2>/dev/null; then \
+		echo 'vm.swappiness=10' | sudo tee -a /etc/sysctl.conf > /dev/null; \
+	else \
+		sudo sed -i 's/^vm.swappiness=.*/vm.swappiness=10/' /etc/sysctl.conf; \
+	fi
 	@sudo sysctl vm.swappiness=10
 	
 	# Dirty ratio設定（メモリ使用量を最適化）
 	@echo "Optimizing dirty ratios..."
-	@echo 'vm.dirty_ratio=15' | sudo tee -a /etc/sysctl.conf > /dev/null
-	@echo 'vm.dirty_background_ratio=5' | sudo tee -a /etc/sysctl.conf > /dev/null
+	@if ! grep -q "^vm.dirty_ratio=" /etc/sysctl.conf 2>/dev/null; then \
+		echo 'vm.dirty_ratio=15' | sudo tee -a /etc/sysctl.conf > /dev/null; \
+	else \
+		sudo sed -i 's/^vm.dirty_ratio=.*/vm.dirty_ratio=15/' /etc/sysctl.conf; \
+	fi
+	@if ! grep -q "^vm.dirty_background_ratio=" /etc/sysctl.conf 2>/dev/null; then \
+		echo 'vm.dirty_background_ratio=5' | sudo tee -a /etc/sysctl.conf > /dev/null; \
+	else \
+		sudo sed -i 's/^vm.dirty_background_ratio=.*/vm.dirty_background_ratio=5/' /etc/sysctl.conf; \
+	fi
 	@sudo sysctl vm.dirty_ratio=15
 	@sudo sysctl vm.dirty_background_ratio=5
 	
@@ -73,7 +85,7 @@ memory-troubleshoot:
 	
 	# 5GB以上使用しているプロセスを特定
 	@echo "🚨 High Memory Processes (>5GB):"
-	@ps aux --sort=-%mem | awk 'NR==1 || $$6 > 5000000 {print $$0}'
+	@ps aux --sort=-%mem | awk 'NR==1 || $$6 > 5242880 {print $$0}'
 	@echo ""
 	
 	# Cursorプロセスの確認
@@ -96,30 +108,40 @@ memory-troubleshoot:
 memory-fix:
 	@echo "🚑 Quick Memory Fix"
 	@echo "==================="
-	
-	# 異常に高いメモリ使用プロセスを特定
-	@HIGH_MEM_PIDS=$$(ps aux --sort=-%mem --no-headers | awk '$$4 > 10 {print $$2}' | head -5); \
+
+	# 保護対象プロセスのパターンを定義
+	@PROTECTED_PATTERNS="systemd|sshd|NetworkManager|dbus|kernel|init|migration|rcu_|watchdog|ksoftirqd"; \
+
+	# 異常に高いメモリ使用プロセスを特定（保護プロセス除外）
+	HIGH_MEM_PIDS=$$(ps aux --sort=-%mem --no-headers | awk -v patterns="$$PROTECTED_PATTERNS" '$$4 > 10 && $$1 != "root" && $$11 !~ /^\[/ && $$11 !~ patterns {print $$2}' | head -5); \
 	if [ -n "$$HIGH_MEM_PIDS" ]; then \
-		echo "Found high memory processes:"; \
-		ps aux --sort=-%mem | head -6; \
+		echo "Found high memory processes (excluding system-critical processes):"; \
+		ps aux --sort=-%mem | awk -v patterns="$$PROTECTED_PATTERNS" 'NR==1 || ($$4 > 10 && $$1 != "root" && $$11 !~ /^\[/ && $$11 !~ patterns)' | head -6; \
 		echo ""; \
-		read -p "Kill these processes? (y/N): " confirm; \
+		echo "⚠️  重要な確認事項:"; \
+		echo "   - 重要なデータが保存されているかご確認ください"; \
+		echo "   - 終了対象プロセスが必須アプリケーションでないかご確認ください"; \
+		echo "   - システム重要プロセス（systemd, sshd, NetworkManager等）は除外済みです"; \
+		echo ""; \
+		read -p "これらのプロセスを終了しますか? (y/N): " confirm; \
 		if [ "$$confirm" = "y" ] || [ "$$confirm" = "Y" ]; then \
 			for pid in $$HIGH_MEM_PIDS; do \
-				echo "Killing process $$pid..."; \
+				echo "Terminating process $$pid..."; \
 				kill -TERM $$pid 2>/dev/null || true; \
 			done; \
 			sleep 3; \
-			echo "Checking if processes terminated..."; \
+			echo "Checking if processes terminated gracefully..."; \
 			for pid in $$HIGH_MEM_PIDS; do \
 				if kill -0 $$pid 2>/dev/null; then \
 					echo "Force killing stubborn process $$pid..."; \
 					kill -KILL $$pid 2>/dev/null || true; \
 				fi; \
 			done; \
+		else \
+			echo "プロセス終了をキャンセルしました。"; \
 		fi; \
 	else \
-		echo "No extremely high memory processes found."; \
+		echo "No killable high memory processes found."; \
 	fi
 	
 	@echo ""
