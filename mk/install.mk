@@ -249,14 +249,14 @@ install-cursor:
 		echo "StartupWMClass=cursor" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
 		sudo chmod +x /usr/share/applications/cursor.desktop && \
 		sudo update-desktop-database 2>/dev/null || true && \
-		echo "✅ Cursor IDEのインストールが完了しました"; 
-	else 
-		echo "❌ Cursor IDEのインストールに失敗しました"; 
-		echo ""; 
-		echo "📥 手動インストール手順:"; 
-		echo "1. ブラウザで https://cursor.sh/ を開く"; 
-		echo "2. 'Download for Linux' をクリック"; 
-		echo "3. ダウンロード後、再度このコマンドを実行"; 
+		echo "✅ Cursor IDEのインストールが完了しました";
+	else
+		echo "❌ Cursor IDEのインストールに失敗しました";
+		echo "";
+		echo "📥 手動インストール手順:";
+		echo "1. ブラウザで https://cursor.sh/ を開く";
+		echo "2. 'Download for Linux' をクリック";
+		echo "3. ダウンロード後、再度このコマンドを実行";
 	fi
 
 # Cursor IDEのアップデート
@@ -553,7 +553,7 @@ install-claude-code:
 		exit 1; \
 	fi
 
-	@echo ""; \
+	@echo ""
 	@echo "🎉 Claude Code のセットアップガイド:"
 	@echo "1. プロジェクトディレクトリに移動: cd your-project-directory"
 	@echo "2. Claude Code を開始: claude"
@@ -564,7 +564,7 @@ install-claude-code:
 	@echo "4. 初回セットアップコマンド:"
 	@echo "   > summarize this project"
 	@echo "   > /init"
-	@echo ""; \
+	@echo ""
 	@echo "📚 詳細なドキュメント: https://docs.anthropic.com/claude-code"
 	@echo "✅ Claude Code のインストールが完了しました"
 
@@ -633,12 +633,12 @@ install-claudia:
 		echo "📦 Bun をインストール中..."; \
 		curl -fsSL https://bun.sh/install | bash; \
 		echo "🔄 Bunのパスを更新中..."; \
-		export PATH="$(HOME_DIR)/.bun/bin:$$PATH"; \
+		export PATH="$$HOME/.bun/bin:$$PATH"; \
 		if ! command -v bun >/dev/null 2>&1; then \
 			echo "⚠️  Bunのインストールが完了しましたが、現在のセッションで認識されていません"; \
 			echo "   新しいターミナルセッションで再実行するか、以下を実行してください:"; \
-			echo "   source $(HOME_DIR)/.bashrc"; \
-			echo "   source $(HOME_DIR)/.zshrc (zshの場合)"; \
+			echo "   source $$HOME/.bashrc"; \
+			echo "   source $$HOME/.zshrc (zshの場合)"; \
 		fi; \
 	else \
 		echo "✅ Bun が見つかりました: $$(bun --version)"; \
@@ -653,7 +653,7 @@ install-claudia:
 		cd "$$CLAUDIA_DIR" && \
 		\
 		echo "📦 フロントエンド依存関係をインストール中..."; \
-		export PATH="$(HOME_DIR)/.bun/bin:$$PATH"; \
+		export PATH="$$HOME/.bun/bin:$$PATH"; \
 		if command -v bun >/dev/null 2>&1; then \
 			bun install; \
 		else \
@@ -668,9 +668,20 @@ install-claudia:
 			echo "✅ Claudia のビルドが完了しました"; \
 			\
 			echo "📁 実行ファイルをインストール中..."; \
-			if [ -f "src-tauri/target/release/claudia" ]; then \
+			BIN_PATH=""; \
+			for candidate in src-tauri/target/release/claudia* src-tauri/target/release/opcode*; do \
+				if [ -f "$$candidate" ] && [ -x "$$candidate" ]; then \
+					case "$$(basename "$$candidate")" in \
+						claudia*|opcode*) \
+							BIN_PATH="$$candidate"; \
+							break ;; \
+					esac; \
+				fi; \
+			done; \
+			if [ -n "$$BIN_PATH" ] && [ -f "$$BIN_PATH" ] && [ -x "$$BIN_PATH" ]; then \
+				echo "✅ 選択された実行ファイル: $$BIN_PATH"; \
 				sudo mkdir -p /opt/claudia; \
-				sudo cp src-tauri/target/release/claudia /opt/claudia/; \
+				sudo cp "$$BIN_PATH" /opt/claudia/claudia; \
 				sudo chmod +x /opt/claudia/claudia; \
 				\
 				echo "📝 デスクトップエントリーを作成中..."; \
@@ -678,6 +689,7 @@ install-claudia:
 				echo "Name=Claudia" | sudo tee -a /usr/share/applications/claudia.desktop > /dev/null; \
 				echo "Comment=A powerful GUI app and Toolkit for Claude Code" | sudo tee -a /usr/share/applications/claudia.desktop > /dev/null; \
 				echo "Exec=/opt/claudia/claudia" | sudo tee -a /usr/share/applications/claudia.desktop > /dev/null; \
+				echo "TryExec=/opt/claudia/claudia" | sudo tee -a /usr/share/applications/claudia.desktop > /dev/null; \
 				echo "Icon=applications-development" | sudo tee -a /usr/share/applications/claudia.desktop > /dev/null; \
 				echo "Terminal=false" | sudo tee -a /usr/share/applications/claudia.desktop > /dev/null; \
 				echo "Type=Application" | sudo tee -a /usr/share/applications/claudia.desktop > /dev/null; \
@@ -688,8 +700,38 @@ install-claudia:
 			\
 				echo "✅ Claudia が /opt/claudia にインストールされました"; \
 			else \
-				echo "❌ ビルドされた実行ファイルが見つかりません"; \
-				exit 1; \
+				echo "⚠️  主要バイナリが見つかりません。代替候補を検索中..."; \
+				ALT_BIN=""; \
+				for alt_candidate in $$(find src-tauri/target/release -maxdepth 1 -type f -executable -name "claudia*" -o -name "opcode*" 2>/dev/null | sort -V); do \
+					case "$$(basename "$$alt_candidate")" in \
+						claudia*|opcode*) \
+							ALT_BIN="$$alt_candidate"; \
+							break ;; \
+					esac; \
+				done; \
+				if [ -n "$$ALT_BIN" ] && [ -f "$$ALT_BIN" ] && [ -x "$$ALT_BIN" ]; then \
+					echo "✅ 代替実行ファイルを発見: $$ALT_BIN"; \
+					sudo mkdir -p /opt/claudia; \
+					sudo cp "$$ALT_BIN" /opt/claudia/claudia; \
+					sudo chmod +x /opt/claudia/claudia; \
+					echo "📝 デスクトップエントリーを作成中..."; \
+					echo "[Desktop Entry]" | sudo tee /usr/share/applications/claudia.desktop > /dev/null; \
+					echo "Name=Claudia" | sudo tee -a /usr/share/applications/claudia.desktop > /dev/null; \
+					echo "Comment=A powerful GUI app and Toolkit for Claude Code" | sudo tee -a /usr/share/applications/claudia.desktop > /dev/null; \
+					echo "Exec=/opt/claudia/claudia" | sudo tee -a /usr/share/applications/claudia.desktop > /dev/null; \
+					echo "TryExec=/opt/claudia/claudia" | sudo tee -a /usr/share/applications/claudia.desktop > /dev/null; \
+					echo "Icon=applications-development" | sudo tee -a /usr/share/applications/claudia.desktop > /dev/null; \
+					echo "Terminal=false" | sudo tee -a /usr/share/applications/claudia.desktop > /dev/null; \
+					echo "Type=Application" | sudo tee -a /usr/share/applications/claudia.desktop > /dev/null; \
+					echo "Categories=Development;IDE;Utility;" | sudo tee -a /usr/share/applications/claudia.desktop > /dev/null; \
+				echo "StartupWMClass=claudia" | sudo tee -a /usr/share/applications/claudia.desktop > /dev/null; \
+				sudo chmod +x /usr/share/applications/claudia.desktop; \
+				sudo update-desktop-database 2>/dev/null || true; \
+					echo "✅ Claudia が /opt/claudia にインストールされました（代替実行ファイル使用）"; \
+				else \
+					echo "❌ ビルドされた実行ファイルが見つかりません"; \
+					exit 1; \
+				fi; \
 			fi; \
 		else \
 			echo "❌ Claudia のビルドに失敗しました"; \
@@ -769,7 +811,7 @@ install-superclaude:
 			echo "📦 uv をインストール中..."; \
 			curl -LsSf https://astral.sh/uv/install.sh | sh; \
 			echo "🔄 uvのパスを更新中..."; \
-			export PATH="$(HOME_DIR)/.local/bin:$$PATH"; \
+			export PATH="$$HOME/.local/bin:$$PATH"; \
 			if ! command -v uv >/dev/null 2>&1; then \
 				echo "⚠️  uvのインストールが完了しましたが、現在のセッションで認識されていません"; \
 				echo "   新しいターミナルセッションで再実行するか、以下を実行してください:"; \
@@ -785,8 +827,8 @@ install-superclaude:
 	# - バージョン固定により依存関係の安定性を確保
 	# - SHA256ハッシュ検証により改ざん防止
 	# - 公式PyPIパッケージからの安全なインストール
-	@echo "🔍 既存の SuperClaude インストールを確認中..."
-	@export PATH="$(HOME_DIR)/.local/bin:$$PATH" && \
+	@echo "🔍 既存の SuperClaude インストールを確認中..." && \
+	export PATH="$$HOME/.local/bin:$$PATH" && \
 	if command -v SuperClaude >/dev/null 2>&1; then \
 		CURRENT_VERSION=$$(SuperClaude --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+(\.[0-9]+)?' || echo "不明"); \
 		echo "✅ SuperClaude は既にインストールされています"; \
@@ -896,7 +938,7 @@ install-superclaude:
 
 	# SuperClaude フレームワークのセットアップ
 	@echo "⚙️  SuperClaude フレームワークをセットアップ中..."
-	@export PATH="$(HOME_DIR)/.local/bin:$$PATH" && \
+	@export PATH="$$HOME/.local/bin:$$PATH"; \
 	if command -v SuperClaude >/dev/null 2>&1; then \
 		echo "🔧 SuperClaude セットアップ準備中..."; \
 		echo "ℹ️  これによりフレームワークファイル、MCPサーバー、Claude Code設定が構成されます"; \
@@ -940,7 +982,7 @@ install-superclaude:
 
 	# インストール確認とテスト
 	@echo "🔍 インストールの確認中..."
-	@export PATH="$(HOME_DIR)/.local/bin:$$PATH" && \
+	@export PATH="$$HOME/.local/bin:$$PATH"; \
 	if command -v SuperClaude >/dev/null 2>&1; then \
 		echo "✅ SuperClaude が正常にインストールされました"; \
 		echo "   実行ファイル: $$(which SuperClaude)"; \
@@ -1012,7 +1054,7 @@ fix-superclaude:
 
 	# SuperClaudeの再セットアップ
 	@echo "🚀 SuperClaude を再セットアップ中..."
-	@export PATH="$(HOME_DIR)/.local/bin:$$PATH" && \
+	@export PATH="$$HOME/.local/bin:$$PATH"; \
 	if command -v SuperClaude >/dev/null 2>&1; then \
 		echo "📦 最小セットアップを実行中..."; \
 		if printf "2\ny\ny\n" | SuperClaude install 2>/dev/null; then \
@@ -1049,8 +1091,15 @@ install-claude-ecosystem:
 
 	# Step 2: SuperClaude のインストール
 	@echo "📋 Step 2/3: SuperClaude をインストール中..."
-	@$(MAKE) install-superclaude
-	@echo "✅ SuperClaude のインストールが完了しました"
+	@if [ "$${SKIP_SUPERCLAUDE:-0}" = "1" ]; then \
+		echo "⚠️  SuperClaude のインストールはスキップされています (SKIP_SUPERCLAUDE=1)"; \
+		echo "   手動インストール例: pip install SuperClaude==3.0.0.2"; \
+		echo "   有効化方法: SKIP_SUPERCLAUDE=0 make install-claude-ecosystem"; \
+	else \
+		echo "📦 SuperClaude をインストール中..."; \
+		$(MAKE) install-superclaude || (echo "❌ SuperClaude インストールに失敗しました"; exit 1); \
+		echo "✅ SuperClaude のインストールが完了しました"; \
+	fi
 	@echo ""
 
 	# Step 3: Claudia のインストール
@@ -1061,9 +1110,17 @@ install-claude-ecosystem:
 
 	# 最終確認
 	@echo "🔍 インストール結果の確認中..."
-	@export PATH="$(HOME_DIR)/.local/bin:$$PATH" && \
-	echo "Claude Code: $$(command -v claude >/dev/null 2>&1 && echo "✅ $$(claude --version 2>/dev/null)" || echo "❌ 未確認")" && \
-	echo "SuperClaude: $$(command -v SuperClaude >/dev/null 2>&1 && echo "✅ $$(SuperClaude --version 2>/dev/null)" || echo "❌ 未確認")"
+	@export PATH="$$HOME/.local/bin:$$PATH"; \
+	if command -v claude >/dev/null 2>&1; then \
+		echo "Claude Code: ✅ $$(claude --version 2>/dev/null)"; \
+	else \
+		echo "Claude Code: ❌ 未確認"; \
+	fi; \
+	if command -v SuperClaude >/dev/null 2>&1; then \
+		echo "SuperClaude: ✅ $$(SuperClaude --version 2>/dev/null)"; \
+	else \
+		echo "SuperClaude: ❌ 未確認"; \
+	fi
 
 	@echo ""; \
 	@echo "🎉 Claude Code エコシステムのインストールが完了しました！" \
@@ -1359,9 +1416,9 @@ install-playwright:
 	@echo ""; \
 	@echo "✅ Playwright のインストールが完了しました"
 
-# ======================================== 
+# ========================================
 # 新しい階層的な命名規則のターゲット
-# ======================================== 
+# ========================================
 
 # パッケージ・ソフトウェアインストール系
 install-packages-homebrew: install-homebrew
@@ -1422,9 +1479,9 @@ install-packages-chrome-beta:
 	fi
 	@echo "✅ Google Chrome Beta のインストールが完了しました"
 
-# ======================================== 
+# ========================================
 # 後方互換性のためのエイリアス
-# ======================================== 
+# ========================================
 
 # 古いターゲット名を維持（新しいターゲットを呼び出すエイリアス）
 # install-homebrew: は既に実装済み
@@ -1465,7 +1522,7 @@ install-supercursor:
 	@echo "🔧 SuperCursor セットアップ準備中..."; \
 	@echo "ℹ️   フレームワークファイル、ペルソナ、コマンドをシンボリックリンクで構成します"; \
 	\
-	# 必要な変数の確認 
+	# 必要な変数の確認
 	if [ -z "$(DOTFILES_DIR)" ]; then \
 		echo "❌ DOTFILES_DIR is not set"; \
 		exit 1; \
@@ -1626,7 +1683,7 @@ install-supergemini:
 
 	# SuperGeminiフレームワークのセットアップ
 	@echo "⚙️  SuperGemini フレームワークをセットアップ中..."
-	@export PATH="$(HOME_DIR)/.local/bin:$$PATH" && \
+	@export PATH="$$HOME/.local/bin:$$PATH"; \
 	echo "🔧 SuperGemini セットアップ準備中..."; \
 	@echo "ℹ️  フレームワークファイル、ユーザーツール、Gemini CLI設定をシンボリックリンクで構成します"; \
 	\
@@ -1709,9 +1766,17 @@ install-gemini-ecosystem:
 
 	# 最終確認
 	@echo "🔍 インストール結果の確認中..."
-	@export PATH="$(HOME_DIR)/.local/bin:$$PATH" && \
-	echo "Gemini CLI: $$(command -v gemini >/dev/null 2>&1 && echo "✅ $$(gemini --version 2>/dev/null || echo "インストール済み")" || echo "❌ 未確認")" && \
-	echo "SuperGemini: $$([ -f $(HOME_DIR)/.gemini/GEMINI.md ] && echo "✅ インストール済み" || echo "❌ 未確認")"
+	@export PATH="$$HOME/.local/bin:$$PATH"; \
+	if command -v gemini >/dev/null 2>&1; then \
+		echo "Gemini CLI: ✅ $$(gemini --version 2>/dev/null || echo "インストール済み")"; \
+	else \
+		echo "Gemini CLI: ❌ 未確認"; \
+	fi; \
+	if [ -f "$$HOME/.gemini/GEMINI.md" ]; then \
+		echo "SuperGemini: ✅ インストール済み"; \
+	else \
+		echo "SuperGemini: ❌ 未確認"; \
+	fi
 
 	@echo ""; \
 	@echo "🎉 Gemini エコシステムのインストールが完了しました！" \
@@ -1751,9 +1816,9 @@ install-imagemagick:
 		echo "✅ ImageMagickのインストールが完了しました"; \
 	fi
 
-# ======================================== 
+# ========================================
 # テスト用ターゲット
-# ======================================== 
+# ========================================
 
 # システム情報の表示
 system-info:
