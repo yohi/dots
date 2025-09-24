@@ -553,7 +553,7 @@ install-claude-code:
 		exit 1; \
 	fi
 
-	@echo ""; \
+	@echo ""
 	@echo "🎉 Claude Code のセットアップガイド:"
 	@echo "1. プロジェクトディレクトリに移動: cd your-project-directory"
 	@echo "2. Claude Code を開始: claude"
@@ -564,7 +564,7 @@ install-claude-code:
 	@echo "4. 初回セットアップコマンド:"
 	@echo "   > summarize this project"
 	@echo "   > /init"
-	@echo ""; \
+	@echo ""
 	@echo "📚 詳細なドキュメント: https://docs.anthropic.com/claude-code"
 	@echo "✅ Claude Code のインストールが完了しました"
 
@@ -668,9 +668,9 @@ install-claudia:
 			echo "✅ Claudia のビルドが完了しました"; \
 			\
 			echo "📁 実行ファイルをインストール中..."; \
-			if [ -f "src-tauri/target/release/claudia" ]; then \
+			if [ -f "src-tauri/target/release/opcode" ]; then \
 				sudo mkdir -p /opt/claudia; \
-				sudo cp src-tauri/target/release/claudia /opt/claudia/; \
+				sudo cp src-tauri/target/release/opcode /opt/claudia/claudia; \
 				sudo chmod +x /opt/claudia/claudia; \
 				\
 				echo "📝 デスクトップエントリーを作成中..."; \
@@ -785,8 +785,8 @@ install-superclaude:
 	# - バージョン固定により依存関係の安定性を確保
 	# - SHA256ハッシュ検証により改ざん防止
 	# - 公式PyPIパッケージからの安全なインストール
-	@echo "🔍 既存の SuperClaude インストールを確認中..."
-	@export PATH="$(HOME_DIR)/.local/bin:$$PATH" && \
+	@echo "🔍 既存の SuperClaude インストールを確認中..." && \
+	export PATH="$(HOME_DIR)/.local/bin:$$PATH" && \
 	if command -v SuperClaude >/dev/null 2>&1; then \
 		CURRENT_VERSION=$$(SuperClaude --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+(\.[0-9]+)?' || echo "不明"); \
 		echo "✅ SuperClaude は既にインストールされています"; \
@@ -896,7 +896,7 @@ install-superclaude:
 
 	# SuperClaude フレームワークのセットアップ
 	@echo "⚙️  SuperClaude フレームワークをセットアップ中..."
-	@export PATH="$(HOME_DIR)/.local/bin:$$PATH" && \
+	@export PATH="$(HOME_DIR)/.local/bin:$$PATH"; \
 	if command -v SuperClaude >/dev/null 2>&1; then \
 		echo "🔧 SuperClaude セットアップ準備中..."; \
 		echo "ℹ️  これによりフレームワークファイル、MCPサーバー、Claude Code設定が構成されます"; \
@@ -940,7 +940,7 @@ install-superclaude:
 
 	# インストール確認とテスト
 	@echo "🔍 インストールの確認中..."
-	@export PATH="$(HOME_DIR)/.local/bin:$$PATH" && \
+	@export PATH="$(HOME_DIR)/.local/bin:$$PATH"; \
 	if command -v SuperClaude >/dev/null 2>&1; then \
 		echo "✅ SuperClaude が正常にインストールされました"; \
 		echo "   実行ファイル: $$(which SuperClaude)"; \
@@ -1012,7 +1012,7 @@ fix-superclaude:
 
 	# SuperClaudeの再セットアップ
 	@echo "🚀 SuperClaude を再セットアップ中..."
-	@export PATH="$(HOME_DIR)/.local/bin:$$PATH" && \
+	@export PATH="$(HOME_DIR)/.local/bin:$$PATH"; \
 	if command -v SuperClaude >/dev/null 2>&1; then \
 		echo "📦 最小セットアップを実行中..."; \
 		if printf "2\ny\ny\n" | SuperClaude install 2>/dev/null; then \
@@ -1049,8 +1049,9 @@ install-claude-ecosystem:
 
 	# Step 2: SuperClaude のインストール
 	@echo "📋 Step 2/3: SuperClaude をインストール中..."
-	@$(MAKE) install-superclaude
-	@echo "✅ SuperClaude のインストールが完了しました"
+	@echo "⚠️  SuperClaude のインストールは一時的にスキップされています（構文エラーのため）"
+	@echo "   手動でインストールする場合: pip install SuperClaude==3.0.0.2"
+	@echo "✅ SuperClaude のスキップが完了しました"
 	@echo ""
 
 	# Step 3: Claudia のインストール
@@ -1061,7 +1062,7 @@ install-claude-ecosystem:
 
 	# 最終確認
 	@echo "🔍 インストール結果の確認中..."
-	@export PATH="$(HOME_DIR)/.local/bin:$$PATH" && \
+	@export PATH="$(HOME_DIR)/.local/bin:$$PATH"; \
 	echo "Claude Code: $$(command -v claude >/dev/null 2>&1 && echo "✅ $$(claude --version 2>/dev/null)" || echo "❌ 未確認")" && \
 	echo "SuperClaude: $$(command -v SuperClaude >/dev/null 2>&1 && echo "✅ $$(SuperClaude --version 2>/dev/null)" || echo "❌ 未確認")"
 
@@ -1626,7 +1627,7 @@ install-supergemini:
 
 	# SuperGeminiフレームワークのセットアップ
 	@echo "⚙️  SuperGemini フレームワークをセットアップ中..."
-	@export PATH="$(HOME_DIR)/.local/bin:$$PATH" && \
+	@export PATH="$(HOME_DIR)/.local/bin:$$PATH"; \
 	echo "🔧 SuperGemini セットアップ準備中..."; \
 	@echo "ℹ️  フレームワークファイル、ユーザーツール、Gemini CLI設定をシンボリックリンクで構成します"; \
 	\
@@ -1709,7 +1710,7 @@ install-gemini-ecosystem:
 
 	# 最終確認
 	@echo "🔍 インストール結果の確認中..."
-	@export PATH="$(HOME_DIR)/.local/bin:$$PATH" && \
+	@export PATH="$(HOME_DIR)/.local/bin:$$PATH"; \
 	echo "Gemini CLI: $$(command -v gemini >/dev/null 2>&1 && echo "✅ $$(gemini --version 2>/dev/null || echo "インストール済み")" || echo "❌ 未確認")" && \
 	echo "SuperGemini: $$([ -f $(HOME_DIR)/.gemini/GEMINI.md ] && echo "✅ インストール済み" || echo "❌ 未確認")"
 

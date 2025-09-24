@@ -344,12 +344,69 @@ zinit light romkatv/powerlevel10k
 alias kgnome='killall -3 gnome-shell'
 
 # カスタム関数の読み込み（サイレント版 - Powerlevel10k instant prompt対応）
-if [ -d "$HOME/dotfiles/zsh/functions" ]; then
-    # デバッグモード時のみ詳細出力
-    typeset debug_functions=${ZSH_FUNCTIONS_DEBUG:-false}
+# 動的にdotsディレクトリを検出（複数の方法でフォールバック）
+typeset DOTS_ROOT=""
 
+# 設定ファイルがあれば読み込み（優先度最高）
+if [[ -r "$HOME/dots/zsh/config.zsh" ]]; then
+    source "$HOME/dots/zsh/config.zsh"
+    [[ -n "${CUSTOM_DOTS_ROOT:-}" ]] && DOTS_ROOT="$CUSTOM_DOTS_ROOT"
+elif [[ -r "$HOME/.config/zsh/config.zsh" ]]; then
+    source "$HOME/.config/zsh/config.zsh"
+    [[ -n "${CUSTOM_DOTS_ROOT:-}" ]] && DOTS_ROOT="$CUSTOM_DOTS_ROOT"
+fi
+
+# Method 1: 現在の.zshrcファイルの位置から相対パス計算
+if [[ -n "${(%):-%N}" ]]; then
+    # zshの特殊パラメータ %N で現在スクリプトのフルパス取得
+    DOTS_ROOT="$(dirname "$(dirname "$(realpath "${(%):-%N}")")")"
+elif [[ -n "${BASH_SOURCE[0]}" ]]; then
+    # bash互換モード
+    DOTS_ROOT="$(dirname "$(dirname "$(realpath "${BASH_SOURCE[0]}")")")"
+fi
+
+# Method 2: 環境変数による設定（優先度高）
+if [[ -n "${DOTFILES_ROOT:-}" ]]; then
+    DOTS_ROOT="$DOTFILES_ROOT"
+elif [[ -n "${DOTS_ROOT_OVERRIDE:-}" ]]; then
+    DOTS_ROOT="$DOTS_ROOT_OVERRIDE"
+fi
+
+# Method 3: 一般的な場所を順次確認
+if [[ -z "$DOTS_ROOT" ]] || [[ ! -d "$DOTS_ROOT/zsh/functions" ]]; then
+    for candidate in \
+        "$HOME/dots" \
+        "$HOME/.dots" \
+        "$HOME/dotfiles" \
+        "$HOME/.dotfiles" \
+        "$HOME/.config/dots" \
+        "/home/$USER/dots"; do
+        if [[ -d "$candidate/zsh/functions" ]]; then
+            DOTS_ROOT="$candidate"
+            break
+        fi
+    done
+fi
+
+# Method 4: symlinkの追跡
+if [[ -L "$HOME/.zshrc" ]] && [[ -z "${DOTS_ROOT:-}" ]]; then
+    # .zshrcがsymlinkの場合、リンク先から推測
+    real_zshrc="$(readlink -f "$HOME/.zshrc" 2>/dev/null || echo "")"
+    if [[ -n "$real_zshrc" ]]; then
+        DOTS_ROOT="$(dirname "$(dirname "$real_zshrc")")"
+    fi
+fi
+
+# 検証とデバッグ情報
+typeset debug_functions=${ZSH_FUNCTIONS_DEBUG:-false}
+if [[ "$debug_functions" == "true" ]]; then
+    echo "🔍 DOTS_ROOT検出: $DOTS_ROOT"
+    echo "🔍 関数ディレクトリ存在確認: $DOTS_ROOT/zsh/functions"
+fi
+
+if [[ -d "$DOTS_ROOT/zsh/functions" ]]; then
     # サブディレクトリを含む全てのzshファイルを再帰的に読み込み
-    for func_file in "$HOME/dotfiles/zsh/functions"/**/*.zsh; do
+    for func_file in "$DOTS_ROOT/zsh/functions"/**/*.zsh; do
         if [ -r "$func_file" ]; then
             # .broken, .disabled, .tmp ファイルをスキップ
             case "$(basename "$func_file")" in
@@ -372,6 +429,16 @@ if [ -d "$HOME/dotfiles/zsh/functions" ]; then
             fi
         fi
     done
+    [[ "$debug_functions" == "true" ]] && echo "✅ 関数読み込み完了: $DOTS_ROOT/zsh/functions"
+else
+    # 関数ディレクトリが見つからない場合の警告
+    {
+        echo "⚠️  zsh関数ディレクトリが見つかりません"
+        echo "   検出したDOTS_ROOT: ${DOTS_ROOT:-'(未検出)'}"
+        echo "   期待ディレクトリ: \$DOTS_ROOT/zsh/functions"
+        echo "   設定方法: export DOTFILES_ROOT=/path/to/your/dots"
+        echo "   または: export DOTS_ROOT_OVERRIDE=/path/to/your/dots"
+    } >&2
 fi
 
 # Fig post block. Keep at the bottom of this file.

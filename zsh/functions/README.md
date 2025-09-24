@@ -108,13 +108,13 @@ rds-ssm --help
 
 ##### よくある問題と解決策
 
-| エラー | 原因 | 解決策 |
-|--------|------|--------|
-| `AWSプロファイルが見つかりません` | AWS CLIが未設定 | `aws configure` でプロファイル設定 |
-| `SSM接続可能なEC2インスタンスが見つかりません` | SSM Agent未インストール/未起動 | EC2にSSM Agentインストール・IAMロール設定 |
-| `IAM認証トークンの生成に失敗しました` | RDS接続権限不足 | IAMユーザー/ロールに`rds-db:connect`権限追加 |
-| `ポートフォワーディング接続がタイムアウトしました` | ネットワーク接続問題 | EC2-RDS間のセキュリティグループ設定確認 |
-| `MySQLクライアントがインストールされていません` | DB クライアント未インストール | `sudo apt-get install mysql-client postgresql-client` |
+| エラー                                             | 原因                           | 解決策                                                |
+| -------------------------------------------------- | ------------------------------ | ----------------------------------------------------- |
+| `AWSプロファイルが見つかりません`                  | AWS CLIが未設定                | `aws configure` でプロファイル設定                    |
+| `SSM接続可能なEC2インスタンスが見つかりません`     | SSM Agent未インストール/未起動 | EC2にSSM Agentインストール・IAMロール設定             |
+| `IAM認証トークンの生成に失敗しました`              | RDS接続権限不足                | IAMユーザー/ロールに`rds-db:connect`権限追加          |
+| `ポートフォワーディング接続がタイムアウトしました` | ネットワーク接続問題           | EC2-RDS間のセキュリティグループ設定確認               |
+| `MySQLクライアントがインストールされていません`    | DB クライアント未インストール  | `sudo apt-get install mysql-client postgresql-client` |
 
 #### セキュリティ考慮事項
 
@@ -166,39 +166,82 @@ nc -zv localhost 13306
 
 AWS操作に関する便利な関数を提供します。
 
-#### 主な機能
+#### 📋 利用可能な関数
 
-- **ec2-ssm**: EC2インスタンスにSSM経由で接続
-- **ecs-exec**: ECSタスクにECS Exec経由で接続
-- **awslogs**: CloudWatch Logsの表示
-- **rds-iam**: RDS IAM認証トークンの生成
+##### 🖥️ EC2関連
+- **ec2-list**: EC2インスタンス一覧表示（表形式）
+- **ec2-ssm**: EC2インスタンスにSSM経由で接続（fzf選択）
+
+##### 🐳 ECS関連
+- **ecs-list**: ECSクラスター一覧表示
+
+##### 📊 CloudWatch関連
+- **awslogs**: CloudWatch Logsの表示（fzf選択、時間範囲指定）
+
+##### ❓ その他
 - **aws-help**: AWS関数の一覧とヘルプ表示
+- **_aws_select_profile**: AWSプロファイル選択（内部関数）
 
-#### 使用例
+#### 🚀 使用例
 
 ```bash
-# EC2インスタンス接続
+# EC2インスタンス一覧表示
+ec2-list
+
+# EC2インスタンス接続（対話式）
 ec2-ssm
 
-# ECSタスク接続
-ecs-exec
+# ECSクラスター一覧
+ecs-list
 
-# CloudWatch Logs表示
+# CloudWatch Logs表示（対話式）
 awslogs
-
-# RDS IAM認証トークン生成
-rds-iam
 
 # AWS関数ヘルプ
 aws-help
 ```
 
-#### 前提条件
+#### 🔧 前提条件
 
+**必須ツール:**
 - AWS CLI v2
-- AWS Session Manager Plugin
+- AWS Session Manager Plugin（SSM接続用）
 - fzf (fuzzy finder)
 - 適切なIAM権限
+
+**AWS設定:**
+```bash
+# プロファイル設定
+aws configure
+
+# 複数プロファイル設定
+aws configure --profile myprofile
+
+# デフォルトプロファイル指定
+export AWS_PROFILE=myprofile
+```
+
+#### 🔒 必要なIAM権限
+
+**EC2関連:**
+- `ssm:StartSession`
+- `ssm:DescribeInstanceInformation`
+- `ec2:DescribeInstances`
+
+**ECS関連:**
+- `ecs:ListClusters`
+- `ecs:ListTasks`
+- `ecs:DescribeTasks`
+
+**CloudWatch関連:**
+- `logs:DescribeLogGroups`
+- `logs:FilterLogEvents`
+
+#### ⚠️ 注意事項
+
+- 構文エラーを修正した簡易版です
+- 元の高度な機能（RDS SSM接続など）は一時的に無効化
+- 基本的なAWS操作のみ対応
 
 ### 🖱️ cursor.zsh - Cursor IDE連携
 
@@ -214,12 +257,48 @@ Cursor IDEとの連携機能を提供します。
 
 これらの関数は、`zshrc`で自動的に読み込まれます。
 
+### 🎯 **動的パス検出システム**
+
+パスのハードコードを避けるため、複数の方法でdotsディレクトリを自動検出します：
+
+#### **検出方法（優先度順）**
+
+1. **設定ファイル**: `~/dots/zsh/config.zsh` または `~/.config/zsh/config.zsh`
+2. **環境変数**: `DOTFILES_ROOT` または `DOTS_ROOT_OVERRIDE`
+3. **現在ファイル位置**: `.zshrc`ファイルの場所から相対パス計算
+4. **標準的な場所**: `~/dots`, `~/.dots`, `~/dotfiles`, `~/.dotfiles` など
+5. **symlinkの追跡**: `.zshrc`がsymlinkの場合、リンク先から推測
+
+#### **設定方法**
+
+**方法1: 環境変数（推奨）**
 ```bash
-# .zshrcの関連セクション
-# Functions auto-loading
-for func_file in ~/.dotfiles/zsh/functions/*.zsh; do
-    [ -r "$func_file" ] && source "$func_file"
-done
+# .zshrc より前で設定、または .zshenv で設定
+export DOTFILES_ROOT="/path/to/your/dotfiles"
+# または
+export DOTS_ROOT_OVERRIDE="/custom/path/to/dots"
+```
+
+**方法2: 設定ファイル**
+```bash
+# ~/dots/zsh/config.zsh を編集
+CUSTOM_DOTS_ROOT="/custom/path/to/dots"
+```
+
+**方法3: デバッグモード**
+```bash
+# 検出状況の詳細確認
+export ZSH_FUNCTIONS_DEBUG=true
+source ~/.zshrc
+```
+
+#### **現在の設定確認**
+```bash
+# 設定ファイルの場所を確認
+echo "DOTS_ROOT: $DOTS_ROOT"
+
+# 利用可能な関数を確認
+typeset -f | grep "^[a-zA-Z_].*() {" | cut -d"(" -f1
 ```
 
 ## 関数の追加
@@ -233,5 +312,5 @@ done
 
 ```bash
 # 新しい関数の即座読み込み
-source ~/.dotfiles/zsh/functions/{function_name}.zsh
+source ~/dots/zsh/functions/{function_name}.zsh
 ```
