@@ -249,14 +249,14 @@ install-cursor:
 		echo "StartupWMClass=cursor" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
 		sudo chmod +x /usr/share/applications/cursor.desktop && \
 		sudo update-desktop-database 2>/dev/null || true && \
-		echo "✅ Cursor IDEのインストールが完了しました"; 
-	else 
-		echo "❌ Cursor IDEのインストールに失敗しました"; 
-		echo ""; 
-		echo "📥 手動インストール手順:"; 
-		echo "1. ブラウザで https://cursor.sh/ を開く"; 
-		echo "2. 'Download for Linux' をクリック"; 
-		echo "3. ダウンロード後、再度このコマンドを実行"; 
+		echo "✅ Cursor IDEのインストールが完了しました";
+	else
+		echo "❌ Cursor IDEのインストールに失敗しました";
+		echo "";
+		echo "📥 手動インストール手順:";
+		echo "1. ブラウザで https://cursor.sh/ を開く";
+		echo "2. 'Download for Linux' をクリック";
+		echo "3. ダウンロード後、再度このコマンドを実行";
 	fi
 
 # Cursor IDEのアップデート
@@ -1397,9 +1397,9 @@ install-playwright:
 	@echo ""; \
 	@echo "✅ Playwright のインストールが完了しました"
 
-# ======================================== 
+# ========================================
 # 新しい階層的な命名規則のターゲット
-# ======================================== 
+# ========================================
 
 # パッケージ・ソフトウェアインストール系
 install-packages-homebrew: install-homebrew
@@ -1460,9 +1460,9 @@ install-packages-chrome-beta:
 	fi
 	@echo "✅ Google Chrome Beta のインストールが完了しました"
 
-# ======================================== 
+# ========================================
 # 後方互換性のためのエイリアス
-# ======================================== 
+# ========================================
 
 # 古いターゲット名を維持（新しいターゲットを呼び出すエイリアス）
 # install-homebrew: は既に実装済み
@@ -1503,7 +1503,7 @@ install-supercursor:
 	@echo "🔧 SuperCursor セットアップ準備中..."; \
 	@echo "ℹ️   フレームワークファイル、ペルソナ、コマンドをシンボリックリンクで構成します"; \
 	\
-	# 必要な変数の確認 
+	# 必要な変数の確認
 	if [ -z "$(DOTFILES_DIR)" ]; then \
 		echo "❌ DOTFILES_DIR is not set"; \
 		exit 1; \
@@ -1797,9 +1797,9 @@ install-imagemagick:
 		echo "✅ ImageMagickのインストールが完了しました"; \
 	fi
 
-# ======================================== 
+# ========================================
 # テスト用ターゲット
-# ======================================== 
+# ========================================
 
 # システム情報の表示
 system-info:
