@@ -633,12 +633,12 @@ install-claudia:
 		echo "📦 Bun をインストール中..."; \
 		curl -fsSL https://bun.sh/install | bash; \
 		echo "🔄 Bunのパスを更新中..."; \
-		export PATH="$(HOME_DIR)/.bun/bin:$$PATH"; \
+		export PATH="$$HOME/.bun/bin:$$PATH"; \
 		if ! command -v bun >/dev/null 2>&1; then \
 			echo "⚠️  Bunのインストールが完了しましたが、現在のセッションで認識されていません"; \
 			echo "   新しいターミナルセッションで再実行するか、以下を実行してください:"; \
-			echo "   source $(HOME_DIR)/.bashrc"; \
-			echo "   source $(HOME_DIR)/.zshrc (zshの場合)"; \
+			echo "   source $$HOME/.bashrc"; \
+			echo "   source $$HOME/.zshrc (zshの場合)"; \
 		fi; \
 	else \
 		echo "✅ Bun が見つかりました: $$(bun --version)"; \
@@ -653,7 +653,7 @@ install-claudia:
 		cd "$$CLAUDIA_DIR" && \
 		\
 		echo "📦 フロントエンド依存関係をインストール中..."; \
-		export PATH="$(HOME_DIR)/.bun/bin:$$PATH"; \
+		export PATH="$$HOME/.bun/bin:$$PATH"; \
 		if command -v bun >/dev/null 2>&1; then \
 			bun install; \
 		else \
@@ -668,9 +668,18 @@ install-claudia:
 			echo "✅ Claudia のビルドが完了しました"; \
 			\
 			echo "📁 実行ファイルをインストール中..."; \
-			BIN_PATH="src-tauri/target/release/opcode"; \
-			[ ! -f "$$BIN_PATH" ] && BIN_PATH="src-tauri/target/release/claudia"; \
-			if [ -f "$$BIN_PATH" ]; then \
+			BIN_PATH=""; \
+			for candidate in src-tauri/target/release/claudia* src-tauri/target/release/opcode*; do \
+				if [ -f "$$candidate" ] && [ -x "$$candidate" ]; then \
+					case "$$(basename "$$candidate")" in \
+						claudia*|opcode*) \
+							BIN_PATH="$$candidate"; \
+							break ;; \
+					esac; \
+				fi; \
+			done; \
+			if [ -n "$$BIN_PATH" ] && [ -f "$$BIN_PATH" ] && [ -x "$$BIN_PATH" ]; then \
+				echo "✅ 選択された実行ファイル: $$BIN_PATH"; \
 				sudo mkdir -p /opt/claudia; \
 				sudo cp "$$BIN_PATH" /opt/claudia/claudia; \
 				sudo chmod +x /opt/claudia/claudia; \
@@ -680,6 +689,7 @@ install-claudia:
 				echo "Name=Claudia" | sudo tee -a /usr/share/applications/claudia.desktop > /dev/null; \
 				echo "Comment=A powerful GUI app and Toolkit for Claude Code" | sudo tee -a /usr/share/applications/claudia.desktop > /dev/null; \
 				echo "Exec=/opt/claudia/claudia" | sudo tee -a /usr/share/applications/claudia.desktop > /dev/null; \
+				echo "TryExec=/opt/claudia/claudia" | sudo tee -a /usr/share/applications/claudia.desktop > /dev/null; \
 				echo "Icon=applications-development" | sudo tee -a /usr/share/applications/claudia.desktop > /dev/null; \
 				echo "Terminal=false" | sudo tee -a /usr/share/applications/claudia.desktop > /dev/null; \
 				echo "Type=Application" | sudo tee -a /usr/share/applications/claudia.desktop > /dev/null; \
@@ -690,9 +700,17 @@ install-claudia:
 			\
 				echo "✅ Claudia が /opt/claudia にインストールされました"; \
 			else \
-				ALT_BIN=$$(find src-tauri/target/release -maxdepth 1 -type f -executable 2>/dev/null | head -n 1); \
-				if [ -n "$$ALT_BIN" ]; then \
-					echo "⚠️  代替実行ファイルを発見: $$ALT_BIN"; \
+				echo "⚠️  主要バイナリが見つかりません。代替候補を検索中..."; \
+				ALT_BIN=""; \
+				for alt_candidate in $$(find src-tauri/target/release -maxdepth 1 -type f -executable -name "claudia*" -o -name "opcode*" 2>/dev/null | sort -V); do \
+					case "$$(basename "$$alt_candidate")" in \
+						claudia*|opcode*) \
+							ALT_BIN="$$alt_candidate"; \
+							break ;; \
+					esac; \
+				done; \
+				if [ -n "$$ALT_BIN" ] && [ -f "$$ALT_BIN" ] && [ -x "$$ALT_BIN" ]; then \
+					echo "✅ 代替実行ファイルを発見: $$ALT_BIN"; \
 					sudo mkdir -p /opt/claudia; \
 					sudo cp "$$ALT_BIN" /opt/claudia/claudia; \
 					sudo chmod +x /opt/claudia/claudia; \
@@ -701,6 +719,7 @@ install-claudia:
 					echo "Name=Claudia" | sudo tee -a /usr/share/applications/claudia.desktop > /dev/null; \
 					echo "Comment=A powerful GUI app and Toolkit for Claude Code" | sudo tee -a /usr/share/applications/claudia.desktop > /dev/null; \
 					echo "Exec=/opt/claudia/claudia" | sudo tee -a /usr/share/applications/claudia.desktop > /dev/null; \
+					echo "TryExec=/opt/claudia/claudia" | sudo tee -a /usr/share/applications/claudia.desktop > /dev/null; \
 					echo "Icon=applications-development" | sudo tee -a /usr/share/applications/claudia.desktop > /dev/null; \
 					echo "Terminal=false" | sudo tee -a /usr/share/applications/claudia.desktop > /dev/null; \
 					echo "Type=Application" | sudo tee -a /usr/share/applications/claudia.desktop > /dev/null; \
