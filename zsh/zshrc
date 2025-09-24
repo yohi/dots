@@ -197,7 +197,7 @@ if [[ -n "${TERM_PROGRAM:-}" ]] && [[ "${TERM_PROGRAM}" =~ (cursor|vscode) ]] ||
    [[ -n "${CURSOR_SESSION_ID:-}" ]] || \
    [[ -n "${DISABLE_CLAUDE_CODE_HISTORY:-}" ]] || \
    [[ "${PWD}" =~ cursor.*terminal ]] || \
-   { [[ -n "${PPID:-}" ]] && { local parent_process_info=$(ps -p "${PPID}" -o comm= 2>/dev/null || true); [[ -n "$parent_process_info" ]] && echo "$parent_process_info" | grep -qi "cursor\|code"; }; }; then
+   { [[ -n "${PPID:-}" ]] && { parent_process_info=$(ps -p "${PPID}" -o comm= 2>/dev/null || true); [[ -n "$parent_process_info" ]] && echo "$parent_process_info" | grep -Eqi 'cursor|code'; }; }; then
 
     # 履歴を無効化
     export HISTFILE=/dev/null        # 履歴ファイルを無効化
