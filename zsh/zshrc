@@ -179,6 +179,36 @@ setopt inc_append_history
 # 開始と終了を記録
 setopt EXTENDED_HISTORY
 
+# 🔒 CursorIDE/Claude Code 履歴無効化設定
+# CursorIDEやClaude Codeでのコマンド履歴を無効化してプライバシーを保護
+#
+# 検出条件:
+# - TERM_PROGRAM が cursor または vscode を含む
+# - VSCODE_INJECTION 環境変数が存在
+# - CURSOR_SESSION_ID 環境変数が存在
+# - DISABLE_CLAUDE_CODE_HISTORY=1 で強制無効化
+# - カレントディレクトリがcursor terminal関連
+# - 親プロセスがcursor/codeの場合
+#
+# 手動で無効化したい場合: export DISABLE_CLAUDE_CODE_HISTORY=1
+# 手動で有効化したい場合: unset DISABLE_CLAUDE_CODE_HISTORY (または export DISABLE_CLAUDE_CODE_HISTORY="")
+if [[ -n "${TERM_PROGRAM:-}" ]] && [[ "${TERM_PROGRAM}" =~ (cursor|vscode) ]] || \
+   [[ -n "${VSCODE_INJECTION:-}" ]] || \
+   [[ -n "${CURSOR_SESSION_ID:-}" ]] || \
+   [[ -n "${DISABLE_CLAUDE_CODE_HISTORY:-}" ]] || \
+   [[ "${PWD}" =~ cursor.*terminal ]] || \
+   [[ "${PPID:-}" != "" ]] && ps -p "${PPID}" -o comm= 2>/dev/null | grep -qi "cursor\|code"; then
+
+    # 履歴を無効化
+    export HISTFILE=/dev/null        # 履歴ファイルを無効化
+    export HISTSIZE=1                # メモリ内履歴を最小限に
+    export SAVEHIST=0                # ファイル保存履歴を無効化
+    setopt HIST_NO_STORE 2>/dev/null || true  # 履歴コマンド自体を保存しない
+
+    # デバッグ情報（必要に応じてコメントアウト解除）
+    # echo "🔒 IDE環境検出: コマンド履歴を無効化しました (TERM_PROGRAM=${TERM_PROGRAM:-'N/A'})"
+fi
+
 
 
 # export PATH="/home/linuxbrew/.linuxbrew/opt/mysql@5.7/bin:$PATH"
