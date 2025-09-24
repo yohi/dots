@@ -1,3 +1,0 @@
-[submodule "lazygit/ai-commit-generator"]
-	path = lazygit/ai-commit-generator
-	url = git@github.com:yohi/lazygit-ai-commit-message.git
