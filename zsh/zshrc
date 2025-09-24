@@ -356,20 +356,25 @@ elif [[ -r "$HOME/.config/zsh/config.zsh" ]]; then
     [[ -n "${CUSTOM_DOTS_ROOT:-}" ]] && DOTS_ROOT="$CUSTOM_DOTS_ROOT"
 fi
 
-# Method 1: 現在の.zshrcファイルの位置から相対パス計算
-if [[ -n "${(%):-%N}" ]]; then
-    # zshの特殊パラメータ %N で現在スクリプトのフルパス取得
-    DOTS_ROOT="$(dirname "$(dirname "$(realpath "${(%):-%N}")")")"
-elif [[ -n "${BASH_SOURCE[0]}" ]]; then
-    # bash互換モード
-    DOTS_ROOT="$(dirname "$(dirname "$(realpath "${BASH_SOURCE[0]}")")")"
+# Method 1: 現在の.zshrcファイルの位置から相対パス計算（DOTS_ROOT未決定時のみ）
+if [[ -z "$DOTS_ROOT" ]]; then
+  if [[ -n "${(%):-%N}" ]]; then
+    # zshのパス修飾子で解決（外部realpath非依存）
+    typeset -r __zshrc_path="${(%):-%N:A}"
+    DOTS_ROOT="${__zshrc_path:h:h}"
+  elif [[ -n "${BASH_SOURCE[0]}" ]]; then
+    # bash互換モード（readlink -fが無い環境も考慮してフォールバック）
+    DOTS_ROOT="$(dirname "$(dirname "$(readlink -f "${BASH_SOURCE[0]}" 2>/dev/null || echo "${BASH_SOURCE[0]}")")")"
+  fi
 fi
 
-# Method 2: 環境変数による設定（優先度高）
-if [[ -n "${DOTFILES_ROOT:-}" ]]; then
-    DOTS_ROOT="$DOTFILES_ROOT"
-elif [[ -n "${DOTS_ROOT_OVERRIDE:-}" ]]; then
-    DOTS_ROOT="$DOTS_ROOT_OVERRIDE"
+# Method 2: 環境変数による設定（優先度高、未決定時のみ）
+if [[ -z "$DOTS_ROOT" ]]; then
+  if [[ -n "${DOTS_ROOT_OVERRIDE:-}" ]]; then
+      DOTS_ROOT="$DOTS_ROOT_OVERRIDE"
+  elif [[ -n "${DOTFILES_ROOT:-}" ]]; then
+      DOTS_ROOT="$DOTFILES_ROOT"
+  fi
 fi
 
 # Method 3: 一般的な場所を順次確認
