@@ -264,8 +264,8 @@ Cursor IDEとの連携機能を提供します。
 #### **検出方法（優先度順）**
 
 1. **設定ファイル**: `~/dots/zsh/config.zsh` または `~/.config/zsh/config.zsh`
-2. **現在ファイル位置**: `.zshrc`ファイルの場所から相対パス計算（設定ファイル未決定時）
-3. **環境変数**: `DOTS_ROOT_OVERRIDE`（最優先）または `DOTFILES_ROOT`（設定ファイル未決定時）
+2. **環境変数**: `DOTFILES_ROOT` または `DOTS_ROOT_OVERRIDE`
+3. **現在ファイル位置**: `.zshrc`ファイルの場所から相対パス計算
 4. **標準的な場所**: `~/dots`, `~/.dots`, `~/dotfiles`, `~/.dotfiles` など
 5. **symlinkの追跡**: `.zshrc`がsymlinkの場合、リンク先から推測
 

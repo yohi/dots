@@ -1072,7 +1072,7 @@ install-claude-ecosystem:
 
 	# Step 2: SuperClaude のインストール
 	@echo "📋 Step 2/3: SuperClaude をインストール中..."
-	@if [ "$${SKIP_SUPERCLAUDE:-1}" = "1" ]; then \
+	@if [ "$${SKIP_SUPERCLAUDE:-0}" = "1" ]; then \
 		echo "⚠️  SuperClaude のインストールはスキップされています (SKIP_SUPERCLAUDE=1)"; \
 		echo "   手動インストール例: pip install SuperClaude==3.0.0.2"; \
 		echo "   有効化方法: SKIP_SUPERCLAUDE=0 make install-claude-ecosystem"; \

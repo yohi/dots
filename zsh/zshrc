@@ -344,62 +344,75 @@ zinit light romkatv/powerlevel10k
 alias kgnome='killall -3 gnome-shell'
 
 # カスタム関数の読み込み（サイレント版 - Powerlevel10k instant prompt対応）
-# 動的にdotsディレクトリを検出（複数の方法でフォールバック）
+# 動的にdotsディレクトリを検出（複数の方法でフォールバック - READMEの優先順位準拠）
 typeset DOTS_ROOT=""
 
-# 設定ファイルがあれば読み込み（優先度最高）
+# Method 1: 設定ファイル読み込み（優先度最高）
 if [[ -r "$HOME/dots/zsh/config.zsh" ]]; then
     source "$HOME/dots/zsh/config.zsh"
-    [[ -n "${CUSTOM_DOTS_ROOT:-}" ]] && DOTS_ROOT="$CUSTOM_DOTS_ROOT"
+    if [[ -n "${CUSTOM_DOTS_ROOT:-}" ]]; then
+        DOTS_ROOT="$CUSTOM_DOTS_ROOT"
+        # 設定ファイルで明示的に指定された場合は、以降の検出をスキップ
+        [[ -d "$DOTS_ROOT/zsh/functions" ]] && goto_load_functions=true
+    fi
 elif [[ -r "$HOME/.config/zsh/config.zsh" ]]; then
     source "$HOME/.config/zsh/config.zsh"
-    [[ -n "${CUSTOM_DOTS_ROOT:-}" ]] && DOTS_ROOT="$CUSTOM_DOTS_ROOT"
-fi
-
-# Method 1: 現在の.zshrcファイルの位置から相対パス計算（DOTS_ROOT未決定時のみ）
-if [[ -z "$DOTS_ROOT" ]]; then
-  if [[ -n "${(%):-%N}" ]]; then
-    # zshのパス修飾子で解決（外部realpath非依存）
-    typeset -r __zshrc_path="${(%):-%N:A}"
-    DOTS_ROOT="${__zshrc_path:h:h}"
-  elif [[ -n "${BASH_SOURCE[0]}" ]]; then
-    # bash互換モード（readlink -fが無い環境も考慮してフォールバック）
-    DOTS_ROOT="$(dirname "$(dirname "$(readlink -f "${BASH_SOURCE[0]}" 2>/dev/null || echo "${BASH_SOURCE[0]}")")")"
-  fi
-fi
-
-# Method 2: 環境変数による設定（優先度高、未決定時のみ）
-if [[ -z "$DOTS_ROOT" ]]; then
-  if [[ -n "${DOTS_ROOT_OVERRIDE:-}" ]]; then
-      DOTS_ROOT="$DOTS_ROOT_OVERRIDE"
-  elif [[ -n "${DOTFILES_ROOT:-}" ]]; then
-      DOTS_ROOT="$DOTFILES_ROOT"
-  fi
-fi
-
-# Method 3: 一般的な場所を順次確認
-if [[ -z "$DOTS_ROOT" ]] || [[ ! -d "$DOTS_ROOT/zsh/functions" ]]; then
-    for candidate in \
-        "$HOME/dots" \
-        "$HOME/.dots" \
-        "$HOME/dotfiles" \
-        "$HOME/.dotfiles" \
-        "$HOME/.config/dots" \
-        "/home/$USER/dots"; do
-        if [[ -d "$candidate/zsh/functions" ]]; then
-            DOTS_ROOT="$candidate"
-            break
-        fi
-    done
-fi
-
-# Method 4: symlinkの追跡
-if [[ -L "$HOME/.zshrc" ]] && [[ -z "${DOTS_ROOT:-}" ]]; then
-    # .zshrcがsymlinkの場合、リンク先から推測
-    real_zshrc="$(readlink -f "$HOME/.zshrc" 2>/dev/null || echo "")"
-    if [[ -n "$real_zshrc" ]]; then
-        DOTS_ROOT="$(dirname "$(dirname "$real_zshrc")")"
+    if [[ -n "${CUSTOM_DOTS_ROOT:-}" ]]; then
+        DOTS_ROOT="$CUSTOM_DOTS_ROOT"
+        # 設定ファイルで明示的に指定された場合は、以降の検出をスキップ
+        [[ -d "$DOTS_ROOT/zsh/functions" ]] && goto_load_functions=true
     fi
+fi
+
+# 設定ファイルで有効なパスが見つかった場合は以降をスキップ
+if [[ "${goto_load_functions:-false}" != "true" ]]; then
+
+    # Method 2: 環境変数による設定（優先度2番目、未決定時のみ）
+    if [[ -z "$DOTS_ROOT" ]]; then
+      if [[ -n "${DOTS_ROOT_OVERRIDE:-}" ]]; then
+          DOTS_ROOT="$DOTS_ROOT_OVERRIDE"
+      elif [[ -n "${DOTFILES_ROOT:-}" ]]; then
+          DOTS_ROOT="$DOTFILES_ROOT"
+      fi
+    fi
+
+    # Method 3: 現在の.zshrcファイルの位置から相対パス計算（優先度3番目、未決定時のみ）
+    if [[ -z "$DOTS_ROOT" ]]; then
+      if [[ -n "${(%):-%N}" ]]; then
+        # zshのパス修飾子で解決（外部realpath非依存）
+        typeset -r __zshrc_path="${(%):-%N:A}"
+        DOTS_ROOT="${__zshrc_path:h:h}"
+      elif [[ -n "${BASH_SOURCE[0]}" ]]; then
+        # bash互換モード（readlink -fが無い環境も考慮してフォールバック）
+        DOTS_ROOT="$(dirname "$(dirname "$(readlink -f "${BASH_SOURCE[0]}" 2>/dev/null || echo "${BASH_SOURCE[0]}")")")"
+      fi
+    fi
+
+    # Method 4: 一般的な場所を順次確認
+    if [[ -z "$DOTS_ROOT" ]] || [[ ! -d "$DOTS_ROOT/zsh/functions" ]]; then
+        for candidate in \
+            "$HOME/dots" \
+            "$HOME/.dots" \
+            "$HOME/dotfiles" \
+            "$HOME/.dotfiles" \
+            "$HOME/.config/dots" \
+            "/home/$USER/dots"; do
+            if [[ -d "$candidate/zsh/functions" ]]; then
+                DOTS_ROOT="$candidate"
+                break
+            fi
+        done
+    fi
+
+    # Method 5: symlinkの追跡
+    if [[ -L "$HOME/.zshrc" ]] && [[ -z "${DOTS_ROOT:-}" ]]; then
+        # .zshrcがsymlinkの場合、リンク先から推測
+        real_zshrc="$(readlink -f "$HOME/.zshrc" 2>/dev/null || echo "")"
+        if [[ -n "$real_zshrc" ]]; then
+            DOTS_ROOT="$(dirname "$(dirname "$real_zshrc")")"
+        fi
+    fi
+
 fi
 
 # 検証とデバッグ情報
