@@ -40,7 +40,7 @@ coderabbit --base main --prompt-only
 ## セキュリティレポート仕様
 
 ### 脅威レベル分類
-```
+```text
 🔴 CRITICAL (CVSS 9.0-10.0)
 - SQLインジェクション
 - リモートコード実行
@@ -67,7 +67,7 @@ coderabbit --base main --prompt-only
 ```
 
 ### エグゼクティブサマリー
-```
+```text
 🛡️ セキュリティ監査レポート
 実行日時: {timestamp}
 監査範囲: {scope_description}
@@ -99,7 +99,7 @@ coderabbit --base main --prompt-only
 ## アクションプラン生成
 
 ### 即時対応（24時間以内）
-```
+```text
 1. Critical脆弱性の緊急パッチ適用
 2. 攻撃表面の一時的縮小
 3. 監視・検知の強化
@@ -107,7 +107,7 @@ coderabbit --base main --prompt-only
 ```
 
 ### 短期対応（1週間以内）
-```
+```text
 1. High脆弱性の本格修正
 2. セキュリティテスト強化
 3. アクセス制御見直し
@@ -115,7 +115,7 @@ coderabbit --base main --prompt-only
 ```
 
 ### 中長期対応（1-3ヶ月）
-```
+```text
 1. セキュリティアーキテクチャ改善
 2. 開発プロセス強化
 3. 自動化ツール導入

@@ -30,7 +30,7 @@ coderabbit --base main --type uncommitted --prompt-only
 ### 段階3: 実装優先度付きレポート生成
 以下の形式で即座に実装可能なレポートを出力：
 
-```
+```text
 ⚡ 高速CodeRabbitレビュー結果
 実行時間: {duration}秒
 対象ファイル: {changed_files}

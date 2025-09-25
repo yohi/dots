@@ -111,7 +111,7 @@ cr auth login
 ## 📊 使用パターン推奨
 
 ### 日常開発サイクル
-```
+```text
 1. 機能開発中: /quick-cr-review (未コミット変更チェック)
 2. 開発完了後: /coderabbit-review (包括的品質チェック)
 3. PR作成前: /security-cr-audit (セキュリティ確認)
@@ -119,7 +119,7 @@ cr auth login
 ```
 
 ### チーム開発プロセス
-```
+```text
 1. 個人開発: /quick-cr-review (毎日)
 2. フィーチャー完成: /coderabbit-review (週次)
 3. セキュリティレビュー: /security-cr-audit (リリース前)
@@ -166,10 +166,10 @@ CodeRabbitは自動的に以下のファイルを読み取り：
 
 ## 📞 サポート・リソース
 
-- **公式ドキュメント**: https://docs.coderabbit.ai/cli/overview
-- **Claude Code統合ガイド**: https://docs.coderabbit.ai/cli/claude-code-integration
+- **公式ドキュメント**: <https://docs.coderabbit.ai/cli/overview>
+- **Claude Code統合ガイド**: <https://docs.coderabbit.ai/cli/claude-code-integration>
 - **Discord**: CodeRabbit公式コミュニティ
-- **Enterprise**: sales@coderabbit.ai
+- **Enterprise**: <mailto:sales@coderabbit.ai>
 
 ---
 

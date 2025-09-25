@@ -40,7 +40,7 @@ CodeRabbit CLIの出力を統合し、以下の形式で構造化：
 ## レポート出力仕様
 
 ### エグゼクティブサマリー
-```
+```text
 🎯 CodeRabbit AI レビューサマリー
 実行時間: {timestamp}
 対象ファイル数: {file_count}
@@ -49,7 +49,7 @@ CodeRabbit CLIの出力を統合し、以下の形式で構造化：
 ```
 
 ### 詳細分析結果
-```
+```text
 📊 カテゴリ別分析
 ├── セキュリティ: {security_score}/100
 ├── パフォーマンス: {performance_score}/100
