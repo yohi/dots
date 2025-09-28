@@ -41,33 +41,15 @@ vim.api.nvim_create_autocmd(
 )
 
 return {
-    -- mason / mason-lspconfig / lspconfig
+    -- mason (LSP server installer only)
     {
         "williamboman/mason.nvim",
         dependencies = {
-            "williamboman/mason-lspconfig.nvim",
-            "neovim/nvim-lspconfig",
             "jay-babu/mason-null-ls.nvim",
-            -- "jose-elias-alvarez/null-ls.nvim",
             "nvimtools/none-ls.nvim",
         },
         config = function()
-            local lsp_config = require("lspconfig")
-
             require("mason").setup()
-            -- require("mason-lspconfig").setup({
-            --     -- lsp_servers table Install
-            --     ensure_installed = lsp_servers,
-            -- })
-
-            -- lsp_servers table setup
-            for _, lsp_server in ipairs(lsp_servers) do
-                lsp_config[lsp_server].setup({
-                    root_dir = function(fname)
-                        return lsp_config.util.find_git_ancestor(fname) or vim.fn.getcwd()
-                    end,
-                })
-            end
 
             -- Python環境設定（改良版：効率的かつエラーハンドリング付き）
             local function setup_python_host()
@@ -104,75 +86,97 @@ return {
 
             setup_python_host()
 
-            lsp_config.basedpyright.setup({
-                root_dir = function(fname)
-                    -- return lsp_config.util.find_git_ancestor(fname) or vim.fn.getcwd()
-                    return lsp_config.util.root_pattern(".venv")(fname)
-                end,
-                settings = {
-                    basedpyright = {
-                        analysis = {
-                            --
-                            -- inlayHints = {
-                            --     functionReturnTypes = true,
-                            --     variableTypes = true,
-                            -- },
+            -- LSP configurations using new Neovim LSP API
+            -- Global configuration for all LSP servers
+            vim.lsp.config('*', {
+                root_markers = { '.git' },
+            })
 
-                            --
-                            -- autoImportCompletions = true,
-
-                            -- 事前定義された名前にもどついて検索パスを自動的に追加するか
-                            autoSearchPaths = true,
-
-                            -- [openFilesOnly, workspace]
-                            diagnosticMode = "openFilesOnly",
-
-                            -- 診断のレベルを上書きする
-                            -- https://github.com/microsoft/pylance-release/blob/main/DIAGNOSTIC_SEVERITY_RULES.md
-                            diagnosticSeverityOverrides = {
-                                reportGeneralTypeIssues = "none",
-                                reportMissingTypeArgument = "none",
-                                reportUnknownMemberType = "none",
-                                reportUnknownVariableType = "none",
-                                reportUnknownArgumentType = "none",
-                            },
-
-                            -- インポート解決のための追加検索パス指定
-                            extraPaths = {
-                            },
-
-                            -- default: Information [Error, Warning, Information, Trace]
-                            -- logLevel = 'Warning',
-                            logLevel = 'Trace',
-
-                            -- カスタムタイプのstubファイルを含むディレクトリ指定 default: ./typings
-                            -- stubPath = '',
-
-                            -- 型チェックの分析レベル default: off [off, basic, strict]
-                            typeCheckingMode = 'off',
-                            reportMissingImports = 'none',
-                            reportMissingModuleSource = 'none',
-                            reportUnusedImport = 'none',
-                            reportUnusedVariable = 'none',
-                            reportUnboundVariable = 'none',
-                            reportUndefinedVariable = 'none',
-                            reportGeneralTypeIssues = 'none',
-                            reportMissingTypeArgument = 'none',
-                            reportOptionalSubscript = 'none',
-                            reportOptionalMemberAccess = 'none',
-
-                            --
-                            -- typeshedPaths = '',
-
-                            -- default: false
-                            useLibraryCodeForTypes = true,
-
-                            pylintPath = {
+            -- Configure LSP servers using vim.lsp.config()
+            local lsp_configs = {
+                basedpyright = {
+                    cmd = { 'basedpyright-langserver', '--stdio' },
+                    filetypes = { 'python' },
+                    root_markers = { '.venv', 'pyproject.toml', 'setup.py', 'requirements.txt' },
+                    settings = {
+                        basedpyright = {
+                            analysis = {
+                                autoSearchPaths = true,
+                                diagnosticMode = "openFilesOnly",
+                                diagnosticSeverityOverrides = {
+                                    reportGeneralTypeIssues = "none",
+                                    reportMissingTypeArgument = "none",
+                                    reportUnknownMemberType = "none",
+                                    reportUnknownVariableType = "none",
+                                    reportUnknownArgumentType = "none",
+                                },
+                                logLevel = 'Trace',
+                                typeCheckingMode = 'off',
+                                reportMissingImports = 'none',
+                                reportMissingModuleSource = 'none',
+                                reportUnusedImport = 'none',
+                                reportUnusedVariable = 'none',
+                                reportUnboundVariable = 'none',
+                                reportUndefinedVariable = 'none',
+                                reportOptionalSubscript = 'none',
+                                reportOptionalMemberAccess = 'none',
+                                useLibraryCodeForTypes = true,
                             },
                         },
                     },
-                }
-            })
+                },
+                bashls = {
+                    cmd = { 'bash-language-server', 'start' },
+                    filetypes = { 'sh', 'bash' },
+                },
+                lua_ls = {
+                    cmd = { 'lua-language-server' },
+                    filetypes = { 'lua' },
+                    root_markers = { '.luarc.json', '.luarc.jsonc' },
+                    settings = {
+                        Lua = {
+                            runtime = { version = 'LuaJIT' },
+                            diagnostics = { globals = { 'vim' } },
+                            workspace = {
+                                library = vim.api.nvim_get_runtime_file("", true),
+                                checkThirdParty = false,
+                            },
+                            telemetry = { enable = false },
+                        },
+                    },
+                },
+                yamlls = {
+                    cmd = { 'yaml-language-server', '--stdio' },
+                    filetypes = { 'yaml', 'yml' },
+                },
+                jsonls = {
+                    cmd = { 'vscode-json-language-server', '--stdio' },
+                    filetypes = { 'json', 'jsonc' },
+                },
+                ts_ls = {
+                    cmd = { 'typescript-language-server', '--stdio' },
+                    filetypes = { 'javascript', 'javascriptreact', 'typescript', 'typescriptreact' },
+                    root_markers = { 'package.json', 'tsconfig.json', 'jsconfig.json' },
+                },
+                html = {
+                    cmd = { 'vscode-html-language-server', '--stdio' },
+                    filetypes = { 'html' },
+                },
+                cssls = {
+                    cmd = { 'vscode-css-language-server', '--stdio' },
+                    filetypes = { 'css', 'scss', 'less' },
+                },
+            }
+
+            -- Apply configurations
+            for server_name, config in pairs(lsp_configs) do
+                vim.lsp.config(server_name, config)
+            end
+
+            -- Enable LSP servers
+            for server_name, _ in pairs(lsp_configs) do
+                vim.lsp.enable(server_name)
+            end
         end,
         cmd = "Mason",
     },
