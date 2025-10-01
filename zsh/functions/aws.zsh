@@ -52,18 +52,20 @@ ec2-ssm() {
     _aws_select_profile || return 1
 
     echo "📋 SSM対応EC2インスタンスを検索中..."
-    local instances=($(aws ssm describe-instance-information \
+    local instance_info=$(aws ec2 describe-instances \
         --profile "$AWS_PROFILE" \
-        --query 'InstanceInformationList[].[InstanceId,PingStatus]' \
-        --output text | grep "Online" | cut -f1))
+        --filters "Name=instance-state-name,Values=running" \
+        --query 'Reservations[].Instances[?PlatformDetails!=`Windows`].[InstanceId, Tags[?Key==`Name`].Value | [0], PrivateIpAddress]' \
+        --output text)
 
-    if [[ ${#instances[@]} -eq 0 ]]; then
-        echo "❌ SSM接続可能なEC2インスタンスが見つかりません。"
+    if [[ -z "$instance_info" ]]; then
+        echo "❌ 実行中のEC2インスタンスが見つかりません。"
         return 1
     fi
 
     # インスタンス選択
-    local selected_instance=$(printf '%s\n' "${instances[@]}" | fzf --prompt="接続するEC2インスタンスを選択: " --layout=reverse --border)
+    local selected_instance_line=$(echo "$instance_info" | fzf --prompt="接続するEC2インスタンスを選択: " --layout=reverse --border --header="InstanceID / Name / PrivateIP")
+    local selected_instance=$(echo "$selected_instance_line" | awk '{print $1}')
     if [[ -z "$selected_instance" ]]; then
         echo "❌ インスタンスが選択されませんでした。"
         return 1
@@ -89,6 +91,11 @@ ecs-list() {
 # CloudWatch Logs表示
 awslogs() {
     echo "📋 CloudWatch Logs表示ツール"
+    local verbose=false
+    # シンプルな引数チェック
+    if [[ "$1" == "-v" || "$1" == "--verbose" ]]; then
+        verbose=true
+    fi
 
     # プロファイル選択
     _aws_select_profile || return 1
@@ -108,22 +115,19 @@ awslogs() {
         return 1
     fi
 
-    echo "📋 ログを表示中... ($selected_log_group)"
+    # evalを使うため、変数をシングルクォートで囲んで安全性を高める
+    local safe_log_group=$(printf "%q" "$selected_log_group")
+    local tail_command="aws logs tail $safe_log_group --follow --profile \"$AWS_PROFILE\""
 
-    # 最近1時間のログを表示
-    local start_timestamp=$(($(date +%s) - 3600))
-    local end_timestamp=$(date +%s)
-
-    aws logs filter-log-events \
-        --log-group-name "$selected_log_group" \
-        --start-time "${start_timestamp}000" \
-        --end-time "${end_timestamp}000" \
-        --profile "$AWS_PROFILE" \
-        --query 'events[].[timestamp,message]' \
-        --output text | while read timestamp message; do
-            local formatted_time=$(date -d "@$((timestamp/1000))" '+%Y-%m-%d %H:%M:%S' 2>/dev/null || echo "Unknown")
-            echo "[$formatted_time] $message"
-        done
+    if [[ "$verbose" == "true" ]]; then
+        echo "📋 ログを詳細表示でストリーミングします... (Ctrl+Cで終了) ($selected_log_group)"
+        eval "$tail_command"
+    else
+        echo "📋 ログを簡易表示でストリーミングします... (Ctrl+Cで終了) ($selected_log_group)"
+        # タイムスタンプとメッセージのみ表示 (ログストリーム名を削除)
+        # sed -uでパイプのバッファリングを無効化
+        eval "$tail_command" | sed -u -E 's/^(\S+T\S+)\s+\S+\s+(.*)/\1 \2/'
+    fi
 }
 
 # AWS関数ヘルプ
