@@ -19,6 +19,7 @@ include mk/main.mk
 include mk/menu.mk
 include mk/shortcuts.mk
 include mk/memory.mk
+include mk/codex.mk
 
 .PHONY: all
 all: menu
