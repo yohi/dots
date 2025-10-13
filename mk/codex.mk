@@ -33,6 +33,10 @@ codex-setup: ## Setup Codex CLI configuration
 EOF
 	fi
 	@echo "Creating symbolic link: $(HOME_DIR)/.codex -> $(DOTFILES_DIR)/codex"
+	@if [ -d "$(HOME_DIR)/.codex" ] && [ ! -L "$(HOME_DIR)/.codex" ]; then \
+		echo "Removing existing directory: $(HOME_DIR)/.codex"; \
+		rm -rf "$(HOME_DIR)/.codex"; \
+	fi
 	@ln -sfn $(DOTFILES_DIR)/codex $(HOME_DIR)/.codex
 	@echo "Codex CLI setup complete."
 
