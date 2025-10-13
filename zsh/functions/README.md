@@ -683,6 +683,7 @@ test_error_handling
 ## 📊 Function Statistics
 
 ### AWS Functions (Modular)
+
 | Module | Lines | Functions | Description |
 |--------|-------|-----------|-------------|
 | `aws/core.zsh` | 116 | aws-help, profile selection | Core utilities |
@@ -694,6 +695,7 @@ test_error_handling
 | **AWS Subtotal** | **3,430** | **6 modules** | - |
 
 ### Other Functions
+
 | Function | Lines | Dependencies | Features |
 |----------|-------|--------------|----------|
 | `cursor` | 38 | cursor | IDE launcher |
