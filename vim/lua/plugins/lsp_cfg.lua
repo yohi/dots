@@ -1,5 +1,5 @@
 local lsp_servers = {
-    -- "basedpyright",
+    "basedpyright",
     -- "ruff",
     "bashls",
     "lua_ls",
@@ -134,6 +134,7 @@ return {
                 basedpyright = {
                     -- Masonのパッケージ名: basedpyright
                     -- インストールされる実行可能ファイル: basedpyright-langserver
+                    cmd = { 'basedpyright-langserver', '--stdio' },
                     filetypes = { 'python' },
                     root_markers = { '.venv', 'pyproject.toml', 'setup.py', 'requirements.txt' },
                     settings = {
@@ -166,11 +167,13 @@ return {
                 bashls = {
                     -- Masonのパッケージ名: bash-language-server
                     -- インストールされる実行可能ファイル: bash-language-server
+                    cmd = { 'bash-language-server', 'start' },
                     filetypes = { 'sh', 'bash' },
                 },
                 lua_ls = {
                     -- Masonのパッケージ名: lua-language-server
                     -- インストールされる実行可能ファイル: lua-language-server
+                    cmd = { 'lua-language-server' },
                     filetypes = { 'lua' },
                     root_markers = { '.luarc.json', '.luarc.jsonc' },
                     settings = {
@@ -188,27 +191,32 @@ return {
                 yamlls = {
                     -- Masonのパッケージ名: yaml-language-server
                     -- インストールされる実行可能ファイル: yaml-language-server
+                    cmd = { 'yaml-language-server', '--stdio' },
                     filetypes = { 'yaml', 'yml' },
                 },
                 jsonls = {
                     -- Masonのパッケージ名: json-lsp
                     -- インストールされる実行可能ファイル: vscode-json-language-server
+                    cmd = { 'vscode-json-language-server', '--stdio' },
                     filetypes = { 'json', 'jsonc' },
                 },
                 ts_ls = {
                     -- Masonのパッケージ名: typescript-language-server
                     -- インストールされる実行可能ファイル: typescript-language-server
+                    cmd = { 'typescript-language-server', '--stdio' },
                     filetypes = { 'javascript', 'javascriptreact', 'typescript', 'typescriptreact' },
                     root_markers = { 'package.json', 'tsconfig.json', 'jsconfig.json' },
                 },
                 html = {
                     -- Masonのパッケージ名: html-lsp
                     -- インストールされる実行可能ファイル: vscode-html-language-server
+                    cmd = { 'vscode-html-language-server', '--stdio' },
                     filetypes = { 'html' },
                 },
                 cssls = {
                     -- Masonのパッケージ名: css-lsp
                     -- インストールされる実行可能ファイル: vscode-css-language-server
+                    cmd = { 'vscode-css-language-server', '--stdio' },
                     filetypes = { 'css', 'scss', 'less' },
                 },
             }
