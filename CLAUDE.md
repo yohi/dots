@@ -1,279 +1,76 @@
-# 🤖 Claude Code - Ubuntu環境開発ガイド
-
-このガイドは、このdotfilesリポジトリで構築されたUbuntu開発環境において、**Claude Code**（Claude with Code capabilities）を効率的に活用するためのガイドラインです。
-
----
-
-## 📋 環境概要
-
-このリポジトリで構築される開発環境には以下が含まれています：
-
-### 🏗️ 主要コンポーネント
-- **Neovim**: AI統合設定、LSP、プラグイン管理（Lazy.nvim）
-- **VS Code + Cursor**: IDE環境、拡張機能、設定
-- **Zsh + Powerlevel10k**: モダンシェル環境
-- **Docker**: コンテナ開発環境（Rootless設定）
-- **多言語サポート**: Python, Node.js, Go, Rust, PHP, Ruby等
-- **GNOME環境**: Extensions, Tweaks, ショートカット設定
-
-### 📁 ディレクトリ構造
-```
-~/dots/
-├── vim/           # Neovim設定・プラグイン
-├── vscode/        # VS Code設定・拡張機能
-├── cursor/        # Cursor IDE設定
-├── zsh/           # Zsh設定
-├── wezterm/       # Wezterm設定
-├── gnome-*/       # GNOME関連設定
-├── Brewfile       # Homebrewパッケージ
-└── Makefile       # セットアップスクリプト
-```
-
----
-
-## 🚀 クイック開始
-
-### 基本的な質問パターン
+# Claude Code Spec-Driven Development
 
-1. **設定の理解**
-   ```
-   "このNeovim設定でLSPはどのように構成されていますか？"
-   "VS Code拡張機能の一覧を教えてください"
-   ```
-
-2. **トラブルシューティング**
-   ```
-   "フォントが正しく表示されない問題を解決してください"
-   "Docker設定でエラーが発生しています"
-   ```
-
-3. **カスタマイズ**
-   ```
-   "Python開発に特化したNeovim設定を追加してください"
-   "新しいGNOME拡張機能を設定に追加したい"
-   ```
-
----
-
-## 🔧 Neovim設定について
-
-### プラグイン管理
-- **プラグインマネージャー**: Lazy.nvim を使用
-- **設定ファイル**: `vim/` ディレクトリ内に構造化
-
-### LSP統合
-- **言語サーバー**: 自動インストール・設定
-- **補完**: nvim-cmp + AI統合
-- **診断**: 各言語に適した linter/formatter
-
-### AI統合機能
-このNeovim設定には以下のAI機能が含まれています：
-- コード補完
-- ドキュメント生成
-- リファクタリング支援
-
-### よくあるタスク
-
-#### プラグイン管理
-```bash
-# Neovim内で実行
-:Lazy                    # プラグインマネージャーを開く
-:Lazy install           # 新しいプラグインをインストール
-:Lazy update            # プラグインを更新
-:Lazy clean             # 未使用プラグインを削除
-```
-
-#### LSP管理
-```bash
-:LspInfo                # LSP情報を表示
-:Mason                  # LSPサーバー管理
-:MasonInstall <server>  # LSPサーバーをインストール
-```
-
----
-
-## 💻 VS Code & Cursor設定
-
-### 拡張機能カテゴリ
-- **Python開発**: Pylance, Debugpy, Django関連
-- **Web開発**: TypeScript, React, Vue関連
-- **コンテナ**: Docker, Remote Development
-- **AI/補完**: GitHub Copilot関連
-- **Git**: GitLens, Git Graph
-- **ユーティリティ**: Bracket Pair Colorizer, Better Comments等
+Kiro-style Spec Driven Development implementation using claude code slash commands, hooks and agents.
 
-### 設定ファイル
-- `vscode/settings.json`: エディタ設定
-- `vscode/keybindings.json`: キーバインド
-- `vscode/extensions.list`: インストール対象拡張機能
+## Project Context
 
----
-
-## 🐚 シェル環境（Zsh）
-
-### 機能
-- **Powerlevel10k**: 高速でカスタマイズ可能なプロンプト
-- **自動補完**: zsh-autosuggestions
-- **履歴管理**: 拡張された履歴機能
-- **エイリアス**: 開発効率化のためのショートカット
+### Paths
+- Steering: `.kiro/steering/`
+- Specs: `.kiro/specs/`
+- Commands: `.claude/commands/`
 
-### 設定ファイル
-- `zsh/.zshrc`: メイン設定
-- `zsh/.p10k.zsh`: Powerlevel10k設定
+### Steering vs Specification
 
----
+**Steering** (`.kiro/steering/`) - Guide AI with project-wide rules and context
+**Specs** (`.kiro/specs/`) - Formalize development process for individual features
 
-## 🐳 Docker環境
+### Active Specifications
+- Check `.kiro/specs/` for active specifications
+- Use `/kiro:spec-status [feature-name]` to check progress
 
-### 特徴
-- **Rootless Docker**: セキュアな設定
-- **Docker Compose**: マルチコンテナ管理
-- **開発環境**: 各言語用コンテナ設定
+#### Current Specifications
+- **aws-ssm-executor-plugin**: Rundeck Node Executor Plugin for executing commands on EC2 nodes via AWS Systems Manager (SSM)
+- **rundeck-dev-environment**: Docker Compose based Rundeck development environment for plugin testing and validation
 
----
+## Development Guidelines
+- Think in English, generate responses in English
 
-## 🎯 Claude Code活用のベストプラクティス
+## Workflow
 
-### 1. 設定ファイルの編集
+### Phase 0: Steering (Optional)
+`/kiro:steering` - Create/update steering documents
+`/kiro:steering-custom` - Create custom steering for specialized contexts
 
-**良い例**:
-```
-"vim/init.lua にPython用のLSP設定を追加して、
-pylsp の設定でflake8とmypyを有効にしてください"
-```
+Note: Optional for new features or small additions. You can proceed directly to spec-init.
 
-**避けるべき例**:
-```
-"Vimの設定を変更して"
-```
+### Phase 1: Specification Creation
+1. `/kiro:spec-init [detailed description]` - Initialize spec with detailed project description
+2. `/kiro:spec-requirements [feature]` - Generate requirements document
+3. `/kiro:spec-design [feature]` - Interactive: "Have you reviewed requirements.md? [y/N]"
+4. `/kiro:spec-tasks [feature]` - Interactive: Confirms both requirements and design review
 
-### 2. 問題の報告
+### Phase 2: Progress Tracking
+`/kiro:spec-status [feature]` - Check current progress and phases
 
-**良い例**:
-```
-"Homebrewでインストールしたパッケージが
-PATH に追加されていません。zsh設定を確認して修正してください。
-現在のPATH: [実際のPATH]"
-```
-
-**避けるべき例**:
-```
-"パッケージが動かない"
-```
+## Development Rules
+1. **Consider steering**: Run `/kiro:steering` before major development (optional for new features)
+2. **Follow 3-phase approval workflow**: Requirements → Design → Tasks → Implementation
+3. **Approval required**: Each phase requires human review (interactive prompt or manual)
+4. **No skipping phases**: Design requires approved requirements; Tasks require approved design
+5. **Update task status**: Mark tasks as completed when working on them
+6. **Keep steering current**: Run `/kiro:steering` after significant changes
+7. **Check spec compliance**: Use `/kiro:spec-status` to verify alignment
 
-### 3. 新機能の追加
+## Steering Configuration
 
-**良い例**:
-```
-"Django開発用の設定を追加したいです：
-- VS Code用Django拡張機能
-- Neovim用django-vim設定
-- 開発用Docker Compose設定
-Makefileにもセットアップターゲットを追加してください"
-```
-
-### 4. デバッグ支援
-
-**良い例**:
-```
-"make setup-vim が以下のエラーで失敗します：
-[エラーメッセージをペースト]
-vim/配下のファイルをチェックして問題を特定してください"
-```
+### Current Steering Files
+Managed by `/kiro:steering` command. Updates here reflect command changes.
 
----
+### Active Steering Files
+- `product.md`: Always included - Product context and business objectives
+- `tech.md`: Always included - Technology stack and architectural decisions
+- `structure.md`: Always included - File organization and code patterns
 
-## 📝 開発フロー
+### Custom Steering Files
+<!-- Added by /kiro:steering-custom command -->
+<!-- Format:
+- `filename.md`: Mode - Pattern(s) - Description
+  Mode: Always|Conditional|Manual
+  Pattern: File patterns for Conditional mode
+-->
 
-### 1. 新しいプロジェクト開始
-```bash
-cd ~/dots
-make help                    # 利用できるコマンドを確認
-make setup-development       # 開発環境の設定
-```
+### Inclusion Modes
+- **Always**: Loaded in every interaction (default)
+- **Conditional**: Loaded for specific file patterns (e.g., "*.test.js")
+- **Manual**: Reference with `@filename.md` syntax
 
-### 2. 特定の言語環境セットアップ
-```bash
-# Python環境
-make setup-python
-
-# Node.js環境
-make setup-nodejs
-
-# Docker環境
-make setup-docker
-```
-
-### 3. IDE設定の適用
-```bash
-make setup-vscode           # VS Code設定
-make setup-vim              # Neovim設定
-make setup-cursor           # Cursor設定
-```
-
----
-
-## 🛠️ トラブルシューティング
-
-### よくある問題
-
-1. **フォントの問題**
-   - IBM Plex Sans, Cica Nerd Fontsのインストール確認
-   - フォントキャッシュの更新: `fc-cache -f`
-
-2. **LSPエラー**
-   - Mason経由でのLSPサーバー再インストール
-   - Node.js/npm のバージョン確認
-
-3. **Docker権限エラー**
-   - Rootless Docker設定の確認
-   - ユーザーのdockerグループ追加
-
-### ログ確認
-```bash
-# システムログ
-journalctl -f
-
-# アプリケーションログ
-tail -f ~/.local/share/nvim/lsp.log
-```
-
----
-
-## 📚 参考情報
-
-### 設定ファイルの場所
-- **Neovim**: `~/.config/nvim/` → `~/dots/vim/`
-- **VS Code**: `~/.config/Code/User/` → `~/dots/vscode/`
-- **Zsh**: `~/.zshrc` → `~/dots/zsh/.zshrc`
-- **Git**: `~/.gitconfig` → Makefile内で設定
-
-### 重要なMakeターゲット
-```bash
-make help                   # ヘルプ表示
-make system-setup          # システム基本設定
-make install-homebrew      # Homebrew インストール
-make setup-all             # 全体セットアップ
-make clean                 # 設定のクリーンアップ
-```
-
----
-
-## 🔄 更新・メンテナンス
-
-### 定期的な更新
-```bash
-cd ~/dots
-git pull                   # 最新版を取得
-make setup-all             # 設定を再適用
-```
-
-### 設定のバックアップ
-```bash
-make backup-gnome-tweaks   # GNOME設定のバックアップ
-make export-gnome-tweaks   # GNOME設定のエクスポート
-```
-
----
-
-**このガイドを参考に、Claude Codeを活用して効率的な開発環境を構築・維持してください！** 🚀
