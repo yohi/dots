@@ -1,141 +1,143 @@
--- local bufnr = vim.api.nvim_get_current_buf()
--- print("bufnr")
--- print(bufnr)
--- local filepath = vim.api.nvim_buf_get_name(bufnr)
--- print('filepath')
--- print(filepath)
--- local venv_path = util.root_pattern('.venv')
--- print('venv_path')
--- print(venv_path)
--- local python_path = nil
--- python_path = vim.g.python3_host_prog
--- -- if (venv_path == nil) then
--- --     print('a')
--- --     python_path = vim.g.python3_host_prog
--- -- else
--- --     print('b')
--- --     python_path = util.path.join(
--- --         venv_path,
--- --         '.venv',
--- --         'bin',
--- --         'python'
--- --     )
--- -- end
--- print('python_path')
--- print(python_path)
--- print('venv_path')
--- print(venv_path(filepath))
--- 
--- local basedpyright_setting = {
---     basedpyright = {
---         analysis = {
---             --
---             -- inlayHints = {
---             --     functionReturnTypes = true,
---             --     variableTypes = true,
---             -- },
--- 
---             --
---             autoImportCompletions = true,
--- 
---             -- 事前定義された名前にもどついて検索パスを自動的に追加するか
---             autoSearchPaths = true,
--- 
---             -- [openFilesOnly, workspace]
---             diagnosticMode = "openFilesOnly",
--- 
---             -- 診断のレベルを上書きする
---             -- https://github.com/microsoft/pylance-release/blob/main/DIAGNOSTIC_SEVERITY_RULES.md
---             diagnosticSeverityOverrides = {
---                 reportGeneralTypeIssues = "none",
---                 reportMissingTypeArgument = "none",
---                 reportUnknownMemberType = "none",
---                 reportUnknownVariableType = "none",
---                 reportUnknownArgumentType = "none",
---             },
--- 
---             -- インポート解決のための追加検索パス指定
---             extraPaths = {
---             },
--- 
---             -- default: Information [Error, Warning, Information, Trace]
---             -- logLevel = 'Warning',
---             logLevel = 'Trace',
--- 
---             -- カスタムタイプのstubファイルを含むディレクトリ指定 default: ./typings
---             -- stubPath = '',
--- 
---             -- 型チェックの分析レベル default: off [off, basic, strict]
---             typeCheckingMode = 'off',
---             reportMissingImports = 'none',
---             reportMissingModuleSource = 'none',
---             reportUnusedImport = 'none',
---             reportUnusedVariable = 'none',
---             reportUnboundVariable = 'none',
---             reportUndefinedVariable = 'none',
---             reportGeneralTypeIssues = 'none',
---             reportMissingTypeArgument = 'none',
---             reportOptionalSubscript = 'none',
---             reportOptionalMemberAccess = 'none',
--- 
---             --
---             -- typeshedPaths = '',
--- 
---             -- default: false
---             useLibraryCodeForTypes = true,
--- 
---             pylintPath = {
---             },
---         },
---     },
--- }
---
--- local servers = {
---     basedpyright = basedpyright_setting,
---     -- pyright = pyright_setting,
---     pylsp = pylsp_setting,
---     -- mypy = {},
---     -- flake8 = {},
---     -- isort = {},
---     bashls = {},
---     dockerls = {},
---     dotls = {},
---     html = {},
---     jsonls = {},
---     -- sourcery = {},
---     -- sqlls = {},
---     lua_ls = {},
---     vimls = {},
---     yamlls = {},
---     -- phpcs = {},
---     intelephense = {},
---     -- sql_formatter = {},
--- }
--- 
--- mason_lspconfig.setup({
---     ensure_installed = vim.tbl_keys(servers),
---     automatic_installation = false,
--- })
---
--- mason_lspconfig.setup_handlers({
---     function(server_name)
---         local opts = {}
---         if (server_name == 'pyright') then
---             opts.root_dir = util.root_pattern('.venv')
---         end
---         if (server_name == 'pylsp') then
---             opts.root_dir = util.root_pattern('.venv')
---         end
---         if (server_name == 'basedpyright') then
---             opts.root_dir = util.root_pattern('.venv')
---         end
---         opts.on_attach = on_attach
---         opts.settings = servers[server_name]
---         opts.filetypes = (servers[server_name] or {}).filetypes
---         lspconfig[server_name].setup(opts)
---     end,
--- })
---
+-- LSP Configuration using vim.lsp.config() (New Neovim LSP API)
+
+-- 1. Define LSP configurations using vim.lsp.config()
+
+-- Global configuration for all LSP servers
+vim.lsp.config('*', {
+  root_markers = { '.git' },
+})
+
+-- Python LSP (basedpyright)
+vim.lsp.config('basedpyright', {
+  cmd = { 'basedpyright-langserver', '--stdio' },
+  filetypes = { 'python' },
+  root_markers = { '.venv', 'pyproject.toml', 'setup.py', 'requirements.txt' },
+  settings = {
+    basedpyright = {
+      analysis = {
+        autoImportCompletions = true,
+        autoSearchPaths = true,
+        diagnosticMode = "openFilesOnly",
+        diagnosticSeverityOverrides = {
+          reportGeneralTypeIssues = "none",
+          reportMissingTypeArgument = "none",
+          reportUnknownMemberType = "none",
+          reportUnknownVariableType = "none",
+          reportUnknownArgumentType = "none",
+        },
+        logLevel = 'Trace',
+        typeCheckingMode = 'off',
+        reportMissingImports = 'none',
+        reportMissingModuleSource = 'none',
+        reportUnusedImport = 'none',
+        reportUnusedVariable = 'none',
+        reportUnboundVariable = 'none',
+        reportUndefinedVariable = 'none',
+        reportOptionalSubscript = 'none',
+        reportOptionalMemberAccess = 'none',
+        useLibraryCodeForTypes = true,
+      },
+    },
+  },
+})
+
+-- Python LSP (pylsp) as alternative
+vim.lsp.config('pylsp', {
+  cmd = { 'pylsp' },
+  filetypes = { 'python' },
+  root_markers = { '.venv', 'pyproject.toml', 'setup.py', 'requirements.txt' },
+})
+
+-- Bash LSP
+vim.lsp.config('bashls', {
+  cmd = { 'bash-language-server', 'start' },
+  filetypes = { 'sh', 'bash' },
+  root_markers = { '.git' },
+})
+
+-- Docker LSP
+vim.lsp.config('dockerls', {
+  cmd = { 'docker-langserver', '--stdio' },
+  filetypes = { 'dockerfile' },
+  root_markers = { 'Dockerfile', '.git' },
+})
+
+-- HTML LSP
+vim.lsp.config('html', {
+  cmd = { 'vscode-html-language-server', '--stdio' },
+  filetypes = { 'html' },
+  root_markers = { 'package.json', '.git' },
+})
+
+-- JSON LSP
+vim.lsp.config('jsonls', {
+  cmd = { 'vscode-json-language-server', '--stdio' },
+  filetypes = { 'json', 'jsonc' },
+  root_markers = { 'package.json', '.git' },
+})
+
+-- Lua LSP
+vim.lsp.config('lua_ls', {
+  cmd = { 'lua-language-server' },
+  filetypes = { 'lua' },
+  root_markers = { '.luarc.json', '.luarc.jsonc', '.git' },
+  settings = {
+    Lua = {
+      runtime = {
+        version = 'LuaJIT',
+      },
+      diagnostics = {
+        globals = { 'vim' },
+      },
+      workspace = {
+        library = vim.api.nvim_get_runtime_file("", true),
+        checkThirdParty = false,
+      },
+      telemetry = {
+        enable = false,
+      },
+    },
+  },
+})
+
+-- Vim LSP
+vim.lsp.config('vimls', {
+  cmd = { 'vim-language-server', '--stdio' },
+  filetypes = { 'vim' },
+  root_markers = { '.git' },
+})
+
+-- YAML LSP
+vim.lsp.config('yamlls', {
+  cmd = { 'yaml-language-server', '--stdio' },
+  filetypes = { 'yaml', 'yml' },
+  root_markers = { '.git' },
+})
+
+-- PHP LSP (Intelephense)
+vim.lsp.config('intelephense', {
+  cmd = { 'intelephense', '--stdio' },
+  filetypes = { 'php' },
+  root_markers = { 'composer.json', '.git' },
+})
+
+-- 2. Enable LSP configurations
+local lsp_servers = {
+  'basedpyright',
+  'bashls',
+  'dockerls',
+  'html',
+  'jsonls',
+  'lua_ls',
+  'vimls',
+  'yamlls',
+  'intelephense',
+}
+
+-- Enable all configured LSP servers
+for _, server in ipairs(lsp_servers) do
+  vim.lsp.enable(server)
+end
 
 vim.diagnostic.config(
     {
