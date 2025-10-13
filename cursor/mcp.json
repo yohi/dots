@@ -1,6 +1,5 @@
 {
   "mcpServers": {
-    // Note: Replace placeholders with actual API keys/tokens
     "bitbucket": {
       "command": "uvx",
       "args": [
@@ -119,6 +118,12 @@
         "ALLOW_WRITE": "false",
         "ALLOW_SENSITIVE_DATA": "false"
       }
+    },
+    "chrome-devtools": {
+      "command": "npx",
+      "args": [
+        "chrome-devtools-mcp@latest"
+      ]
     }
   }
 }

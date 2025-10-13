@@ -1,6 +1,37 @@
 customCommands:
-  - command: git diff --staged | "/home/y_ohi/program/lazygit-llm-commit-generator/lazygit-llm-generate" --config "/home/y_ohi/program/lazygit-llm-commit-generator/lazygit-llm/config/config.yml"
-    context: files
-    description: Generate commit message with LLM
-    key: <c-g>
-    output: log
+- command: |
+    if git diff --staged --quiet; then
+      echo "ステージングされた変更がありません"
+      echo "終了する場合はq"
+    else
+      MSG=$(git diff --staged | "/home/y_ohi/program/lazygit-llm-commit-generator/lazygit-llm-generate" --config "/home/y_ohi/program/lazygit-llm-commit-generator/lazygit-llm/config/config.yml")
+      echo "$MSG" > /tmp/lazygit-commit-msg
+      git commit --template=/tmp/lazygit-commit-msg
+    fi
+  context: files
+  description: Generate commit message with LLM
+  key: <c-g>
+  output: terminal
+- command: /home/y_ohi/program/lazygit-llm-commit-generator/lazygit-llm-generate-auto
+  context: files
+  description: Generate and auto-commit with LLM
+  key: <c-a>
+  output: log
+- command: |
+    if git diff --staged --quiet; then
+      echo "ステージングされた変更がありません"
+      echo "終了する場合はq"
+    elif [ -f /tmp/lazygit-commit-msg ]; then
+      git commit --template=/tmp/lazygit-commit-msg
+    else
+      git commit
+    fi
+  context: files
+  description: Open commit editor
+  key: <c-c>
+  output: terminal
+- command: 'MSG=$(git diff --staged | lazygit-llm-generate) && echo "$MSG" > /tmp/lazygit-commit-msg && git commit --template=/tmp/lazygit-commit-msg'
+  context: files
+  description: Generate commit message with Gemini and open editor
+  key: <c-x>
+  output: terminal
