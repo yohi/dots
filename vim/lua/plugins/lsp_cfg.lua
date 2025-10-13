@@ -41,16 +41,44 @@ vim.api.nvim_create_autocmd(
 )
 
 return {
-    -- mason (LSP server installer only)
+    -- mason (LSP server installer)
     {
         "williamboman/mason.nvim",
         dependencies = {
+            "williamboman/mason-lspconfig.nvim",
             "jay-babu/mason-null-ls.nvim",
             "nvimtools/none-ls.nvim",
         },
+        priority = 100, -- 他のプラグインより先に読み込む
         config = function()
-            require("mason").setup()
+            require("mason").setup({
+                ui = {
+                    icons = {
+                        package_installed = "✓",
+                        package_pending = "➜",
+                        package_uninstalled = "✗"
+                    }
+                }
+            })
 
+            -- mason-lspconfig: LSPサーバーの自動インストールと管理
+            require("mason-lspconfig").setup({
+                -- lsp_serversテーブルで定義されたサーバーを自動インストール
+                ensure_installed = lsp_servers,
+                -- サーバーが利用可能になったら自動的にセットアップ
+                automatic_installation = true,
+            })
+        end,
+    },
+
+    -- LSP Configuration (バッファ読み込み時に実行)
+    {
+        "williamboman/mason-lspconfig.nvim",
+        dependencies = {
+            "williamboman/mason.nvim",
+        },
+        event = { "BufReadPre", "BufNewFile" }, -- バッファ読み込み時にLSP設定を実行
+        config = function()
             -- Python環境設定（改良版：効率的かつエラーハンドリング付き）
             local function setup_python_host()
                 local python_path = nil
@@ -86,16 +114,26 @@ return {
 
             setup_python_host()
 
-            -- LSP configurations using new Neovim LSP API
-            -- Global configuration for all LSP servers
-            vim.lsp.config('*', {
-                root_markers = { '.git' },
-            })
+            -- バージョンガード: Neovim 0.11以降の新しいLSP APIを使用
+            local has_new_lsp_api = vim.fn.has('nvim-0.11') == 1
+
+            -- Masonのレジストリから実行可能ファイル名を取得するヘルパー関数
+            local function get_mason_cmd(server_name)
+                local registry = require("mason-registry")
+                if registry.is_installed(server_name) then
+                    local pkg = registry.get_package(server_name)
+                    -- MasonでインストールされたパッケージのbinディレクトリはすでにPATHに含まれている
+                    return nil  -- デフォルトのコマンドを使用
+                end
+                return nil
+            end
 
             -- Configure LSP servers using vim.lsp.config()
+            -- Masonでインストールされたバイナリは自動的にPATHに追加される
             local lsp_configs = {
                 basedpyright = {
-                    cmd = { 'basedpyright-langserver', '--stdio' },
+                    -- Masonのパッケージ名: basedpyright
+                    -- インストールされる実行可能ファイル: basedpyright-langserver
                     filetypes = { 'python' },
                     root_markers = { '.venv', 'pyproject.toml', 'setup.py', 'requirements.txt' },
                     settings = {
@@ -126,11 +164,13 @@ return {
                     },
                 },
                 bashls = {
-                    cmd = { 'bash-language-server', 'start' },
+                    -- Masonのパッケージ名: bash-language-server
+                    -- インストールされる実行可能ファイル: bash-language-server
                     filetypes = { 'sh', 'bash' },
                 },
                 lua_ls = {
-                    cmd = { 'lua-language-server' },
+                    -- Masonのパッケージ名: lua-language-server
+                    -- インストールされる実行可能ファイル: lua-language-server
                     filetypes = { 'lua' },
                     root_markers = { '.luarc.json', '.luarc.jsonc' },
                     settings = {
@@ -146,39 +186,58 @@ return {
                     },
                 },
                 yamlls = {
-                    cmd = { 'yaml-language-server', '--stdio' },
+                    -- Masonのパッケージ名: yaml-language-server
+                    -- インストールされる実行可能ファイル: yaml-language-server
                     filetypes = { 'yaml', 'yml' },
                 },
                 jsonls = {
-                    cmd = { 'vscode-json-language-server', '--stdio' },
+                    -- Masonのパッケージ名: json-lsp
+                    -- インストールされる実行可能ファイル: vscode-json-language-server
                     filetypes = { 'json', 'jsonc' },
                 },
                 ts_ls = {
-                    cmd = { 'typescript-language-server', '--stdio' },
+                    -- Masonのパッケージ名: typescript-language-server
+                    -- インストールされる実行可能ファイル: typescript-language-server
                     filetypes = { 'javascript', 'javascriptreact', 'typescript', 'typescriptreact' },
                     root_markers = { 'package.json', 'tsconfig.json', 'jsconfig.json' },
                 },
                 html = {
-                    cmd = { 'vscode-html-language-server', '--stdio' },
+                    -- Masonのパッケージ名: html-lsp
+                    -- インストールされる実行可能ファイル: vscode-html-language-server
                     filetypes = { 'html' },
                 },
                 cssls = {
-                    cmd = { 'vscode-css-language-server', '--stdio' },
+                    -- Masonのパッケージ名: css-lsp
+                    -- インストールされる実行可能ファイル: vscode-css-language-server
                     filetypes = { 'css', 'scss', 'less' },
                 },
             }
 
             -- Apply configurations
-            for server_name, config in pairs(lsp_configs) do
-                vim.lsp.config(server_name, config)
-            end
+            if has_new_lsp_api then
+                -- Neovim 0.11以降: 新しいLSP APIを使用
+                -- Global configuration for all LSP servers
+                vim.lsp.config('*', {
+                    root_markers = { '.git' },
+                })
 
-            -- Enable LSP servers
-            for server_name, _ in pairs(lsp_configs) do
-                vim.lsp.enable(server_name)
+                for server_name, config in pairs(lsp_configs) do
+                    vim.lsp.config(server_name, config)
+                end
+
+                -- Enable LSP servers
+                for server_name, _ in pairs(lsp_configs) do
+                    vim.lsp.enable(server_name)
+                end
+            else
+                -- Neovim 0.10以前: 従来のlspconfig APIを使用
+                -- 従来のlspconfigプラグインが必要な場合はここに実装を追加
+                vim.notify(
+                    "Neovim 0.10以前が検出されました。LSP設定には lspconfig プラグインが必要です。",
+                    vim.log.levels.WARN
+                )
             end
         end,
-        cmd = "Mason",
     },
 
  --   -- mason-null-ls
