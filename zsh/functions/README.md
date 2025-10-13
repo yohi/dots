@@ -40,7 +40,15 @@ This directory contains modular function files that extend zsh functionality. Fu
 
 Comprehensive AWS helper functions with interactive selection using fzf.
 
-**File**: `aws.zsh` (3,085 lines)
+**Module Structure**: Organized into specialized files for maintainability
+- `aws/core.zsh` (116 lines) - Core utilities and profile selection
+- `aws/ec2.zsh` (68 lines) - EC2 instance management
+- `aws/ecs.zsh` (28 lines) - ECS cluster operations
+- `aws/logs.zsh` (61 lines) - CloudWatch Logs streaming
+- `aws/rds.zsh` (165 lines) - RDS connection via SSM
+- `aws/rds-helpers.zsh` (2,992 lines) - RDS internal helper functions
+
+**Total**: 3,430 lines across 6 modules
 
 **Prerequisites**:
 - AWS CLI v2.x
@@ -53,6 +61,8 @@ Comprehensive AWS helper functions with interactive selection using fzf.
 - fzf-powered resource selection
 - Error handling with cleanup traps
 - Comprehensive validation
+
+**Module Loading**: All AWS modules are automatically sourced at shell startup via the main zshrc configuration
 
 ---
 
@@ -96,7 +106,7 @@ ec2-list
 ```
 
 **Output Format**:
-```
+```text
 InstanceID | State | Type | Name | PrivateIP | PublicIP
 ```
 
@@ -279,14 +289,14 @@ awslogs --verbose
 **Output Formats**:
 
 **Simple Mode** (default):
-```
+```text
 2025-01-03T10:15:30Z [INFO] Application started
 2025-01-03T10:15:31Z [INFO] Connected to database
 2025-01-03T10:15:32Z [ERROR] Failed to load config
 ```
 
 **Verbose Mode** (`-v`):
-```
+```text
 ====================================
 Timestamp: 2025-01-03T10:15:30Z
 Log Stream: app-server-001
@@ -328,7 +338,7 @@ ecs-list
 ```
 
 **Output**:
-```
+```text
 Cluster ARN                                     | Status  | Services | Tasks
 arn:aws:ecs:us-east-1:123456789:cluster/prod  | ACTIVE  | 5        | 12
 arn:aws:ecs:us-east-1:123456789:cluster/dev   | ACTIVE  | 3        | 6
@@ -430,6 +440,8 @@ fi
 
 ### Creating New Functions
 
+#### Single-File Functions
+
 1. **Create Function File**:
 ```bash
 cat > ~/dots/zsh/functions/my-function.zsh << 'EOF'
@@ -449,6 +461,53 @@ exec zsh
 3. **Test Function**:
 ```bash
 my-custom-function
+```
+
+#### Modular Functions (AWS-style)
+
+For complex function suites, use a modular structure:
+
+1. **Create Module Directory**:
+```bash
+mkdir -p ~/dots/zsh/functions/mymodule
+```
+
+2. **Create Module Files**:
+```bash
+# Core module with shared utilities
+cat > ~/dots/zsh/functions/mymodule/core.zsh << 'EOF'
+#!/usr/bin/env zsh
+# Shared helper functions
+_mymodule_helper() {
+    echo "Helper function"
+}
+EOF
+
+# Feature-specific module
+cat > ~/dots/zsh/functions/mymodule/feature.zsh << 'EOF'
+#!/usr/bin/env zsh
+mymodule-feature() {
+    _mymodule_helper
+    echo "Feature function"
+}
+EOF
+```
+
+3. **Module Loading**: Modules are auto-loaded by pattern matching in zshrc
+   - All `*.zsh` files in subdirectories are sourced automatically
+   - Load order is alphabetical by filename
+
+4. **Example Module Structure**:
+```text
+functions/
+├── aws/
+│   ├── core.zsh       # Core utilities, profile selection
+│   ├── ec2.zsh        # EC2-specific functions
+│   ├── ecs.zsh        # ECS-specific functions
+│   ├── logs.zsh       # CloudWatch Logs
+│   ├── rds.zsh        # RDS functions
+│   └── rds-helpers.zsh # RDS internal helpers
+└── cursor.zsh         # Standalone function
 ```
 
 ### Best Practices
@@ -623,16 +682,24 @@ test_error_handling
 
 ## 📊 Function Statistics
 
+### AWS Functions (Modular)
+
+| Module | Lines | Functions | Description |
+|--------|-------|-----------|-------------|
+| `aws/core.zsh` | 116 | aws-help, profile selection | Core utilities |
+| `aws/ec2.zsh` | 68 | ec2-list, ec2-ssm | EC2 management |
+| `aws/ecs.zsh` | 28 | ecs-list | ECS operations |
+| `aws/logs.zsh` | 61 | awslogs | CloudWatch Logs |
+| `aws/rds.zsh` | 165 | rds-ssm | RDS connections |
+| `aws/rds-helpers.zsh` | 2,992 | Internal helpers | RDS utilities |
+| **AWS Subtotal** | **3,430** | **6 modules** | - |
+
+### Other Functions
+
 | Function | Lines | Dependencies | Features |
 |----------|-------|--------------|----------|
-| `aws-help` | ~50 | - | Documentation |
-| `ec2-list` | ~80 | aws, jq | Listing |
-| `ec2-ssm` | ~150 | aws, fzf, session-manager-plugin | Interactive SSM |
-| `rds-ssm` | ~400 | aws, fzf, jq, psql/mysql | SSM port forwarding |
-| `awslogs` | ~100 | aws, fzf | Log streaming |
-| `ecs-list` | ~60 | aws, jq | ECS management |
-| `cursor` | ~30 | cursor | IDE launcher |
-| **Total** | **3,123** | - | - |
+| `cursor` | 38 | cursor | IDE launcher |
+| **Total** | **3,468** | - | **6 AWS modules + 1 function** |
 
 ---
 
@@ -654,6 +721,6 @@ For issues or questions:
 
 ---
 
-**Last Updated**: 2025-01-03
-**Total Functions**: 7 public + 2 internal helpers
-**Total Lines**: 3,123
+**Last Updated**: 2025-10-13
+**Total Functions**: 7 public functions across 6 AWS modules + 1 cursor function
+**Total Lines**: 3,468
