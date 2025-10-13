@@ -4,14 +4,14 @@ Modern, high-performance Zsh configuration with AWS integration, powerful themin
 
 ## 📋 Table of Contents
 
-- [Features](#features)
-- [Quick Start](#quick-start)
-- [Directory Structure](#directory-structure)
-- [Configuration Files](#configuration-files)
-- [AWS Functions](#aws-functions)
-- [Performance](#performance)
-- [Customization](#customization)
-- [Troubleshooting](#troubleshooting)
+- [Features](#-features)
+- [Quick Start](#-quick-start)
+- [Directory Structure](#-directory-structure)
+- [Configuration Files](#️-configuration-files)
+- [AWS Functions](#-aws-functions)
+- [Performance](#-performance)
+- [Customization](#-customization)
+- [Troubleshooting](#-troubleshooting)
 
 ---
 
