@@ -320,7 +320,7 @@ source ~/dots/zsh/functions/aws.zsh
 
 ## 今後の予定
 
-### v2.2.0（予定）
+### v2.4.0（予定）
 - [ ] 環境変数によるポート事前指定機能（`RDS_LOCAL_PORT`）
 - [ ] S3関連関数の追加
 - [ ] Lambda関連関数の追加

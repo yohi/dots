@@ -2,12 +2,12 @@
 
 ## 📋 Table of Contents
 
-- [Installation](#-installation)
-- [First Time Setup](#-first-time-setup)
-- [Available Functions](#-available-functions)
-- [Configuration](#️-configuration)
-- [Troubleshooting](#-troubleshooting)
-- [Performance Tips](#-performance-tips)
+- [Installation](#installation)
+- [First Time Setup](#first-time-setup)
+- [Available Functions](#available-functions)
+- [Configuration](#configuration)
+- [Troubleshooting](#troubleshooting)
+- [Performance Tips](#performance-tips)
 
 ---
 

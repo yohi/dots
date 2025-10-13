@@ -6,19 +6,19 @@ Comprehensive reference for custom zsh functions in this dotfiles repository.
 
 ## 📋 Table of Contents
 
-- [Overview](#-overview)
-- [AWS Functions](#️-aws-functions)
+- [Overview](#overview)
+- [AWS Functions](#aws-functions)
   - [aws-help](#aws-help)
   - [ec2-list](#ec2-list)
   - [ec2-ssm](#ec2-ssm)
   - [rds-ssm](#rds-ssm)
   - [awslogs](#awslogs)
   - [ecs-list](#ecs-list)
-- [Cursor Functions](#️-cursor-functions)
+- [Cursor Functions](#cursor-functions)
   - [cursor](#cursor)
-- [Internal Helper Functions](#-internal-helper-functions)
-- [Development Guide](#-development-guide)
-- [Testing](#-testing)
+- [Internal Helper Functions](#internal-helper-functions)
+- [Development Guide](#development-guide)
+- [Testing](#testing)
 
 ---
 
