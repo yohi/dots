@@ -96,7 +96,7 @@ ec2-list
 ```
 
 **Output Format**:
-```
+```text
 InstanceID | State | Type | Name | PrivateIP | PublicIP
 ```
 
@@ -279,14 +279,14 @@ awslogs --verbose
 **Output Formats**:
 
 **Simple Mode** (default):
-```
+```text
 2025-01-03T10:15:30Z [INFO] Application started
 2025-01-03T10:15:31Z [INFO] Connected to database
 2025-01-03T10:15:32Z [ERROR] Failed to load config
 ```
 
 **Verbose Mode** (`-v`):
-```
+```text
 ====================================
 Timestamp: 2025-01-03T10:15:30Z
 Log Stream: app-server-001
@@ -328,7 +328,7 @@ ecs-list
 ```
 
 **Output**:
-```
+```text
 Cluster ARN                                     | Status  | Services | Tasks
 arn:aws:ecs:us-east-1:123456789:cluster/prod  | ACTIVE  | 5        | 12
 arn:aws:ecs:us-east-1:123456789:cluster/dev   | ACTIVE  | 3        | 6
