@@ -436,3 +436,5 @@ export BUN_INSTALL="$HOME/.bun"
 export PATH="$BUN_INSTALL/bin:$PATH"
 
 eval ""
+
+alias claude="/home/y_ohi/.claude/local/claude"

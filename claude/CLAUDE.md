@@ -61,3 +61,30 @@ Git操作の代わりに以下を提案します：
 - README.mdは日本語で作成します
 - API仕様書も日本語での説明を含めます
 - コードの変更履歴は分かりやすく記録します
+
+# ===================================================
+# SuperClaude Framework Components
+# ===================================================
+
+# Behavioral Modes
+@MODE_Brainstorming.md
+@MODE_Business_Panel.md
+@MODE_Introspection.md
+@MODE_Orchestration.md
+@MODE_Task_Management.md
+@MODE_Token_Efficiency.md
+
+# MCP Documentation
+@MCP_Context7.md
+@MCP_Magic.md
+@MCP_Morphllm.md
+@MCP_Playwright.md
+@MCP_Sequential.md
+@MCP_Serena.md
+
+# Core Framework
+@BUSINESS_PANEL_EXAMPLES.md
+@BUSINESS_SYMBOLS.md
+@FLAGS.md
+@PRINCIPLES.md
+@RULES.md
