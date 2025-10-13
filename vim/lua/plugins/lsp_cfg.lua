@@ -1,5 +1,5 @@
 local lsp_servers = {
-    -- "basedpyright",
+    "basedpyright",
     -- "ruff",
     "bashls",
     "lua_ls",
@@ -41,34 +41,44 @@ vim.api.nvim_create_autocmd(
 )
 
 return {
-    -- mason / mason-lspconfig / lspconfig
+    -- mason (LSP server installer)
     {
         "williamboman/mason.nvim",
         dependencies = {
             "williamboman/mason-lspconfig.nvim",
-            "neovim/nvim-lspconfig",
             "jay-babu/mason-null-ls.nvim",
-            -- "jose-elias-alvarez/null-ls.nvim",
             "nvimtools/none-ls.nvim",
         },
+        priority = 100, -- 他のプラグインより先に読み込む
         config = function()
-            local lsp_config = require("lspconfig")
+            require("mason").setup({
+                ui = {
+                    icons = {
+                        package_installed = "✓",
+                        package_pending = "➜",
+                        package_uninstalled = "✗"
+                    }
+                }
+            })
 
-            require("mason").setup()
-            -- require("mason-lspconfig").setup({
-            --     -- lsp_servers table Install
-            --     ensure_installed = lsp_servers,
-            -- })
+            -- mason-lspconfig: LSPサーバーの自動インストールと管理
+            require("mason-lspconfig").setup({
+                -- lsp_serversテーブルで定義されたサーバーを自動インストール
+                ensure_installed = lsp_servers,
+                -- サーバーが利用可能になったら自動的にセットアップ
+                automatic_installation = true,
+            })
+        end,
+    },
 
-            -- lsp_servers table setup
-            for _, lsp_server in ipairs(lsp_servers) do
-                lsp_config[lsp_server].setup({
-                    root_dir = function(fname)
-                        return lsp_config.util.find_git_ancestor(fname) or vim.fn.getcwd()
-                    end,
-                })
-            end
-
+    -- LSP Configuration (バッファ読み込み時に実行)
+    {
+        "williamboman/mason-lspconfig.nvim",
+        dependencies = {
+            "williamboman/mason.nvim",
+        },
+        event = { "BufReadPre", "BufNewFile" }, -- バッファ読み込み時にLSP設定を実行
+        config = function()
             -- Python環境設定（改良版：効率的かつエラーハンドリング付き）
             local function setup_python_host()
                 local python_path = nil
@@ -104,77 +114,138 @@ return {
 
             setup_python_host()
 
-            lsp_config.basedpyright.setup({
-                root_dir = function(fname)
-                    -- return lsp_config.util.find_git_ancestor(fname) or vim.fn.getcwd()
-                    return lsp_config.util.root_pattern(".venv")(fname)
-                end,
-                settings = {
-                    basedpyright = {
-                        analysis = {
-                            --
-                            -- inlayHints = {
-                            --     functionReturnTypes = true,
-                            --     variableTypes = true,
-                            -- },
+            -- バージョンガード: Neovim 0.11以降の新しいLSP APIを使用
+            local has_new_lsp_api = vim.fn.has('nvim-0.11') == 1
 
-                            --
-                            -- autoImportCompletions = true,
+            -- Masonのレジストリから実行可能ファイル名を取得するヘルパー関数
+            local function get_mason_cmd(server_name)
+                local registry = require("mason-registry")
+                if registry.is_installed(server_name) then
+                    local pkg = registry.get_package(server_name)
+                    -- MasonでインストールされたパッケージのbinディレクトリはすでにPATHに含まれている
+                    return nil  -- デフォルトのコマンドを使用
+                end
+                return nil
+            end
 
-                            -- 事前定義された名前にもどついて検索パスを自動的に追加するか
-                            autoSearchPaths = true,
-
-                            -- [openFilesOnly, workspace]
-                            diagnosticMode = "openFilesOnly",
-
-                            -- 診断のレベルを上書きする
-                            -- https://github.com/microsoft/pylance-release/blob/main/DIAGNOSTIC_SEVERITY_RULES.md
-                            diagnosticSeverityOverrides = {
-                                reportGeneralTypeIssues = "none",
-                                reportMissingTypeArgument = "none",
-                                reportUnknownMemberType = "none",
-                                reportUnknownVariableType = "none",
-                                reportUnknownArgumentType = "none",
-                            },
-
-                            -- インポート解決のための追加検索パス指定
-                            extraPaths = {
-                            },
-
-                            -- default: Information [Error, Warning, Information, Trace]
-                            -- logLevel = 'Warning',
-                            logLevel = 'Trace',
-
-                            -- カスタムタイプのstubファイルを含むディレクトリ指定 default: ./typings
-                            -- stubPath = '',
-
-                            -- 型チェックの分析レベル default: off [off, basic, strict]
-                            typeCheckingMode = 'off',
-                            reportMissingImports = 'none',
-                            reportMissingModuleSource = 'none',
-                            reportUnusedImport = 'none',
-                            reportUnusedVariable = 'none',
-                            reportUnboundVariable = 'none',
-                            reportUndefinedVariable = 'none',
-                            reportGeneralTypeIssues = 'none',
-                            reportMissingTypeArgument = 'none',
-                            reportOptionalSubscript = 'none',
-                            reportOptionalMemberAccess = 'none',
-
-                            --
-                            -- typeshedPaths = '',
-
-                            -- default: false
-                            useLibraryCodeForTypes = true,
-
-                            pylintPath = {
+            -- Configure LSP servers using vim.lsp.config()
+            -- Masonでインストールされたバイナリは自動的にPATHに追加される
+            local lsp_configs = {
+                basedpyright = {
+                    -- Masonのパッケージ名: basedpyright
+                    -- インストールされる実行可能ファイル: basedpyright-langserver
+                    cmd = { 'basedpyright-langserver', '--stdio' },
+                    filetypes = { 'python' },
+                    root_markers = { '.venv', 'pyproject.toml', 'setup.py', 'requirements.txt' },
+                    settings = {
+                        basedpyright = {
+                            analysis = {
+                                autoSearchPaths = true,
+                                diagnosticMode = "openFilesOnly",
+                                diagnosticSeverityOverrides = {
+                                    reportGeneralTypeIssues = "none",
+                                    reportMissingTypeArgument = "none",
+                                    reportUnknownMemberType = "none",
+                                    reportUnknownVariableType = "none",
+                                    reportUnknownArgumentType = "none",
+                                },
+                                logLevel = 'Trace',
+                                typeCheckingMode = 'off',
+                                reportMissingImports = 'none',
+                                reportMissingModuleSource = 'none',
+                                reportUnusedImport = 'none',
+                                reportUnusedVariable = 'none',
+                                reportUnboundVariable = 'none',
+                                reportUndefinedVariable = 'none',
+                                reportOptionalSubscript = 'none',
+                                reportOptionalMemberAccess = 'none',
+                                useLibraryCodeForTypes = true,
                             },
                         },
                     },
-                }
-            })
+                },
+                bashls = {
+                    -- Masonのパッケージ名: bash-language-server
+                    -- インストールされる実行可能ファイル: bash-language-server
+                    cmd = { 'bash-language-server', 'start' },
+                    filetypes = { 'sh', 'bash' },
+                },
+                lua_ls = {
+                    -- Masonのパッケージ名: lua-language-server
+                    -- インストールされる実行可能ファイル: lua-language-server
+                    cmd = { 'lua-language-server' },
+                    filetypes = { 'lua' },
+                    root_markers = { '.luarc.json', '.luarc.jsonc' },
+                    settings = {
+                        Lua = {
+                            runtime = { version = 'LuaJIT' },
+                            diagnostics = { globals = { 'vim' } },
+                            workspace = {
+                                library = vim.api.nvim_get_runtime_file("", true),
+                                checkThirdParty = false,
+                            },
+                            telemetry = { enable = false },
+                        },
+                    },
+                },
+                yamlls = {
+                    -- Masonのパッケージ名: yaml-language-server
+                    -- インストールされる実行可能ファイル: yaml-language-server
+                    cmd = { 'yaml-language-server', '--stdio' },
+                    filetypes = { 'yaml', 'yml' },
+                },
+                jsonls = {
+                    -- Masonのパッケージ名: json-lsp
+                    -- インストールされる実行可能ファイル: vscode-json-language-server
+                    cmd = { 'vscode-json-language-server', '--stdio' },
+                    filetypes = { 'json', 'jsonc' },
+                },
+                ts_ls = {
+                    -- Masonのパッケージ名: typescript-language-server
+                    -- インストールされる実行可能ファイル: typescript-language-server
+                    cmd = { 'typescript-language-server', '--stdio' },
+                    filetypes = { 'javascript', 'javascriptreact', 'typescript', 'typescriptreact' },
+                    root_markers = { 'package.json', 'tsconfig.json', 'jsconfig.json' },
+                },
+                html = {
+                    -- Masonのパッケージ名: html-lsp
+                    -- インストールされる実行可能ファイル: vscode-html-language-server
+                    cmd = { 'vscode-html-language-server', '--stdio' },
+                    filetypes = { 'html' },
+                },
+                cssls = {
+                    -- Masonのパッケージ名: css-lsp
+                    -- インストールされる実行可能ファイル: vscode-css-language-server
+                    cmd = { 'vscode-css-language-server', '--stdio' },
+                    filetypes = { 'css', 'scss', 'less' },
+                },
+            }
+
+            -- Apply configurations
+            if has_new_lsp_api then
+                -- Neovim 0.11以降: 新しいLSP APIを使用
+                -- Global configuration for all LSP servers
+                vim.lsp.config('*', {
+                    root_markers = { '.git' },
+                })
+
+                for server_name, config in pairs(lsp_configs) do
+                    vim.lsp.config(server_name, config)
+                end
+
+                -- Enable LSP servers
+                for server_name, _ in pairs(lsp_configs) do
+                    vim.lsp.enable(server_name)
+                end
+            else
+                -- Neovim 0.10以前: 従来のlspconfig APIを使用
+                -- 従来のlspconfigプラグインが必要な場合はここに実装を追加
+                vim.notify(
+                    "Neovim 0.10以前が検出されました。LSP設定には lspconfig プラグインが必要です。",
+                    vim.log.levels.WARN
+                )
+            end
         end,
-        cmd = "Mason",
     },
 
  --   -- mason-null-ls
