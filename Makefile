@@ -20,6 +20,8 @@ include mk/menu.mk
 include mk/shortcuts.mk
 include mk/memory.mk
 include mk/codex.mk
+include mk/superclaude.mk
+include mk/cc-sdd.mk
 
 .PHONY: all
 all: menu

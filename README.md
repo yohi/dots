@@ -775,4 +775,191 @@ make setup-mcp-tools
 make setup-vscode
 ```
 
+### SuperClaude Framework for Claude Code設定
+
+**🚀 Claude Code向けSuperClaudeフレームワーク** - AIとの対話を強化する包括的なフレームワーク
+
+#### 📋 概要
+
+SuperClaudeフレームワークは、Claude Codeでの開発体験を向上させる以下のコンポーネントを提供します:
+
+- **Behavioral Modes**: タスク管理、ブレインストーミング、イントロスペクションなど
+- **MCP Documentation**: Context7、Serena、Playwrightなどのドキュメント
+- **Core Framework**: ビジネスパネル、フラグ、原則、ルールなど
+
+#### 🔧 セットアップコマンド
+
+```bash
+# SuperClaudeフレームワークをインストール
+make superclaude-install
+
+# または短縮形
+make claudecode
+
+# インストール状態を確認
+make superclaude-check
+
+# フレームワーク情報を表示
+make superclaude-info
+```
+
+#### 📦 インストール内容
+
+フレームワークは以下のファイルを`~/.claude/`にセットアップします:
+
+**Behavioral Modes**:
+- `MODE_Brainstorming.md` - ブレインストーミングモード
+- `MODE_Business_Panel.md` - ビジネスパネルモード
+- `MODE_Introspection.md` - イントロスペクションモード
+- `MODE_Orchestration.md` - オーケストレーションモード
+- `MODE_Task_Management.md` - タスク管理モード
+- `MODE_Token_Efficiency.md` - トークン効率化モード
+
+**MCP Documentation**:
+- `MCP_Context7.md` - Context7 MCPドキュメント
+- `MCP_Magic.md` - Magic MCPドキュメント
+- `MCP_Morphllm.md` - Morphllm MCPドキュメント
+- `MCP_Playwright.md` - Playwright MCPドキュメント
+- `MCP_Sequential.md` - Sequential MCPドキュメント
+- `MCP_Serena.md` - Serena MCPドキュメント
+
+**Core Framework**:
+- `BUSINESS_PANEL_EXAMPLES.md` - ビジネスパネルの例
+- `BUSINESS_SYMBOLS.md` - ビジネスシンボル
+- `FLAGS.md` - フラグ定義
+- `PRINCIPLES.md` - 原則
+- `RULES.md` - ルール
+
+#### 🔄 メンテナンスコマンド
+
+```bash
+# 最新版に更新
+make superclaude-update
+
+# アンインストール
+make superclaude-uninstall
+```
+
+#### 📝 使用方法
+
+SuperClaudeフレームワークをインストールすると、Claude Codeを起動した際に自動的にフレームワークが読み込まれます。`~/.claude/CLAUDE.md`に記載されている各モードやMCPドキュメントが利用可能になります。
+
+#### 🔗 設定ファイル
+
+- **メイン設定**: `~/.claude/CLAUDE.md` (dotfilesからシンボリックリンク)
+- **ソース**: `~/dotfiles/claude/CLAUDE.md`
+
+---
+
+### cc-sdd (Spec-Driven Development) for Claude Code設定
+
+**🚀 AI駆動開発ライフサイクル(AI-DLC) × Spec-Driven Development(SDD)** - プロトタイプから本番開発へ
+
+#### 📋 概要
+
+cc-sddは、Claude CodeにAI-DLC (AI-Driven Development Life Cycle)とSpec-Driven Development (SDD)のワークフローを導入するツールです。
+
+**主な特徴**:
+- 🚀 **AI-DLC手法** - 人間承認付きAIネイティブプロセス
+- 📋 **仕様ファースト開発** - 包括的仕様を単一情報源として活用
+- ⚡ **ボルト開発** - 週単位から時間単位の納期を実現
+- 🧠 **永続的プロジェクトメモリ** - AIがセッション間でコンテキスト維持
+- 🛠 **テンプレート柔軟性** - チームのドキュメント形式に合わせてカスタマイズ可能
+- 🔄 **AIネイティブ+人間ゲート** - AI計画→人間検証→AI実装
+
+#### 🔧 セットアップコマンド
+
+```bash
+# cc-sddをインストール（日本語、Claude Code）
+make cc-sdd-install
+
+# または短縮形
+make cc-sdd
+
+# アルファ版インストール（最新機能）
+make cc-sdd-install-alpha
+
+# SubAgentsインストール（12コマンド + 9サブエージェント）
+make cc-sdd-install-agent
+
+# 英語版インストール
+make cc-sdd-install-en
+
+# インストール状態を確認
+make cc-sdd-check
+
+# 詳細情報を表示
+make cc-sdd-info
+```
+
+#### 📦 提供されるコマンド
+
+**仕様駆動開発ワークフロー**:
+- `/kiro:spec-init <description>` - 機能仕様を初期化
+- `/kiro:spec-requirements <feature>` - 要件を生成
+- `/kiro:spec-design <feature>` - 技術設計を作成
+- `/kiro:spec-tasks <feature>` - 実装タスクに分解
+- `/kiro:spec-impl <feature> <tasks>` - TDDで実行
+- `/kiro:spec-status <feature>` - 進捗を確認
+
+**品質向上（既存コード向けオプション）**:
+- `/kiro:validate-gap <feature>` - 既存機能と要件のギャップ分析
+- `/kiro:validate-design <feature>` - 設計互換性をレビュー
+
+**プロジェクトメモリとコンテキスト**:
+- `/kiro:steering` - プロジェクトメモリを作成/更新
+- `/kiro:steering-custom` - 専門ドメイン知識を追加
+
+#### 🤖 対応AIエージェント
+
+- **Claude Code** (デフォルト) - `make cc-sdd-install`
+- **Claude Code SubAgents** (アルファ版) - `make cc-sdd-install-agent`
+- **Gemini CLI** - `make cc-sdd-install-gemini`
+- **Cursor IDE** - `make cc-sdd-install-cursor`
+- **Codex CLI** (アルファ版) - `make cc-sdd-install-codex`
+- **GitHub Copilot** (アルファ版) - `make cc-sdd-install-copilot`
+- **Qwen Code** - `make cc-sdd-install-qwen`
+
+#### 💡 使用例
+
+**新規プロジェクト**:
+```bash
+/kiro:spec-init ユーザー認証システムをOAuthで構築
+/kiro:spec-requirements auth-system
+/kiro:spec-design auth-system
+/kiro:spec-tasks auth-system
+/kiro:spec-impl auth-system
+```
+
+**既存プロジェクト（推奨）**:
+```bash
+/kiro:steering
+/kiro:spec-init 既存認証にOAuthを追加
+/kiro:spec-requirements oauth-enhancement
+/kiro:validate-gap oauth-enhancement
+/kiro:spec-design oauth-enhancement
+/kiro:validate-design oauth-enhancement
+/kiro:spec-tasks oauth-enhancement
+/kiro:spec-impl oauth-enhancement
+```
+
+#### 📂 インストール内容
+
+- **Kiroコマンド**: `.claude/commands/kiro/` (11コマンド)
+- **サブエージェント**: `.claude/agents/kiro/` (9サブエージェント、SubAgents版のみ)
+- **Kiroディレクトリ**: `.kiro/` (steering, specs, settings)
+- **設定ファイル**: `CLAUDE.md`
+
+#### 🌐 対応言語
+
+英語、日本語、繁体字中国語、簡体字中国語、スペイン語、ポルトガル語、ドイツ語、フランス語、ロシア語、イタリア語、韓国語、アラビア語（全12言語）
+
+#### 📚 リソース
+
+- **GitHubリポジトリ**: https://github.com/gotalab/cc-sdd
+- **NPMパッケージ**: https://www.npmjs.com/package/cc-sdd
+- **関連記事**: [Kiroの仕様書駆動開発プロセスをClaude Codeで徹底的に再現した](https://zenn.dev/gotalab/articles/3db0621ce3d6d2)
+
+---
+
 **🎉 快適な開発環境をお楽しみください！**
