@@ -2321,22 +2321,24 @@ _rds_ssm_smart_filter_secrets() {
         | map(
             . + {
                 "relevance_score": (
-                    # 🔥 最高優先度: Description欄のRDS ARN一致
+                    # 🔥 最高優先度: RDS/プレフィックス + クラスター名完全一致
+                    (if (.Name | test("^RDS/" + $actual_cluster + "/"; "i")) then 250 else 0 end) +
+                    (if (.Name | test("^RDS/" + $cluster_base + "/"; "i")) then 240 else 0 end) +
+                    (if (.Name | test("^RDS/.*" + $actual_cluster; "i")) then 230 else 0 end) +
+                    (if (.Name | test("^RDS/.*" + $cluster_base; "i")) then 220 else 0 end) +
+
+                    # 🎯 Description欄のRDS ARN一致
                     (if (.Description // "" | test("cluster:" + $actual_cluster + "($|[^a-zA-Z0-9-])"; "i")) then 200 else 0 end) +
                     (if (.Description // "" | test("cluster:" + $cluster_base + "($|[^a-zA-Z0-9-])"; "i")) then 190 else 0 end) +
 
-                    # 🎯 高優先度: 名前の完全一致系
+                    # 🔍 名前の完全一致系
                     (if (.Name | test($actual_cluster; "i")) then 150 else 0 end) +
                     (if (.Name | test($cluster_id; "i")) then 130 else 0 end) +
                     (if (.Name | test($cluster_base; "i")) then 120 else 0 end) +
 
-                    # 🔍 パス形式のシークレット名一致
-                    (if (.Name | test("RDS/" + $actual_cluster; "i")) then 140 else 0 end) +
-                    (if (.Name | test("RDS/" + $cluster_base; "i")) then 135 else 0 end) +
-
-                    # 🤖 RDS自動生成パターン（高スコア）
-                    (if (.Name | test("rds!cluster-[a-f0-9-]+"; "i") and (.Description // "" | test($actual_cluster; "i"))) then 180 else 0 end) +
-                    (if (.Name | test("rds!cluster-[a-f0-9-]+"; "i")) then 100 else 0 end) +
+                    # 🤖 RDS自動生成パターン（マスターユーザー用、低優先度）
+                    (if (.Name | test("rds!cluster-[a-f0-9-]+"; "i") and (.Description // "" | test($actual_cluster; "i"))) then 100 else 0 end) +
+                    (if (.Name | test("rds!cluster-[a-f0-9-]+"; "i")) then 60 else 0 end) +
 
                     # 📋 Description欄の一般マッチング
                     (if (.Description // "" | test($actual_cluster; "i")) then 110 else 0 end) +
@@ -2522,16 +2524,27 @@ _rds_ssm_auto_fill_credentials() {
                 local name="${found_names[$i]}"
                 local score=50
 
-                if [[ "$name" =~ rds!cluster ]]; then
-                    score=100
+                # クラスター識別子との完全一致を最優先
+                if [[ "$name" =~ RDS/$cluster_base/ ]] || [[ "$name" =~ RDS/${cluster_base}- ]]; then
+                    score=150  # 完全一致（RDS/プレフィックス + クラスター名）
+                elif [[ "$name" =~ RDS/.*$cluster_base ]]; then
+                    score=140  # RDS/プレフィックス + クラスター名（部分一致）
+                elif [[ "$name" =~ RDS/ ]] && [[ "$name" =~ rundeck.*prd ]]; then
+                    score=130  # RDS/プレフィックス + 環境一致
+                elif [[ "$name" == "$cluster_base" ]]; then
+                    score=120  # クラスター名完全一致
                 elif [[ "$name" =~ $cluster_base ]]; then
-                    score=90
-                elif [[ "$name" =~ rundeck.*prd ]]; then
-                    score=80
+                    score=110  # クラスター名部分一致
                 elif [[ "$name" =~ RDS/ ]]; then
-                    score=70
+                    score=100  # RDS/プレフィックス（一般）
+                elif [[ "$name" =~ rds!cluster ]] && [[ "$name" =~ $cluster_base ]]; then
+                    score=90   # AWS管理シークレット + クラスター名
+                elif [[ "$name" =~ rds!cluster ]]; then
+                    score=60   # AWS管理シークレット（一般）
+                elif [[ "$name" =~ rundeck.*prd ]]; then
+                    score=70   # 環境一致
                 elif [[ "$name" =~ rundeck ]]; then
-                    score=60
+                    score=50   # アプリケーション名一致
                 fi
 
                 secrets_to_use+="{\"Name\":\"$name\",\"relevance_score\":$score}"
@@ -2543,21 +2556,12 @@ _rds_ssm_auto_fill_credentials() {
 
             echo "   🎯 構築JSON: ${secrets_to_use:0:200}..."
         else
-        echo "   ❌ 正規表現マッチング失敗"
-        echo "   🚀 確実なフォールバック: 既知のシークレットを直接構築"
-
-        # 🎯 事前確認で確実に存在する3つのシークレットを直接構築
-        secrets_to_use='[
-            {"Name":"rds!cluster-c338233c-f9d4-49b0-a9c5-0f9b8140a0d8","relevance_score":305},
-            {"Name":"rds!cluster-0963ee18-8db3-40fb-b1a2-041a5afb94ce","relevance_score":255},
-            {"Name":"RDS/rundeck-prd-product-db-cluster/rundeck_prd_product","relevance_score":225}
-        ]'
-
-        echo "   ✅ 確実なフォールバック成功: 3個の確認済みシークレット"
-        echo "   🎯 構築された候補:"
-        echo "      - rds!cluster-c338233c-f9d4-49b0-a9c5-0f9b8140a0d8 (スコア: 305)"
-        echo "      - rds!cluster-0963ee18-8db3-40fb-b1a2-041a5afb94ce (スコア: 255)"
-        echo "      - RDS/rundeck-prd-product-db-cluster/rundeck_prd_product (スコア: 225)"
+            echo "   ❌ 正規表現マッチング失敗"
+            echo "   ⚠️  手動でのシークレット選択が必要です"
+            echo ""
+            echo "   💡 Secrets Managerでシークレットを確認してください:"
+            echo "      aws secretsmanager list-secrets --profile $profile --query 'SecretList[?contains(Name, \`$cluster_base\`) || contains(Name, \`rds\`)].Name'"
+            return 1
         fi
     fi
 
