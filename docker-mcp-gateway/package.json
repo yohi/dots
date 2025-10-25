@@ -1,0 +1,15 @@
+{
+  "name": "docker-mcp-gateway",
+  "version": "1.0.0",
+  "description": "Docker MCP Gateway管理システム",
+  "scripts": {
+    "install-plugin": "bash ./install-docker-mcp-plugin.sh",
+    "setup-env": "bash ./extract-env.sh",
+    "config": "bash ./mcp-config.sh",
+    "start": "docker mcp gateway run --secrets ./.env",
+    "start-remote": "docker mcp gateway run --transport streaming --port 8080 --secrets ./.env",
+    "help": "make -f docker-mcp.mk help"
+  },
+  "author": "",
+  "license": "MIT"
+}
