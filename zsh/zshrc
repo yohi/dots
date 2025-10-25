@@ -1,6 +1,6 @@
-if [ "$TERM_PROGRAM" = "vscode" ]; then
-  return
-fi
+# if [ "$TERM_PROGRAM" = "vscode" ]; then
+#   return
+# fi
 
 
 # Fig pre block. Keep at the top of this file.
@@ -23,34 +23,14 @@ export INPUT_METHOD=ibus
 export IBUS_USE_PORTAL=1
 export IBUS_ENABLE_SYNC_MODE=1
 
-###########################3
-###########################3 autoload -Uz colors
-###########################3 colors
-###########################3
+# Claude Code オプトアウト環境変数
+export DISABLE_TELEMETRY=1
+export DISABLE_ERROR_REPORTING=1
+export DISABLE_BUG_COMMAND=1
+export CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1
+
 # コマンドのスペルミスを指摘
 setopt correct
-###########################3
-###########################3 #bindkey -v
-###########################3 #bindkey -a
-###########################3
-###########################3 case ${OSTYPE} in
-###########################3   darwin*)
-###########################3     # MAC
-###########################3     PROMPT='%F{red}[%n@%m]%f %~
-###########################3 %% '
-###########################3     export PATH="/usr/local/sbin:$PATH"
-###########################3     #export PATH=$PATH:/Applications/MAMP/Library/bin
-###########################3     ;;
-###########################3   linux*)
-###########################3     # LINUX
-###########################3     PROMPT='%F{blue}[%n@%m]%f %~
-###########################3 %% '
-###########################3     ;;
-###########################3 esac
-###########################3
-###########################3
-###########################3 fpath=(/usr/local/share/zsh-completions $fpath)
-###########################3
 alias la="ls -a"
 alias ll="ls -l"
 alias du="du -h"
@@ -60,44 +40,12 @@ alias lg="lazygit"
 alias mkdirdate="mkdir $(date +"%Y%m%d") && cd $(date +"%Y%m%d")"
 alias mkdirdatetime="mkdir $(date +"%Y%m%d%I%M%S")"
 
-# 作業ディレクトリの作成
-#WORKDIR="/tmp/${DATETIME}_$$"
-#mkdir ${WORKDIR}
-
-###########################3
 # ls で ディレクトリに色を付ける
 autoload -U compinit
 compinit -u
-###########################3
-###########################3 export LSCOLORS=exfxcxdxbxegedabagacad
-###########################3 export LS_COLORS='di=34:ln=35:so=32:pi=33:ex=31:bd=46;34:cd=43;34:su=41;30:sg=46;30:tw=42;30:ow=43;30'
-###########################3
-###########################3 alias ls="ls -GF"
-###########################3 alias gls="gls --color"
-###########################3
-###########################3 zstyle ':completion:*' list-colors 'di=34' 'ln=35' 'so=32' 'ex=31' 'bd=46;34' 'cd=43;34'
-###########################3
+
 # DELETE KEY 有効化
 bindkey "^[[3~" delete-char
-###########################3
-###########################3 # powerline-shell
-###########################3 #function powerline_precmd() {
-###########################3 #    PS1="$(~/powerline-shell.py $? --shell zsh 2> /dev/null)"
-###########################3 #}
-###########################3 #
-###########################3 #function install_powerline_precmd() {
-###########################3 #  for s in "${precmd_functions[@]}"; do
-###########################3 #    if [ "$s" = "powerline_precmd" ]; then
-###########################3 #      return
-###########################3 #    fi
-###########################3 #  done
-###########################3 #  precmd_functions+=(powerline_precmd)
-###########################3 #}
-###########################3 #
-###########################3 #if [ "$TERM" != "linux" ]; then
-###########################3 #    install_powerline_precmd
-###########################3 #fi
-###########################3
 #
 # HOMEBREW
 export PATH=/home/${USER}/bin:${PATH}
@@ -111,7 +59,7 @@ eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
 # export PATH="/usr/local/bin:/usr/local/sbin:$PATH"
 # export PATH="/usr/local/opt/mysql@5.7/bin:$PATH"
 
-# SSH AGENT TODO
+# SSH AGENT - Disabled by default, uncomment if needed
 # eval $(ssh-agent)
 
 # # ROOTLESS DOCKER
@@ -173,17 +121,43 @@ setopt inc_append_history
 # 開始と終了を記録
 setopt EXTENDED_HISTORY
 
+# 🔒 CursorIDE/Claude Code 履歴無効化設定
+# CursorIDEやClaude Codeでのコマンド履歴を無効化してプライバシーを保護
+#
+# 検出条件:
+# - TERM_PROGRAM が cursor または vscode を含む
+# - VSCODE_INJECTION 環境変数が存在
+# - CURSOR_SESSION_ID 環境変数が存在
+# - DISABLE_CLAUDE_CODE_HISTORY=1 で強制無効化
+# - カレントディレクトリがcursor terminal関連
+# - 親プロセスがcursor/codeの場合
+#
+# 手動で無効化したい場合: export DISABLE_CLAUDE_CODE_HISTORY=1
+# 手動で有効化したい場合: unset DISABLE_CLAUDE_CODE_HISTORY (または export DISABLE_CLAUDE_CODE_HISTORY="")
+if [[ -n "${TERM_PROGRAM:-}" ]] && [[ "${TERM_PROGRAM}" =~ (cursor|vscode) ]] || \
+   [[ -n "${VSCODE_INJECTION:-}" ]] || \
+   [[ -n "${CURSOR_SESSION_ID:-}" ]] || \
+   [[ -n "${DISABLE_CLAUDE_CODE_HISTORY:-}" ]] || \
+   [[ "${PWD}" =~ cursor.*terminal ]] || \
+   { [[ -n "${PPID:-}" ]] && { parent_process_info=$(ps -p "${PPID}" -o comm= 2>/dev/null || true); [[ -n "$parent_process_info" ]] && echo "$parent_process_info" | grep -Eqi 'cursor|code'; }; }; then
+
+    # 履歴を無効化
+    export HISTFILE=/dev/null        # 履歴ファイルを無効化
+    export HISTSIZE=1                # メモリ内履歴を最小限に
+    export SAVEHIST=0                # ファイル保存履歴を無効化
+    setopt HIST_NO_STORE 2>/dev/null || true  # 履歴コマンド自体を保存しない
+
+    # デバッグ情報（必要に応じてコメントアウト解除）
+    # echo "🔒 IDE環境検出: コマンド履歴を無効化しました (TERM_PROGRAM=${TERM_PROGRAM:-'N/A'})"
+fi
 
 
+
+# MySQL@5.7 configuration (disabled by default)
 # export PATH="/home/linuxbrew/.linuxbrew/opt/mysql@5.7/bin:$PATH"
 # export LDFLAGS="-L/home/linuxbrew/.linuxbrew/opt/mysql@5.7/lib"
 # export CPPFLAGS="-I/home/linuxbrew/.linuxbrew/opt/mysql@5.7/include"
 # export PKG_CONFIG_PATH="/home/linuxbrew/.linuxbrew/opt/mysql@5.7/lib/pkgconfig"
-
-export VISUAL=nvim
-export EDITOR=nvim
-unset LESSEDIT
-
 
 # peco settings - DISABLED
 # # 過去に実行したコマンドを選択。ctrl-rにバインド
@@ -229,157 +203,6 @@ unset LESSEDIT
 # }
 # zle -N ec2-ssm
 
-# function awslogs() {
-#     local profile=$(aws configure list-profiles | peco )
-#     local log_group_name=$(aws --profile ${profile} logs describe-log-groups | jq -r '.logGroups[].logGroupName' | peco)
-#     aws --profile ${profile} logs tail ${log_group_name} --follow
-# }
-# zle -N awslogs
-
-# EC2 SSM接続 (fzf版)
-function ec2-ssm() {
-    # .aws/credentialsからprofile一覧を取得
-    local profile=$(awk '/^\[/{gsub(/\[|\]/, ""); print}' ~/.aws/credentials | fzf --prompt="AWS Profile> " --height=40% --reverse)
-
-    if [[ -z "$profile" ]]; then
-        echo "profileが選択されませんでした。"
-        return 1
-    fi
-
-    echo "Profile: $profile を使用します"
-
-    # 選択されたprofileでEC2インスタンス一覧を取得
-    local instance_info=$(aws --profile ${profile} ec2 describe-instances \
-        --filter "Name=instance-state-name,Values=running" \
-        --query 'Reservations[].Instances[].[InstanceId,Tags[?Key==`Name`].Value|[0]]' \
-        --output text | \
-        awk '{if($2 == "None" || $2 == "") $2="(No Name)"; printf "%-19s %s\n", $1, $2}' | \
-        fzf --prompt="EC2 Instance> " --height=40% --reverse)
-
-    if [[ -z "$instance_info" ]]; then
-        echo "インスタンスが選択されませんでした。"
-        return 1
-    fi
-
-    local instance_id=$(echo $instance_info | awk '{print $1}')
-    echo "Instance: $instance_id に接続します"
-
-    # SSM接続を実行
-    aws --profile ${profile} ssm start-session --target ${instance_id}
-}
-
-# ECS タスク接続 (fzf版)
-function ecs-exec() {
-    # .aws/credentialsからprofile一覧を取得
-    local profile=$(awk '/^\[/{gsub(/\[|\]/, ""); print}' ~/.aws/credentials | fzf --prompt="AWS Profile> " --height=40% --reverse)
-
-    if [[ -z "$profile" ]]; then
-        echo "profileが選択されませんでした。"
-        return 1
-    fi
-
-    echo "Profile: $profile を使用します"
-
-    # ECSクラスター一覧を取得
-    local cluster_arn=$(aws --profile ${profile} ecs list-clusters \
-        --query 'clusterArns[]' \
-        --output text | \
-        sed 's|.*/||' | \
-        fzf --prompt="ECS Cluster> " --height=40% --reverse)
-
-    if [[ -z "$cluster_arn" ]]; then
-        echo "クラスターが選択されませんでした。"
-        return 1
-    fi
-
-    echo "Cluster: $cluster_arn を使用します"
-
-    # 選択されたクラスターでrunning状態のタスク一覧を取得（ECS Exec有効なもののみ）
-    echo "ECS Exec有効なタスクを検索中..."
-    local task_info=$(aws --profile ${profile} ecs list-tasks \
-        --cluster ${cluster_arn} \
-        --desired-status RUNNING \
-        --query 'taskArns[]' \
-        --output text | \
-        xargs -I {} aws --profile ${profile} ecs describe-tasks \
-        --cluster ${cluster_arn} \
-        --tasks {} \
-        --query 'tasks[].[taskArn,taskDefinitionArn,lastStatus,enableExecuteCommand]' \
-        --output text | \
-        awk '{
-            split($1, task_parts, "/"); task_id = task_parts[length(task_parts)];
-            split($2, td_parts, "/"); td_name = td_parts[length(td_parts)];
-            gsub(/:.*/, "", td_name);
-            exec_enabled = ($4 == "True") ? "✓" : "✗";
-            if($4 == "True") {
-                printf "%-32s %-30s %-8s %s\n", task_id, td_name, $3, exec_enabled
-            }
-        }' | \
-        fzf --prompt="ECS Task (Exec有効のみ)> " --height=40% --reverse --header="Task ID                         Task Definition            Status   Exec")
-
-    if [[ -z "$task_info" ]]; then
-        echo "ECS Exec有効なタスクが見つからないか、選択されませんでした。"
-        echo ""
-        echo "ECS Execを有効にするには："
-        echo "1. タスク定義で enableExecuteCommand を true に設定"
-        echo "2. タスク起動時に --enable-execute-command オプションを指定"
-        echo "3. 適切なIAMロールとポリシーを設定"
-        return 1
-    fi
-
-    local task_id=$(echo $task_info | awk '{print $1}')
-    echo "Task: $task_id に接続します"
-
-    # コンテナ一覧を取得（複数コンテナがある場合に対応）
-    local container_name=$(aws --profile ${profile} ecs describe-tasks \
-        --cluster ${cluster_arn} \
-        --tasks ${task_id} \
-        --query 'tasks[0].containers[].name' \
-        --output text | \
-        tr '\t' '\n' | \
-        fzf --prompt="Container> " --height=40% --reverse)
-
-    if [[ -z "$container_name" ]]; then
-        echo "コンテナが選択されませんでした。"
-        return 1
-    fi
-
-    echo "Container: $container_name に接続します"
-
-    # ECS Exec接続を実行（bashが利用可能か確認してからshにフォールバック）
-    echo "接続中..."
-    if ! aws --profile ${profile} ecs execute-command \
-        --cluster ${cluster_arn} \
-        --task ${task_id} \
-        --container ${container_name} \
-        --interactive \
-        --command "/bin/bash" 2>/dev/null; then
-
-        echo "/bin/bash が利用できません。/bin/sh で再試行します..."
-        if ! aws --profile ${profile} ecs execute-command \
-            --cluster ${cluster_arn} \
-            --task ${task_id} \
-            --container ${container_name} \
-            --interactive \
-            --command "/bin/sh" 2>/dev/null; then
-
-            echo ""
-            echo "❌ ECS Exec接続に失敗しました。"
-            echo ""
-            echo "考えられる原因："
-            echo "• タスクでECS Execが無効になっている"
-            echo "• Session Manager Pluginがインストールされていない"
-            echo "• IAMロールに必要な権限がない"
-            echo "• ネットワーク設定に問題がある"
-            echo ""
-            echo "解決方法："
-            echo "1. タスクを --enable-execute-command で再起動"
-            echo "2. Session Manager Plugin をインストール"
-            echo "3. IAMロールに ssmmessages:* 権限を追加"
-            return 1
-        fi
-    fi
-}
 
 # ブランチを簡単切り替え。git checkout lbで実行できる - DISABLED (peco dependency)
 # alias -g lb='`git branch | peco --prompt "GIT BRANCH>" | head -n 1 | sed -e "s/^\*\s*//g"`'
@@ -390,40 +213,21 @@ function ecs-exec() {
 
 
 
-# export PATH="/home/linuxbrew/.linuxbrew/opt/mysql@5.7/bin:$PATH"
-# export LDFLAGS="-L/home/linuxbrew/.linuxbrew/opt/mysql@5.7/lib"
-# export CPPFLAGS="-I/home/linuxbrew/.linuxbrew/opt/mysql@5.7/include"
-# export PKG_CONFIG_PATH="/home/linuxbrew/.linuxbrew/opt/mysql@5.7/lib/pkgconfig"
+export GOPATH=$HOME/.go
+export PATH=$PATH:$GOPATH/bin
 
+# Editor configuration (consolidated from multiple locations)
 export VISUAL=nvim
 export EDITOR=nvim
 unset LESSEDIT
 
-export GOPATH=$HOME/.go
-export PATH=$PATH:$GOPATH/bin
+# nodenv initialization (ensure shims are prioritized in PATH)
+if command -v nodenv 1>/dev/null 2>&1; then
+  export PATH="$HOME/.nodenv/shims:${PATH}"
+  eval "$(nodenv init -)"
+fi
 
-# eval export PATH="/home/y_ohi/.nodenv/shims:${PATH}"
-# export NODENV_SHELL=zsh
-# source '/home/linuxbrew/.linuxbrew/Cellar/nodenv/1.4.0/libexec/../completions/nodenv.zsh'
-# command nodenv rehash 2>/dev/null
-# nodenv() {
-#   local command
-#   command="${1:-}"
-#   if [ "$#" -gt 0 ]; then
-#     shift
-#   fi
-#
-#   case "$command" in
-#   rehash|shell)
-#     eval "$(nodenv "sh-$command" "$@")";;
-#   *)
-#     command nodenv "$command" "$@";;
-#   esac
-# }
-#
-
-
-export EDITOR=nvim
+# direnv hook
 eval "$(direnv hook zsh)"
 
 
@@ -501,5 +305,134 @@ zinit light romkatv/powerlevel10k
 
 alias kgnome='killall -3 gnome-shell'
 
+# カスタム関数の読み込み（サイレント版 - Powerlevel10k instant prompt対応）
+# 動的にdotsディレクトリを検出（複数の方法でフォールバック - READMEの優先順位準拠）
+typeset DOTS_ROOT=""
+
+# Method 1: 設定ファイル読み込み（優先度最高）
+if [[ -r "$HOME/dots/zsh/config.zsh" ]]; then
+    source "$HOME/dots/zsh/config.zsh"
+    if [[ -n "${CUSTOM_DOTS_ROOT:-}" ]]; then
+        DOTS_ROOT="$CUSTOM_DOTS_ROOT"
+        # 設定ファイルで明示的に指定された場合は、以降の検出をスキップ
+        [[ -d "$DOTS_ROOT/zsh/functions" ]] && goto_load_functions=true
+    fi
+elif [[ -r "$HOME/.config/zsh/config.zsh" ]]; then
+    source "$HOME/.config/zsh/config.zsh"
+    if [[ -n "${CUSTOM_DOTS_ROOT:-}" ]]; then
+        DOTS_ROOT="$CUSTOM_DOTS_ROOT"
+        # 設定ファイルで明示的に指定された場合は、以降の検出をスキップ
+        [[ -d "$DOTS_ROOT/zsh/functions" ]] && goto_load_functions=true
+    fi
+fi
+
+# 設定ファイルで有効なパスが見つかった場合は以降をスキップ
+if [[ "${goto_load_functions:-false}" != "true" ]]; then
+
+    # Method 2: 環境変数による設定（優先度2番目、未決定時のみ）
+    if [[ -z "$DOTS_ROOT" ]]; then
+      if [[ -n "${DOTS_ROOT_OVERRIDE:-}" ]]; then
+          DOTS_ROOT="$DOTS_ROOT_OVERRIDE"
+      elif [[ -n "${DOTFILES_ROOT:-}" ]]; then
+          DOTS_ROOT="$DOTFILES_ROOT"
+      fi
+    fi
+
+    # Method 3: 現在の.zshrcファイルの位置から相対パス計算（優先度3番目、未決定時のみ）
+    if [[ -z "$DOTS_ROOT" ]]; then
+      if [[ -n "${(%):-%N}" ]]; then
+        # zshのパス修飾子で解決（外部realpath非依存）
+        typeset -r __zshrc_path="${(%):-%N:A}"
+        DOTS_ROOT="${__zshrc_path:h:h}"
+      elif [[ -n "${BASH_SOURCE[0]}" ]]; then
+        # bash互換モード（readlink -fが無い環境も考慮してフォールバック）
+        DOTS_ROOT="$(dirname "$(dirname "$(readlink -f "${BASH_SOURCE[0]}" 2>/dev/null || echo "${BASH_SOURCE[0]}")")")"
+      fi
+    fi
+
+    # Method 4: 一般的な場所を順次確認
+    if [[ -z "$DOTS_ROOT" ]] || [[ ! -d "$DOTS_ROOT/zsh/functions" ]]; then
+        for candidate in \
+            "$HOME/dots" \
+            "$HOME/.dots" \
+            "$HOME/dotfiles" \
+            "$HOME/.dotfiles" \
+            "$HOME/.config/dots" \
+            "/home/$USER/dots"; do
+            if [[ -d "$candidate/zsh/functions" ]]; then
+                DOTS_ROOT="$candidate"
+                break
+            fi
+        done
+    fi
+
+    # Method 5: symlinkの追跡
+    if [[ -L "$HOME/.zshrc" ]] && [[ -z "${DOTS_ROOT:-}" ]]; then
+        # .zshrcがsymlinkの場合、リンク先から推測
+        real_zshrc="$(readlink -f "$HOME/.zshrc" 2>/dev/null || echo "")"
+        if [[ -n "$real_zshrc" ]]; then
+            DOTS_ROOT="$(dirname "$(dirname "$real_zshrc")")"
+        fi
+    fi
+
+fi
+
+# 検証とデバッグ情報
+typeset debug_functions=${ZSH_FUNCTIONS_DEBUG:-false}
+if [[ "$debug_functions" == "true" ]]; then
+    echo "🔍 DOTS_ROOT検出: $DOTS_ROOT"
+    echo "🔍 関数ディレクトリ存在確認: $DOTS_ROOT/zsh/functions"
+fi
+
+if [[ -d "$DOTS_ROOT/zsh/functions" ]]; then
+    # パフォーマンス最適化: glob結果を配列に格納してから処理
+    typeset -a func_files
+    func_files=("$DOTS_ROOT/zsh/functions"/**/*.zsh(N))
+
+    # サブディレクトリを含む全てのzshファイルを再帰的に読み込み
+    for func_file in "${func_files[@]}"; do
+        [[ ! -r "$func_file" ]] && continue
+
+        # .broken, .disabled, .tmp ファイルをスキップ（高速化）
+        case "${func_file:t}" in
+            *.broken|*.disabled|*.tmp)
+                [[ "$debug_functions" == "true" ]] && echo "⚠️  スキップ: ${func_file:t} (無効化)"
+                continue
+                ;;
+        esac
+
+        # 関数ファイルを安全に読み込み（サイレント）
+        if source "$func_file" 2>/dev/null; then
+            [[ "$debug_functions" == "true" ]] && echo "✅ 読み込み成功: ${func_file:t}"
+        else
+            # エラー時のみ出力（instant prompt後に表示）
+            {
+                echo "❌ zsh関数読み込み失敗: $func_file"
+                echo "   構文エラーまたは依存関係の問題があります"
+                echo "   デバッグ: ZSH_FUNCTIONS_DEBUG=true で詳細確認可能"
+            } >&2
+        fi
+    done
+    [[ "$debug_functions" == "true" ]] && echo "✅ 関数読み込み完了: $DOTS_ROOT/zsh/functions (${#func_files[@]} files)"
+else
+    # 関数ディレクトリが見つからない場合の警告
+    {
+        echo "⚠️  zsh関数ディレクトリが見つかりません"
+        echo "   検出したDOTS_ROOT: ${DOTS_ROOT:-'(未検出)'}"
+        echo "   期待ディレクトリ: \$DOTS_ROOT/zsh/functions"
+        echo "   設定方法: export DOTFILES_ROOT=/path/to/your/dots"
+        echo "   または: export DOTS_ROOT_OVERRIDE=/path/to/your/dots"
+    } >&2
+fi
+
 # Fig post block. Keep at the bottom of this file.
 [[ -f "$HOME/.fig/shell/zshrc.post.zsh" ]] && builtin source "$HOME/.fig/shell/zshrc.post.zsh"
+
+# bun completions
+[ -s "/home/y_ohi/.bun/_bun" ] && source "/home/y_ohi/.bun/_bun"
+
+# bun
+export BUN_INSTALL="$HOME/.bun"
+export PATH="$BUN_INSTALL/bin:$PATH"
+
+alias claude="/home/y_ohi/.claude/local/claude"

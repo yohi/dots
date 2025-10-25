@@ -60,10 +60,10 @@ setup-zsh:
 		echo "" >> $(DOTFILES_DIR)/zsh/zshrc; \
 		echo "# Homebrew PATH" >> $(DOTFILES_DIR)/zsh/zshrc; \
 		echo 'export PATH="/home/linuxbrew/.linuxbrew/bin:$$PATH"' >> $(DOTFILES_DIR)/zsh/zshrc; \
-		echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"' >> $(DOTFILES_DIR)/zsh/zshrc; \
+		echo 'eval "$$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"' >> $(DOTFILES_DIR)/zsh/zshrc; \
 		echo "" >> $(DOTFILES_DIR)/zsh/zshrc; \
 		echo "# Zinit" >> $(DOTFILES_DIR)/zsh/zshrc; \
-		echo 'ZINIT_HOME="$${XDG_DATA_HOME:-$${HOME}/.local/share}/zinit/zinit.git"' >> $(DOTFILES_DIR)/zsh/zshrc; \
+		echo 'ZINIT_HOME="$${XDG_DATA_HOME:-$$HOME/.local/share}/zinit/zinit.git"' >> $(DOTFILES_DIR)/zsh/zshrc; \
 		echo 'source "$${ZINIT_HOME}/zinit.zsh"' >> $(DOTFILES_DIR)/zsh/zshrc; \
 		echo "" >> $(DOTFILES_DIR)/zsh/zshrc; \
 		echo "# Load Powerlevel10k theme" >> $(DOTFILES_DIR)/zsh/zshrc; \
@@ -183,6 +183,32 @@ setup-vscode:
 	fi
 
 	@echo "✅ VS Codeの設定が完了しました。"
+
+# VS Code用のSuperCopilotフレームワークをセットアップ
+setup-vscode-copilot:
+	@echo "🧠 VS Code用のSuperCopilotフレームワークをセットアップ中..."
+	@mkdir -p $(HOME_DIR)/.vscode/copilot-instructions
+
+	# シンボリックリンクを作成
+	@ln -sfn $(DOTFILES_DIR)/vscode/copilot-instructions/personas.md $(HOME_DIR)/.vscode/copilot-instructions/personas.md
+	@ln -sfn $(DOTFILES_DIR)/vscode/copilot-instructions/commands.md $(HOME_DIR)/.vscode/copilot-instructions/commands.md
+	@ln -sfn $(DOTFILES_DIR)/vscode/copilot-instructions/rules.md $(HOME_DIR)/.vscode/copilot-instructions/rules.md
+
+	@echo "✅ VS Code用のSuperCopilotフレームワークのセットアップが完了しました"
+	@echo ""
+	@echo "📝 VS Code settings.jsonに以下の設定が追加されています:"
+	@echo "\"github.copilot.chat.codeGeneration.instructions\": ["
+	@echo "  {"
+	@echo "    \"file\": \"~/.vscode/copilot-instructions/personas.md\""
+	@echo "  },"
+	@echo "  {"
+	@echo "    \"file\": \"~/.vscode/copilot-instructions/commands.md\""
+	@echo "  },"
+	@echo "  {"
+	@echo "    \"file\": \"~/.vscode/copilot-instructions/rules.md\""
+	@echo "  }"
+	@echo "]"
+	@echo ""
 
 # Cursorの設定をセットアップ
 setup-cursor:
@@ -344,7 +370,7 @@ setup-docker:
 	@echo "🐙 Docker Composeの設定中..."
 	@mkdir -p $(HOME_DIR)/.docker/cli-plugins
 	@if command -v brew >/dev/null 2>&1; then \
-		eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"; \
+		eval "$$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"; \
 		ln -sfn $$(brew --prefix)/opt/docker-compose/bin/docker-compose $(HOME_DIR)/.docker/cli-plugins/docker-compose || true; \
 	fi
 
@@ -489,6 +515,7 @@ setup-config-vim: setup-vim
 setup-config-zsh: setup-zsh
 setup-config-wezterm: setup-wezterm
 setup-config-vscode: setup-vscode
+setup-config-vscode-copilot: setup-vscode-copilot
 setup-config-cursor: setup-cursor
 setup-config-mcp-tools: setup-mcp-tools
 setup-config-git: setup-git
@@ -496,7 +523,61 @@ setup-config-docker: setup-docker
 setup-config-development: setup-development
 setup-config-shortcuts: setup-shortcuts
 setup-config-ime: setup-ime
+setup-config-claude: setup-claude
+setup-config-lazygit: setup-lazygit
 
+# ========================================
+# Claude Code設定のセットアップ
+# ========================================
+
+setup-claude:
+	@echo "🤖 Claude Code設定をセットアップ中..."
+	@mkdir -p $(HOME_DIR)/.claude
+
+	# claude-settings.jsonのシンボリックリンク作成
+	@echo "🔗 claude-settings.jsonを~/.claude/settings.jsonにリンク中..."
+	@if [ -f "$(HOME_DIR)/.claude/settings.json" ] && [ ! -L "$(HOME_DIR)/.claude/settings.json" ]; then \
+		echo "⚠️  既存のsettings.jsonをバックアップ中..."; \
+		mv $(HOME_DIR)/.claude/settings.json $(HOME_DIR)/.claude/settings.json.backup.$$(date +%Y%m%d_%H%M%S); \
+	fi
+	@if [ -f "$(DOTFILES_DIR)/claude/claude-settings.json" ]; then \
+		ln -sfn $(DOTFILES_DIR)/claude/claude-settings.json $(HOME_DIR)/.claude/settings.json; \
+		echo "✅ リンク作成: claude-settings.json"; \
+	else \
+		echo "⚠️ missing: $(DOTFILES_DIR)/claude/claude-settings.json（リンクをスキップ）"; \
+	fi
+
+	# CLAUDE.mdのシンボリックリンク作成
+	@echo "🔗 CLAUDE.mdを~/.claude/CLAUDE.mdにリンク中..."
+	@if [ -f "$(HOME_DIR)/.claude/CLAUDE.md" ] && [ ! -L "$(HOME_DIR)/.claude/CLAUDE.md" ]; then \
+		echo "⚠️  既存のCLAUDE.mdをバックアップ中..."; \
+		mv $(HOME_DIR)/.claude/CLAUDE.md $(HOME_DIR)/.claude/CLAUDE.md.backup.$$(date +%Y%m%d_%H%M%S); \
+	fi
+	@if [ -f "$(DOTFILES_DIR)/claude/CLAUDE.md" ]; then \
+		ln -sfn $(DOTFILES_DIR)/claude/CLAUDE.md $(HOME_DIR)/.claude/CLAUDE.md; \
+		echo "✅ リンク作成: CLAUDE.md"; \
+	else \
+		echo "⚠️ missing: $(DOTFILES_DIR)/claude/CLAUDE.md（リンクをスキップ）"; \
+	fi
+
+	# statusline.shのシンボリックリンク作成
+	@echo "🔗 statusline.shを~/.claude/statusline.shにリンク中..."
+	@if [ -f "$(HOME_DIR)/.claude/statusline.sh" ] && [ ! -L "$(HOME_DIR)/.claude/statusline.sh" ]; then \
+		echo "⚠️  既存のstatusline.shをバックアップ中..."; \
+		mv $(HOME_DIR)/.claude/statusline.sh $(HOME_DIR)/.claude/statusline.sh.backup.$$(date +%Y%m%d_%H%M%S); \
+	fi
+	@if [ -f "$(DOTFILES_DIR)/claude/statusline.sh" ]; then \
+		ln -sfn $(DOTFILES_DIR)/claude/statusline.sh $(HOME_DIR)/.claude/statusline.sh; \
+		chmod +x $(HOME_DIR)/.claude/statusline.sh; \
+		echo "✅ リンク作成: statusline.sh（実行権限付与）"; \
+	else \
+		echo "⚠️ missing: $(DOTFILES_DIR)/claude/statusline.sh（リンクをスキップ）"; \
+	fi
+
+	@echo "✅ Claude設定が完了しました。"
+	@echo "   設定ファイル: ~/.claude/settings.json -> $(DOTFILES_DIR)/claude/claude-settings.json"
+	@echo "   設定ファイル: ~/.claude/CLAUDE.md -> $(DOTFILES_DIR)/claude/CLAUDE.md"
+	@echo "   スクリプト:   ~/.claude/statusline.sh -> $(DOTFILES_DIR)/claude/statusline.sh"
 # ========================================
 # 後方互換性のためのエイリアス
 # ========================================
@@ -506,3 +587,25 @@ setup-config-ime: setup-ime
 # setup-zsh: は既に実装済み
 # setup-wezterm: は既に実装済み
 # その他の既存ターゲットはそのまま
+
+
+# Lazygitの設定をセットアップ
+setup-lazygit:
+	@echo "📦 Lazygitの設定をセットアップ中..."
+	@mkdir -p $(CONFIG_DIR)/lazygit
+
+	# 既存設定のバックアップ
+	@if [ -f "$(CONFIG_DIR)/lazygit/config.yml" ] && [ ! -L "$(CONFIG_DIR)/lazygit/config.yml" ]; then \
+		echo "⚠️  既存のlazygit設定をバックアップ中..."; \
+		mv $(CONFIG_DIR)/lazygit/config.yml $(CONFIG_DIR)/lazygit/config.yml.backup.$$(date +%Y%m%d_%H%M%S); \
+	fi
+
+	# シンボリックリンクを作成
+	@ln -sfn $(DOTFILES_DIR)/lazygit/config.yml $(CONFIG_DIR)/lazygit/config.yml
+
+	@echo "✅ Lazygitの設定が完了しました。"
+	@echo "   設定ファイル: ~/.config/lazygit/config.yml -> $(DOTFILES_DIR)/lazygit/config.yml"
+
+
+
+# （重複定義削除）上部の階層ターゲット群（lines 513-527）に集約済み

@@ -1,13 +1,15 @@
 return {
     "yetone/avante.nvim",
     event = "VeryLazy",
-    lazy = false,
+    lazy = true,
     version = false, -- Set this to "*" to always pull the latest release version, or set it to false to update to the latest code changes.
     opts = {
         -- add any opts here
         -- for example
-        provider = "copilot",
-        auto_suggestions_provider = "copilot",
+        provider = "gemini",
+        -- mode = "agentic",
+        mode = "legacy",
+        -- auto_suggestions_provider = "gemini", -- auto_suggestions=false のため未使用
         behaviour = {
             auto_suggestions = false,
             auto_set_highlight_group = false,
@@ -16,21 +18,53 @@ return {
             support_paste_from_clipboard = false,
             enable_cursor_planning_mode = true, -- Whether to enable Cursor Planning Mode. Default to false.
         },
-        copilot = {
-            endpoint = "https://api.githubcopilot.com",
-            model = "claude-3.7-sonnet",
-            -- model = "claude-3.5-sonnet",
-            -- model = "gpt-4o-2024-05-13",
-            -- model = "gpt-4o-mini",
-            -- max_tokens = 4096,
-        },
-        openai = {
-            endpoint = "https://api.openai.com/v1",
-            model = "gpt-4o", -- your desired model (or use gpt-4o, etc.)
-            timeout = 30000, -- timeout in milliseconds
-            temperature = 0, -- adjust if needed
-            max_tokens = 4096,
-            -- reasoning_effort = "high" -- only supported for reasoning models (o1, etc.)
+        providers = {
+            copilot = {
+                endpoint = "https://api.githubcopilot.com",
+                model = "claude-sonnet-4",
+                -- model = "claude-3.7-sonnet",
+                -- model = "claude-3.5-sonnet",
+                -- model = "gpt-4o-2024-05-13",
+                -- model = "gpt-4o-mini",
+                -- max_tokens = 4096,
+            },
+            openai = {
+                endpoint = "https://api.openai.com/v1",
+                model = "gpt-4o", -- your desired model (or use gpt-4o, etc.)
+                timeout = 30000, -- timeout in milliseconds
+                extra_request_body = {
+                    temperature = 0, -- adjust if needed
+                    max_tokens = 4096,
+                }
+                -- reasoning_effort = "high" -- only supported for reasoning models (o1, etc.)
+            },
+            claude = {
+                endpoint = "https://api.anthropic.com",
+                model = "claude-sonnet-4-20250514",
+                timeout = 30000,
+                extra_request_body = {
+                    temperature = 0,
+                    max_tokens = 4096,
+                },
+            },
+            bedrock = {
+                model = "us.anthropic.claude-sonnet-4-20250514-v1:0",
+                aws_region = "us-east-1",
+                aws_profile = os.getenv("AWS_PROFILE") or 'poc',
+                timeout = 30000,
+                extra_request_body = {
+                    temperature = 0,
+                    max_tokens = 4096,
+                },
+            },
+            gemini = {
+                model = 'gemini-2.0-flash',
+                timeout = 30000,
+                extra_request_body = {
+                    temperature = 0,
+                    max_output_tokens = 4096,
+                },
+            }
         },
     },
     -- if you want to build from source then do `make BUILD_FROM_SOURCE=true`
@@ -47,7 +81,7 @@ return {
         "hrsh7th/nvim-cmp", -- autocompletion for avante commands and mentions
         "ibhagwan/fzf-lua", -- for file_selector provider fzf
         "nvim-tree/nvim-web-devicons", -- or echasnovski/mini.icons
-        "zbirenbaum/copilot.lua", -- for providers='copilot'
+        -- Copilot setup moved to dedicated lua/plugins/copilot.lua
         {
             -- support for image pasting
             "HakonHarnes/img-clip.nvim",

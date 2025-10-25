@@ -8,11 +8,9 @@ system-setup:
 	@echo "tzdata tzdata/Zones/Asia select Tokyo" | sudo debconf-set-selections
 	@export DEBIAN_FRONTEND=noninteractive
 
-	# 問題のあるリポジトリの事前修正
+	# 問題のあるリポジトリの事前修正（CopyQは除外）
 	@echo "🔧 問題のあるリポジトリを修正中..."
-	@if [ -f /etc/apt/sources.list.d/hluk-ubuntu-copyq-plucky.list ]; then \
-		sudo mv /etc/apt/sources.list.d/hluk-ubuntu-copyq-plucky.list /etc/apt/sources.list.d/hluk-ubuntu-copyq-plucky.list.disabled 2>/dev/null || true; \
-	fi
+	# CopyQ PPAは正常なPPAなので無効化しない
 	@if [ -f /etc/apt/sources.list.d/remmina-ppa-team-ubuntu-remmina-next-plucky.list ]; then \
 		sudo mv /etc/apt/sources.list.d/remmina-ppa-team-ubuntu-remmina-next-plucky.list /etc/apt/sources.list.d/remmina-ppa-team-ubuntu-remmina-next-plucky.list.disabled 2>/dev/null || true; \
 	fi
@@ -57,8 +55,8 @@ system-setup:
 	@systemctl --user enable ibus-daemon || true
 	@systemctl --user start ibus-daemon || true
 
-	# IBM Plex Sans フォントのインストール
-	@$(MAKE) install-ibm-plex-fonts
+	# フォント環境のセットアップ
+	@$(MAKE) fonts-setup
 
 	# 基本開発ツール
 	@echo "🔧 基本開発ツールをインストール中..."
@@ -111,14 +109,33 @@ system-setup:
 	@sudo chmod +x /usr/bin/fusermount || true
 	@sudo chmod u+s /usr/bin/fusermount || true
 
+	# メモリ最適化設定
+	@echo "🧠 メモリ最適化設定を適用中..."
+	@CURRENT_SWAPPINESS=$$(cat /proc/sys/vm/swappiness 2>/dev/null || echo 60); \
+	if [ $$CURRENT_SWAPPINESS -ne 10 ]; then \
+		echo "📊 現在のスワップ積極度: $$CURRENT_SWAPPINESS"; \
+		echo "⚙️  推奨値（vm.swappiness=10）を設定中..."; \
+		if ! grep -q "vm.swappiness=10" /etc/sysctl.conf 2>/dev/null; then \
+			echo 'vm.swappiness=10' | sudo tee -a /etc/sysctl.conf >/dev/null; \
+		fi; \
+		sudo sysctl vm.swappiness=10 >/dev/null 2>&1 || true; \
+		NEW_SWAPPINESS=$$(cat /proc/sys/vm/swappiness 2>/dev/null || echo "unknown"); \
+		echo "✅ スワップ積極度を最適化しました: $$CURRENT_SWAPPINESS → $$NEW_SWAPPINESS"; \
+		echo "💡 この設定により、メモリ使用量が90%を超えるまでスワップを使用しません"; \
+	else \
+		echo "✅ スワップ積極度は既に最適化されています ($$CURRENT_SWAPPINESS)"; \
+	fi
+
 	@echo "✅ システムレベルの基本設定が完了しました。"
 	@echo "🌏 タイムゾーン: $$(timedatectl show --property=Timezone --value 2>/dev/null || echo '取得に失敗')"
 	@echo "🌐 ロケール: $$(locale | grep LANG 2>/dev/null || echo '取得に失敗')"
 	@echo "🇯🇵 日本語入力: mozc（IBus）がインストールされました"
+	@echo "🧠 メモリ最適化: vm.swappiness=$$(cat /proc/sys/vm/swappiness 2>/dev/null || echo 'unknown') に設定されました"
 	@echo ""
 	@echo "⚠️  重要：設定を反映するため、システムの再起動を推奨します。"
 	@echo "🔄 再起動後は Super+Space または Alt+\` で日本語⇔英語切り替えが可能です"
 	@echo "⚙️  mozc設定は「設定」→「地域と言語」→「入力ソース」から変更できます"
+	@echo "💾 メモリ最適化設定は恒久的に適用されています"
 	@echo ""
 	@echo "ℹ️  一部のリポジトリでエラーが発生した場合は、以下のコマンドで修正できます："
 	@echo "    make clean-repos"

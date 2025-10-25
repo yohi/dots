@@ -4,12 +4,13 @@
 setup-all:
 	@echo "🚀 全体のセットアップを開始中..."
 	@echo "ℹ️  以下の順序で実行します:"
-	@echo "   1. システムセットアップ"
+	@echo "   1. システムセットアップ（メモリ最適化含む）"
 	@echo "   2. Homebrewインストール"
 	@echo "   3. アプリケーションインストール"
 	@echo "   4. Claude Codeエコシステムインストール"
 	@echo "   5. 設定セットアップ"
 	@echo "   6. 拡張機能インストール"
+	@echo "   7. メモリ最適化確認"
 	@echo ""
 
 	# 各セットアップを順次実行
@@ -40,10 +41,16 @@ setup-all:
 	@$(MAKE) setup-docker
 	@$(MAKE) setup-development
 	@$(MAKE) setup-shortcuts
+	@$(MAKE) setup-claude
 	@echo ""
 
 	@echo "📋 6. 拡張機能インストール実行中..."
 	@$(MAKE) install-extensions-simple
+	@echo ""
+
+	@echo "📋 7. メモリ最適化確認中..."
+	@echo "🧠 メモリ使用状況の最終確認..."
+	@$(MAKE) memory-check
 	@echo ""
 
 	@echo "✅ 全体のセットアップが完了しました！"
@@ -51,6 +58,7 @@ setup-all:
 	@echo "   1. ログアウト・ログインして設定を反映"
 	@echo "   2. 必要に応じて個別の設定を実行"
 	@echo "   3. 'make help' で利用可能なコマンドを確認"
+	@echo "   4. メモリ最適化: 'make memory-optimize' で追加最適化可能"
 
 # デバッグ用のターゲット
 debug:
@@ -156,3 +164,7 @@ setup-config-all: setup-all
 # 古いターゲット名を維持（既に実装済み）
 # setup-all: は既に実装済み
 # system-setup: は既に実装済み
+
+# Playwright エイリアス（短縮形）
+playwright: install-packages-playwright  ## Playwright E2Eテストフレームワークをインストール
+pw: install-packages-playwright          ## Playwright E2Eテストフレームワークをインストール（短縮形）

@@ -16,6 +16,7 @@ desktop.ini
 *.woff
 *.woff2
 plex-fonts.zip
+fonts/
 
 # 一時ファイル
 *.tmp
@@ -49,3 +50,13 @@ nvim/plugin/packer_compiled.lua
 .env.local
 .env.secret
 cursor/mcp.local.json
+cursor/mcp.json
+cursor/mcp*.json
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[codz]
+*$py.class
+
+# MCP関連
+/.serena/
