@@ -1,14 +1,57 @@
 #!/bin/bash
 # AI Commit Message Generator Interface
 # Provides a standardized interface for AI CLI tools
-# Requirements: 5.2, 5.3, 6.1, 6.3, 8.2, 8.4
+# Requirements: 5.2, 5.3, 6.1, 6.3, 7.1, 7.2, 7.3, 8.2, 8.4
 
 set -e
 set -o pipefail  # Requirement 8.2: Catch pipeline failures
 
 # Configuration
-AI_TOOL="${AI_TOOL:-./mock-ai-tool.sh}"
+# Requirement 7.1: Support for configurable AI CLI commands
+AI_BACKEND="${AI_BACKEND:-mock}"
 TIMEOUT_SECONDS="${TIMEOUT_SECONDS:-30}"
+
+# AI Backend Configuration
+# Requirement 7.2: Execute configured command with diff as input
+case "$AI_BACKEND" in
+    gemini)
+        # Gemini 1.5 Flash - Fast and free tier available
+        GEMINI_MODEL="${GEMINI_MODEL:-gemini-1.5-flash}"
+        if [ -z "$GEMINI_API_KEY" ]; then
+            echo "Error: GEMINI_API_KEY environment variable not set" >&2
+            echo "Suggestion: export GEMINI_API_KEY='your-api-key'" >&2
+            echo "Get your key from: https://aistudio.google.com/app/apikey" >&2
+            exit 1
+        fi
+        AI_TOOL="gemini"
+        ;;
+    claude)
+        # Claude 3.5 Haiku - Excellent for code understanding
+        CLAUDE_MODEL="${CLAUDE_MODEL:-claude-3-5-haiku-20241022}"
+        if [ -z "$ANTHROPIC_API_KEY" ]; then
+            echo "Error: ANTHROPIC_API_KEY environment variable not set" >&2
+            echo "Suggestion: export ANTHROPIC_API_KEY='your-api-key'" >&2
+            echo "Get your key from: https://console.anthropic.com/" >&2
+            exit 1
+        fi
+        AI_TOOL="claude"
+        ;;
+    ollama)
+        # Ollama - Local LLM, privacy-focused
+        OLLAMA_MODEL="${OLLAMA_MODEL:-mistral}"
+        OLLAMA_HOST="${OLLAMA_HOST:-http://localhost:11434}"
+        AI_TOOL="ollama"
+        ;;
+    mock)
+        # Mock tool for testing
+        AI_TOOL="./mock-ai-tool.sh"
+        ;;
+    *)
+        echo "Error: Unknown AI_BACKEND '$AI_BACKEND'" >&2
+        echo "Suggestion: Set AI_BACKEND to one of: gemini, claude, ollama, mock" >&2
+        exit 1
+        ;;
+esac
 
 # Prompt structure for AI tools
 # This prompt ensures Conventional Commits format and no Markdown
@@ -55,12 +98,51 @@ ${DIFF_INPUT}
 ---DIFF END---"
 
 # Execute AI tool with timeout (Requirement 8.4)
-# Pass combined prompt + diff via stdin and capture output
+# Requirement 7.2: Execute configured command with diff as input
+# Requirement 7.3: Function without code changes when backend changes
 AI_OUTPUT=""
+
+# Build AI-specific command
+case "$AI_BACKEND" in
+    gemini)
+        # Gemini API call via Python
+        AI_COMMAND="python3 -c \"
+import os
+import sys
+import google.generativeai as genai
+
+genai.configure(api_key=os.environ['GEMINI_API_KEY'])
+model = genai.GenerativeModel('$GEMINI_MODEL')
+
+# Read input from stdin
+input_text = sys.stdin.read()
+
+try:
+    response = model.generate_content(input_text)
+    print(response.text)
+except Exception as e:
+    print(f'Error: {e}', file=sys.stderr)
+    sys.exit(1)
+\""
+        ;;
+    claude)
+        # Claude API call via official CLI
+        AI_COMMAND="claude --model $CLAUDE_MODEL --no-stream"
+        ;;
+    ollama)
+        # Ollama local API call
+        AI_COMMAND="ollama run $OLLAMA_MODEL"
+        ;;
+    mock)
+        # Mock tool for testing
+        AI_COMMAND="$AI_TOOL"
+        ;;
+esac
+
 if command -v timeout &> /dev/null; then
     # Use timeout command to prevent hanging
     set +e  # Temporarily disable exit on error to capture exit code
-    AI_OUTPUT=$(echo "$COMBINED_INPUT" | timeout "$TIMEOUT_SECONDS" "$AI_TOOL" 2>&1)
+    AI_OUTPUT=$(echo "$COMBINED_INPUT" | timeout "$TIMEOUT_SECONDS" bash -c "$AI_COMMAND" 2>&1)
     EXIT_CODE=$?
     set -e  # Re-enable exit on error
     
@@ -73,14 +155,22 @@ if command -v timeout &> /dev/null; then
         else
             # Other error
             echo "Error: AI tool failed with exit code $EXIT_CODE" >&2
-            echo "Suggestion: Check AI tool configuration and try again" >&2
+            if [ "$AI_BACKEND" = "gemini" ]; then
+                echo "Suggestion: Check GEMINI_API_KEY and internet connection" >&2
+            elif [ "$AI_BACKEND" = "claude" ]; then
+                echo "Suggestion: Check ANTHROPIC_API_KEY and internet connection" >&2
+            elif [ "$AI_BACKEND" = "ollama" ]; then
+                echo "Suggestion: Ensure Ollama is running (ollama serve)" >&2
+            else
+                echo "Suggestion: Check AI tool configuration and try again" >&2
+            fi
             exit 1
         fi
     fi
 else
     # Fallback if timeout command is not available
     set +e  # Temporarily disable exit on error to capture exit code
-    AI_OUTPUT=$(echo "$COMBINED_INPUT" | "$AI_TOOL" 2>&1)
+    AI_OUTPUT=$(echo "$COMBINED_INPUT" | bash -c "$AI_COMMAND" 2>&1)
     EXIT_CODE=$?
     set -e  # Re-enable exit on error
     
