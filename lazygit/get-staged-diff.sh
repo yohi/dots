@@ -1,6 +1,6 @@
 #!/bin/bash
-# Script to retrieve staged git diff with error handling
-# Requirements: 5.1, 2.4
+# Script to retrieve staged git diff with error handling and size limitation
+# Requirements: 5.1, 2.4, 8.1
 
 set -e
 
@@ -11,7 +11,8 @@ if git diff --cached --quiet; then
     exit 1
 fi
 
-# Get the staged diff
-git diff --cached
+# Get the staged diff and limit to 12KB (12000 bytes)
+# This prevents exceeding AI token limits
+git diff --cached | head -c 12000
 
 exit 0
