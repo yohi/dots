@@ -1,116 +1,116 @@
-# Property Coverage Status
+# プロパティカバレッジステータス
 
-## Overview
+## 概要
 
-This document tracks the implementation status of property-based tests defined in the design specification. Property-based testing validates that correctness properties hold across all valid inputs, providing stronger guarantees than example-based tests.
+このドキュメントは、設計仕様で定義されたプロパティベーステストの実装ステータスを追跡します。プロパティベーステストは、正確性プロパティがすべての有効な入力に対して保持されることを検証し、例ベースのテストよりも強力な保証を提供します。
 
-**Current Coverage**: 19.35% (6 of 31 requirements have corresponding property tests)
+**現在のカバレッジ**: 19.35%（31の要件のうち6つに対応するプロパティテストがある）
 
-## Defined Properties
+## 定義されたプロパティ
 
-The design document defines 5 correctness properties that should be validated through property-based testing:
+設計ドキュメントでは、プロパティベーステストを通じて検証すべき5つの正確性プロパティが定義されています:
 
-### Property 1: Multiple Candidate Generation
-**Status**: ❌ Not Implemented
+### プロパティ 1: 複数候補生成
+**ステータス**: ❌ 未実装
 
-**Definition**: For any valid diff input, the AI system SHALL generate 2 or more commit message candidates.
+**定義**: 任意の有効なdiff入力に対して、AIシステムは2個以上のコミットメッセージ候補を生成すること。
 
-**Validates**: Requirement 2.1
+**検証**: 要件 2.1
 
-**Implementation Task**: 4.1 in tasks.md
+**実装タスク**: tasks.mdの4.1
 
-**Why Important**: Ensures users always have choices, preventing single-option scenarios that defeat the purpose of AI-assisted selection.
-
----
-
-### Property 2: Regex Parsing Completeness
-**Status**: ❌ Not Implemented
-
-**Definition**: For any newline-delimited text output (each line non-empty), the regex parser SHALL extract each line as an individual message candidate.
-
-**Validates**: Requirement 5.4
-
-**Implementation Task**: 5.1 in tasks.md
-
-**Why Important**: Guarantees that no AI-generated candidates are lost during parsing, maintaining the full set of options for users.
+**重要な理由**: ユーザーが常に選択肢を持つことを保証し、AIアシスト選択の目的を損なう単一オプションシナリオを防ぎます。
 
 ---
 
-### Property 3: Shell Injection Prevention
-**Status**: ❌ Not Implemented
+### プロパティ 2: 正規表現解析の完全性
+**ステータス**: ❌ 未実装
 
-**Definition**: For any commit message text (including special characters), the escaped command string SHALL NOT cause shell injection after escape processing.
+**定義**: 任意の改行区切りテキスト出力（各行が非空）に対して、正規表現パーサーは各行を個別のメッセージ候補として抽出すること。
 
-**Validates**: Requirements 4.2, 8.3
+**検証**: 要件 5.4
 
-**Implementation Task**: 7.1 in tasks.md
+**実装タスク**: tasks.mdの5.1
 
-**Why Important**: Critical security property ensuring that malicious or accidental special characters cannot execute unintended commands.
-
----
-
-### Property 4: Conventional Commits Format Compliance
-**Status**: ❌ Not Implemented
-
-**Definition**: For any diff input, all generated commit messages SHALL follow valid Conventional Commits format (`<type>(<scope>): <description>` or `<type>: <description>`).
-
-**Validates**: Requirement 6.1
-
-**Implementation Task**: 4.2 in tasks.md
-
-**Why Important**: Ensures consistent commit history format across all generated messages, maintaining repository standards.
+**重要な理由**: AI生成候補が解析中に失われないことを保証し、ユーザーのための完全なオプションセットを維持します。
 
 ---
 
-### Property 5: Markdown Removal
-**Status**: ❌ Not Implemented
+### プロパティ 3: シェルインジェクション防止
+**ステータス**: ❌ 未実装
 
-**Definition**: For any diff input, generated commit messages SHALL NOT contain Markdown symbols (`**`, `*`, `` ` ``, `#`, `-`, etc.).
+**定義**: 任意のコミットメッセージテキスト（特殊文字を含む）に対して、エスケープ処理後のコマンド文字列はシェルインジェクションを引き起こさないこと。
 
-**Validates**: Requirement 6.3
+**検証**: 要件 4.2、8.3
 
-**Implementation Task**: 4.3 in tasks.md
+**実装タスク**: tasks.mdの7.1
 
-**Why Important**: Prevents formatting artifacts in commit messages, ensuring clean, plain-text output suitable for git logs.
+**重要な理由**: 悪意のあるまたは偶発的な特殊文字が意図しないコマンドを実行できないことを保証する重要なセキュリティプロパティ。
 
 ---
 
-## Current Test Coverage
+### プロパティ 4: Conventional Commits形式準拠
+**ステータス**: ❌ 未実装
 
-### Implemented Tests
+**定義**: 任意のdiff入力に対して、生成されるすべてのコミットメッセージは有効なConventional Commits形式（`<type>(<scope>): <description>`または`<type>: <description>`）に従うこと。
 
-The project has comprehensive integration and unit tests:
+**検証**: 要件 6.1
 
-1. **test-complete-workflow.sh** - 23 integration tests covering end-to-end workflows
-2. **test-error-handling.sh** - 12 tests for error scenarios
-3. **test-timeout-handling.sh** - 5 tests for timeout behavior
-4. **test-all-error-scenarios.sh** - 11 tests for various error conditions
-5. **test-lazygit-commit-integration.sh** - 5 tests for LazyGit integration
-6. **test-menu-integration.sh** - 7 tests for menu functionality
-7. **test-regex-parser.sh** - 7 tests for parser behavior
-8. **test-commit-escape.sh** - 8 tests for escape processing
-9. **test-ai-backend-integration.sh** - Backend-specific tests
+**実装タスク**: tasks.mdの4.2
 
-**Total**: 78+ tests, all passing
+**重要な理由**: 生成されたすべてのメッセージで一貫したコミット履歴形式を保証し、リポジトリ標準を維持します。
 
-### Gap Analysis
+---
 
-While the project has excellent example-based test coverage, it lacks property-based tests that would:
+### プロパティ 5: Markdown除去
+**ステータス**: ❌ 未実装
 
-1. **Test with random inputs**: Current tests use fixed examples; property tests would generate thousands of random inputs
-2. **Discover edge cases**: Property tests often find bugs that example-based tests miss
-3. **Provide formal guarantees**: Properties serve as executable specifications
+**定義**: 任意のdiff入力に対して、生成されたコミットメッセージにMarkdown記号（`**`、`*`、`` ` ``、`#`、`-`など）が含まれないこと。
 
-## Recommendations
+**検証**: 要件 6.3
 
-### Priority 1: Security Properties
+**実装タスク**: tasks.mdの4.3
 
-Implement Property 3 (Shell Injection Prevention) first:
-- Critical for security
-- Relatively straightforward to implement
-- High impact on system safety
+**重要な理由**: コミットメッセージの形式アーティファクトを防ぎ、gitログに適したクリーンなプレーンテキスト出力を保証します。
 
-**Suggested approach**:
+---
+
+## 現在のテストカバレッジ
+
+### 実装されたテスト
+
+プロジェクトには包括的な統合テストとユニットテストがあります:
+
+1. **test-complete-workflow.sh** - エンドツーエンドワークフローをカバーする23の統合テスト
+2. **test-error-handling.sh** - エラーシナリオ用の12テスト
+3. **test-timeout-handling.sh** - タイムアウト動作用の5テスト
+4. **test-all-error-scenarios.sh** - 様々なエラー条件用の11テスト
+5. **test-lazygit-commit-integration.sh** - LazyGit統合用の5テスト
+6. **test-menu-integration.sh** - メニュー機能用の7テスト
+7. **test-regex-parser.sh** - パーサー動作用の7テスト
+8. **test-commit-escape.sh** - エスケープ処理用の8テスト
+9. **test-ai-backend-integration.sh** - バックエンド固有のテスト
+
+**合計**: 78以上のテスト、すべて合格
+
+### ギャップ分析
+
+プロジェクトには優れた例ベースのテストカバレッジがありますが、以下を行うプロパティベーステストが欠けています:
+
+1. **ランダム入力でテスト**: 現在のテストは固定例を使用；プロパティテストは数千のランダム入力を生成
+2. **エッジケースを発見**: プロパティテストは例ベースのテストが見逃すバグをしばしば発見
+3. **形式的保証を提供**: プロパティは実行可能な仕様として機能
+
+## 推奨事項
+
+### 優先度 1: セキュリティプロパティ
+
+プロパティ3（シェルインジェクション防止）を最初に実装:
+- セキュリティにとって重要
+- 実装が比較的簡単
+- システムの安全性に大きな影響
+
+**推奨アプローチ**:
 ```python
 from hypothesis import given, strategies as st
 
@@ -119,17 +119,17 @@ def test_shell_injection_prevention(message):
     escaped = apply_quote_filter(message)
     result = subprocess.run(f'echo {escaped}', shell=True, capture_output=True)
     assert result.returncode == 0
-    # Verify no command injection occurred
+    # コマンドインジェクションが発生しなかったことを確認
 ```
 
-### Priority 2: Format Compliance
+### 優先度 2: 形式準拠
 
-Implement Properties 4 and 5 (Conventional Commits and Markdown Removal):
-- Validates core functionality
-- Ensures consistent output quality
-- Can be tested together
+プロパティ4と5（Conventional CommitsとMarkdown除去）を実装:
+- コア機能を検証
+- 一貫した出力品質を保証
+- 一緒にテスト可能
 
-**Suggested approach**:
+**推奨アプローチ**:
 ```python
 @given(valid_diff_content())
 def test_conventional_commits_format(diff):
@@ -147,72 +147,72 @@ def test_no_markdown(diff):
             assert symbol not in candidate
 ```
 
-### Priority 3: Functional Properties
+### 優先度 3: 機能プロパティ
 
-Implement Properties 1 and 2 (Multiple Candidates and Parsing Completeness):
-- Validates core workflow
-- Ensures user experience quality
-- Lower risk than security properties
+プロパティ1と2（複数候補と解析完全性）を実装:
+- コアワークフローを検証
+- ユーザーエクスペリエンス品質を保証
+- セキュリティプロパティよりリスクが低い
 
-## Implementation Strategy
+## 実装戦略
 
-### Phase 1: Setup (1-2 hours)
-1. Choose property testing framework:
-   - Python: `hypothesis` (recommended for bash script testing)
+### フェーズ 1: セットアップ（1〜2時間）
+1. プロパティテストフレームワークを選択:
+   - Python: `hypothesis`（bashスクリプトテストに推奨）
    - JavaScript: `fast-check`
-   - Bash: Custom generators with `shunit2`
+   - Bash: `shunit2`を使用したカスタムジェネレーター
 
-2. Create test infrastructure:
-   - Property test runner script
-   - Input generators for diffs, messages, etc.
-   - Integration with existing test suite
+2. テストインフラストラクチャを作成:
+   - プロパティテストランナースクリプト
+   - diff、メッセージなどの入力ジェネレーター
+   - 既存のテストスイートとの統合
 
-### Phase 2: Implementation (4-6 hours)
-1. Implement Property 3 (security critical)
-2. Implement Properties 4 and 5 (format validation)
-3. Implement Properties 1 and 2 (functional validation)
+### フェーズ 2: 実装（4〜6時間）
+1. プロパティ3を実装（セキュリティクリティカル）
+2. プロパティ4と5を実装（形式検証）
+3. プロパティ1と2を実装（機能検証）
 
-### Phase 3: Integration (1-2 hours)
-1. Add property tests to CI/CD pipeline
-2. Document property test execution
-3. Update coverage metrics
+### フェーズ 3: 統合（1〜2時間）
+1. CI/CDパイプラインにプロパティテストを追加
+2. プロパティテスト実行をドキュメント化
+3. カバレッジメトリクスを更新
 
-## Benefits of Property-Based Testing
+## プロパティベーステストのメリット
 
-1. **Stronger Guarantees**: Properties hold for all inputs, not just examples
-2. **Bug Discovery**: Often finds edge cases missed by manual testing
-3. **Living Documentation**: Properties serve as executable specifications
-4. **Regression Prevention**: Random testing catches regressions in unexpected ways
-5. **Confidence**: Provides mathematical confidence in correctness
+1. **より強力な保証**: プロパティは例だけでなくすべての入力に対して保持
+2. **バグ発見**: 手動テストで見逃されたエッジケースをしばしば発見
+3. **生きたドキュメント**: プロパティは実行可能な仕様として機能
+4. **リグレッション防止**: ランダムテストが予期しない方法でリグレッションをキャッチ
+5. **信頼性**: 正確性に対する数学的信頼を提供
 
-## Current Status Summary
+## 現在のステータスサマリー
 
-✅ **Strengths**:
-- Comprehensive integration test suite (78+ tests)
-- All functional requirements validated with examples
-- Excellent error handling coverage
-- Well-documented test procedures
+✅ **強み**:
+- 包括的な統合テストスイート（78以上のテスト）
+- 例を使用してすべての機能要件を検証
+- 優れたエラー処理カバレッジ
+- よくドキュメント化されたテスト手順
 
-❌ **Gaps**:
-- No property-based tests implemented
-- Limited random input testing
-- No formal verification of security properties
-- Coverage metric (19.35%) reflects missing property tests
+❌ **ギャップ**:
+- プロパティベーステストが実装されていない
+- 限定的なランダム入力テスト
+- セキュリティプロパティの形式的検証なし
+- カバレッジメトリクス（19.35%）が欠落しているプロパティテストを反映
 
-## Next Steps
+## 次のステップ
 
-1. **Immediate**: Document this gap in project status
-2. **Short-term**: Implement Property 3 (security critical)
-3. **Medium-term**: Implement remaining properties
-4. **Long-term**: Integrate property tests into CI/CD
+1. **即時**: プロジェクトステータスでこのギャップをドキュメント化
+2. **短期**: プロパティ3を実装（セキュリティクリティカル）
+3. **中期**: 残りのプロパティを実装
+4. **長期**: プロパティテストをCI/CDに統合
 
-## References
+## 参照
 
-- Design Document: `.kiro/specs/lazygit-ai-commit/design.md` (Section: Correctness Properties)
-- Tasks Document: `.kiro/specs/lazygit-ai-commit/tasks.md` (Tasks 4.1, 4.2, 4.3, 5.1, 7.1)
-- Testing Guide: `TESTING-GUIDE.md`
+- 設計ドキュメント: `.kiro/specs/lazygit-ai-commit/design.md`（セクション: 正確性プロパティ）
+- タスクドキュメント: `.kiro/specs/lazygit-ai-commit/tasks.md`（タスク 4.1、4.2、4.3、5.1、7.1）
+- テストガイド: `TESTING-GUIDE.md`
 
 ---
 
-**Last Updated**: November 27, 2025
-**Status**: Documentation Complete, Implementation Pending
+**最終更新**: 2025年11月27日
+**ステータス**: ドキュメント完了、実装保留中

@@ -1,170 +1,170 @@
-# Quick Start Guide
+# クイックスタートガイド
 
-Get AI-powered commit messages in LazyGit in under 5 minutes!
+5分以内でLazyGitでAI駆動のコミットメッセージを取得！
 
-## Choose Your Path
+## パスを選択
 
-### Path 1: Quick Test (No Setup Required)
+### パス 1: クイックテスト（セットアップ不要）
 
-Try it out with the mock backend first:
+まずmockバックエンドで試してみる:
 
 ```bash
-# 1. Clone the repository
+# 1. リポジトリをクローン
 git clone <repo-url> ~/lazygit-ai-commit
 cd ~/lazygit-ai-commit
 
-# 2. Make scripts executable
+# 2. スクリプトを実行可能にする
 chmod +x *.sh
 
-# 3. Test it works
+# 3. 動作することをテスト
 export AI_BACKEND=mock
 echo "test change" | ./ai-commit-generator.sh
 
-# 4. Update config.yml with full paths
-# Edit config.yml and replace ./ai-commit-generator.sh with full path
-# Example: /home/username/lazygit-ai-commit/ai-commit-generator.sh
+# 4. config.ymlを完全なパスで更新
+# config.ymlを編集して./ai-commit-generator.shを完全なパスに置き換える
+# 例: /home/username/lazygit-ai-commit/ai-commit-generator.sh
 
-# 5. Copy to LazyGit config
+# 5. LazyGit設定にコピー
 cp config.yml ~/.config/lazygit/config.yml
 
-# 6. Try it in LazyGit
+# 6. LazyGitで試す
 cd /tmp
 git init test-repo
 cd test-repo
 echo "test" > test.txt
 git add test.txt
 lazygit
-# Press Ctrl+A to see AI-generated messages!
+# Ctrl+Aを押してAI生成メッセージを確認！
 ```
 
-### Path 2: Gemini Setup (Recommended)
+### パス 2: Geminiセットアップ（推奨）
 
-Get real AI-powered messages with Google Gemini:
+Google Geminiで実際のAI駆動メッセージを取得:
 
 ```bash
-# 1. Install Gemini
+# 1. Geminiをインストール
 pip install google-generativeai
 
-# 2. Get API key
-# Visit: https://aistudio.google.com/app/apikey
-# Click "Create API Key" and copy it
+# 2. APIキーを取得
+# アクセス: https://aistudio.google.com/app/apikey
+# "Create API Key"をクリックしてコピー
 
-# 3. Set environment variable
+# 3. 環境変数を設定
 echo 'export GEMINI_API_KEY="your-key-here"' >> ~/.bashrc
 echo 'export AI_BACKEND="gemini"' >> ~/.bashrc
 source ~/.bashrc
 
-# 4. Clone and setup
+# 4. クローンしてセットアップ
 git clone <repo-url> ~/lazygit-ai-commit
 cd ~/lazygit-ai-commit
 chmod +x *.sh
 
-# 5. Test it
+# 5. テスト
 echo "test change" | ./ai-commit-generator.sh
 
-# 6. Update paths in config.yml and copy to LazyGit
-# Edit config.yml: replace ./ai-commit-generator.sh with full path
+# 6. config.ymlのパスを更新してLazyGitにコピー
+# config.ymlを編集: ./ai-commit-generator.shを完全なパスに置き換える
 cp config.yml ~/.config/lazygit/config.yml
 
-# 7. Use in LazyGit
+# 7. LazyGitで使用
 lazygit
-# Press Ctrl+A in files view!
+# filesビューでCtrl+Aを押す！
 ```
 
-### Path 3: Ollama Setup (Privacy-Focused)
+### パス 3: Ollamaセットアップ（プライバシー重視）
 
-Run AI completely locally:
+AIを完全にローカルで実行:
 
 ```bash
-# 1. Install Ollama
+# 1. Ollamaをインストール
 curl -fsSL https://ollama.com/install.sh | sh
 
-# 2. Pull a model
+# 2. モデルをダウンロード
 ollama pull mistral
 
-# 3. Start Ollama (in a separate terminal)
+# 3. Ollamaを起動（別のターミナルで）
 ollama serve
 
-# 4. Set environment variable
+# 4. 環境変数を設定
 echo 'export AI_BACKEND="ollama"' >> ~/.bashrc
 source ~/.bashrc
 
-# 5. Clone and setup
+# 5. クローンしてセットアップ
 git clone <repo-url> ~/lazygit-ai-commit
 cd ~/lazygit-ai-commit
 chmod +x *.sh
 
-# 6. Test it
+# 6. テスト
 echo "test change" | ./ai-commit-generator.sh
 
-# 7. Update paths in config.yml and copy to LazyGit
-# Edit config.yml: replace ./ai-commit-generator.sh with full path
+# 7. config.ymlのパスを更新してLazyGitにコピー
+# config.ymlを編集: ./ai-commit-generator.shを完全なパスに置き換える
 cp config.yml ~/.config/lazygit/config.yml
 
-# 8. Use in LazyGit
+# 8. LazyGitで使用
 lazygit
-# Press Ctrl+A in files view!
+# filesビューでCtrl+Aを押す！
 ```
 
-## Usage
+## 使い方
 
-Once set up:
+セットアップ後:
 
-1. **Stage your changes** in LazyGit (press `space` on files)
-2. **Press `Ctrl+A`** to generate commit messages
-3. **Navigate** with arrow keys
-4. **Press `Enter`** to commit with selected message
-5. **Press `Esc`** to cancel
+1. **変更をステージング** - LazyGitでファイル上で`space`を押す
+2. **`Ctrl+A`を押す** - コミットメッセージを生成
+3. **移動** - 矢印キーで
+4. **`Enter`を押す** - 選択したメッセージでコミット
+5. **`Esc`を押す** - キャンセル
 
-## Troubleshooting
+## トラブルシューティング
 
 ### "No such file or directory"
 
-**Problem**: Script paths in config.yml are wrong
+**問題**: config.ymlのスクリプトパスが間違っている
 
-**Fix**: Edit `~/.config/lazygit/config.yml` and use full absolute paths:
+**修正**: `~/.config/lazygit/config.yml`を編集して完全な絶対パスを使用:
 ```yaml
 git diff --cached | head -c 12000 | /home/username/lazygit-ai-commit/ai-commit-generator.sh | /home/username/lazygit-ai-commit/parse-ai-output.sh
 ```
 
 ### "GEMINI_API_KEY not set"
 
-**Problem**: Environment variable not configured
+**問題**: 環境変数が設定されていない
 
-**Fix**:
+**修正**:
 ```bash
 export GEMINI_API_KEY="your-key"
 export AI_BACKEND="gemini"
-# Add to ~/.bashrc to make permanent
+# 永続化するために~/.bashrcに追加
 ```
 
 ### "AI tool failed"
 
-**Problem**: Backend not installed or not running
+**問題**: バックエンドがインストールされていないか実行されていない
 
-**Fix**:
+**修正**:
 - Gemini: `pip install google-generativeai`
 - Claude: `npm install -g @anthropic-ai/claude-cli`
-- Ollama: Ensure `ollama serve` is running
+- Ollama: `ollama serve`が実行中であることを確認
 
 ### "No staged changes"
 
-**Problem**: No files staged for commit
+**問題**: コミット用にステージングされたファイルがない
 
-**Fix**: Press `space` on files in LazyGit to stage them first
+**修正**: LazyGitでファイル上で`space`を押して最初にステージング
 
-## Next Steps
+## 次のステップ
 
-- Read [README.md](README.md) for full documentation
-- See [INSTALLATION.md](INSTALLATION.md) for detailed setup
-- Check [AI-BACKEND-GUIDE.md](AI-BACKEND-GUIDE.md) for backend comparison
-- Customize prompts in `ai-commit-generator.sh`
+- 完全なドキュメントは[README.md](README.md)を読む
+- 詳細なセットアップは[INSTALLATION.md](INSTALLATION.md)を参照
+- バックエンド比較は[AI-BACKEND-GUIDE.md](AI-BACKEND-GUIDE.md)を確認
+- `ai-commit-generator.sh`でプロンプトをカスタマイズ
 
-## Getting Help
+## ヘルプを得る
 
-Run the test suite to diagnose issues:
+問題を診断するためにテストスイートを実行:
 ```bash
 ./test-ai-backend-integration.sh
 ```
 
-This will tell you exactly what's working and what needs fixing!
+これにより、何が動作していて何を修正する必要があるかが正確にわかります！

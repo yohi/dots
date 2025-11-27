@@ -1,325 +1,325 @@
-# Testing Guide
+# テストガイド
 
-This document describes how to test the LazyGit AI Commit Message Generator to ensure it's working correctly.
+このドキュメントでは、LazyGit AIコミットメッセージジェネレーターが正しく動作していることを確認するためのテスト方法を説明します。
 
-## Quick Test
+## クイックテスト
 
-Run the complete test suite to verify everything works:
+完全なテストスイートを実行してすべてが動作することを確認:
 
 ```bash
 ./test-complete-workflow.sh
 ```
 
-This will run 23 integration tests covering all aspects of the system.
+これにより、システムのすべての側面をカバーする23の統合テストが実行されます。
 
-## Test Suite Overview
+## テストスイート概要
 
-### Complete Workflow Test (`test-complete-workflow.sh`)
+### 完全なワークフローテスト（`test-complete-workflow.sh`）
 
-Comprehensive integration test that validates the entire system end-to-end.
+システム全体をエンドツーエンドで検証する包括的な統合テスト。
 
-**What it tests**:
-1. Complete happy path workflow (diff → AI → commit)
-2. Special character handling and escaping
-3. Empty staging area detection
-4. Large diff truncation (12KB limit)
-5. Conventional Commits format compliance
-6. Markdown removal from messages
-7. Timeout handling
-8. Error recovery
-9. Multiple backend support
-10. UI update verification
-11. Cancellation scenario
-12. Parser robustness
+**テスト内容**:
+1. 完全なハッピーパスワークフロー（diff → AI → コミット）
+2. 特殊文字の処理とエスケープ
+3. 空のステージングエリア検出
+4. 大きなdiffの切り詰め（12KB制限）
+5. Conventional Commits形式の準拠
+6. メッセージからのMarkdown削除
+7. タイムアウト処理
+8. エラー回復
+9. 複数バックエンドサポート
+10. UI更新の検証
+11. キャンセルシナリオ
+12. パーサーの堅牢性
 
-**Expected result**: All 23 tests should pass
+**期待される結果**: すべての23テストが合格すること
 
-**Run it**:
+**実行方法**:
 ```bash
 ./test-complete-workflow.sh
 ```
 
-### Error Scenario Tests (`test-all-error-scenarios.sh`)
+### エラーシナリオテスト（`test-all-error-scenarios.sh`）
 
-Tests all error handling paths to ensure the system fails gracefully.
+システムが適切に失敗することを確認するためのすべてのエラー処理パスをテスト。
 
-**What it tests**:
-- Empty diff input handling
-- AI tool empty output detection
-- AI tool failure handling
-- Timeout detection
-- Parser empty input handling
-- Parser whitespace-only input handling
-- Pipeline failure propagation
-- Valid input produces valid output
-- Error messages include suggestions
-- Timeout configurability
+**テスト内容**:
+- 空のdiff入力処理
+- AIツールの空出力検出
+- AIツール失敗処理
+- タイムアウト検出
+- パーサーの空入力処理
+- パーサーの空白のみ入力処理
+- パイプライン失敗の伝播
+- 有効な入力が有効な出力を生成
+- エラーメッセージに提案が含まれる
+- タイムアウトの設定可能性
 
-**Run it**:
+**実行方法**:
 ```bash
 ./test-all-error-scenarios.sh
 ```
 
-### Component Tests
+### コンポーネントテスト
 
-Individual component tests for specific functionality:
+特定の機能のための個別コンポーネントテスト:
 
-#### Commit Integration Test (`test-lazygit-commit-integration.sh`)
+#### コミット統合テスト（`test-lazygit-commit-integration.sh`）
 
-Tests the complete pipeline from menuFromCommand to commit execution.
+menuFromCommandからコミット実行までの完全なパイプラインをテスト。
 
-**Run it**:
+**実行方法**:
 ```bash
 ./test-lazygit-commit-integration.sh
 ```
 
-#### Regex Parser Test (`test-regex-parser.sh`)
+#### 正規表現パーサーテスト（`test-regex-parser.sh`）
 
-Tests the parsing of AI output into individual commit messages.
+AI出力を個別のコミットメッセージに解析することをテスト。
 
-**Run it**:
+**実行方法**:
 ```bash
 ./test-regex-parser.sh
 ```
 
-#### Error Handling Test (`test-error-handling.sh`)
+#### エラー処理テスト（`test-error-handling.sh`）
 
-Tests error detection and reporting.
+エラー検出と報告をテスト。
 
-**Run it**:
+**実行方法**:
 ```bash
 ./test-error-handling.sh
 ```
 
-#### Timeout Handling Test (`test-timeout-handling.sh`)
+#### タイムアウト処理テスト（`test-timeout-handling.sh`）
 
-Tests timeout functionality.
+タイムアウト機能をテスト。
 
-**Run it**:
+**実行方法**:
 ```bash
 ./test-timeout-handling.sh
 ```
 
-#### AI Backend Integration Test (`test-ai-backend-integration.sh`)
+#### AIバックエンド統合テスト（`test-ai-backend-integration.sh`）
 
-Tests integration with different AI backends.
+異なるAIバックエンドとの統合をテスト。
 
-**Run it**:
+**実行方法**:
 ```bash
 ./test-ai-backend-integration.sh
 ```
 
-## Manual Testing
+## 手動テスト
 
-### Test with Mock Backend
+### Mockバックエンドでテスト
 
-The mock backend requires no API keys and is perfect for testing:
+mockバックエンドはAPIキー不要でテストに最適:
 
 ```bash
-# Set backend to mock
+# バックエンドをmockに設定
 export AI_BACKEND=mock
 
-# Create a test repository
+# テストリポジトリを作成
 mkdir ~/test-ai-commit
 cd ~/test-ai-commit
 git init
 
-# Make some changes
+# 変更を加える
 echo "function hello() { return 'world'; }" > test.js
 git add test.js
 
-# Test the pipeline manually
+# パイプラインを手動でテスト
 git diff --cached | ./ai-commit-generator.sh | ./parse-ai-output.sh
 
-# Or test in LazyGit
+# またはLazyGitでテスト
 lazygit
-# Press Ctrl+A to see AI-generated messages
+# Ctrl+Aを押してAI生成メッセージを確認
 ```
 
-### Test with Real AI Backend
+### 実際のAIバックエンドでテスト
 
-Once you have API keys configured:
+APIキーが設定されたら:
 
 ```bash
-# For Gemini
+# Geminiの場合
 export AI_BACKEND=gemini
 export GEMINI_API_KEY="your-key"
 
-# For Claude
+# Claudeの場合
 export AI_BACKEND=claude
 export ANTHROPIC_API_KEY="your-key"
 
-# For Ollama (ensure it's running)
+# Ollamaの場合（実行中であることを確認）
 export AI_BACKEND=ollama
-ollama serve  # In another terminal
+ollama serve  # 別のターミナルで
 
-# Test the pipeline
+# パイプラインをテスト
 cd your-project
 git add some-file.js
 git diff --cached | ./ai-commit-generator.sh | ./parse-ai-output.sh
 ```
 
-### Test in LazyGit
+### LazyGitでテスト
 
-The ultimate test is using it in LazyGit:
+最終的なテストはLazyGitで使用すること:
 
 ```bash
-# 1. Make changes in a real project
+# 1. 実際のプロジェクトで変更を加える
 cd your-project
 vim some-file.js
 
-# 2. Open LazyGit
+# 2. LazyGitを開く
 lazygit
 
-# 3. Stage files (press space)
+# 3. ファイルをステージング（spaceを押す）
 
-# 4. Press Ctrl+A to generate messages
+# 4. Ctrl+Aを押してメッセージを生成
 
-# 5. Verify:
-#    - Loading message appears
-#    - Menu shows 5+ messages
-#    - Messages follow Conventional Commits format
-#    - No markdown formatting
-#    - Messages are relevant to your changes
+# 5. 確認:
+#    - ローディングメッセージが表示される
+#    - メニューに5つ以上のメッセージが表示される
+#    - メッセージがConventional Commits形式に従っている
+#    - markdown形式がない
+#    - メッセージが変更に関連している
 
-# 6. Select a message and press Enter
+# 6. メッセージを選択してEnterを押す
 
-# 7. Verify commit was created:
+# 7. コミットが作成されたことを確認:
 git log -1
 ```
 
-## Testing Checklist
+## テストチェックリスト
 
-Use this checklist to verify a complete installation:
+完全なインストールを確認するためにこのチェックリストを使用:
 
-### Installation Tests
+### インストールテスト
 
-- [ ] Scripts are executable (`ls -l *.sh` shows `-rwxr-xr-x`)
-- [ ] AI backend is installed and accessible
-- [ ] API keys are set (for cloud backends)
-- [ ] Environment variables are configured
-- [ ] LazyGit config.yml has correct absolute paths
-- [ ] LazyGit config.yml syntax is valid
+- [ ] スクリプトが実行可能（`ls -l *.sh`で`-rwxr-xr-x`と表示）
+- [ ] AIバックエンドがインストールされアクセス可能
+- [ ] APIキーが設定されている（クラウドバックエンドの場合）
+- [ ] 環境変数が設定されている
+- [ ] LazyGit config.ymlに正しい絶対パスがある
+- [ ] LazyGit config.ymlの構文が有効
 
-### Functional Tests
+### 機能テスト
 
-- [ ] Mock backend works: `echo "test" | AI_BACKEND=mock ./ai-commit-generator.sh`
-- [ ] Parser works: `echo "feat: test" | ./parse-ai-output.sh`
-- [ ] Complete pipeline works: `git diff --cached | ./ai-commit-generator.sh | ./parse-ai-output.sh`
-- [ ] LazyGit shows Ctrl+A option in files view
-- [ ] Pressing Ctrl+A shows loading message
-- [ ] Menu appears with multiple messages
-- [ ] Messages follow Conventional Commits format
-- [ ] Selecting a message creates a commit
-- [ ] Commit message is preserved correctly
-- [ ] Special characters are handled (test with quotes, backticks)
+- [ ] mockバックエンドが動作: `echo "test" | AI_BACKEND=mock ./ai-commit-generator.sh`
+- [ ] パーサーが動作: `echo "feat: test" | ./parse-ai-output.sh`
+- [ ] 完全なパイプラインが動作: `git diff --cached | ./ai-commit-generator.sh | ./parse-ai-output.sh`
+- [ ] LazyGitがfilesビューでCtrl+Aオプションを表示
+- [ ] Ctrl+Aを押すとローディングメッセージが表示される
+- [ ] 複数のメッセージを含むメニューが表示される
+- [ ] メッセージがConventional Commits形式に従っている
+- [ ] メッセージを選択するとコミットが作成される
+- [ ] コミットメッセージが正しく保持される
+- [ ] 特殊文字が処理される（引用符、バッククォートでテスト）
 
-### Error Handling Tests
+### エラー処理テスト
 
-- [ ] Empty staging area shows error
-- [ ] AI failure shows error message
-- [ ] Timeout shows error message (if applicable)
-- [ ] Invalid output is handled gracefully
-- [ ] Pressing Esc cancels without committing
+- [ ] 空のステージングエリアでエラーが表示される
+- [ ] AI失敗でエラーメッセージが表示される
+- [ ] タイムアウトでエラーメッセージが表示される（該当する場合）
+- [ ] 無効な出力が適切に処理される
+- [ ] Escを押すとコミットせずにキャンセルされる
 
-### Quality Tests
+### 品質テスト
 
-- [ ] Messages are relevant to changes
-- [ ] Messages follow Conventional Commits format
-- [ ] No markdown formatting in messages
-- [ ] Messages are concise (under 72 characters)
-- [ ] Multiple candidates are provided
+- [ ] メッセージが変更に関連している
+- [ ] メッセージがConventional Commits形式に従っている
+- [ ] メッセージにmarkdown形式がない
+- [ ] メッセージが簡潔（72文字以内）
+- [ ] 複数の候補が提供される
 
-## Troubleshooting Test Failures
+## テスト失敗のトラブルシューティング
 
 ### "AI tool failed with exit code 127"
 
-**Cause**: Script not found or not executable
+**原因**: スクリプトが見つからないか実行可能でない
 
-**Fix**:
+**修正**:
 ```bash
 chmod +x *.sh
-ls -l mock-ai-tool.sh  # Should show -rwxr-xr-x
+ls -l mock-ai-tool.sh  # -rwxr-xr-xと表示されるはず
 ```
 
 ### "No such file or directory"
 
-**Cause**: Relative paths not working from test directory
+**原因**: テストディレクトリから相対パスが機能しない
 
-**Fix**: The scripts now use absolute paths. Ensure you're running from the correct directory.
+**修正**: スクリプトは現在絶対パスを使用しています。正しいディレクトリから実行していることを確認してください。
 
 ### "Timeout not detected"
 
-**Cause**: `timeout` command not available on your system
+**原因**: システムで`timeout`コマンドが利用できない
 
-**Fix**: This is acceptable - the test will pass with a note. The timeout feature requires the `timeout` command (usually available on Linux).
+**修正**: これは許容範囲 - テストは注記付きで合格します。タイムアウト機能には`timeout`コマンドが必要です（通常Linuxで利用可能）。
 
 ### "Some messages don't follow format"
 
-**Cause**: Mock AI tool not generating proper format
+**原因**: mockAIツールが適切な形式を生成していない
 
-**Fix**: Check that `mock-ai-tool.sh` is the correct version and executable.
+**修正**: `mock-ai-tool.sh`が正しいバージョンで実行可能であることを確認してください。
 
-### Tests pass but LazyGit doesn't work
+### テストは合格するがLazyGitが動作しない
 
-**Cause**: LazyGit config.yml has incorrect paths
+**原因**: LazyGit config.ymlのパスが正しくない
 
-**Fix**:
-1. Edit `~/.config/lazygit/config.yml`
-2. Replace `./ai-commit-generator.sh` with full absolute path
-3. Replace `./parse-ai-output.sh` with full absolute path
-4. Restart LazyGit
+**修正**:
+1. `~/.config/lazygit/config.yml`を編集
+2. `./ai-commit-generator.sh`を完全な絶対パスに置き換える
+3. `./parse-ai-output.sh`を完全な絶対パスに置き換える
+4. LazyGitを再起動
 
-## Continuous Integration
+## 継続的インテグレーション
 
-To run tests in CI/CD:
+CI/CDでテストを実行するには:
 
 ```bash
 #!/bin/bash
-# CI test script
+# CIテストスクリプト
 
 set -e
 
-# Use mock backend (no API keys needed)
+# mockバックエンドを使用（APIキー不要）
 export AI_BACKEND=mock
 
-# Run all tests
+# すべてのテストを実行
 ./test-complete-workflow.sh
 ./test-all-error-scenarios.sh
 
 echo "All tests passed!"
 ```
 
-## Performance Testing
+## パフォーマンステスト
 
-Test with different diff sizes:
+異なるdiffサイズでテスト:
 
 ```bash
-# Small diff (< 1KB)
+# 小さいdiff（< 1KB）
 echo "small change" > test.txt
 git add test.txt
 time git diff --cached | ./ai-commit-generator.sh
 
-# Medium diff (5-10KB)
+# 中程度のdiff（5-10KB）
 cat large-file.js > test.js
 git add test.js
 time git diff --cached | ./ai-commit-generator.sh
 
-# Large diff (> 12KB, will be truncated)
+# 大きいdiff（> 12KB、切り詰められる）
 dd if=/dev/zero of=large.bin bs=1024 count=20
 git add large.bin
 time git diff --cached | head -c 12000 | ./ai-commit-generator.sh
 ```
 
-## Backend-Specific Testing
+## バックエンド固有のテスト
 
-### Test Gemini
+### Geminiをテスト
 
 ```bash
 export AI_BACKEND=gemini
 export GEMINI_API_KEY="your-key"
 
-# Test API connection
+# API接続をテスト
 python3 -c "
 import google.generativeai as genai
 import os
@@ -327,81 +327,81 @@ genai.configure(api_key=os.environ['GEMINI_API_KEY'])
 print('Gemini API key is valid')
 "
 
-# Test message generation
+# メッセージ生成をテスト
 echo "test change" | ./ai-commit-generator.sh
 ```
 
-### Test Claude
+### Claudeをテスト
 
 ```bash
 export AI_BACKEND=claude
 export ANTHROPIC_API_KEY="your-key"
 
-# Test CLI installation
+# CLIインストールをテスト
 claude --version
 
-# Test message generation
+# メッセージ生成をテスト
 echo "test change" | ./ai-commit-generator.sh
 ```
 
-### Test Ollama
+### Ollamaをテスト
 
 ```bash
 export AI_BACKEND=ollama
 
-# Test Ollama is running
+# Ollamaが実行中であることをテスト
 curl http://localhost:11434/api/tags
 
-# Test model is available
+# モデルが利用可能であることをテスト
 ollama list | grep mistral
 
-# Test message generation
+# メッセージ生成をテスト
 echo "test change" | ./ai-commit-generator.sh
 ```
 
-## Test Coverage
+## テストカバレッジ
 
-The test suite covers:
+テストスイートがカバーする内容:
 
-- ✅ Requirements 1.1, 1.2 - LazyGit integration
-- ✅ Requirements 2.1, 2.2, 2.3, 2.4 - Multiple candidates and menu
-- ✅ Requirements 3.1, 3.2, 3.3, 3.4 - User selection and confirmation
-- ✅ Requirements 4.1, 4.2, 4.3 - Commit execution and escaping
-- ✅ Requirements 5.1, 5.2, 5.3, 5.4 - Diff processing and parsing
-- ✅ Requirements 6.1, 6.3 - Conventional Commits format
-- ✅ Requirements 7.1, 7.2, 7.3 - Configurable AI backends
-- ✅ Requirements 8.1, 8.2, 8.3, 8.4 - Error handling and edge cases
-- ✅ Requirements 9.1, 9.2, 9.3 - Keyboard shortcuts
+- ✅ 要件 1.1、1.2 - LazyGit統合
+- ✅ 要件 2.1、2.2、2.3、2.4 - 複数候補とメニュー
+- ✅ 要件 3.1、3.2、3.3、3.4 - ユーザー選択と確認
+- ✅ 要件 4.1、4.2、4.3 - コミット実行とエスケープ
+- ✅ 要件 5.1、5.2、5.3、5.4 - diff処理と解析
+- ✅ 要件 6.1、6.3 - Conventional Commits形式
+- ✅ 要件 7.1、7.2、7.3 - 設定可能なAIバックエンド
+- ✅ 要件 8.1、8.2、8.3、8.4 - エラー処理とエッジケース
+- ✅ 要件 9.1、9.2、9.3 - キーボードショートカット
 
-## Reporting Issues
+## 問題の報告
 
-If tests fail, gather this information:
+テストが失敗した場合、この情報を収集:
 
 ```bash
-# System information
+# システム情報
 uname -a
 bash --version
 git --version
 lazygit --version
 
-# Environment
+# 環境
 env | grep -E 'AI_|GEMINI|ANTHROPIC|OLLAMA'
 
-# Test output
+# テスト出力
 ./test-complete-workflow.sh > test-output.log 2>&1
 
-# Script permissions
+# スクリプトのパーミッション
 ls -la *.sh
 
-# LazyGit config
+# LazyGit設定
 cat ~/.config/lazygit/config.yml
 ```
 
-Include this information when reporting issues.
+問題を報告する際にこの情報を含めてください。
 
-## Success Criteria
+## 成功基準
 
-A successful test run should show:
+成功したテスト実行では以下が表示されるはず:
 
 ```
 ==========================================
@@ -418,4 +418,4 @@ The LazyGit AI Commit system is working correctly.
 You can now use it with confidence in your workflow.
 ```
 
-If you see this, your installation is complete and working correctly!
+これが表示されれば、インストールは完了し正しく動作しています！
