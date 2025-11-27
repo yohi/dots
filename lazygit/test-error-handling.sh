@@ -57,11 +57,17 @@ exit 0
 EOF
 chmod +x "$TEMP_SCRIPT"
 
+# Backup and replace mock-ai-tool.sh temporarily
+cp mock-ai-tool.sh mock-ai-tool.sh.backup
+cp "$TEMP_SCRIPT" mock-ai-tool.sh
+
 # Test with empty output
-if echo "test diff" | AI_TOOL="$TEMP_SCRIPT" ./ai-commit-generator.sh 2>&1 | grep -q "AI tool returned empty output"; then
+if echo "test diff" | AI_BACKEND=mock ./ai-commit-generator.sh 2>&1 | grep -q "AI tool returned empty output"; then
     echo "✓ PASS: Empty output is detected and reported"
+    mv mock-ai-tool.sh.backup mock-ai-tool.sh
 else
     echo "✗ FAIL: Empty output is not properly handled"
+    mv mock-ai-tool.sh.backup mock-ai-tool.sh
     rm "$TEMP_SCRIPT"
     exit 1
 fi
@@ -79,11 +85,17 @@ exit 1
 EOF
 chmod +x "$TEMP_SCRIPT"
 
+# Backup and replace mock-ai-tool.sh temporarily
+cp mock-ai-tool.sh mock-ai-tool.sh.backup
+cp "$TEMP_SCRIPT" mock-ai-tool.sh
+
 # Test with failing AI tool
-if echo "test diff" | AI_TOOL="$TEMP_SCRIPT" ./ai-commit-generator.sh 2>&1 | grep -q "AI tool failed"; then
+if echo "test diff" | AI_BACKEND=mock ./ai-commit-generator.sh 2>&1 | grep -q "AI tool failed"; then
     echo "✓ PASS: AI tool failure is detected and reported"
+    mv mock-ai-tool.sh.backup mock-ai-tool.sh
 else
     echo "✗ FAIL: AI tool failure is not properly handled"
+    mv mock-ai-tool.sh.backup mock-ai-tool.sh
     rm "$TEMP_SCRIPT"
     exit 1
 fi

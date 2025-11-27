@@ -45,13 +45,16 @@ cat > "$EMPTY_AI" << 'EOF'
 exit 0
 EOF
 chmod +x "$EMPTY_AI"
-if echo "test diff" | AI_TOOL="$EMPTY_AI" ./ai-commit-generator.sh 2>&1 | grep -q "AI tool returned empty output"; then
+cp mock-ai-tool.sh mock-ai-tool.sh.backup
+cp "$EMPTY_AI" mock-ai-tool.sh
+if echo "test diff" | AI_BACKEND=mock ./ai-commit-generator.sh 2>&1 | grep -q "AI tool returned empty output"; then
     echo "✓ PASS: Empty AI output detected"
     PASS_COUNT=$((PASS_COUNT + 1))
 else
     echo "✗ FAIL: Empty AI output not detected"
     FAIL_COUNT=$((FAIL_COUNT + 1))
 fi
+mv mock-ai-tool.sh.backup mock-ai-tool.sh
 rm "$EMPTY_AI"
 echo ""
 
@@ -64,13 +67,16 @@ echo "Internal error" >&2
 exit 1
 EOF
 chmod +x "$FAILING_AI"
-if echo "test diff" | AI_TOOL="$FAILING_AI" ./ai-commit-generator.sh 2>&1 | grep -q "AI tool failed"; then
+cp mock-ai-tool.sh mock-ai-tool.sh.backup
+cp "$FAILING_AI" mock-ai-tool.sh
+if echo "test diff" | AI_BACKEND=mock ./ai-commit-generator.sh 2>&1 | grep -q "AI tool failed"; then
     echo "✓ PASS: AI tool failure detected"
     PASS_COUNT=$((PASS_COUNT + 1))
 else
     echo "✗ FAIL: AI tool failure not detected"
     FAIL_COUNT=$((FAIL_COUNT + 1))
 fi
+mv mock-ai-tool.sh.backup mock-ai-tool.sh
 rm "$FAILING_AI"
 echo ""
 
@@ -83,13 +89,16 @@ sleep 10
 echo "feat: too slow"
 EOF
 chmod +x "$SLOW_AI"
-if echo "test diff" | TIMEOUT_SECONDS=1 AI_TOOL="$SLOW_AI" ./ai-commit-generator.sh 2>&1 | grep -q "timed out"; then
+cp mock-ai-tool.sh mock-ai-tool.sh.backup
+cp "$SLOW_AI" mock-ai-tool.sh
+if echo "test diff" | TIMEOUT_SECONDS=1 AI_BACKEND=mock ./ai-commit-generator.sh 2>&1 | grep -q "timed out"; then
     echo "✓ PASS: Timeout detected"
     PASS_COUNT=$((PASS_COUNT + 1))
 else
     echo "✗ FAIL: Timeout not detected"
     FAIL_COUNT=$((FAIL_COUNT + 1))
 fi
+mv mock-ai-tool.sh.backup mock-ai-tool.sh
 rm "$SLOW_AI"
 echo ""
 
