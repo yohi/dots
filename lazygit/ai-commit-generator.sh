@@ -42,13 +42,25 @@ if [ -z "$DIFF_INPUT" ]; then
     exit 1
 fi
 
+# Prompt delivery mechanism: Combine PROMPT and DIFF via stdin piping
+# This approach is chosen because:
+# 1. Most AI CLI tools accept full input via stdin
+# 2. No temporary files needed (cleaner, no cleanup required)
+# 3. Works well with pipes and process substitution
+# 4. The mock AI tool can parse or ignore the prompt as needed
+COMBINED_INPUT="${PROMPT}
+
+---DIFF START---
+${DIFF_INPUT}
+---DIFF END---"
+
 # Execute AI tool with timeout
-# Pass diff via stdin and capture output
+# Pass combined prompt + diff via stdin and capture output
 if command -v timeout &> /dev/null; then
-    echo "$DIFF_INPUT" | timeout "$TIMEOUT_SECONDS" "$AI_TOOL" 2>&1
+    echo "$COMBINED_INPUT" | timeout "$TIMEOUT_SECONDS" "$AI_TOOL" 2>&1
 else
     # Fallback if timeout command is not available
-    echo "$DIFF_INPUT" | "$AI_TOOL" 2>&1
+    echo "$COMBINED_INPUT" | "$AI_TOOL" 2>&1
 fi
 
 EXIT_CODE=$?

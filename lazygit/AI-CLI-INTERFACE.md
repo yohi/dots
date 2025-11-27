@@ -15,6 +15,14 @@ Main interface script that:
 - Handles timeouts and errors
 - Returns formatted commit messages
 
+**Prompt Delivery Mechanism:**
+The script combines the PROMPT and DIFF via stdin piping. This approach:
+- Sends both prompt and diff to the AI tool in a single stream
+- Uses `---DIFF START---` and `---DIFF END---` markers to separate content
+- Requires no temporary files (cleaner, no cleanup needed)
+- Works seamlessly with pipes and process substitution
+- Preserves timeout handling and environment variables
+
 **Usage:**
 ```bash
 git diff --cached | ./ai-commit-generator.sh
@@ -31,11 +39,18 @@ Mock AI tool for testing that:
 - Analyzes diff content heuristically
 - Returns Conventional Commits formatted messages
 - No markdown, numbering, or decorations
+- Handles combined prompt + diff input (extracts diff from markers)
+- Backward compatible with plain diff input
 
 **Usage:**
 ```bash
 echo "diff content" | ./mock-ai-tool.sh
 ```
+
+**Input Format:**
+The tool accepts either:
+1. Combined input with markers (from `ai-commit-generator.sh`)
+2. Plain diff input (for direct testing)
 
 ## Prompt Structure
 
@@ -148,7 +163,7 @@ echo "test diff" | ./ai-commit-generator.sh
 
 Test with actual staged changes:
 ```bash
-./get-staged-diff.sh | ./ai-commit-generator.sh
+git diff --cached | ./ai-commit-generator.sh
 ```
 
 ## Requirements Validation
