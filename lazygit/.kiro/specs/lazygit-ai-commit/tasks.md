@@ -27,7 +27,7 @@
   - 12KB超の入力が正しく切り詰められるテスト
   - _Requirements: 8.1_
 
-- [ ] 4. AI CLIインターフェースの実装
+- [x] 4. AI CLIインターフェースの実装
   - モックAIツールスクリプトを作成（テスト用）
   - プロンプト構造を定義（Conventional Commits形式、Markdown除去指示）
   - stdin/stdoutパイプライン処理を実装

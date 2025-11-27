@@ -12,8 +12,8 @@ customCommands:
             echo "Error: No staged changes. Please stage files first."
             exit 1
           fi
-          # Placeholder for AI CLI tool - will be implemented in later tasks
-          git diff --cached | head -c 12000 | cat
+          # Get staged diff, limit size, and pass to AI tool
+          git diff --cached | head -c 12000 | ./ai-commit-generator.sh
         filter: "^(?P<msg>.+)$"
         valueFormat: "{{ .msg }}"
         labelFormat: "{{ .msg | green }}"
