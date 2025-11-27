@@ -69,7 +69,7 @@
   - 空行スキップのテスト
   - _Requirements: 5.4_
 
-- [ ] 6. menuFromCommandの完全な設定
+- [x] 6. menuFromCommandの完全な設定
   - commandフィールドにパイプライン全体を統合
   - filterフィールドに正規表現を設定
   - valueFormatとlabelFormatを設定（色付き表示）
