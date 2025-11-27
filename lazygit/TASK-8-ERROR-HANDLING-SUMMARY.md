@@ -161,7 +161,7 @@ Specific timeout tests:
 
 ### Error Message Format
 All error messages follow this pattern:
-```
+```text
 Error: [Clear description of what went wrong]
 Suggestion: [Actionable advice for the user]
 ```

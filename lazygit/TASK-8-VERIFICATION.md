@@ -16,7 +16,7 @@
 - ✅ User can retry or cancel (LazyGit handles this automatically)
 
 #### Test Results
-```
+```text
 ✓ pipefail is set in ai-commit-generator.sh
 ✓ pipefail is set in parse-ai-output.sh
 ✓ pipefail is set in config.yml
@@ -38,7 +38,7 @@
 - ✅ Control returned to user
 
 #### Test Results
-```
+```text
 ✓ Timeout command is used
 ✓ Timeout is configurable (default 30s)
 ✓ Timeout errors are detected and reported
@@ -140,7 +140,7 @@ Integration tests:
 
 ### Error Message Quality
 All error messages follow the format:
-```
+```text
 Error: [Clear description]
 Suggestion: [Actionable advice]
 ```
