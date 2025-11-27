@@ -129,7 +129,7 @@ echo "function hello() { return 'world'; }" > test.js
 git add test.js
 
 # パイプラインを手動でテスト
-git diff --cached | ./ai-commit-generator.sh | ./parse-ai-output.sh
+git diff --cached | scripts/lazygit-ai-commit/ai-commit-generator.sh | scripts/lazygit-ai-commit/parse-ai-output.sh
 
 # またはLazyGitでテスト
 lazygit
@@ -156,7 +156,7 @@ ollama serve  # 別のターミナルで
 # パイプラインをテスト
 cd your-project
 git add some-file.js
-git diff --cached | ./ai-commit-generator.sh | ./parse-ai-output.sh
+git diff --cached | scripts/lazygit-ai-commit/ai-commit-generator.sh | scripts/lazygit-ai-commit/parse-ai-output.sh
 ```
 
 ### LazyGitでテスト
@@ -203,9 +203,9 @@ git log -1
 
 ### 機能テスト
 
-- [ ] mockバックエンドが動作: `echo "test" | AI_BACKEND=mock ./ai-commit-generator.sh`
-- [ ] パーサーが動作: `echo "feat: test" | ./parse-ai-output.sh`
-- [ ] 完全なパイプラインが動作: `git diff --cached | ./ai-commit-generator.sh | ./parse-ai-output.sh`
+- [ ] mockバックエンドが動作: `echo "test" | AI_BACKEND=mock scripts/lazygit-ai-commit/ai-commit-generator.sh`
+- [ ] パーサーが動作: `echo "feat: test" | scripts/lazygit-ai-commit/parse-ai-output.sh`
+- [ ] 完全なパイプラインが動作: `git diff --cached | scripts/lazygit-ai-commit/ai-commit-generator.sh | scripts/lazygit-ai-commit/parse-ai-output.sh`
 - [ ] LazyGitがfilesビューでCtrl+Aオプションを表示
 - [ ] Ctrl+Aを押すとローディングメッセージが表示される
 - [ ] 複数のメッセージを含むメニューが表示される
@@ -266,8 +266,8 @@ ls -l mock-ai-tool.sh  # -rwxr-xr-xと表示されるはず
 
 **修正**:
 1. `~/.config/lazygit/config.yml`を編集
-2. `./ai-commit-generator.sh`を完全な絶対パスに置き換える
-3. `./parse-ai-output.sh`を完全な絶対パスに置き換える
+2. `scripts/lazygit-ai-commit/ai-commit-generator.sh`を完全な絶対パスに置き換える
+3. `scripts/lazygit-ai-commit/parse-ai-output.sh`を完全な絶対パスに置き換える
 4. LazyGitを再起動
 
 ## 継続的インテグレーション
@@ -298,17 +298,17 @@ echo "All tests passed!"
 # 小さいdiff（< 1KB）
 echo "small change" > test.txt
 git add test.txt
-time git diff --cached | ./ai-commit-generator.sh
+time git diff --cached | scripts/lazygit-ai-commit/ai-commit-generator.sh
 
 # 中程度のdiff（5-10KB）
 cat large-file.js > test.js
 git add test.js
-time git diff --cached | ./ai-commit-generator.sh
+time git diff --cached | scripts/lazygit-ai-commit/ai-commit-generator.sh
 
 # 大きいdiff（> 12KB、切り詰められる）
 dd if=/dev/zero of=large.bin bs=1024 count=20
 git add large.bin
-time git diff --cached | head -c 12000 | ./ai-commit-generator.sh
+time git diff --cached | head -c 12000 | scripts/lazygit-ai-commit/ai-commit-generator.sh
 ```
 
 ## バックエンド固有のテスト
@@ -328,7 +328,7 @@ print('Gemini API key is valid')
 "
 
 # メッセージ生成をテスト
-echo "test change" | ./ai-commit-generator.sh
+echo "test change" | scripts/lazygit-ai-commit/ai-commit-generator.sh
 ```
 
 ### Claudeをテスト
@@ -341,7 +341,7 @@ export ANTHROPIC_API_KEY="your-key"
 claude --version
 
 # メッセージ生成をテスト
-echo "test change" | ./ai-commit-generator.sh
+echo "test change" | scripts/lazygit-ai-commit/ai-commit-generator.sh
 ```
 
 ### Ollamaをテスト
@@ -356,7 +356,7 @@ curl http://localhost:11434/api/tags
 ollama list | grep mistral
 
 # メッセージ生成をテスト
-echo "test change" | ./ai-commit-generator.sh
+echo "test change" | scripts/lazygit-ai-commit/ai-commit-generator.sh
 ```
 
 ## テストカバレッジ

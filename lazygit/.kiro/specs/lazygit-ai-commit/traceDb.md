@@ -9,68 +9,83 @@ Coverage: 19.35
 
 ### Property 1: 複数候補生成
 
-*任意の*有効なdiff入力に対して、AIシステムは2個以上のコミットメッセージ候補を生成すること
+任意の有効なdiff入力に対して、AIシステムは2個以上のコミットメッセージ候補を生成すること
 
-**Validates**
+#### Validates
+
 - Criteria 2.1: WHEN AIがステージングされた変更を処理する THEN LazyGitシステムは複数のコミットメッセージ候補を生成すること
 
-**Implementation tasks**
+#### Implementation tasks
+
 - Task 4.1: 4.1 プロパティテスト: 複数候補生成
 
-**Implemented PBTs**
+#### Implemented PBTs
+
 - No implemented PBTs found
 
 ### Property 2: 正規表現解析の完全性
 
-*任意の*改行区切りテキスト出力（各行が非空）に対して、正規表現パーサーは各行を個別のメッセージ候補として抽出すること
+任意の改行区切りテキスト出力（各行が非空）に対して、正規表現パーサーは各行を個別のメッセージ候補として抽出すること
 
-**Validates**
+#### Validates
+
 - Criteria 5.4: WHEN AIツールが出力を返す THEN LazyGitシステムは正規表現を使用して出力を解析し、個別のメッセージ候補を抽出すること
 
-**Implementation tasks**
+#### Implementation tasks
+
 - Task 5.1: 5.1 プロパティテスト: 正規表現解析の完全性
 
-**Implemented PBTs**
+#### Implemented PBTs
+
 - No implemented PBTs found
 
 ### Property 3: シェルインジェクション防止
 
-*任意の*コミットメッセージテキスト（特殊文字を含む）に対して、エスケープ処理後のコマンド文字列はシェルインジェクションを引き起こさないこと
+任意のコミットメッセージテキスト（特殊文字を含む）に対して、エスケープ処理後のコマンド文字列はシェルインジェクションを引き起こさないこと
 
-**Validates**
+#### Validates
+
 - Criteria 4.2: WHEN メッセージをgitに渡す THEN LazyGitシステムはシェルインジェクションを防ぐために特殊文字を適切にエスケープすること
 - Criteria 8.3: WHEN 生成されたメッセージに特殊文字が含まれる THEN LazyGitシステムはコマンドインジェクションを防ぐために適切にエスケープすること
 
-**Implementation tasks**
+#### Implementation tasks
+
 - Task 7.1: 7.1 プロパティテスト: シェルインジェクション防止
 
-**Implemented PBTs**
+#### Implemented PBTs
+
 - No implemented PBTs found
 
 ### Property 4: Conventional Commits形式準拠
 
-*任意の*diff入力に対して、生成される全てのコミットメッセージは有効なConventional Commits形式（`<type>(<scope>): <description>`または`<type>: <description>`）に従うこと
+任意のdiff入力に対して、生成される全てのコミットメッセージは有効なConventional Commits形式（`<type>(<scope>): <description>`または`<type>: <description>`）に従うこと
 
-**Validates**
+#### Validates
+
 - Criteria 6.1: WHEN メッセージを生成する THEN AIツールはタイプ接頭辞を持つConventional Commits形式に従ったメッセージを生成すること
 
-**Implementation tasks**
+#### Implementation tasks
+
 - Task 4.2: 4.2 プロパティテスト: Conventional Commits形式準拠
 
-**Implemented PBTs**
+#### Implemented PBTs
+
 - No implemented PBTs found
 
 ### Property 5: Markdown除去
 
-*任意の*生成されたコミットメッセージに対して、Markdown記号（`**`, `*`, `` ` ``, `#`, `-`など）が含まれないこと
+任意の生成されたコミットメッセージに対して、Markdown記号（`**`, `*`, `` ` ``, `#`, `-`など）が含まれないこと
 
-**Validates**
+#### Validates
+
 - Criteria 6.3: WHEN メッセージを出力する THEN AIツールはMarkdownフォーマットなしで簡潔で説明的なテキストを生成すること
 
-**Implementation tasks**
+#### Implementation tasks
+
 - Task 4.3: 4.3 プロパティテスト: Markdown除去
 
-**Implemented PBTs**
+#### Implemented PBTs
+
 - No implemented PBTs found
 
 ## DATA

@@ -121,9 +121,9 @@
 2. スクリプトを実行可能にする:
    ```bash
    chmod +x ai-commit-generator.sh
-   chmod +x parse-ai-output.sh
-   chmod +x get-staged-diff.sh
-   chmod +x mock-ai-tool.sh
+   chmod +x scripts/lazygit-ai-commit/parse-ai-output.sh
+   chmod +x scripts/lazygit-ai-commit/get-staged-diff.sh
+   chmod +x scripts/lazygit-ai-commit/mock-ai-tool.sh
    ```
 
 ### ステップ 4: LazyGitを設定
@@ -139,12 +139,12 @@
 
 2. `config.yml`のスクリプトパスを更新:
    
-   `config.yml`を開き、スクリプトをインストールした場所を指すようにパスを更新:
+   `config/config.yml`を開き、スクリプトをインストールした場所を指すようにパスを更新:
    
    ```yaml
    command: |
      # ... 既存の設定 ...
-     git diff --cached | head -c 12000 | /full/path/to/ai-commit-generator.sh | /full/path/to/parse-ai-output.sh
+     git diff --cached | head -c 12000 | /full/path/to/ai-commit-generator.sh | /full/path/to/scripts/lazygit-ai-commit/parse-ai-output.sh
    ```
    
    `/full/path/to/`をリポジトリをクローンした実際のパスに置き換えます。
@@ -152,10 +152,11 @@
 3. 設定をコピーまたはマージ:
    ```bash
    # 既存の設定がない場合:
-   cp config.yml ~/.config/lazygit/config.yml
+   cp config/config.yml ~/.config/lazygit/config.yml
    
    # 既存の設定がある場合、customCommandsセクションをマージ:
    # 両方のファイルを開き、AIコミットコマンドを既存の設定にコピー
+   cat config/config.yml >> ~/.config/lazygit/config.yml
    ```
 
 ### ステップ 5: インストールをテスト
@@ -194,7 +195,7 @@ export AI_BACKEND=mock
 
 # 選択したバックエンドでテスト
 export AI_BACKEND=gemini  # またはclaudeまたはollama
-echo "test change" | ./ai-commit-generator.sh
+echo "test change" | ai-commit-generator.sh
 ```
 
 コミットメッセージが生成されれば、すべて設定完了です！
@@ -224,11 +225,11 @@ echo "test change" | ./ai-commit-generator.sh
 
 ### Ctrl+Aを押したときに"No such file or directory"
 
-**問題**: config.ymlのスクリプトパスが正しくない
+**問題**: config/config.ymlのスクリプトパスが間違っている
 
 **解決策**:
 1. スクリプトをインストールした場所を確認: `pwd`
-2. config.ymlを完全な絶対パスで更新
+2. config/config.ymlを完全な絶対パスで更新
 3. スクリプトが実行可能であることを確認: `ls -l *.sh`
 
 ### Ollama "connection refused"エラー
@@ -250,8 +251,8 @@ sudo systemctl start ollama
 **問題**: 設定ファイルが読み込まれていないか構文エラー
 
 **解決策**:
-1. 設定の場所を確認: `ls -la ~/.config/lazygit/config.yml`
-2. YAML構文を検証: `python3 -c "import yaml; yaml.safe_load(open('config.yml'))"`
+1. 設定の場所を確認: `ls -la ~/.config/lazygit/config/config.yml`
+2. YAML構文を検証: `python3 -c "import yaml; yaml.safe_load(open('config/config.yml'))"`
 3. LazyGitを完全に再起動
 
 ## 次のステップ
@@ -279,7 +280,7 @@ sudo systemctl start ollama
    ```
 3. スクリプトを個別にテスト:
    ```bash
-   echo "test diff" | ./ai-commit-generator.sh
+   echo "test diff" | ai-commit-generator.sh
    ```
 4. LazyGitログでエラーを確認
 

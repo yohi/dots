@@ -34,7 +34,7 @@ customCommands:
           # Complete pipeline: Get staged diff → Limit size → AI generation → Parse output
           # Requirement 7.2: Execute configured command with diff as input
           # Requirement 8.2, 8.4: Enhanced error handling with pipefail and timeout
-          git diff --cached | head -c 12000 | ./ai-commit-generator.sh | ./parse-ai-output.sh
+          git diff --cached | head -c 12000 | scripts/lazygit-ai-commit/ai-commit-generator.sh | scripts/lazygit-ai-commit/parse-ai-output.sh
         filter: "^(?P<msg>.+\\S.*)$"
         valueFormat: "{{ .msg }}"
         labelFormat: "{{ .msg | green }}"

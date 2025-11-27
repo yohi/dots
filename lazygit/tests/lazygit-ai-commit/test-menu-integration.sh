@@ -22,7 +22,7 @@ echo "test content" > "$TEST_DIR/test.txt"
 git -C "$TEST_DIR" add test.txt
 
 # Run the complete pipeline (simulating LazyGit's command)
-RESULT=$(git -C "$TEST_DIR" diff --cached | head -c 12000 | ./ai-commit-generator.sh | ./parse-ai-output.sh)
+RESULT=$(git -C "$TEST_DIR" diff --cached | head -c 12000 | ../../scripts/lazygit-ai-commit/ai-commit-generator.sh | ../../scripts/lazygit-ai-commit/parse-ai-output.sh)
 
 # Verify output
 if [ -z "$RESULT" ]; then
@@ -107,7 +107,7 @@ echo "Test 5: LoadingText configuration"
 echo "---------------------------------"
 
 # Check that config.yml has loadingText set
-if grep -q 'loadingText: "Generating commit messages with AI..."' config.yml; then
+if grep -q 'loadingText: "Generating commit messages with AI..."' ../config/config.yml; then
     echo "✓ PASS: loadingText configured for user feedback"
 else
     echo "✗ FAIL: loadingText not found in config.yml"
@@ -120,7 +120,7 @@ echo "Test 6: Color formatting in labelFormat"
 echo "---------------------------------------"
 
 # Check that config.yml has green color formatting
-if grep -q 'labelFormat: "{{ .msg | green }}"' config.yml; then
+if grep -q 'labelFormat: "{{ .msg | green }}"' ../config/config.yml; then
     echo "✓ PASS: labelFormat configured with green color"
 else
     echo "✗ FAIL: labelFormat color not configured"
@@ -144,7 +144,7 @@ REQUIRED_FIELDS=(
 
 ALL_PRESENT=true
 for field in "${REQUIRED_FIELDS[@]}"; do
-    if ! grep -q "$field" config.yml; then
+    if ! grep -q "$field" ../config/config.yml; then
         echo "✗ FAIL: Missing required field: $field"
         ALL_PRESENT=false
     fi

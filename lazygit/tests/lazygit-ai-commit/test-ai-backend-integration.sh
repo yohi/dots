@@ -41,7 +41,7 @@ run_test() {
     
     # Run the test
     set +e
-    OUTPUT=$(echo "$TEST_DIFF" | ./ai-commit-generator.sh 2>&1)
+    OUTPUT=$(echo "$TEST_DIFF" | ../../scripts/lazygit-ai-commit/ai-commit-generator.sh 2>&1)
     EXIT_CODE=$?
     set -e
     
@@ -169,7 +169,7 @@ echo ""
 echo "--- Test 8: Empty Input Handling ---"
 echo -n "Testing empty input... "
 set +e
-OUTPUT=$(echo "" | ./ai-commit-generator.sh 2>&1)
+OUTPUT=$(echo "" | ../../scripts/lazygit-ai-commit/ai-commit-generator.sh 2>&1)
 EXIT_CODE=$?
 set -e
 if [ $EXIT_CODE -ne 0 ]; then

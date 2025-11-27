@@ -9,7 +9,7 @@ echo ""
 
 # Test 1: Standard lines
 echo "Test 1: Standard lines"
-OUTPUT=$(cat << 'EOF' | ./parse-ai-output.sh
+OUTPUT=$(cat << 'EOF' | ../../scripts/lazygit-ai-commit/parse-ai-output.sh
 feat: add new feature
 fix: resolve bug
 docs: update readme
@@ -33,7 +33,7 @@ echo ""
 
 # Test 2: Numbered lists
 echo "Test 2: Numbered lists"
-OUTPUT=$(cat << 'EOF' | ./parse-ai-output.sh
+../../scripts/lazygit-ai-commit/parse-ai-output.sh
 1. feat: add authentication
 2. fix: correct validation
 3. docs: update API docs
@@ -57,7 +57,7 @@ echo ""
 
 # Test 3: Empty lines skipped
 echo "Test 3: Empty lines skipped"
-OUTPUT=$(cat << 'EOF' | ./parse-ai-output.sh
+../../scripts/lazygit-ai-commit/parse-ai-output.sh
 feat: first message
 
 fix: second message
@@ -84,7 +84,7 @@ echo ""
 
 # Test 4: Mixed format
 echo "Test 4: Mixed format (numbered + standard + empty)"
-OUTPUT=$(cat << 'EOF' | ./parse-ai-output.sh
+../../scripts/lazygit-ai-commit/parse-ai-output.sh
 feat: standard line
 1. fix: numbered line
 
@@ -112,7 +112,7 @@ echo ""
 
 # Test 5: Whitespace-only lines
 echo "Test 5: Whitespace-only lines skipped"
-OUTPUT=$(cat << 'EOF' | ./parse-ai-output.sh
+../../scripts/lazygit-ai-commit/parse-ai-output.sh
 feat: first
    
 fix: second
@@ -138,7 +138,7 @@ echo ""
 
 # Test 6: Integration with mock AI tool
 echo "Test 6: Integration with mock AI tool"
-OUTPUT=$(echo "test diff" | ./mock-ai-tool.sh | ./parse-ai-output.sh)
+OUTPUT=$(echo "test diff" | ../../scripts/lazygit-ai-commit/mock-ai-tool.sh | ../../scripts/lazygit-ai-commit/parse-ai-output.sh)
 LINE_COUNT=$(echo "$OUTPUT" | wc -l)
 
 if [ "$LINE_COUNT" -ge 3 ]; then
@@ -152,7 +152,7 @@ echo ""
 
 # Test 7: Numbers with varying spacing
 echo "Test 7: Numbered lists with varying spacing"
-OUTPUT=$(cat << 'EOF' | ./parse-ai-output.sh
+../../scripts/lazygit-ai-commit/parse-ai-output.sh
 1.feat: no space after dot
 2. fix: one space
 3.  docs: two spaces

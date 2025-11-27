@@ -51,7 +51,7 @@ echo
 echo "2. Generating commit messages..."
 # Use the script directory to locate companion scripts
 # Set AI_TOOL to use absolute path
-MESSAGES=$(echo "$DIFF" | head -c 12000 | AI_TOOL="$SCRIPT_DIR/mock-ai-tool.sh" "$SCRIPT_DIR/ai-commit-generator.sh" 2>&1 | "$SCRIPT_DIR/parse-ai-output.sh" 2>&1)
+MESSAGES=$(echo "$DIFF" | head -c 12000 | AI_TOOL="$SCRIPT_DIR/../../scripts/lazygit-ai-commit/mock-ai-tool.sh" "$SCRIPT_DIR/../../scripts/lazygit-ai-commit/ai-commit-generator.sh" 2>&1 | "$SCRIPT_DIR/../../scripts/lazygit-ai-commit/parse-ai-output.sh" 2>&1)
 
 if [ -z "$MESSAGES" ]; then
     echo "✗ FAIL: No messages generated"
