@@ -50,7 +50,8 @@ echo
 # Simulate AI generation (using mock)
 echo "2. Generating commit messages..."
 # Use the script directory to locate companion scripts
-MESSAGES=$(echo "$DIFF" | head -c 12000 | "$SCRIPT_DIR/ai-commit-generator.sh" | "$SCRIPT_DIR/parse-ai-output.sh")
+# Set AI_TOOL to use absolute path
+MESSAGES=$(echo "$DIFF" | head -c 12000 | AI_TOOL="$SCRIPT_DIR/mock-ai-tool.sh" "$SCRIPT_DIR/ai-commit-generator.sh" 2>&1 | "$SCRIPT_DIR/parse-ai-output.sh" 2>&1)
 
 if [ -z "$MESSAGES" ]; then
     echo "✗ FAIL: No messages generated"
