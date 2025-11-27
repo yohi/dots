@@ -10,7 +10,10 @@ echo
 
 # Create a temporary test repository
 TEST_DIR=$(mktemp -d)
-cd "$TEST_DIR"
+if ! cd "$TEST_DIR"; then
+    echo "failed to cd $TEST_DIR" >&2
+    exit 1
+fi
 git init
 git config user.email "test@example.com"
 git config user.name "Test User"

@@ -5,12 +5,18 @@
 
 set +e
 
+# Determine the directory where this script is located
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 echo "=== LazyGit Commit Integration Test ==="
 echo
 
 # Create a temporary test repository
 TEST_DIR=$(mktemp -d)
-cd "$TEST_DIR"
+if ! cd "$TEST_DIR"; then
+    echo "failed to cd $TEST_DIR" >&2
+    exit 1
+fi
 git init -q
 git config user.email "test@example.com"
 git config user.name "Test User"
@@ -43,9 +49,8 @@ echo
 
 # Simulate AI generation (using mock)
 echo "2. Generating commit messages..."
-# Get the original directory where the scripts are located
-ORIG_DIR="$OLDPWD"
-MESSAGES=$(echo "$DIFF" | head -c 12000 | "$ORIG_DIR/ai-commit-generator.sh" | "$ORIG_DIR/parse-ai-output.sh")
+# Use the script directory to locate companion scripts
+MESSAGES=$(echo "$DIFF" | head -c 12000 | "$SCRIPT_DIR/ai-commit-generator.sh" | "$SCRIPT_DIR/parse-ai-output.sh")
 
 if [ -z "$MESSAGES" ]; then
     echo "✗ FAIL: No messages generated"
