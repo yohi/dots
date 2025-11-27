@@ -13,8 +13,8 @@ customCommands:
             exit 1
           fi
           # Get staged diff, limit size, and pass to AI tool
-          git diff --cached | head -c 12000 | ./ai-commit-generator.sh
-        filter: "^(?P<msg>.+)$"
+          git diff --cached | head -c 12000 | ./ai-commit-generator.sh | ./parse-ai-output.sh
+        filter: "^(?P<msg>.+\\S.*)$"
         valueFormat: "{{ .msg }}"
         labelFormat: "{{ .msg | green }}"
     command: 'git commit -m {{.Form.SelectedMsg | quote}}'

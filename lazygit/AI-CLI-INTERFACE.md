@@ -175,8 +175,43 @@ This implementation satisfies:
 - **Requirement 6.1**: Conventional Commits format enforced
 - **Requirement 6.3**: No markdown in output (pure text only)
 
+## Regex Parser
+
+### `parse-ai-output.sh`
+
+Parses AI-generated output and extracts clean commit messages:
+- Skips empty lines and whitespace-only lines
+- Removes numbered list prefixes (e.g., "1. ", "2. ")
+- Outputs clean commit messages one per line
+
+**Usage:**
+```bash
+./mock-ai-tool.sh | ./parse-ai-output.sh
+```
+
+**Handled Patterns:**
+1. Standard lines: `feat: add feature` → `feat: add feature`
+2. Numbered lists: `1. feat: add feature` → `feat: add feature`
+3. Empty lines: skipped
+4. Whitespace-only lines: skipped
+
+**Regex Patterns:**
+- Numbered list detection: `^[0-9]+\.[[:space:]]*(.+)$`
+- Empty line detection: `^[[:space:]]*$`
+
+### LazyGit Filter Regex
+
+The `config.yml` uses the following regex pattern:
+```regex
+^(?P<msg>.+\S.*)$
+```
+
+This pattern:
+- Matches lines with at least one non-whitespace character
+- Captures the entire line in the `msg` group
+- Automatically skips empty and whitespace-only lines
+
 ## Next Steps
 
-- Implement regex parser (Task 5)
 - Integrate with menuFromCommand (Task 6)
 - Add real AI tool integration (Task 9)
