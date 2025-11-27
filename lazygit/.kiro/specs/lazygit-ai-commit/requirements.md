@@ -2,111 +2,111 @@
 
 ## Introduction
 
-This specification defines the requirements for integrating AI-based commit message generation into LazyGit (a terminal UI tool for Git). The goal is to enable developers to adopt high-quality commit messages from staged changes through visual confirmation only, without manual editing. This reduces cognitive load during commits, promotes Atomic Commits, and improves overall commit quality.
+本仕様は、LazyGit（Git用ターミナルUIツール）にAIベースのコミットメッセージ自動生成機能を統合するための要件を定義する。開発者がステージングされた変更内容から高品質なコミットメッセージを、編集作業なしに目視確認のみで採用できるワークフローを実現する。これにより、コミット作業の認知的負荷を軽減し、Atomic Commitsの促進とコミット品質の向上を目指す。
 
 ## Glossary
 
-- **LazyGit**: A terminal-based user interface (TUI) tool for operating Git commands
-- **Custom Commands**: LazyGit's extension feature that allows user-defined commands and key bindings via config.yml
-- **menuFromCommand**: A LazyGit prompt type that dynamically parses shell command output to generate menu items
-- **Staging Area**: The Git area that temporarily holds changes to be included in the next commit
-- **Diff**: Difference information showing file changes
-- **AI CLI Tool**: Command-line interface for AI language models (e.g., gemini-cli, sgpt, ollama)
-- **Conventional Commits**: A standardized commit message format (e.g., feat:, fix:, docs:)
-- **Context**: In LazyGit, a concept representing specific screens or operational states (e.g., files, branches, commits)
+- **LazyGit**: Gitコマンドを操作するためのターミナルベースのユーザーインターフェース（TUI）ツール
+- **Custom Commands**: LazyGitの拡張機能。config.ymlファイルでユーザー定義のコマンドとキーバインディングを設定可能
+- **menuFromCommand**: LazyGitのプロンプトタイプの一つ。シェルコマンドの出力を動的に解析してメニュー項目を生成する機能
+- **Staging Area**: Gitにおいて、次回のコミットに含める変更を一時的に保持する領域
+- **Diff**: ファイルの変更内容を示す差分情報
+- **AI CLI Tool**: コマンドラインから利用可能なAI言語モデルのインターフェース（例：gemini-cli, sgpt, ollama）
+- **Conventional Commits**: コミットメッセージの標準化されたフォーマット（例：feat:, fix:, docs:）
+- **Context**: LazyGitにおいて、特定の画面や操作状態を示す概念（例：files, branches, commits）
 
 ## Requirements
 
 ### Requirement 1
 
-**User Story:** As a developer, I want to generate commit messages with AI from staged changes without leaving LazyGit, so that I can maintain workflow context and reduce cognitive load.
+**User Story:** 開発者として、LazyGitから離れることなくステージングされた変更からAIでコミットメッセージを生成したい。そうすることで、ワークフローのコンテキストを維持し、認知的負荷を軽減できる。
 
 #### Acceptance Criteria
 
-1. WHEN the developer triggers the AI commit command from the files context THEN the LazyGit system SHALL execute the command without switching to external applications
-2. WHEN the AI commit command is executed THEN the LazyGit system SHALL remain in the foreground and display loading feedback to the user
-3. WHEN the command completes THEN the LazyGit system SHALL display results within the LazyGit terminal interface
+1. WHEN 開発者がfilesコンテキストからAIコミットコマンドを起動する THEN LazyGitシステムは外部アプリケーションに切り替えることなくコマンドを実行すること
+2. WHEN AIコミットコマンドが実行される THEN LazyGitシステムはフォアグラウンドに留まり、ユーザーにローディングフィードバックを表示すること
+3. WHEN コマンドが完了する THEN LazyGitシステムはLazyGitターミナルインターフェース内で結果を表示すること
 
 ### Requirement 2
 
-**User Story:** As a developer, I want to see multiple AI-generated commit message candidates, so that I can select the one most appropriate for my changes.
+**User Story:** 開発者として、AIが生成した複数のコミットメッセージ候補を見たい。そうすることで、変更内容に最も適したものを選択できる。
 
 #### Acceptance Criteria
 
-1. WHEN the AI processes staged changes THEN the LazyGit system SHALL generate multiple commit message candidates
-2. WHEN candidates are generated THEN the LazyGit system SHALL display them as a selectable menu list
-3. WHEN displaying the menu THEN the LazyGit system SHALL present each candidate message in a readable format with visual highlighting
-4. WHEN no staged changes exist THEN the LazyGit system SHALL display an error message and prevent AI execution
+1. WHEN AIがステージングされた変更を処理する THEN LazyGitシステムは複数のコミットメッセージ候補を生成すること
+2. WHEN 候補が生成される THEN LazyGitシステムは選択可能なメニューリストとして表示すること
+3. WHEN メニューを表示する THEN LazyGitシステムは各候補メッセージを視覚的なハイライトを伴う読みやすい形式で表示すること
+4. WHEN ステージングされた変更が存在しない THEN LazyGitシステムはエラーメッセージを表示し、AI実行を防止すること
 
 ### Requirement 3
 
-**User Story:** As a developer, I want to visually confirm AI-generated messages before committing, so that I can ensure accuracy without manual editing.
+**User Story:** 開発者として、コミット前にAI生成メッセージを目視確認したい。そうすることで、手動編集なしに正確性を保証できる。
 
 #### Acceptance Criteria
 
-1. WHEN the menu is displayed THEN the LazyGit system SHALL allow navigation between candidates using keyboard controls
-2. WHEN the user selects a candidate THEN the LazyGit system SHALL highlight the selected message for visual confirmation
-3. WHEN the user confirms the selection THEN the LazyGit system SHALL execute the git commit command with the selected message
-4. WHEN the user cancels the menu THEN the LazyGit system SHALL abort the commit operation and return to the previous state
+1. WHEN メニューが表示される THEN LazyGitシステムはキーボード操作で候補間を移動できるようにすること
+2. WHEN ユーザーが候補を選択する THEN LazyGitシステムは選択されたメッセージを目視確認のためにハイライト表示すること
+3. WHEN ユーザーが選択を確定する THEN LazyGitシステムは選択されたメッセージでgit commitコマンドを実行すること
+4. WHEN ユーザーがメニューをキャンセルする THEN LazyGitシステムはコミット操作を中止し、前の状態に戻ること
 
 ### Requirement 4
 
-**User Story:** As a developer, I want to use the selected commit message as-is, so that I can complete commits quickly without editing.
+**User Story:** 開発者として、選択したコミットメッセージを生成されたまま使用したい。そうすることで、編集なしに素早くコミットを完了できる。
 
 #### Acceptance Criteria
 
-1. WHEN the user confirms message selection THEN the LazyGit system SHALL pass the message text directly to git commit without opening an editor
-2. WHEN passing the message to git THEN the LazyGit system SHALL properly escape special characters to prevent shell injection
-3. WHEN the commit completes THEN the LazyGit system SHALL update the interface to reflect the new commit
+1. WHEN ユーザーがメッセージ選択を確定する THEN LazyGitシステムはエディタを開かずにメッセージテキストを直接git commitに渡すこと
+2. WHEN メッセージをgitに渡す THEN LazyGitシステムはシェルインジェクションを防ぐために特殊文字を適切にエスケープすること
+3. WHEN コミットが完了する THEN LazyGitシステムは新しいコミットを反映するためにインターフェースを更新すること
 
 ### Requirement 5
 
-**User Story:** As a developer, I want the AI to analyze git diff output and generate contextually appropriate messages, so that commit messages accurately reflect the changes.
+**User Story:** 開発者として、AIにgit diffの出力を解析させ、コンテキストに適したメッセージを生成させたい。そうすることで、コミットメッセージが変更内容を正確に反映する。
 
 #### Acceptance Criteria
 
-1. WHEN the AI command is executed THEN the LazyGit system SHALL retrieve staged changes using git diff --cached
-2. WHEN the diff is retrieved THEN the LazyGit system SHALL pipe the diff content to the configured AI CLI tool via standard input
-3. WHEN calling the AI tool THEN the LazyGit system SHALL include a prompt specifying output format requirements
-4. WHEN the AI tool returns output THEN the LazyGit system SHALL parse the output using regular expressions to extract individual message candidates
+1. WHEN AIコマンドが実行される THEN LazyGitシステムはgit diff --cachedを使用してステージングされた変更を取得すること
+2. WHEN diffが取得される THEN LazyGitシステムはdiffの内容を標準入力経由で設定されたAI CLIツールにパイプすること
+3. WHEN AIツールを呼び出す THEN LazyGitシステムは出力フォーマット要件を指定するプロンプトを含めること
+4. WHEN AIツールが出力を返す THEN LazyGitシステムは正規表現を使用して出力を解析し、個別のメッセージ候補を抽出すること
 
 ### Requirement 6
 
-**User Story:** As a developer, I want commit messages to follow Conventional Commits format, so that the repository maintains a consistent commit history.
+**User Story:** 開発者として、コミットメッセージをConventional Commits形式に従わせたい。そうすることで、リポジトリが一貫したコミット履歴を維持できる。
 
 #### Acceptance Criteria
 
-1. WHEN generating messages THEN the AI tool SHALL produce messages following Conventional Commits format with type prefixes
-2. WHEN formatting messages THEN the AI tool SHALL include appropriate scope information when relevant
-3. WHEN outputting messages THEN the AI tool SHALL generate concise, descriptive text without Markdown formatting
+1. WHEN メッセージを生成する THEN AIツールはタイプ接頭辞を持つConventional Commits形式に従ったメッセージを生成すること
+2. WHEN メッセージをフォーマットする THEN AIツールは関連する場合に適切なスコープ情報を含めること
+3. WHEN メッセージを出力する THEN AIツールはMarkdownフォーマットなしで簡潔で説明的なテキストを生成すること
 
 ### Requirement 7
 
-**User Story:** As a developer, I want to configure which AI backend to use, so that I can choose based on speed, cost, and privacy requirements.
+**User Story:** 開発者として、使用するAIバックエンドを設定したい。そうすることで、速度、コスト、プライバシー要件に基づいて選択できる。
 
 #### Acceptance Criteria
 
-1. WHEN configuration is defined THEN the LazyGit system SHALL support specifying any AI CLI command in config.yml
-2. WHEN the AI command is invoked THEN the LazyGit system SHALL execute the configured command with the diff as input
-3. WHEN the AI backend is changed THEN the LazyGit system SHALL continue to function without code changes
+1. WHEN 設定が定義される THEN LazyGitシステムはconfig.ymlで任意のAI CLIコマンドの指定をサポートすること
+2. WHEN AIコマンドが呼び出される THEN LazyGitシステムはdiffを入力として設定されたコマンドを実行すること
+3. WHEN AIバックエンドが変更される THEN LazyGitシステムはコード変更なしに機能し続けること
 
 ### Requirement 8
 
-**User Story:** As a developer, I want the system to handle edge cases properly, so that unexpected situations don't break my workflow.
+**User Story:** 開発者として、システムにエッジケースを適切に処理させたい。そうすることで、予期しない状況がワークフローを壊さない。
 
 #### Acceptance Criteria
 
-1. WHEN diff output exceeds token limits THEN the LazyGit system SHALL truncate the input to an appropriate size before sending to the AI
-2. WHEN the AI tool returns malformed output THEN the LazyGit system SHALL display an error message and allow the user to retry or cancel
-3. WHEN generated messages contain special characters THEN the LazyGit system SHALL properly escape them to prevent command injection
-4. WHEN the AI tool execution times out THEN the LazyGit system SHALL display a timeout message and return control to the user
+1. WHEN diff出力がトークン制限を超える THEN LazyGitシステムはAIに送信する前に入力を適切なサイズに切り詰めること
+2. WHEN AIツールが不正な形式の出力を返す THEN LazyGitシステムはエラーメッセージを表示し、ユーザーが再試行またはキャンセルできるようにすること
+3. WHEN 生成されたメッセージに特殊文字が含まれる THEN LazyGitシステムはコマンドインジェクションを防ぐために適切にエスケープすること
+4. WHEN AIツールの実行がタイムアウトする THEN LazyGitシステムはタイムアウトメッセージを表示し、ユーザーに制御を返すこと
 
 ### Requirement 9
 
-**User Story:** As a developer, I want to trigger the AI commit feature with a keyboard shortcut, so that I can access it quickly during my workflow.
+**User Story:** 開発者として、キーボードショートカットでAIコミット機能を起動したい。そうすることで、ワークフロー中に素早くアクセスできる。
 
 #### Acceptance Criteria
 
-1. WHEN the custom command is configured THEN the LazyGit system SHALL bind the command to a user-specified key combination
-2. WHEN the key combination is pressed in the files context THEN the LazyGit system SHALL execute the AI commit workflow
-3. WHEN the key combination is pressed in other contexts THEN the LazyGit system SHALL ignore the command to prevent unintended execution
+1. WHEN カスタムコマンドが設定される THEN LazyGitシステムはユーザー指定のキー組み合わせにコマンドをバインドすること
+2. WHEN filesコンテキストでキー組み合わせが押される THEN LazyGitシステムはAIコミットワークフローを実行すること
+3. WHEN 他のコンテキストでキー組み合わせが押される THEN LazyGitシステムは意図しない実行を防ぐためにコマンドを無視すること

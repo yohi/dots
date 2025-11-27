@@ -2,48 +2,48 @@
 
 ## Overview
 
-This design leverages LazyGit's Custom Commands feature to natively integrate AI-powered commit message generation. The core of the design uses LazyGit's `menuFromCommand` prompt type to dynamically convert external AI CLI tool output into a menu, enabling users to complete visual confirmation and selection in a single operation.
+本設計は、LazyGitのCustom Commands機能を活用し、AIによるコミットメッセージ自動生成をネイティブに統合する。設計の核心は、LazyGitの`menuFromCommand`プロンプトタイプを使用して、外部AI CLIツールの出力を動的にメニュー化し、ユーザーが目視確認と選択を一つの操作で完了できるワークフローの実現にある。
 
-The system follows these design principles:
+本システムは以下の設計原則に従う：
 
-1. **Zero Context Switch**: All operations complete within LazyGit's TUI, eliminating transitions to external editors or browsers
-2. **Selection as Approval**: Menu selection acts as both visual confirmation and approval, creating an efficient UX pattern
-3. **Pluggable AI Backend**: Switch between different AI services (Gemini, ChatGPT, Claude, Ollama, etc.) by only changing configuration files
-4. **Security First**: Thorough shell injection prevention and error handling
+1. **ゼロコンテキストスイッチ**: 全ての操作がLazyGitのTUI内で完結し、外部エディタやブラウザへの遷移を排除
+2. **選択即承認**: メニューからの選択行為が目視確認と承認を兼ねる、効率的なUXパターン
+3. **プラガブルAIバックエンド**: 設定ファイルの変更のみで異なるAIサービス（Gemini、ChatGPT、Claude、Ollamaなど）に切り替え可能
+4. **安全性優先**: シェルインジェクション対策とエラーハンドリングを徹底
 
 ## Architecture
 
-### System Architecture Diagram
+### システム構成図
 
 ```mermaid
 graph TD
-    A[User: Press Ctrl+A] --> B[LazyGit Custom Command]
-    B --> C{Check Staging}
-    C -->|Empty| D[Display Error]
-    C -->|Has Changes| E[git diff --cached]
-    E --> F[Diff Output]
-    F --> G[Size Limit Check]
-    G --> H[AI CLI Tool<br/>via stdin]
-    H --> I[AI Processing<br/>Apply Prompt]
-    I --> J[Generated Results<br/>Multiple Candidates]
-    J --> K[Regex Parsing]
-    K --> L[menuFromCommand<br/>Display Menu]
-    L --> M{User Selection}
-    M -->|Enter| N[Get Selected Message]
-    M -->|Esc| O[Cancel]
-    N --> P[Escape Processing]
+    A[ユーザー: Ctrl+A押下] --> B[LazyGit Custom Command]
+    B --> C{ステージング確認}
+    C -->|空| D[エラー表示]
+    C -->|変更あり| E[git diff --cached]
+    E --> F[Diff出力]
+    F --> G[サイズ制限チェック]
+    G --> H[AI CLI Tool<br/>stdin経由]
+    H --> I[AI処理<br/>プロンプト適用]
+    I --> J[生成結果<br/>複数候補]
+    J --> K[正規表現解析]
+    K --> L[menuFromCommand<br/>メニュー表示]
+    L --> M{ユーザー選択}
+    M -->|Enter| N[選択メッセージ取得]
+    M -->|Esc| O[キャンセル]
+    N --> P[エスケープ処理]
     P --> Q[git commit -m]
-    Q --> R[LazyGit UI Update]
+    Q --> R[LazyGit UI更新]
 ```
 
-### Data Flow
+### データフロー
 
-1. **Input Phase**: Retrieve staging diff with `git diff --cached`
-2. **Preprocessing Phase**: Check and truncate diff output size (token limit protection)
-3. **AI Processing Phase**: Pass to AI CLI tool via pipeline, generate multiple candidates with structured prompt
-4. **Parsing Phase**: Extract each line as menu item using regular expressions
-5. **Selection Phase**: User navigates with keyboard and selects
-6. **Execution Phase**: Escape selected text and pass to `git commit`
+1. **入力フェーズ**: `git diff --cached`でステージング差分を取得
+2. **前処理フェーズ**: Diff出力のサイズチェックと切り詰め（トークン制限対策）
+3. **AI処理フェーズ**: パイプライン経由でAI CLIツールに渡し、構造化プロンプトで複数候補を生成
+4. **解析フェーズ**: 正規表現で各行をメニュー項目として抽出
+5. **選択フェーズ**: ユーザーがキーボードでナビゲートし選択
+6. **実行フェーズ**: 選択テキストをエスケープして`git commit`に渡す
 
 ## Components and Interfaces
 
