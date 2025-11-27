@@ -44,7 +44,9 @@ case "$AI_BACKEND" in
         ;;
     mock)
         # Mock tool for testing
-        AI_TOOL="./mock-ai-tool.sh"
+        # Use absolute path based on script location
+        SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+        AI_TOOL="$SCRIPT_DIR/mock-ai-tool.sh"
         ;;
     *)
         echo "Error: Unknown AI_BACKEND '$AI_BACKEND'" >&2
