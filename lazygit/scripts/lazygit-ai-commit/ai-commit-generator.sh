@@ -15,15 +15,12 @@ TIMEOUT_SECONDS="${TIMEOUT_SECONDS:-30}"
 # Requirement 7.2: Execute configured command with diff as input
 case "$AI_BACKEND" in
     gemini)
-        # Gemini 1.5 Flash - Fast and free tier available
-        GEMINI_MODEL="${GEMINI_MODEL:-gemini-1.5-flash}"
-        if [ -z "$GEMINI_API_KEY" ]; then
-            echo "Error: GEMINI_API_KEY environment variable not set" >&2
-            echo "Suggestion: export GEMINI_API_KEY='your-api-key'" >&2
-            echo "Get your key from: https://aistudio.google.com/app/apikey" >&2
-            exit 1
-        fi
+        # Gemini CLI
+        # Uses the installed 'gemini' command which handles authentication
         AI_TOOL="gemini"
+        
+        # Note: We skip the explicit API key check here because the CLI 
+        # manages credentials via oauth/config files.
         ;;
     claude)
         # Claude 3.5 Haiku - Excellent for code understanding
@@ -107,25 +104,12 @@ AI_OUTPUT=""
 # Build AI-specific command
 case "$AI_BACKEND" in
     gemini)
-        # Gemini API call via Python
-        AI_COMMAND="python3 -c \"
-import os
-import sys
-import google.generativeai as genai
-
-genai.configure(api_key=os.environ['GEMINI_API_KEY'])
-model = genai.GenerativeModel('$GEMINI_MODEL')
-
-# Read input from stdin
-input_text = sys.stdin.read()
-
-try:
-    response = model.generate_content(input_text)
-    print(response.text)
-except Exception as e:
-    print(f'Error: {e}', file=sys.stderr)
-    sys.exit(1)
-\""
+        # Gemini CLI call
+        # We use -p for prompt as positional arguments + stdin seems to cause 404s in some contexts
+        # We also disable extensions to ensure a clean context
+        export PROMPT
+        AI_COMMAND='gemini --extensions "" -p "$PROMPT" --model "$GEMINI_MODEL"'
+        COMBINED_INPUT="$DIFF_INPUT"
         ;;
     claude)
         # Claude API call via official CLI
@@ -157,6 +141,7 @@ if command -v timeout &> /dev/null; then
         else
             # Other error
             echo "Error: AI tool failed with exit code $EXIT_CODE" >&2
+            echo "Details: $AI_OUTPUT" >&2
             if [ "$AI_BACKEND" = "gemini" ]; then
                 echo "Suggestion: Check GEMINI_API_KEY and internet connection" >&2
             elif [ "$AI_BACKEND" = "claude" ]; then
