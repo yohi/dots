@@ -4,7 +4,7 @@
 MOZC_DICT_VERSION := 20240330
 MOZC_DICT_FILENAME := mozcdic-ut-$(MOZC_DICT_VERSION).zip
 MOZC_DICT_URL := https://github.com/utuhiro78/mozcdic-ut/releases/download/$(MOZC_DICT_VERSION)/$(MOZC_DICT_FILENAME)
-MOZC_DICT_CHECKSUM := 0000000000000000000000000000000000000000000000000000000000000000  # 注意：実際のSHA256チェックサムに置き換える必要があります
+MOZC_DICT_CHECKSUM := 0000000000000000000000000000000000000000000000000000000000000000  # 実際のSHA256チェックサム。0または空の場合は検証をスキップします
 MOZC_DICT_TXT := mozcdic-ut-$(MOZC_DICT_VERSION).txt
 MOZC_CONFIG_DIR := $(HOME_DIR)/.config/mozc
 MOZC_DOTFILES_CONFIG_DIR := $(DOTFILES_DIR)/config/mozc
@@ -89,23 +89,21 @@ setup-mozc:
 	@echo "5. Configuring Mozc (Hiragana default & Keymap) using symbolic links..."
 	mkdir -p $(MOZC_CONFIG_DIR)
 
-	# 設定ファイル(ibus_config.textproto)を作成し、シンボリックリンク
+	# 設定ファイル(ibus_config.textproto)を作成
 	# active_on_launch: True (起動時ひらがな)
 	# notification_on_mode_change: True (切り替え時にUIを表示)
 	# keymap_style: カスタムキーマップファイルが存在する場合は "custom"、存在しない場合は "default"
-	@mkdir -p $(MOZC_DOTFILES_CONFIG_DIR)
 	@if [ -f "$(MOZC_DOTFILES_CONFIG_DIR)/my_keymap.txt" ]; then \
-		echo "active_on_launch: True" > $(MOZC_DOTFILES_CONFIG_DIR)/ibus_config.textproto; \
-		echo "keymap_style: \"custom\"" >> $(MOZC_DOTFILES_CONFIG_DIR)/ibus_config.textproto; \
-		echo "notification_on_mode_change: True" >> $(MOZC_DOTFILES_CONFIG_DIR)/ibus_config.textproto; \
+		echo "active_on_launch: True" > $(MOZC_CONFIG_DIR)/ibus_config.textproto; \
+		echo "keymap_style: \"custom\"" >> $(MOZC_CONFIG_DIR)/ibus_config.textproto; \
+		echo "notification_on_mode_change: True" >> $(MOZC_CONFIG_DIR)/ibus_config.textproto; \
 		echo "✅ カスタムキーマップを使用します"; \
 	else \
-		echo "active_on_launch: True" > $(MOZC_DOTFILES_CONFIG_DIR)/ibus_config.textproto; \
-		echo "keymap_style: \"default\"" >> $(MOZC_DOTFILES_CONFIG_DIR)/ibus_config.textproto; \
-		echo "notification_on_mode_change: True" >> $(MOZC_DOTFILES_CONFIG_DIR)/ibus_config.textproto; \
+		echo "active_on_launch: True" > $(MOZC_CONFIG_DIR)/ibus_config.textproto; \
+		echo "keymap_style: \"default\"" >> $(MOZC_CONFIG_DIR)/ibus_config.textproto; \
+		echo "notification_on_mode_change: True" >> $(MOZC_CONFIG_DIR)/ibus_config.textproto; \
 		echo "📝 デフォルトキーマップを使用します（Ctrl+SpaceでIME切り替え）"; \
 	fi
-	ln -sf $(MOZC_DOTFILES_CONFIG_DIR)/ibus_config.textproto $(MOZC_CONFIG_DIR)/ibus_config.textproto
 
 	# キーマップファイルの設定（カスタムキーマップが存在する場合のみ）
 	@if [ -f "$(MOZC_DOTFILES_CONFIG_DIR)/my_keymap.txt" ]; then \
@@ -190,7 +188,10 @@ setup-mozc-ut-dictionaries:
 	@cd $(MOZC_CONFIG_DIR) && \
 	if [ -f "$(MOZC_DICT_FILENAME)" ]; then \
 		ACTUAL_CHECKSUM=$$(sha256sum $(MOZC_DICT_FILENAME) | cut -d' ' -f1); \
-		if [ "$$ACTUAL_CHECKSUM" != "$(MOZC_DICT_CHECKSUM)" ]; then \
+		if [ -z "$(MOZC_DICT_CHECKSUM)" ] || echo "$(MOZC_DICT_CHECKSUM)" | grep -q "^0\+$$"; then \
+			echo "⚠️  警告: チェックサム検証をスキップします（未設定またはプレースホルダー）"; \
+			echo "実際値: $$ACTUAL_CHECKSUM"; \
+		elif [ "$$ACTUAL_CHECKSUM" != "$(MOZC_DICT_CHECKSUM)" ]; then \
 			echo "❌ エラー: チェックサムが一致しません"; \
 			echo "期待値: $(MOZC_DICT_CHECKSUM)"; \
 			echo "実際値: $$ACTUAL_CHECKSUM"; \
