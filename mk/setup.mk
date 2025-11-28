@@ -491,7 +491,7 @@ setup-ime:
 
 	# IBusデーモンの再起動
 	@echo "🔄 IBusデーモンを再起動中..."
-	@pkill -f ibus-daemon || true
+	@pkill -f '[i]bus-daemon' || true
 	@sleep 2
 	@ibus-daemon -drx || true
 
