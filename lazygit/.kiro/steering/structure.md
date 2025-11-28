@@ -2,7 +2,7 @@
 
 ## ディレクトリレイアウト
 
-```
+```text
 .
 ├── archive/                          # 過去のドキュメントと実装ノート
 │   ├── AI-CLI-INTERFACE.md

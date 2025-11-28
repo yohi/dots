@@ -14,7 +14,7 @@
 ## アーキテクチャ
 
 **パイプラインベース設計**: パイプで接続されたシェルスクリプト
-```
+```text
 git diff → ai-commit-generator.sh → parse-ai-output.sh → LazyGitメニュー → git commit
 ```
 
