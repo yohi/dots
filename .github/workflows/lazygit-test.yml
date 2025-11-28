@@ -21,40 +21,40 @@ jobs:
         
     - name: Make scripts executable
       run: |
-        chmod +x scripts/lazygit-ai-commit/*.sh
-        chmod +x tests/lazygit-ai-commit/*.sh
+        chmod +x lazygit/scripts/lazygit-ai-commit/*.sh
+        chmod +x lazygit/tests/lazygit-ai-commit/*.sh
         
     - name: Run complete workflow tests
       run: |
-        cd tests/lazygit-ai-commit
+        cd lazygit/tests/lazygit-ai-commit
         ./test-complete-workflow.sh
         
     - name: Run error scenario tests
       run: |
-        cd tests/lazygit-ai-commit
+        cd lazygit/tests/lazygit-ai-commit
         ./test-all-error-scenarios.sh
         
     - name: Run regex parser tests
       run: |
-        cd tests/lazygit-ai-commit
+        cd lazygit/tests/lazygit-ai-commit
         ./test-regex-parser.sh
         
     - name: Run error handling tests
       run: |
-        cd tests/lazygit-ai-commit
+        cd lazygit/tests/lazygit-ai-commit
         ./test-error-handling.sh
         
     - name: Run timeout handling tests
       run: |
-        cd tests/lazygit-ai-commit
+        cd lazygit/tests/lazygit-ai-commit
         ./test-timeout-handling.sh
         
     - name: Run commit escape tests
       run: |
-        cd tests/lazygit-ai-commit
+        cd lazygit/tests/lazygit-ai-commit
         ./test-commit-escape.sh
         
     - name: Run menu integration tests
       run: |
-        cd tests/lazygit-ai-commit
+        cd lazygit/tests/lazygit-ai-commit
         ./test-menu-integration.sh
