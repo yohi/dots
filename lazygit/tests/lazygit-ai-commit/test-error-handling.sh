@@ -158,7 +158,7 @@ echo ""
 
 # Test 12: Test pipefail in config.yml
 echo "Test 12: Checking pipefail in config.yml..."
-if grep -q "set -o pipefail" config.yml; then
+if grep -q "set -o pipefail" ../../config.yml; then
     echo "✓ PASS: pipefail is set in config.yml command"
 else
     echo "✗ FAIL: pipefail is not set in config.yml command"

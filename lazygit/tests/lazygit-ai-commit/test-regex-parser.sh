@@ -33,7 +33,7 @@ echo ""
 
 # Test 2: Numbered lists
 echo "Test 2: Numbered lists"
-../../scripts/lazygit-ai-commit/parse-ai-output.sh
+OUTPUT=$(cat << 'EOF' | ../../scripts/lazygit-ai-commit/parse-ai-output.sh
 1. feat: add authentication
 2. fix: correct validation
 3. docs: update API docs
@@ -57,7 +57,7 @@ echo ""
 
 # Test 3: Empty lines skipped
 echo "Test 3: Empty lines skipped"
-../../scripts/lazygit-ai-commit/parse-ai-output.sh
+OUTPUT=$(cat << 'EOF' | ../../scripts/lazygit-ai-commit/parse-ai-output.sh
 feat: first message
 
 fix: second message
@@ -84,7 +84,7 @@ echo ""
 
 # Test 4: Mixed format
 echo "Test 4: Mixed format (numbered + standard + empty)"
-../../scripts/lazygit-ai-commit/parse-ai-output.sh
+OUTPUT=$(cat << 'EOF' | ../../scripts/lazygit-ai-commit/parse-ai-output.sh
 feat: standard line
 1. fix: numbered line
 
@@ -112,7 +112,7 @@ echo ""
 
 # Test 5: Whitespace-only lines
 echo "Test 5: Whitespace-only lines skipped"
-../../scripts/lazygit-ai-commit/parse-ai-output.sh
+OUTPUT=$(cat << 'EOF' | ../../scripts/lazygit-ai-commit/parse-ai-output.sh
 feat: first
    
 fix: second
@@ -152,7 +152,7 @@ echo ""
 
 # Test 7: Numbers with varying spacing
 echo "Test 7: Numbered lists with varying spacing"
-../../scripts/lazygit-ai-commit/parse-ai-output.sh
+OUTPUT=$(cat << 'EOF' | ../../scripts/lazygit-ai-commit/parse-ai-output.sh
 1.feat: no space after dot
 2. fix: one space
 3.  docs: two spaces

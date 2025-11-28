@@ -92,7 +92,7 @@ echo ""
 
 # Test 4: Verify timeout is configurable via environment variable
 echo "Test 4: Testing timeout configuration..."
-if grep -q 'TIMEOUT_SECONDS="${TIMEOUT_SECONDS:-30}"' ai-commit-generator.sh; then
+if grep -q 'TIMEOUT_SECONDS="${TIMEOUT_SECONDS:-30}"' ../../scripts/lazygit-ai-commit/ai-commit-generator.sh; then
     echo "✓ PASS: Timeout is configurable via TIMEOUT_SECONDS environment variable"
     echo "  Default: 30 seconds"
 else
