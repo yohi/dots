@@ -157,7 +157,7 @@ echo "Scenario 9: All error messages include suggestions"
 SUGGESTION_COUNT=0
 
 # Check ai-commit-generator.sh
-SUGGESTION_COUNT=$(grep -c "Suggestion:" ai-commit-generator.sh || true)
+SUGGESTION_COUNT=$(grep -c "Suggestion:" ../../scripts/lazygit-ai-commit/ai-commit-generator.sh || true)
 if [ "$SUGGESTION_COUNT" -ge 3 ]; then
     echo "✓ PASS: ai-commit-generator.sh has $SUGGESTION_COUNT suggestions"
     PASS_COUNT=$((PASS_COUNT + 1))
@@ -179,7 +179,7 @@ echo ""
 
 # Scenario 10: Timeout is configurable
 echo "Scenario 10: Timeout configuration"
-if grep -q 'TIMEOUT_SECONDS="${TIMEOUT_SECONDS:-30}"' ai-commit-generator.sh; then
+if grep -q 'TIMEOUT_SECONDS="${TIMEOUT_SECONDS:-30}"' ../../scripts/lazygit-ai-commit/ai-commit-generator.sh; then
     echo "✓ PASS: Timeout is configurable with default 30s"
     PASS_COUNT=$((PASS_COUNT + 1))
 else

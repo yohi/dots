@@ -139,7 +139,7 @@
 
 2. `config.yml`のスクリプトパスを更新:
    
-   `config/config.yml`を開き、スクリプトをインストールした場所を指すようにパスを更新:
+   `config.yml`を開き、スクリプトをインストールした場所を指すようにパスを更新:
    
    ```yaml
    command: |
@@ -152,11 +152,11 @@
 3. 設定をコピーまたはマージ:
    ```bash
    # 既存の設定がない場合:
-   cp config/config.yml ~/.config/lazygit/config.yml
+   cp config.yml ~/.config/lazygit/config.yml
    
    # 既存の設定がある場合、customCommandsセクションをマージ:
    # 両方のファイルを開き、AIコミットコマンドを既存の設定にコピー
-   cat config/config.yml >> ~/.config/lazygit/config.yml
+   cat config.yml >> ~/.config/lazygit/config.yml
    ```
 
 ### ステップ 5: インストールをテスト
@@ -225,11 +225,11 @@ echo "test change" | ai-commit-generator.sh
 
 ### Ctrl+Aを押したときに"No such file or directory"
 
-**問題**: config/config.ymlのスクリプトパスが間違っている
+**問題**: config.ymlのスクリプトパスが間違っている
 
 **解決策**:
 1. スクリプトをインストールした場所を確認: `pwd`
-2. config/config.ymlを完全な絶対パスで更新
+2. config.ymlを完全な絶対パスで更新
 3. スクリプトが実行可能であることを確認: `ls -l *.sh`
 
 ### Ollama "connection refused"エラー
@@ -251,8 +251,8 @@ sudo systemctl start ollama
 **問題**: 設定ファイルが読み込まれていないか構文エラー
 
 **解決策**:
-1. 設定の場所を確認: `ls -la ~/.config/lazygit/config/config.yml`
-2. YAML構文を検証: `python3 -c "import yaml; yaml.safe_load(open('config/config.yml'))"`
+1. 設定の場所を確認: `ls -la ~/.config/lazygit/config.yml`
+2. YAML構文を検証: `python3 -c "import yaml; yaml.safe_load(open('~/.config/lazygit/config.yml'))"`
 3. LazyGitを完全に再起動
 
 ## 次のステップ

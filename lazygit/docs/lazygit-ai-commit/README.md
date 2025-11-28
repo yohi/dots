@@ -509,13 +509,13 @@ git log -1
 
 ```bash
 # 1. AI生成をテスト
-echo "test change" | AI_BACKEND=mock ai-commit-generator.sh
+echo "test change" | AI_BACKEND=mock scripts/lazygit-ai-commit/ai-commit-generator.sh
 
 # 2. パーサーをテスト
 echo -e "feat: test\nfix: another" | scripts/lazygit-ai-commit/parse-ai-output.sh
 
 # 3. 完全なパイプラインをテスト
-git diff --cached | ai-commit-generator.sh | scripts/lazygit-ai-commit/parse-ai-output.sh
+git diff --cached | scripts/lazygit-ai-commit/ai-commit-generator.sh | scripts/lazygit-ai-commit/parse-ai-output.sh
 ```
 
 ## トラブルシューティング
