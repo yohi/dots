@@ -54,7 +54,8 @@ help:
 	@echo "  make setup-config-gnome-tweaks        - Gnome Tweaks の設定をセットアップ"
 	@echo "  make setup-config-mozc                - Mozc入力メソッドの設定をセットアップ"
 	@echo "  make setup-config-mozc-ut-dictionaries - Mozc UT辞書の設定を開始"
-	@echo "  make setup-config-mozc-ut-dictionaries-manual - Mozc UT辞書の手動インポート手順を表示"
+	@echo "  make setup-config-mozc-ut-dictionaries-manual - Mozc UT辞書の手動インポート手順を表示
+  make setup-mozc-perfect               - Mozc一本化（Mac風）スタイル + Ctrl+Space切り替えを自動構築"
 	@echo "  make setup-claude                     - Claude Code設定ファイルのセットアップ"
 	@echo "  make setup-config-all                 - すべての設定をセットアップ"
 	@echo ""

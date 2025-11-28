@@ -8,9 +8,9 @@ MOZC_DICT_CHECKSUM := 0000000000000000000000000000000000000000000000000000000000
 MOZC_DICT_TXT := mozcdic-ut-$(MOZC_DICT_VERSION).txt
 MOZC_CONFIG_DIR := $(HOME_DIR)/.config/mozc
 
-# Mozcの設定
-setup-mozc:
-	@echo "⌨️  Mozcの設定を実行中..."
+# Fcitx5 Mozcの設定
+setup-fcitx5-mozc:
+	@echo "⌨️  Fcitx5 Mozcの設定を実行中..."
 
 	# Mozcのインストール
 	@echo "📦 Mozcをインストール中..."
@@ -45,9 +45,89 @@ setup-mozc:
 		echo "Name=Fcitx5" >> $(HOME_DIR)/.config/autostart/fcitx5.desktop; \
 		echo "Comment=Start Fcitx5 Input Method" >> $(HOME_DIR)/.config/autostart/fcitx5.desktop; \
 	fi
-
-	@echo "✅ Mozcの設定が完了しました。"
+	@echo "✅ Fcitx5 Mozcの設定が完了しました。"
 	@echo "ℹ️  ログアウト・ログインしてからMozcを使用してください。"
+
+# IBus Mozcのインストールと設定を行うターゲット
+setup-ibus-mozc:
+	@echo "Installing ibus-mozc..."
+	sudo apt install -y ibus-mozc
+
+	@echo "Setting up IBus shortcut (Ctrl+Space)..."
+	# IBusの切り替えキーを Ctrl+Space に設定
+	gsettings set org.freedesktop.ibus.general.hotkey triggers "['<Control>space']"
+
+	# GNOMEの入力ソース切り替えショートカットを無効化し、IBusに譲る
+	gsettings set org.gnome.desktop.wm.keybindings switch-input-source "['']"
+	gsettings set org.gnome.desktop.wm.keybindings switch-input-source-backward "['']"
+
+	@echo "Configuring Mozc to default to Hiragana..."
+	mkdir -p $(HOME)/.config/mozc
+	
+	# --- ここが重要: Mozcの設定ファイルを生成/更新 ---
+	# active_on_launch: True (起動時ひらがな)
+	# keymap_style: "custom" (カスタムキーマップを使用)
+	touch $(HOME)/.config/mozc/ibus_config.textproto
+	sed -i '/active_on_launch/d' $(HOME)/.config/mozc/ibus_config.textproto
+	sed -i '/keymap_style/d' $(HOME)/.config/mozc/ibus_config.textproto
+	echo "active_on_launch: True" >> $(HOME)/.config/mozc/ibus_config.textproto
+	echo "keymap_style: \"custom\"" >> $(HOME)/.config/mozc/ibus_config.textproto
+
+	# --- Mozc内部のキーマップから Ctrl+Space を排除 ---
+	# もしお手元にエクスポート済みの keymap.txt があればそれを cp するのがベストです。
+	# その場合は、以下のコメントアウトを解除し、パスをあなたの環境に合わせて書き換えてください。
+	# cp $(PWD)/config/mozc/keymap.txt $(HOME)/.config/mozc/user_keymap.txt
+
+	@echo "Restarting IBus to apply changes..."
+	ibus restart
+	
+	@echo "Done! Please log out and log back in if settings do not apply immediately."
+	@echo "=== 重要 ==="
+	@echo "もしこれでも2回押しが必要な場合は、手動で以下を行ってください:"
+	@echo "1. /usr/lib/mozc/mozc_tool --mode=keymap_editor"
+	@echo "2. 左下の編集メニュー -> 'MS-IME'等のプリセットからインポート"
+	@echo "3. 一覧から 'Ctrl Space' が割り当たっている行を探して削除"
+	@echo "4. '適用' -> 'OK'"
+
+# デフォルトのMozcセットアップ (IBusを優先)
+setup-mozc: setup-mozc-perfect
+
+# Mozc一本化（Mac風）スタイル + Ctrl+Space切り替えを自動構築するターゲット
+setup-mozc-perfect:
+	@echo "1. Installing Mozc..."
+	sudo apt install -y ibus-mozc mozc-utils-gui
+
+	@echo "2. Setting Input Source to Mozc ONLY..."
+	# 入力ソースを「Mozc」のみにします（これでOSの切り替え機能と決別します）
+	# ※万が一のために 'xkb','jp' (標準日本語) も末尾に残しますが、先頭はMozcにします
+	gsettings set org.gnome.desktop.input-sources sources "[('ibus', 'mozc-jp'), ('xkb', 'jp')]"
+
+	@echo "3. Disabling OS default shortcuts..."
+	# OS側の Ctrl+Space を無効化（Mozcに直接キーを届けるため）
+	gsettings set org.gnome.desktop.wm.keybindings switch-input-source "[]"
+	gsettings set org.gnome.desktop.wm.keybindings switch-input-source-backward "[]"
+
+	@echo "4. Configuring Mozc (Hiragana default & Keymap)..."
+	mkdir -p $(HOME)/.config/mozc
+	
+	# 設定ファイル(ibus_config.textproto)を作成
+	# active_on_launch: True (起動時ひらがな)
+	# keymap_style: "custom" (これから配置するキーマップを使う設定)
+	touch $(HOME)/.config/mozc/ibus_config.textproto
+	sed -i '/active_on_launch/d' $(HOME)/.config/mozc/ibus_config.textproto
+	sed -i '/keymap_style/d' $(HOME)/.config/mozc/ibus_config.textproto
+	echo "active_on_launch: True" >> $(HOME)/.config/mozc/ibus_config.textproto
+	echo "keymap_style: \"custom\"" >> $(HOME)/.config/mozc/ibus_config.textproto
+
+	# 【重要】書き出したキーマップファイルを配置
+	# ※ ./config/mozc/my_keymap.txt は手順1で保存した場所に合わせてください
+	cp ./config/mozc/my_keymap.txt $(HOME)/.config/mozc/user_keymap.txt
+
+	@echo "5. Restarting IBus..."
+	# 設定反映
+	ibus restart
+	
+	@echo "Done! Ctrl+Space toggles Mozc mode directly."
 
 # Mozc UT辞書のセットアップ
 setup-mozc-ut-dictionaries:
@@ -185,9 +265,12 @@ get-mozc-dict-checksum:
 # ========================================
 
 # Mozc関連設定系
-setup-config-mozc: setup-mozc
+setup-config-mozc: setup-mozc-perfect
 setup-config-mozc-ut-dictionaries: setup-mozc-ut-dictionaries
 setup-config-mozc-ut-dictionaries-manual: setup-mozc-ut-dictionaries-manual
+
+# IME環境セットアップの統合
+setup-config-ime: setup-mozc-perfect
 
 # ========================================
 # 後方互換性のためのエイリアス
