@@ -18,10 +18,10 @@ chmod +x *.sh
 
 # 3. 動作することをテスト
 export AI_BACKEND=mock
-echo "test change" | ./ai-commit-generator.sh
+echo "test change" | scripts/lazygit-ai-commit/ai-commit-generator.sh
 
 # 4. config.ymlを完全なパスで更新
-# config.ymlを編集して./ai-commit-generator.shを完全なパスに置き換える
+# config.ymlを編集してscripts/lazygit-ai-commit/ai-commit-generator.shを完全なパスに置き換える
 # 例: /home/username/lazygit-ai-commit/ai-commit-generator.sh
 
 # 5. LazyGit設定にコピー
@@ -60,10 +60,10 @@ cd ~/lazygit-ai-commit
 chmod +x *.sh
 
 # 5. テスト
-echo "test change" | ./ai-commit-generator.sh
+echo "test change" | scripts/lazygit-ai-commit/ai-commit-generator.sh
 
 # 6. config.ymlのパスを更新してLazyGitにコピー
-# config.ymlを編集: ./ai-commit-generator.shを完全なパスに置き換える
+# config.ymlを編集: scripts/lazygit-ai-commit/ai-commit-generator.shを完全なパスに置き換える
 cp config.yml ~/.config/lazygit/config.yml
 
 # 7. LazyGitで使用
@@ -95,10 +95,10 @@ cd ~/lazygit-ai-commit
 chmod +x *.sh
 
 # 6. テスト
-echo "test change" | ./ai-commit-generator.sh
+echo "test change" | scripts/lazygit-ai-commit/ai-commit-generator.sh
 
 # 7. config.ymlのパスを更新してLazyGitにコピー
-# config.ymlを編集: ./ai-commit-generator.shを完全なパスに置き換える
+# config.ymlを編集: scripts/lazygit-ai-commit/ai-commit-generator.shを完全なパスに置き換える
 cp config.yml ~/.config/lazygit/config.yml
 
 # 8. LazyGitで使用

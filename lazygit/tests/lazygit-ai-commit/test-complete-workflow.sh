@@ -70,8 +70,8 @@ git add feature.js
 # Generate commit messages
 test_info "Generating commit messages with AI..."
 MESSAGES=$(git diff --cached | head -c 12000 | \
-    AI_BACKEND=mock "$SCRIPT_DIR/ai-commit-generator.sh" 2>&1 | \
-    "$SCRIPT_DIR/parse-ai-output.sh" 2>&1)
+    AI_BACKEND=mock "$SCRIPT_DIR/../../scripts/lazygit-ai-commit/ai-commit-generator.sh" 2>&1 | \
+    "$SCRIPT_DIR/../../scripts/lazygit-ai-commit/parse-ai-output.sh" 2>&1)
 
 if [ -n "$MESSAGES" ]; then
     test_pass "Messages generated successfully"
@@ -153,7 +153,7 @@ git reset HEAD --quiet
 
 # Try to generate messages with empty staging
 if git diff --cached | head -c 12000 | \
-    AI_TOOL="$SCRIPT_DIR/mock-ai-tool.sh" "$SCRIPT_DIR/ai-commit-generator.sh" 2>&1 | \
+    AI_TOOL="$SCRIPT_DIR/../../scripts/lazygit-ai-commit/mock-ai-tool.sh" "$SCRIPT_DIR/../../scripts/lazygit-ai-commit/ai-commit-generator.sh" 2>&1 | \
     grep -q "No diff input provided"; then
     test_pass "Empty staging area detected"
 else
@@ -198,8 +198,8 @@ git add test.txt
 
 # Generate messages and check format
 MESSAGES=$(git diff --cached | head -c 12000 | \
-    AI_BACKEND=mock "$SCRIPT_DIR/ai-commit-generator.sh" 2>&1 | \
-    "$SCRIPT_DIR/parse-ai-output.sh" 2>&1)
+    AI_BACKEND=mock "$SCRIPT_DIR/../../scripts/lazygit-ai-commit/ai-commit-generator.sh" 2>&1 | \
+    "$SCRIPT_DIR/../../scripts/lazygit-ai-commit/parse-ai-output.sh" 2>&1)
 
 # Check if messages follow Conventional Commits format
 CONVENTIONAL_PATTERN='^(feat|fix|docs|style|refactor|test|chore|perf|ci|build|revert)(\(.+\))?: .+'
@@ -266,13 +266,13 @@ EOF
 chmod +x "$SLOW_MOCK"
 
 # Temporarily replace mock-ai-tool.sh
-ORIGINAL_MOCK="$SCRIPT_DIR/mock-ai-tool.sh"
+ORIGINAL_MOCK="$SCRIPT_DIR/../../scripts/lazygit-ai-commit/mock-ai-tool.sh"
 BACKUP_MOCK="$SCRIPT_DIR/mock-ai-tool.sh.backup"
 mv "$ORIGINAL_MOCK" "$BACKUP_MOCK"
 mv "$SLOW_MOCK" "$ORIGINAL_MOCK"
 
 # Test with short timeout
-TIMEOUT_OUTPUT=$(echo "test" | TIMEOUT_SECONDS=2 AI_BACKEND=mock "$SCRIPT_DIR/ai-commit-generator.sh" 2>&1 || true)
+TIMEOUT_OUTPUT=$(echo "test" | TIMEOUT_SECONDS=2 AI_BACKEND=mock "$SCRIPT_DIR/../../scripts/lazygit-ai-commit/ai-commit-generator.sh" 2>&1 || true)
 
 # Restore original mock
 mv "$ORIGINAL_MOCK" "$SLOW_MOCK"
@@ -305,13 +305,13 @@ EOF
 chmod +x "$FAIL_MOCK"
 
 # Temporarily replace mock-ai-tool.sh
-ORIGINAL_MOCK="$SCRIPT_DIR/mock-ai-tool.sh"
+ORIGINAL_MOCK="$SCRIPT_DIR/../../scripts/lazygit-ai-commit/mock-ai-tool.sh"
 BACKUP_MOCK="$SCRIPT_DIR/mock-ai-tool.sh.backup"
 mv "$ORIGINAL_MOCK" "$BACKUP_MOCK"
 mv "$FAIL_MOCK" "$ORIGINAL_MOCK"
 
 # Test error handling
-ERROR_OUTPUT=$(echo "test" | AI_BACKEND=mock "$SCRIPT_DIR/ai-commit-generator.sh" 2>&1 || true)
+ERROR_OUTPUT=$(echo "test" | AI_BACKEND=mock "$SCRIPT_DIR/../../scripts/lazygit-ai-commit/ai-commit-generator.sh" 2>&1 || true)
 
 # Restore original mock
 mv "$ORIGINAL_MOCK" "$FAIL_MOCK"
@@ -334,7 +334,7 @@ echo "Test 9: Multiple Backend Support"
 echo "---------------------------------"
 
 # Test mock backend
-MOCK_OUTPUT=$(echo "test" | AI_BACKEND=mock "$SCRIPT_DIR/ai-commit-generator.sh" 2>&1 || true)
+MOCK_OUTPUT=$(echo "test" | AI_BACKEND=mock "$SCRIPT_DIR/../../scripts/lazygit-ai-commit/ai-commit-generator.sh" 2>&1 || true)
 if [ -n "$MOCK_OUTPUT" ] && ! echo "$MOCK_OUTPUT" | grep -q "Error"; then
     test_pass "Mock backend works"
 else
@@ -343,9 +343,9 @@ else
 fi
 
 # Note: We can't test real backends without API keys, but we can verify the script handles them
-if grep -q "gemini)" "$SCRIPT_DIR/ai-commit-generator.sh" && \
-   grep -q "claude)" "$SCRIPT_DIR/ai-commit-generator.sh" && \
-   grep -q "ollama)" "$SCRIPT_DIR/ai-commit-generator.sh"; then
+if grep -q "gemini)" "$SCRIPT_DIR/../../scripts/lazygit-ai-commit/ai-commit-generator.sh" && \
+   grep -q "claude)" "$SCRIPT_DIR/../../scripts/lazygit-ai-commit/ai-commit-generator.sh" && \
+   grep -q "ollama)" "$SCRIPT_DIR/../../scripts/lazygit-ai-commit/ai-commit-generator.sh"; then
     test_pass "Multiple backends configured in script"
 else
     test_fail "Not all backends configured"
@@ -423,7 +423,7 @@ TEST_INPUTS=(
 for input in "${TEST_INPUTS[@]}"; do
     if [ -z "$input" ] || [ -z "${input// }" ]; then
         # Empty or whitespace-only should be filtered
-        OUTPUT=$(echo "$input" | "$SCRIPT_DIR/parse-ai-output.sh" 2>&1 || true)
+        OUTPUT=$(echo "$input" | "$SCRIPT_DIR/../../scripts/lazygit-ai-commit/parse-ai-output.sh" 2>&1 || true)
         if [ -z "$OUTPUT" ] || echo "$OUTPUT" | grep -qE "No valid commit messages|No AI output"; then
             test_pass "Parser correctly filters empty/whitespace input"
         else
@@ -432,7 +432,7 @@ for input in "${TEST_INPUTS[@]}"; do
         fi
     else
         # Non-empty should be parsed
-        OUTPUT=$(echo "$input" | "$SCRIPT_DIR/parse-ai-output.sh" 2>&1 || true)
+        OUTPUT=$(echo "$input" | "$SCRIPT_DIR/../../scripts/lazygit-ai-commit/parse-ai-output.sh" 2>&1 || true)
         if [ -n "$OUTPUT" ] && ! echo "$OUTPUT" | grep -q "Error"; then
             test_pass "Parser handles: '$input'"
         else

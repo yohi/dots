@@ -56,37 +56,29 @@ APIキー不要 - 完全にローカルで動作！
 
 ### 2. LazyGitを設定
 
-提供された`config.yml`をLazyGitの設定ディレクトリにコピー:
+提供された`config/config.yml`をLazyGitの設定ディレクトリにコピー:
 
 ```bash
 # Linux/macOS
-cp config.yml ~/.config/lazygit/config.yml
+cp config/config.yml ~/.config/lazygit/config.yml
 
 # または既存の設定にマージ
-cat config.yml >> ~/.config/lazygit/config.yml
-```
+cat config/config.yml >> ~/.config/lazygit/config.yml
+```### 3. AIバックエンドを設定
 
-### 3. AIバックエンドを設定
-
-`config.yml`を編集し、`AI_BACKEND`変数で選択したAIバックエンドのコメントを解除:
+`config/config.yml`を編集し、`AI_BACKEND`変数で選択したAIバックエンドのコメントを解除:
 
 ```yaml
 # Geminiの場合（デフォルト）
 export AI_BACKEND=gemini
 
-# Claudeの場合
-export AI_BACKEND=claude
-
-# Ollamaの場合
-export AI_BACKEND=ollama
-```
 
 ### 4. スクリプトを実行可能にする
 
 ```bash
 chmod +x ai-commit-generator.sh
-chmod +x parse-ai-output.sh
-chmod +x get-staged-diff.sh
+chmod +x scripts/lazygit-ai-commit/parse-ai-output.sh
+chmod +x scripts/lazygit-ai-commit/get-staged-diff.sh
 ```
 
 ### 5. LazyGitで使用
@@ -181,7 +173,7 @@ export TIMEOUT_SECONDS=60
 
 AIに送信されるコンテキストの量を調整:
 
-`config.yml`を編集して`head -c`の値を変更:
+`config/config.yml`を編集して`head -c`の値を変更:
 
 ```yaml
 # 小さいdiff（高速、コンテキスト少）
@@ -517,13 +509,13 @@ git log -1
 
 ```bash
 # 1. AI生成をテスト
-echo "test change" | AI_BACKEND=mock ./ai-commit-generator.sh
+echo "test change" | AI_BACKEND=mock scripts/lazygit-ai-commit/ai-commit-generator.sh
 
 # 2. パーサーをテスト
-echo -e "feat: test\nfix: another" | ./parse-ai-output.sh
+echo -e "feat: test\nfix: another" | scripts/lazygit-ai-commit/parse-ai-output.sh
 
 # 3. 完全なパイプラインをテスト
-git diff --cached | ./ai-commit-generator.sh | ./parse-ai-output.sh
+git diff --cached | scripts/lazygit-ai-commit/ai-commit-generator.sh | scripts/lazygit-ai-commit/parse-ai-output.sh
 ```
 
 ## トラブルシューティング
@@ -580,7 +572,7 @@ git diff --cached | ./ai-commit-generator.sh | ./parse-ai-output.sh
 - AIツールがインストールされているか確認: `which gemini`または`ollama list`
 - インターネット接続を確認（クラウドAIの場合）
 - Ollamaの場合: サービスが実行中であることを確認: `ollama serve`
-- AIツールを独立してテスト: `echo "test" | ./ai-commit-generator.sh`
+- AIツールを独立してテスト: `echo "test" | scripts/lazygit-ai-commit/ai-commit-generator.sh`
 
 **要件**: 8.2 - 適切なエラーメッセージによる強化されたエラー処理
 
@@ -715,7 +707,7 @@ source ~/.bashrc
 set -x  # デバッグモードを有効化
 
 # またはデバッグ付きで手動実行:
-bash -x ./ai-commit-generator.sh < test-diff.txt
+bash -x scripts/lazygit-ai-commit/ai-commit-generator.sh < test-diff.txt
 ```
 
 #### コンポーネントを個別にテスト
@@ -725,13 +717,13 @@ bash -x ./ai-commit-generator.sh < test-diff.txt
 git diff --cached
 
 # AI生成をテスト
-git diff --cached | ./ai-commit-generator.sh
+git diff --cached | scripts/lazygit-ai-commit/ai-commit-generator.sh
 
 # パースをテスト
-echo -e "feat: test\nfix: another" | ./parse-ai-output.sh
+echo -e "feat: test\nfix: another" | scripts/lazygit-ai-commit/parse-ai-output.sh
 
 # 完全なパイプラインをテスト
-git diff --cached | head -c 12000 | ./ai-commit-generator.sh | ./parse-ai-output.sh
+git diff --cached | head -c 12000 | scripts/lazygit-ai-commit/ai-commit-generator.sh | scripts/lazygit-ai-commit/parse-ai-output.sh
 ```
 
 #### LazyGitログを確認
@@ -848,7 +840,7 @@ MIT
 - **[AI-BACKEND-GUIDE.md](AI-BACKEND-GUIDE.md)** - AIバックエンドの完全ガイド
 - **[BACKEND-COMPARISON.md](BACKEND-COMPARISON.md)** - バックエンドを一目で比較
 - **[TESTING-GUIDE.md](TESTING-GUIDE.md)** - インストールのテスト方法
-- **[config.example.yml](config.example.yml)** - 注釈付き設定例
+- **[config.example.yml](config/config.example.yml)** - 注釈付き設定例
 
 ### クイックリンク
 

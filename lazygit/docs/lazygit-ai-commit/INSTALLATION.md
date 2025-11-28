@@ -121,9 +121,9 @@
 2. スクリプトを実行可能にする:
    ```bash
    chmod +x ai-commit-generator.sh
-   chmod +x parse-ai-output.sh
-   chmod +x get-staged-diff.sh
-   chmod +x mock-ai-tool.sh
+   chmod +x scripts/lazygit-ai-commit/parse-ai-output.sh
+   chmod +x scripts/lazygit-ai-commit/get-staged-diff.sh
+   chmod +x scripts/lazygit-ai-commit/mock-ai-tool.sh
    ```
 
 ### ステップ 4: LazyGitを設定
@@ -144,7 +144,7 @@
    ```yaml
    command: |
      # ... 既存の設定 ...
-     git diff --cached | head -c 12000 | /full/path/to/ai-commit-generator.sh | /full/path/to/parse-ai-output.sh
+     git diff --cached | head -c 12000 | /full/path/to/ai-commit-generator.sh | /full/path/to/scripts/lazygit-ai-commit/parse-ai-output.sh
    ```
    
    `/full/path/to/`をリポジトリをクローンした実際のパスに置き換えます。
@@ -156,6 +156,7 @@
    
    # 既存の設定がある場合、customCommandsセクションをマージ:
    # 両方のファイルを開き、AIコミットコマンドを既存の設定にコピー
+   cat config.yml >> ~/.config/lazygit/config.yml
    ```
 
 ### ステップ 5: インストールをテスト
@@ -194,7 +195,7 @@ export AI_BACKEND=mock
 
 # 選択したバックエンドでテスト
 export AI_BACKEND=gemini  # またはclaudeまたはollama
-echo "test change" | ./ai-commit-generator.sh
+echo "test change" | ai-commit-generator.sh
 ```
 
 コミットメッセージが生成されれば、すべて設定完了です！
@@ -224,7 +225,7 @@ echo "test change" | ./ai-commit-generator.sh
 
 ### Ctrl+Aを押したときに"No such file or directory"
 
-**問題**: config.ymlのスクリプトパスが正しくない
+**問題**: config.ymlのスクリプトパスが間違っている
 
 **解決策**:
 1. スクリプトをインストールした場所を確認: `pwd`
@@ -251,7 +252,7 @@ sudo systemctl start ollama
 
 **解決策**:
 1. 設定の場所を確認: `ls -la ~/.config/lazygit/config.yml`
-2. YAML構文を検証: `python3 -c "import yaml; yaml.safe_load(open('config.yml'))"`
+2. YAML構文を検証: `python3 -c "import yaml; yaml.safe_load(open('~/.config/lazygit/config.yml'))"`
 3. LazyGitを完全に再起動
 
 ## 次のステップ
@@ -279,7 +280,7 @@ sudo systemctl start ollama
    ```
 3. スクリプトを個別にテスト:
    ```bash
-   echo "test diff" | ./ai-commit-generator.sh
+   echo "test diff" | ai-commit-generator.sh
    ```
 4. LazyGitログでエラーを確認
 

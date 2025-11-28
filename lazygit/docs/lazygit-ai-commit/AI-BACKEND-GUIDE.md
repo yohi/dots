@@ -243,7 +243,7 @@ export TIMEOUT_SECONDS=120
 
 ### Diff Size Limits
 
-Large diffs can cause timeouts or poor quality. Adjust in `config.yml`:
+Large diffs can cause timeouts or poor quality. Adjust in `config/config.yml`:
 
 ```yaml
 # Default: 12KB
@@ -401,8 +401,8 @@ For maximum reliability, you could modify the script to try multiple backends:
 
 ```bash
 # Try Gemini first, fallback to Ollama
-AI_BACKEND=gemini ./ai-commit-generator.sh || \
-AI_BACKEND=ollama ./ai-commit-generator.sh
+AI_BACKEND=gemini scripts/lazygit-ai-commit/ai-commit-generator.sh || \
+AI_BACKEND=ollama scripts/lazygit-ai-commit/ai-commit-generator.sh
 ```
 
 ### Backend-Specific Timeouts
