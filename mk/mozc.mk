@@ -58,38 +58,101 @@ setup-mozc:
 	# 入力ソースを「Mozc」のみにします（これでOSの切り替え機能と決別します）
 	# ※万が一のために 'xkb','jp' (標準日本語) も末尾に残しますが、先頭はMozcにします
 	gsettings set org.gnome.desktop.input-sources sources "[('ibus', 'mozc-jp'), ('xkb', 'jp')]"
+	gsettings set org.gnome.desktop.input-sources mru-sources "[('ibus', 'mozc-jp'), ('xkb', 'jp')]"
+	gsettings set org.gnome.desktop.input-sources current 0
+	# 入力ソースインジケーターを表示する設定
+	gsettings set org.gnome.desktop.input-sources show-all-sources true
 
-	@echo "3. Disabling OS default shortcuts..."
+	@echo "3. Configuring environment variables..."
+	# IBus用の環境変数を.profileに設定
+	@if ! grep -q "GTK_IM_MODULE=ibus" $(HOME_DIR)/.profile 2>/dev/null; then \
+		echo "export GTK_IM_MODULE=ibus" >> $(HOME_DIR)/.profile; \
+	fi
+	@if ! grep -q "QT_IM_MODULE=ibus" $(HOME_DIR)/.profile 2>/dev/null; then \
+		echo "export QT_IM_MODULE=ibus" >> $(HOME_DIR)/.profile; \
+	fi
+	@if ! grep -q "XMODIFIERS=@im=ibus" $(HOME_DIR)/.profile 2>/dev/null; then \
+		echo "export XMODIFIERS=@im=ibus" >> $(HOME_DIR)/.profile; \
+	fi
+	@if ! grep -q "IBUS_USE_PORTAL=1" $(HOME_DIR)/.profile 2>/dev/null; then \
+		echo "export IBUS_USE_PORTAL=1" >> $(HOME_DIR)/.profile; \
+	fi
+
+	@echo "4. Configuring IBus shortcuts..."
 	# OS側の Ctrl+Space を無効化（Mozcに直接キーを届けるため）
 	gsettings set org.gnome.desktop.wm.keybindings switch-input-source "[]"
 	gsettings set org.gnome.desktop.wm.keybindings switch-input-source-backward "[]"
+	# IBusの設定ディレクトリを作成
+	@mkdir -p $(HOME_DIR)/.config/ibus
+	@mkdir -p $(HOME_DIR)/.config/ibus/bus
 
-	@echo "4. Configuring Mozc (Hiragana default & Keymap) using symbolic links..."
+	@echo "5. Configuring Mozc (Hiragana default & Keymap) using symbolic links..."
 	mkdir -p $(MOZC_CONFIG_DIR)
-	
+
 	# 設定ファイル(ibus_config.textproto)を作成し、シンボリックリンク
 	# active_on_launch: True (起動時ひらがな)
-	# keymap_style: "custom" (これから配置するキーマップを使う設定)
+	# notification_on_mode_change: True (切り替え時にUIを表示)
+	# keymap_style: カスタムキーマップファイルが存在する場合は "custom"、存在しない場合は "default"
 	@mkdir -p $(MOZC_DOTFILES_CONFIG_DIR)
-	@if [ ! -f "$(MOZC_DOTFILES_CONFIG_DIR)/ibus_config.textproto" ]; then \
+	@if [ -f "$(MOZC_DOTFILES_CONFIG_DIR)/my_keymap.txt" ]; then \
 		echo "active_on_launch: True" > $(MOZC_DOTFILES_CONFIG_DIR)/ibus_config.textproto; \
 		echo "keymap_style: \"custom\"" >> $(MOZC_DOTFILES_CONFIG_DIR)/ibus_config.textproto; \
+		echo "notification_on_mode_change: True" >> $(MOZC_DOTFILES_CONFIG_DIR)/ibus_config.textproto; \
+		echo "✅ カスタムキーマップを使用します"; \
+	else \
+		echo "active_on_launch: True" > $(MOZC_DOTFILES_CONFIG_DIR)/ibus_config.textproto; \
+		echo "keymap_style: \"default\"" >> $(MOZC_DOTFILES_CONFIG_DIR)/ibus_config.textproto; \
+		echo "notification_on_mode_change: True" >> $(MOZC_DOTFILES_CONFIG_DIR)/ibus_config.textproto; \
+		echo "📝 デフォルトキーマップを使用します（Ctrl+SpaceでIME切り替え）"; \
 	fi
 	ln -sf $(MOZC_DOTFILES_CONFIG_DIR)/ibus_config.textproto $(MOZC_CONFIG_DIR)/ibus_config.textproto
 
-	# 【重要】書き出したキーマップファイルを配置し、シンボリックリンク
-	# ※ $(MOZC_DOTFILES_CONFIG_DIR)/my_keymap.txt は手順1で保存した場所に合わせてください
-	@if [ ! -f "$(MOZC_DOTFILES_CONFIG_DIR)/my_keymap.txt" ]; then \
-		echo "⚠️  $(MOZC_DOTFILES_CONFIG_DIR)/my_keymap.txt が見つかりません。"; \
-		echo "    make mozc-export-keymap を実行して作成してください。"; \
+	# キーマップファイルの設定（カスタムキーマップが存在する場合のみ）
+	@if [ -f "$(MOZC_DOTFILES_CONFIG_DIR)/my_keymap.txt" ]; then \
+		ln -sf $(MOZC_DOTFILES_CONFIG_DIR)/my_keymap.txt $(MOZC_CONFIG_DIR)/user_keymap.txt; \
+		echo "✅ カスタムキーマップファイルを適用しました"; \
 	fi
-	ln -sf $(MOZC_DOTFILES_CONFIG_DIR)/my_keymap.txt $(MOZC_CONFIG_DIR)/user_keymap.txt
 
-	@echo "5. Restarting IBus..."
-	# 設定反映
-	ibus restart
-	
-	@echo "Done! Ctrl+Space toggles Mozc mode directly."
+	@echo "6. Configuring IBus indicator display..."
+	# IBusのインジケーター表示設定（切り替え時にUIを表示）
+	@gsettings set org.gnome.desktop.input-sources show-all-sources true
+	@gsettings set org.gnome.desktop.input-sources per-window false
+
+	@echo "7. Setting up IBus autostart..."
+	# IBusの自動起動設定
+	@mkdir -p $(HOME_DIR)/.config/autostart
+	@if [ ! -f "$(HOME_DIR)/.config/autostart/ibus.desktop" ]; then \
+		echo "[Desktop Entry]" > $(HOME_DIR)/.config/autostart/ibus.desktop; \
+		echo "Type=Application" >> $(HOME_DIR)/.config/autostart/ibus.desktop; \
+		echo "Name=IBus" >> $(HOME_DIR)/.config/autostart/ibus.desktop; \
+		echo "Comment=Start IBus input method framework" >> $(HOME_DIR)/.config/autostart/ibus.desktop; \
+		echo "Exec=ibus-daemon -drx" >> $(HOME_DIR)/.config/autostart/ibus.desktop; \
+		echo "Icon=ibus" >> $(HOME_DIR)/.config/autostart/ibus.desktop; \
+		echo "X-GNOME-Autostart-enabled=true" >> $(HOME_DIR)/.config/autostart/ibus.desktop; \
+	fi
+
+	@echo "8. Restarting IBus..."
+	# 設定反映（現在のセッションでも有効にするため）
+	@pkill -f '[i]bus-daemon' || true
+	@sleep 2
+	@export GTK_IM_MODULE=ibus QT_IM_MODULE=ibus XMODIFIERS=@im=ibus IBUS_USE_PORTAL=1 && \
+		ibus-daemon -drx &
+	@ibus engine mozc-jp >/dev/null 2>&1 || true
+
+	@echo ""
+	@echo "✅ セットアップ完了！"
+	@echo "   - Ctrl+Space 1回で日本語入力と直接入力を切り替え"
+	@echo "   - 切り替え時に画面上にUIが表示されます"
+	@echo "   - 日本語入力の初期値はひらがなです"
+	@echo ""
+	@echo "⚠️  重要: 以下のいずれかを実行してください："
+	@echo "   1. 新しいターミナルを開く（環境変数を読み込むため）"
+	@echo "   2. ログアウト・ログイン"
+	@echo "   3. 以下のコマンドで環境変数を読み込む:"
+	@echo "      source ~/.profile"
+	@echo ""
+	@echo "現在のセッションで即座に有効にする場合:"
+	@echo "   export GTK_IM_MODULE=ibus QT_IM_MODULE=ibus XMODIFIERS=@im=ibus"
 
 # Mozcキーマップのエクスポート
 mozc-export-keymap:
