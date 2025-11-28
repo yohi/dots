@@ -19,6 +19,7 @@ Kiro-style Spec Driven Development implementation using claude code slash comman
 - Use `/kiro:spec-status [feature-name]` to check progress
 
 #### Current Specifications
+- **context-store-mcp**: AIエージェント向けMCPベース長期記憶システム - セッションを越えて情報を永続保存し、文脈に応じた検索を可能にする
 - **aws-ssm-executor-plugin**: Rundeck Node Executor Plugin for executing commands on EC2 nodes via AWS Systems Manager (SSM)
 - **rundeck-dev-environment**: Docker Compose based Rundeck development environment for plugin testing and validation
 
