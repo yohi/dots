@@ -42,7 +42,7 @@ setup-all:
 	@$(MAKE) setup-development
 	@$(MAKE) setup-shortcuts
 	@$(MAKE) setup-claude
-	@$(MAKE) setup-mozc-perfect
+	@$(MAKE) setup-mozc
 	@echo ""
 
 	@echo "📋 6. 拡張機能インストール実行中..."
