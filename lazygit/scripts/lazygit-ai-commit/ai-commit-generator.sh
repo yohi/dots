@@ -55,27 +55,28 @@ esac
 # Prompt structure for AI tools
 # This prompt ensures Conventional Commits format and no Markdown
 PROMPT='Staged changes are provided via stdin.
-Generate 1 commit message following Conventional Commits format.
+Generate 1 commit message following Conventional Commits format, in Japanese.
 
 Rules:
 - DO NOT USE ANY TOOLS.
 - DO NOT EDIT ANY FILES.
-- No markdown, no code blocks, no decorations
-- One message per line
-- No numbering (e.g., "1. ")
-- Concise and descriptive
-- Pure text output only
-- Format: <type>(<scope>): <description> OR <type>: <description>
-- Valid types: feat, fix, docs, style, refactor, test, chore
-- Keep under 72 characters
-- Be specific about what changed
+- Output must be in Japanese (except for the type and scope).
+- No markdown, no code blocks, no decorations.
+- Pure text output only.
+- Structure:
+  <type>(<scope>): <description in Japanese>
 
-Example output format:
-feat(auth): add JWT token validation
-fix(db): correct connection timeout handling
-docs(readme): update installation steps
-refactor(api): simplify error handling logic
-test(user): add unit tests for user model'
+  <Body paragraph explaining "why" and "what" changed in Japanese>
+
+- Valid types: feat, fix, docs, style, refactor, test, chore, perf, build, ci
+- Title line should be under 72 characters (if possible in Japanese).
+- Body should be concise.
+
+Example output:
+feat(auth): JWTトークン検証機能を追加
+
+APIエンドポイントを保護するためにJWT検証ミドルウェアを実装しました。
+これにより、認証されたユーザーのみがリソースにアクセスできるようになります。'
 
 # Read diff from stdin
 DIFF_INPUT=$(cat)
