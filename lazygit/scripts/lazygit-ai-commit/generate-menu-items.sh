@@ -27,4 +27,4 @@ fi
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Complete pipeline: Get staged diff → Limit size → AI generation → Parse output
-git diff --cached | head -c 3000 | "$SCRIPT_DIR/ai-commit-generator.sh" | "$SCRIPT_DIR/parse-ai-output.sh"
+git diff --cached | head -c 3000 | "$SCRIPT_DIR/ai-commit-generator.sh" | "$SCRIPT_DIR/parse-ai-output.sh" | head -n 1

@@ -55,9 +55,11 @@ esac
 # Prompt structure for AI tools
 # This prompt ensures Conventional Commits format and no Markdown
 PROMPT='Staged changes are provided via stdin.
-Generate 5 commit messages following Conventional Commits format.
+Generate 1 commit message following Conventional Commits format.
 
 Rules:
+- DO NOT USE ANY TOOLS.
+- DO NOT EDIT ANY FILES.
 - No markdown, no code blocks, no decorations
 - One message per line
 - No numbering (e.g., "1. ")
@@ -107,8 +109,9 @@ case "$AI_BACKEND" in
         # Gemini CLI call
         # We use -p for prompt as positional arguments + stdin seems to cause 404s in some contexts
         # We also disable extensions to ensure a clean context
+        # We filter out "Loaded cached credentials." from stderr to keep the output clean
         export PROMPT
-        AI_COMMAND='gemini --extensions "" -p "$PROMPT" --model "$GEMINI_MODEL"'
+        AI_COMMAND='gemini --extensions "" -p "$PROMPT" --model "$GEMINI_MODEL" 2>&1 | grep -v "Loaded cached credentials."'
         COMBINED_INPUT="$DIFF_INPUT"
         ;;
     claude)
