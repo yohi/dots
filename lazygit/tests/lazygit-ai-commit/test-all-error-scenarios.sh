@@ -112,7 +112,7 @@ echo ""
 
 # Scenario 6: Parser receives whitespace-only input
 echo "Scenario 6: Parser receives whitespace-only input"
-if echo -e "\n  \n\t\n" | ../../scripts/lazygit-ai-commit/parse-ai-output.sh 2>&1 | grep -q "No valid commit messages found"; then
+if echo -e "\n  \n\t\n" | ../../scripts/lazygit-ai-commit/parse-ai-output.sh 2>&1 | grep -q "No AI output provided"; then
     echo "✓ PASS: Parser detects whitespace-only input"
     PASS_COUNT=$((PASS_COUNT + 1))
 else

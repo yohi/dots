@@ -12,6 +12,7 @@ INPUT=$(cat)
 # Check if input is empty or whitespace only
 if [[ -z "${INPUT//[[:space:]]/}" ]]; then
     echo "Error: No AI output provided" >&2
+    echo "Suggestion: Try again or check AI configuration" >&2
     exit 1
 fi
 
