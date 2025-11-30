@@ -2,11 +2,18 @@ customCommands:
   # AI-powered commit message generator with interactive menu
   # Requirements: 1.1, 1.2, 2.1, 2.2, 2.3, 2.4, 3.1, 3.2, 5.1, 5.2, 5.3, 5.4, 7.1, 7.2, 7.3, 8.2, 8.4
   - key: "<c-a>"
-    description: "AI Commit: Generate commit message and open editor"
+    description: "AI Commit: Generate commit messages with AI"
     context: "files"
-    loadingText: "Generating commit message with AI..."
-    command: bash -c "$HOME/.config/lazygit/scripts/lazygit-ai-commit/generate-menu-items.sh > .git/LAZYGIT_AI_COMMIT_MSG && git commit -e -F .git/LAZYGIT_AI_COMMIT_MSG"
-    output: terminal
+    loadingText: "Generating commit messages with AI..."
+    prompts:
+      - type: "menuFromCommand"
+        key: "CommitMsg"
+        title: "Confirm Commit Message (Esc to Cancel)"
+        command: bash -c "$HOME/.config/lazygit/scripts/lazygit-ai-commit/generate-menu-items.sh"
+        filter: "^(?P<msg>.+\\S.*)$"
+        valueFormat: "{{ .msg }}"
+        labelFormat: "{{ .msg | green }}"
+    command: 'git commit -m "$(echo -e {{.Form.CommitMsg | quote}})"'
   # Legacy commands (kept for reference)
   - command: |
       if git diff --staged --quiet; then
