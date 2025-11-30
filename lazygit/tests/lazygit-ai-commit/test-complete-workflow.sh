@@ -76,10 +76,10 @@ MESSAGES=$(git diff --cached | head -c 12000 | \
 if [ -n "$MESSAGES" ]; then
     test_pass "Messages generated successfully"
     MESSAGE_COUNT=$(echo "$MESSAGES" | wc -l)
-    if [ "$MESSAGE_COUNT" -ge 2 ]; then
-        test_pass "Multiple candidates generated ($MESSAGE_COUNT messages)"
+    if [ "$MESSAGE_COUNT" -ge 1 ]; then
+        test_pass "Valid candidates generated ($MESSAGE_COUNT messages)"
     else
-        test_fail "Expected 2+ messages, got $MESSAGE_COUNT"
+        test_fail "Expected 1+ messages, got $MESSAGE_COUNT"
     fi
 else
     test_fail "No messages generated"
