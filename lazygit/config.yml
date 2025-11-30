@@ -7,13 +7,16 @@ customCommands:
     loadingText: "🤖 AI is generating commit message... (Please wait)"
     prompts:
       - type: "menuFromCommand"
-        key: "CommitMsg"
-        title: "Confirm Commit Message (Esc to Cancel)"
+        key: "AiMsg"
+        title: "Select generated message (Press Enter)"
         command: bash -c "$HOME/.config/lazygit/scripts/lazygit-ai-commit/generate-menu-items.sh"
         filter: "^(?P<msg>.+\\S.*)$"
         valueFormat: "{{ .msg }}"
         labelFormat: "{{ .msg | green }}"
-    command: 'git commit -m "$(echo -e {{.Form.CommitMsg | quote}})"'
+      - type: "confirm"
+        title: "Commit Message Preview"
+        body: "{{ .Form.AiMsg }}"
+    command: 'git commit -m "$(echo -e {{.Form.AiMsg | quote}})"'
   # Legacy commands (kept for reference)
   - command: |
       if git diff --staged --quiet; then
