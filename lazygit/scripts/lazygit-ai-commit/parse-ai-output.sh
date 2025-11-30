@@ -18,7 +18,3 @@ fi
 # Replace actual newlines with literal string "\n"
 # using sed to read the whole stream and replace
 echo "$INPUT" | sed ':a;N;$!ba;s/\n/\\n/g'
-
-# Replace actual newlines with literal string "\n"
-# using sed to read the whole stream and replace
-echo "$INPUT" | sed ':a;N;$!ba;s/\n/\\n/g'
