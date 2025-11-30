@@ -4,7 +4,7 @@ customCommands:
   - key: "<c-a>"
     description: "AI Commit: Generate commit messages with AI"
     context: "files"
-    loadingText: "Generating commit messages with AI..."
+    loadingText: "🤖 AI is generating commit message... (Please wait)"
     prompts:
       - type: "menuFromCommand"
         key: "CommitMsg"
