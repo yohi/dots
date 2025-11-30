@@ -12,7 +12,7 @@ export AI_BACKEND="${AI_BACKEND:-gemini}"
 # For Ollama: No API key needed (local)
 
 # Optional configuration
-export TIMEOUT_SECONDS="${TIMEOUT_SECONDS:-90}"
+export TIMEOUT_SECONDS="${TIMEOUT_SECONDS:-60}"
 export GEMINI_MODEL="${GEMINI_MODEL:-gemini-2.5-flash}"
 export CLAUDE_MODEL="${CLAUDE_MODEL:-claude-3-5-haiku-20241022}"
 export OLLAMA_MODEL="${OLLAMA_MODEL:-mistral}"
@@ -21,6 +21,11 @@ export OLLAMA_MODEL="${OLLAMA_MODEL:-mistral}"
 if git diff --cached --quiet; then
   echo "Error: No staged changes. Please stage files first."
   exit 1
+fi
+
+# Notify user of start (since loadingText might not be visible)
+if command -v notify-send > /dev/null; then
+  notify-send -t 5000 "Lazygit AI" "Generating commit message... 🤖"
 fi
 
 # Resolve script directory for calling sibling scripts
