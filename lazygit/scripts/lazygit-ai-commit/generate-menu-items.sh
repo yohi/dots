@@ -12,7 +12,7 @@ export AI_BACKEND="${AI_BACKEND:-gemini}"
 # For Ollama: No API key needed (local)
 
 # Optional configuration
-export TIMEOUT_SECONDS="${TIMEOUT_SECONDS:-60}"
+export TIMEOUT_SECONDS="${TIMEOUT_SECONDS:-90}"
 export GEMINI_MODEL="${GEMINI_MODEL:-gemini-2.5-flash}"
 export CLAUDE_MODEL="${CLAUDE_MODEL:-claude-3-5-haiku-20241022}"
 export OLLAMA_MODEL="${OLLAMA_MODEL:-mistral}"
@@ -27,4 +27,4 @@ fi
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Complete pipeline: Get staged diff → Limit size → AI generation → Parse output
-git diff --cached | head -c 3000 | "$SCRIPT_DIR/ai-commit-generator.sh" | "$SCRIPT_DIR/parse-ai-output.sh" | head -n 1
+git diff --cached | head -c 3000 | "$SCRIPT_DIR/ai-commit-generator.sh" | "$SCRIPT_DIR/parse-ai-output.sh"
