@@ -3,7 +3,7 @@ set -o pipefail
 
 # Configure AI backend via environment variable
 # Set AI_BACKEND to one of: gemini, claude, ollama, mock
-# Default: mock (for testing without API keys)
+# Default: gemini (requires gemini CLI or API key)
 export AI_BACKEND="${AI_BACKEND:-gemini}"
 
 # API key management via environment variables
