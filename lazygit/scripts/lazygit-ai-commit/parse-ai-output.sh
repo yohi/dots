@@ -9,11 +9,15 @@ set -o pipefail
 # Read all input
 INPUT=$(cat)
 
-# Check if input is empty
-if [ -z "$INPUT" ]; then
+# Check if input is empty or whitespace only
+if [[ -z "${INPUT//[[:space:]]/}" ]]; then
     echo "Error: No AI output provided" >&2
     exit 1
 fi
+
+# Replace actual newlines with literal string "\n"
+# using sed to read the whole stream and replace
+echo "$INPUT" | sed ':a;N;$!ba;s/\n/\\n/g'
 
 # Replace actual newlines with literal string "\n"
 # using sed to read the whole stream and replace
