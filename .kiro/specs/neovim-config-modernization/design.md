@@ -27,7 +27,7 @@
 ### 既存アーキテクチャ分析
 
 **現状の構成**:
-```
+```mermaid
 vim/
 ├── init.vim          # エントリポイント（Vim script）
 ├── rc/               # レガシーVim script設定
