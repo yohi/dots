@@ -175,12 +175,12 @@ sequenceDiagram
 | 意図 | Neovim起動時のエントリポイントとして、設定モジュールとプラグイン管理をロードする |
 | 要件 | 1.1, 1.2, 1.3 |
 
-**責務と制約**
+#### 責務と制約
 - 各設定モジュール (`config/options`, `config/keymaps`, `config/autocmds`) を `require` でロード
 - `lazy.lua` を `require` してプラグイン管理を初期化
 - Vim script (`rc/*.vim`) への参照を持たない
 
-**依存関係**
+#### 依存関係
 - Outbound: config/options.lua — 基本オプション適用 (P0)
 - Outbound: config/keymaps.lua — キーマップ適用 (P0)
 - Outbound: config/autocmds.lua — autocmd登録 (P0)
@@ -188,7 +188,7 @@ sequenceDiagram
 
 **コントラクト**: なし
 
-**実装ノート**
+#### 実装ノート
 - 統合: `require("config.options")`, `require("config.keymaps")`, `require("config.autocmds")`, `require("lazy")` の順でロード
 - 検証: 各モジュールがエラーなくロードされることを起動テストで確認
 
@@ -201,17 +201,17 @@ sequenceDiagram
 | 意図 | Neovimの基本オプション（エンコーディング、インデント、UI、セキュリティ設定）を定義する |
 | 要件 | 1.1, 4.2, 5.3, 5.4 |
 
-**責務と制約**
+#### 責務と制約
 - `vim.opt` を使用してオプションを設定
 - 現 `rc/basic.vim`, `rc/ui.vim`, `rc/search.vim` の内容をLuaに移植
 - TODOマーカーやコメントアウトコードは除外
 
-**依存関係**
+#### 依存関係
 - なし
 
 **コントラクト**: なし
 
-**実装ノート**
+#### 実装ノート
 - 統合: `vim.opt.updatetime = 300` を明示設定 (要件 4.2)
 - 統合: `vim.opt.exrc = false` でローカルvimrcの自動実行を無効化 (要件 5.3)
 - リスク: WezTerm連携のautocmdは `config/autocmds.lua` に分離
@@ -225,17 +225,17 @@ sequenceDiagram
 | 意図 | 汎用キーマップを一元定義する |
 | 要件 | 1.1, 3.2, 3.3 |
 
-**責務と制約**
+#### 責務と制約
 - `vim.keymap.set` を使用してキーマップを定義
 - 現 `rc/keymap.vim` の内容をLuaに移植
 - 未使用キーマップは移植しない
 
-**依存関係**
+#### 依存関係
 - なし
 
 **コントラクト**: なし
 
-**実装ノート**
+#### 実装ノート
 - 統合: プラグイン固有のキーマップは各プラグイン設定内で定義（ここには含めない）
 
 ---
@@ -247,17 +247,17 @@ sequenceDiagram
 | 意図 | 汎用autocmdを一元定義する |
 | 要件 | 1.1, 3.2, 3.3 |
 
-**責務と制約**
+#### 責務と制約
 - `vim.api.nvim_create_autocmd` を使用してautocmdを定義
 - 現 `rc/basic.vim` 内の `augroup` をLuaに移植（WezTerm連携含む）
 - コメントアウトされたautocmdは移植しない
 
-**依存関係**
+#### 依存関係
 - なし
 
 **コントラクト**: なし
 
-**実装ノート**
+#### 実装ノート
 - 統合: WezTerm IME連携用の `InsertLeave`, `InsertEnter`, `CmdlineEnter`, `CmdlineLeave`, `VimEnter` autocmdを移植
 
 ---
@@ -271,19 +271,19 @@ sequenceDiagram
 | 意図 | Lazy.nvimをブートストラップし、プラグイン仕様をインポートする |
 | 要件 | 4.1, 4.3 |
 
-**責務と制約**
+#### 責務と制約
 - Lazy.nvimのインストール確認とパス設定
 - `mapleader`, `maplocalleader` の設定（プラグインロード前に必要）
 - プラグイン仕様を `plugins/` からインポート
 - **`checker = { enabled = false }`** に変更して自動更新チェックを無効化 (要件 4.3)
 
-**依存関係**
+#### 依存関係
 - Outbound: plugins/*.lua — プラグイン仕様読み込み (P0)
 - External: lazy.nvim — プラグイン管理ライブラリ (P0)
 
 **コントラクト**: なし
 
-**実装ノート**
+#### 実装ノート
 - 変更: 現状 `checker = { enabled = true }` を `checker = { enabled = false }` に修正
 
 ---
@@ -297,14 +297,14 @@ sequenceDiagram
 | 意図 | LSPサーバの設定・有効化・診断設定を一元管理する |
 | 要件 | 2.1, 2.2, 2.3, 2.4 |
 
-**責務と制約**
+#### 責務と制約
 - `mason.nvim` と `mason-lspconfig.nvim` を統合してLSPサーバを自動インストール
 - `vim.lsp.config()` でサーバ設定を定義、`vim.lsp.enable()` で有効化
 - `vim.diagnostic.config()` で診断設定を一元管理
 - LSP関連キーマップを定義（現 `lsp.lua` から移植）
 - **削除対象の `lua/lsp.lua` の残存設定を吸収**
 
-**依存関係**
+#### 依存関係
 - External: mason.nvim — LSPサーバインストール (P0)
 - External: mason-lspconfig.nvim — Mason-LSP連携 (P0)
 - Inbound: lazy.nvim — プラグインロード (P0)
@@ -336,7 +336,7 @@ end
 - 事後条件: 対象ファイルタイプを開いた際にLSPがアタッチされる
 - 不変条件: 同一サーバの設定は単一箇所でのみ定義
 
-**実装ノート**
+#### 実装ノート
 - 統合: `lsp.lua` の `vim.diagnostic.config()` 設定をこのファイルに移動
 - 統合: `lsp.lua` のLSPキーマップ (`K`, `gf`, `gr` 等) をこのファイルに移動
 - 統合完了後: `lua/lsp.lua` を削除
@@ -352,12 +352,12 @@ end
 | 意図 | AIプラグイン用のAPIキー存在チェックと警告表示を提供する |
 | 要件 | 5.1, 5.2 |
 
-**責務と制約**
+#### 責務と制約
 - 環境変数からAPIキーを取得
 - キーが未設定の場合は `vim.notify` で警告を表示
 - キーが存在する場合は値を返す
 
-**依存関係**
+#### 依存関係
 - なし
 
 **コントラクト**: Service [x] / API [ ] / Event [ ] / Batch [ ] / State [ ]
@@ -389,7 +389,7 @@ end
 - 事後条件: キー未設定時は警告が表示される
 - 不変条件: 環境変数の値を変更しない
 
-**実装ノート**
+#### 実装ノート
 - 統合: `avante.lua`, `minuet-ai.lua` 等でこのユーティリティを使用
 - 統合: `enabled` フラグと組み合わせて、キー未設定時にプラグインを無効化可能
 
