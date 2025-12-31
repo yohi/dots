@@ -60,3 +60,20 @@ __pycache__/
 
 # MCP関連
 /.serena/
+
+# Gemini
+GEMINI.md
+.gemini/
+
+# Codex
+.codex/
+
+# Kiro
+.kiro/settings
+
+# Session
+.sessions
+
+# TODO
+codex/
+AGENTS.md
