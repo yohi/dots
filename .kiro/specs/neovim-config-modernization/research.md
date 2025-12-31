@@ -97,10 +97,14 @@
 ## リスクと軽減策
 - **リスク1**: 移行中に一部設定が読み込まれずNeovimが不安定になる可能性
   - **軽減策**: 変更をモジュール単位で行い、各段階でNeovim起動テストを実施
+  - **追加軽減策**: 互換モード期間を設け、`init.lua` から `init.vim` を source する段階的移行
 - **リスク2**: LSP統合後に特定言語のサポートが抜け落ちる可能性
   - **軽減策**: 統合前に両ファイルのサーバリストを突合し、全サーバをカバー
+  - **追加軽減策**: 10サーバ（basedpyright, pylsp, bashls, dockerls, html, jsonls, lua_ls, vimls, yamlls, intelephense）を明示的にリスト化
 - **リスク3**: WezTerm連携 autocmd の Lua 移植漏れ
   - **軽減策**: `basic.vim` の WezTerm 用 augroup を完全移植対象として明示的に管理
+- **リスク4**: サプライチェーン攻撃によるプラグインの改ざん（新規追加）
+  - **軽減策**: `lazy-lock.json` をGit管理し、バージョンを固定。更新は手動で `:Lazy update` 実行後に動作確認してからcommit
 
 ## 参照
 - [Lazy.nvim Configuration](https://lazy.folke.io/configuration) — checker オプションの設定
