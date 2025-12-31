@@ -20,13 +20,13 @@ Neovim設定のモダナイゼーション: Vim scriptからLuaへの完全移�
   - `lua/config/` ディレクトリを作成する
   - `lua/utils/` ディレクトリを作成する
   - エントリポイントが既存設定を正常にロードできることを確認する
-  - _Requirements: 1.1, 1.2_
+  - _Requirements: 1 (受け入れ基準 1, 2)_
 
 - [ ] 2.2 プラグイン管理の初期設定を準備する
   - `lazy.lua` のロード順序を `init.lua` に組み込む
   - leader キー設定がプラグインロード前に実行されることを確認する
   - プラグイン管理システムが正常に動作することを検証する
-  - _Requirements: 1.1, 1.3 (Note: 要件4.1の遅延ロードは後続フェーズで実装)_
+  - _Requirements: 1 (受け入れ基準 1, 3) (Note: 要件4.1の遅延ロードは後続フェーズで実装)_
 
 - [ ] 3. 基本オプション設定をLuaに移植する
 - [ ] 3.1 コアオプションを移植する
@@ -34,24 +34,24 @@ Neovim設定のモダナイゼーション: Vim scriptからLuaへの完全移�
   - エンコーディング、インデント、タブ幅、ファイル形式の設定を移植する
   - バックアップとスワップファイルの設定を移植する
   - TODOマーカーとコメントアウトコードは除外する
-  - _Requirements: 1.1_
+  - _Requirements: 1, 3 (受け入れ基準 3.2)_
 
 - [ ] 3.2 UI設定を統合する
   - `rc/ui.vim` の内容を `config/options.lua` に統合する
   - 行番号、カーソル行、検索ハイライト、コマンドライン表示の設定を移植する
   - カラースキームとウィンドウ表示設定を移植する
-  - _Requirements: 1.1_
+  - _Requirements: 1_
 
 - [ ] 3.3 検索設定を統合する
   - `rc/search.vim` の内容を `config/options.lua` に統合する
   - 大文字小文字の扱い、インクリメンタル検索の設定を移植する
-  - _Requirements: 1.1_
+  - _Requirements: 1_
 
 - [ ] 3.4 性能とセキュリティ設定を追加する
   - `updatetime` を明示的に300msに設定する
   - `exrc` と `secure` オプションで外部ソース実行を制限する
   - 設定値が期待通りに適用されることを確認する
-  - _Requirements: 4.2, 5.3, 5.4_
+  - _Requirements: 4 (受け入れ基準 2), 5 (受け入れ基準 3, 4)_
 
 - [ ] 4. キーマップと自動コマンドをLuaに移植する
 - [ ] 4.1 汎用キーマップを移植する
@@ -59,14 +59,14 @@ Neovim設定のモダナイゼーション: Vim scriptからLuaへの完全移�
   - モードごとに `vim.keymap.set` を使用してキーマップを定義する
   - 未使用キーマップとコメントアウトされたマッピングは除外する
   - 主要キーマップ（`;` → `:`, 分割移動等）が動作することを確認する
-  - _Requirements: 1.1, 3.2, 3.3_
+  - _Requirements: 1, 3 (受け入れ基準 3.2)_
 
 - [ ] 4.2 自動コマンドを移植する
   - `rc/basic.vim` 内の `augroup` を `config/autocmds.lua` に変換する
   - `vim.api.nvim_create_augroup` と `vim.api.nvim_create_autocmd` を使用する
   - WezTerm IME連携用の自動コマンドを移植する
   - コメントアウトされた自動コマンドは除外する
-  - _Requirements: 1.1, 3.2, 3.3_
+  - _Requirements: 1, 3 (受け入れ基準 3.2)_
 
 - [ ] 5. LSP設定を一元化する
 - [ ] 5.1 LSPサーバ設定を統合する
@@ -74,26 +74,26 @@ Neovim設定のモダナイゼーション: Vim scriptからLuaへの完全移�
   - 重複する10個のLSPサーバ設定を単一の `lsp_servers` テーブルに統合する
   - `vim.lsp.config()` と `vim.lsp.enable()` を使用してサーバを設定・有効化する
   - 各サーバのファイルタイプ、ルートマーカー、固有設定を定義する
-  - _Requirements: 2.1, 2.2, 2.4_
+  - _Requirements: 2 (受け入れ基準 1, 2, 4)_
 
 - [ ] 5.2 LSP共通設定を統合する
   - `lua/lsp.lua` の診断設定を `plugins/lsp_cfg.lua` に移動する
   - `vim.diagnostic.config()` で診断表示方法を一元管理する
   - 補完能力とLSP関連キーマップを統合する
-  - _Requirements: 2.3_
+  - _Requirements: 2 (受け入れ基準 3)_
 
 - [ ] 5.3 LSPアタッチを検証する
   - Python、Lua、YAML、Shell、PHP等の各ファイルタイプでLSPが正常にアタッチされることを確認する
   - `:LspInfo` コマンドで各サーバの状態を検証する
   - サーバ未インストール時に適切な警告が表示されることを確認する
-  - _Requirements: 2.1, 2.3_
+  - _Requirements: 2 (全受け入れ基準の検証)_
 
 - [ ] 6. APIキー管理ユーティリティを実装する
   - `utils/apikey.lua` を作成し、環境変数からAPIキーを取得する機能を実装する
   - キーが未設定の場合に警告を表示し、適切な戻り値を返す機能を実装する
   - `get_api_key()` 関数のインターフェースを定義する
   - ユニットテスト用の検証を行う
-  - _Requirements: 5.1, 5.2_
+  - _Requirements: 5 (受け入れ基準 1, 2)_
 
 - [ ] 7. エントリポイントを完成させる
 - [ ] 7.1 init.luaを完成させる
@@ -101,13 +101,13 @@ Neovim設定のモダナイゼーション: Vim scriptからLuaへの完全移�
   - 設定モジュールのロード順序を確定する（options → keymaps → autocmds → lazy）
   - 各モジュールを `require` でロードする実装を完成させる
   - ロード順序を誤った場合のリスクを最小化する
-  - _Requirements: 1.1, 1.3_
+  - _Requirements: 1_
 
 - [ ] 7.2 段階的切り替えを実施する
   - 各モジュール移植完了ごとに `init.lua` を更新する
   - 対応する `runtime!` 呼び出しを削除する
   - 各切り替え後にNeovimが正常に起動することを確認する
-  - _Requirements: 1.2, 1.3_
+  - _Requirements: 1, 3_
 
 - [ ] 8. レガシーコードを削除する
 - [ ] 8.1 Vim script設定ファイルを削除する
@@ -115,7 +115,7 @@ Neovim設定のモダナイゼーション: Vim scriptからLuaへの完全移�
   - `rc/` ディレクトリ全体を削除する
   - `lua/lsp.lua` を削除する
   - 削除前にGitの状態を確認し、リバート可能な状態にする
-  - _Requirements: 1.2, 2.2, 3.1, 3.4_
+  - _Requirements: 1 (受け入れ基準 2), 2 (受け入れ基準 2), 3 (受け入れ基準 1, 4)_
 
 - [ ] 8.2 削除後の動作を検証する
   - `nvim --headless +qa` がエラーなく終了することを確認する
@@ -128,13 +128,13 @@ Neovim設定のモダナイゼーション: Vim scriptからLuaへの完全移�
   - `plugins/*.lua` の各プラグイン定義で `event`, `cmd`, `ft` による遅延ロードを設定する
   - 起動時に必須でないプラグインを特定し、遅延ロード対象とする
   - `:Lazy profile` で起動時間を測定する
-  - _Requirements: 4.1_
+  - _Requirements: 4 (受け入れ基準 1)_
 
 - [ ] 9.2 自動更新チェックを無効化する
   - `lazy.lua` の `checker.enabled` を `false` に設定する
   - `lazy-lock.json` がGit管理下にあることを確認する
   - 自動更新が実行されないことを確認する
-  - _Requirements: 4.3_
+  - _Requirements: 4 (受け入れ基準 3)_
 
 - [ ] 10. 最終検証とテストを実施する
 - [ ] 10.1 統合テストを実施する
