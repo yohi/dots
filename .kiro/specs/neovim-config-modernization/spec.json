@@ -1,0 +1,19 @@
+{
+    "name": "neovim-config-modernization",
+    "description": "Neovim設定のモダナイゼーション: Vim scriptからLuaへの完全移行、LSP設定の一元化、レガシーコードの削除",
+    "status": "design",
+    "phase": "design-generated",
+    "approvals": {
+        "requirements": {
+            "generated": true,
+            "approved": true
+        },
+        "design": {
+            "generated": true,
+            "approved": false
+        }
+    },
+    "language": "ja",
+    "createdAt": "2025-12-31T12:48:30+09:00",
+    "updatedAt": "2025-12-31T13:06:35+09:00"
+}
