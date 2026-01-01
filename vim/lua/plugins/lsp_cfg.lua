@@ -275,7 +275,7 @@ return {
                 float = {
                     focusable = false,
                     style = "minimal",
-                    source = "always",
+                    source = true,
                     header = "",
                     prefix = "",
                     border = "rounded",
