@@ -1,5 +1,12 @@
+-- =====================================================================================
+-- init.lua - Neovim エントリポイント
+-- =====================================================================================
+-- 設計書 Phase 7: エントリポイントの完成
+-- ロード順序: options → keymaps → autocmds → lazy
+-- すべてのモジュールは pcall でラップし、エラー時もNeovimが起動できるようにする
+-- =====================================================================================
+
 local config_dir = vim.fn.stdpath("config")
-local legacy_init = config_dir .. "/init.vim"
 
 -- 必要なディレクトリ構造を作成（冪等）
 local required_dirs = {
@@ -14,31 +21,30 @@ end
 vim.g.mapleader = " "
 vim.g.maplocalleader = "\\"
 
--- lazy.nvim プラグインマネージャーの読み込み
--- NOTE: Phase 5での互換性モード中は init.vim -> runtime! lua/*.lua で lazy.lua が読み込まれるため
--- ここでは読み込まない（二重ロードを防ぐ）
--- local ok, err = pcall(require, "lazy")
--- if not ok then
---   vim.notify("Failed to load lazy.nvim: " .. tostring(err), vim.log.levels.ERROR)
--- end
+-- =====================================================================================
+-- 設定モジュールのロード（順序厳守）
+-- =====================================================================================
 
--- 移行済みの設定モジュールを読み込む
--- Phase 4.2: Autocmd migration
-local ok_autocmds, err_autocmds = pcall(require, "config.autocmds")
-if not ok_autocmds then
-  vim.notify("Failed to load config.autocmds: " .. tostring(err_autocmds), vim.log.levels.ERROR)
+-- 1. 基本オプション設定
+local ok_options, err_options = pcall(require, "config.options")
+if not ok_options then
+  vim.notify("Failed to load config.options: " .. tostring(err_options), vim.log.levels.ERROR)
 end
 
--- Phase 4.2: Keymap migration
+-- 2. キーマップ設定
 local ok_keymaps, err_keymaps = pcall(require, "config.keymaps")
 if not ok_keymaps then
   vim.notify("Failed to load config.keymaps: " .. tostring(err_keymaps), vim.log.levels.ERROR)
 end
 
+-- 3. 自動コマンド設定
+local ok_autocmds, err_autocmds = pcall(require, "config.autocmds")
+if not ok_autocmds then
+  vim.notify("Failed to load config.autocmds: " .. tostring(err_autocmds), vim.log.levels.ERROR)
+end
 
--- レガシーinit.vimの読み込み（互換性モード）
-if vim.fn.filereadable(legacy_init) == 1 then
-  vim.cmd.source(vim.fn.fnameescape(legacy_init))
-else
-  vim.notify("legacy init.vim was not found; compatibility mode skipped", vim.log.levels.WARN)
+-- 4. プラグイン管理 (lazy.nvim)
+local ok_lazy, err_lazy = pcall(require, "lazy_bootstrap")
+if not ok_lazy then
+  vim.notify("Failed to load lazy.nvim: " .. tostring(err_lazy), vim.log.levels.ERROR)
 end
