@@ -46,7 +46,7 @@ vim.api.nvim_create_autocmd({ "BufNewFile", "BufRead", "BufEnter" }, {
   callback = function()
     local filepath = vim.fn.expand("%:p:h")
     if filepath ~= "" then
-      vim.fn.chdir(filepath)
+      vim.cmd("lcd " .. vim.fn.fnameescape(filepath))
     end
   end,
   desc = "Change directory to file's directory",
