@@ -305,7 +305,7 @@ return {
 
             -- LSP Keymaps (migrated from lsp.lua)
             vim.keymap.set('n', 'K',  '<cmd>lua vim.lsp.buf.hover()<CR>')
-            vim.keymap.set('n', 'gf', '<cmd>lua vim.lsp.buf.formatting()<CR>')
+            vim.keymap.set('n', 'gf', '<cmd>lua vim.lsp.buf.format()<CR>')
             vim.keymap.set('n', 'gr', '<cmd>lua vim.lsp.buf.references()<CR>')
             vim.keymap.set('n', '<F12>', '<cmd>lua vim.lsp.buf.definition()<CR>')
             vim.keymap.set('n', 'gD', '<cmd>lua vim.lsp.buf.declaration()<CR>')
