@@ -57,10 +57,39 @@ vim.api.nvim_create_autocmd({ "BufNewFile", "BufRead", "BufEnter" }, {
 if vim.env.TERM_PROGRAM == "WezTerm" then
   local wezterm_ime_group = vim.api.nvim_create_augroup("WezTermIME", { clear = true })
 
+  -- Helper function to encode a string to base64 (pure Lua implementation)
+  local function base64_encode(data)
+    local b64chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+    local result = {}
+    
+    -- Process every 3 bytes
+    for i = 1, #data, 3 do
+      local byte1 = string.byte(data, i)
+      local byte2 = string.byte(data, i + 1)
+      local byte3 = string.byte(data, i + 2)
+      
+      -- Combine the 3 bytes into a 24-bit number
+      local combined = bit.lshift(byte1, 16) + bit.lshift(byte2 or 0, 8) + (byte3 or 0)
+      
+      -- Extract four 6-bit groups
+      local b1 = bit.rshift(bit.band(combined, 0xFC0000), 18) + 1
+      local b2 = bit.rshift(bit.band(combined, 0x03F000), 12) + 1
+      local b3 = bit.rshift(bit.band(combined, 0x000FC0), 6) + 1
+      local b4 = bit.band(combined, 0x00003F) + 1
+      
+      table.insert(result, string.sub(b64chars, b1, b1))
+      table.insert(result, string.sub(b64chars, b2, b2))
+      table.insert(result, byte2 and string.sub(b64chars, b3, b3) or "=")
+      table.insert(result, byte3 and string.sub(b64chars, b4, b4) or "=")
+    end
+    
+    return table.concat(result)
+  end
+  
   -- Helper function to set WezTerm user variable for IME control
   local function set_wezterm_mode(mode)
     -- Base64-encode the mode value as required by WezTerm SetUserVar
-    local encoded_mode = vim.fn.system(string.format('printf "%%s" "%s" | base64 -w 0', mode)):gsub("\n", "")
+    local encoded_mode = base64_encode(mode)
     vim.fn.system(string.format('printf "\\033]1337;SetUserVar=NVIM_MODE=%s\\007"', encoded_mode))
   end
 
