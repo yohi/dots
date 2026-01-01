@@ -39,7 +39,7 @@ required_patterns=(
 )
 
 for pattern in "${required_patterns[@]}"; do
-  if ! rg -q "${pattern}" "${options_file}"; then
+  if ! rg -P -q "${pattern}" "${options_file}"; then
     echo "Missing required setting: ${pattern}"
     exit 1
   fi
