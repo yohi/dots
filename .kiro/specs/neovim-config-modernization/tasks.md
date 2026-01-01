@@ -70,21 +70,21 @@ Neovim設定のモダナイゼーション: Vim scriptからLuaへの完全移�
   - コメントアウトされた自動コマンドは除外する
   - _Requirements: 1, 3 (受け入れ基準 3.2)_
 
-- [ ] 5. LSP設定を一元化する
-- [ ] 5.1 LSPサーバ設定を統合する
+- [x] 5. LSP設定を一元化する
+- [x] 5.1 LSPサーバ設定を統合する
   - `lua/lsp.lua` と `lua/plugins/lsp_cfg.lua` の設定を分析する
   - 重複する10個のLSPサーバ設定を単一の `lsp_servers` テーブルに統合する
   - `vim.lsp.config()` と `vim.lsp.enable()` を使用してサーバを設定・有効化する
   - 各サーバのファイルタイプ、ルートマーカー、固有設定を定義する
   - _Requirements: 2 (受け入れ基準 1, 2, 4)_
 
-- [ ] 5.2 LSP共通設定を統合する
+- [x] 5.2 LSP共通設定を統合する
   - `lua/lsp.lua` の診断設定を `plugins/lsp_cfg.lua` に移動する
   - `vim.diagnostic.config()` で診断表示方法を一元管理する
   - 補完能力とLSP関連キーマップを統合する
   - _Requirements: 2 (受け入れ基準 3)_
 
-- [ ] 5.3 LSPアタッチを検証する
+- [x] 5.3 LSPアタッチを検証する
   - Python、Lua、YAML、Shell、PHP等の各ファイルタイプでLSPが正常にアタッチされることを確認する
   - `:LspInfo` コマンドで各サーバの状態を検証する
   - サーバ未インストール時に適切な警告が表示されることを確認する

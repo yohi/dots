@@ -1,15 +1,15 @@
 local lsp_servers = {
     "basedpyright",
-    -- "ruff",
     "bashls",
     "lua_ls",
     "yamlls",
     "jsonls",
-    -- "taplo",
-    -- "rust_analyzer",
     "ts_ls",
     "html",
     "cssls",
+    "vimls",
+    "dockerls",
+    "intelephense",
 }
 
 local formatters = {
@@ -219,6 +219,26 @@ return {
                     cmd = { 'vscode-css-language-server', '--stdio' },
                     filetypes = { 'css', 'scss', 'less' },
                 },
+                vimls = {
+                    -- Masonのパッケージ名: vim-language-server
+                    -- インストールされる実行可能ファイル: vim-language-server
+                    cmd = { 'vim-language-server', '--stdio' },
+                    filetypes = { 'vim' },
+                },
+                dockerls = {
+                    -- Masonのパッケージ名: dockerfile-language-server
+                    -- インストールされる実行可能ファイル: docker-langserver
+                    cmd = { 'docker-langserver', '--stdio' },
+                    filetypes = { 'dockerfile' },
+                    root_markers = { 'Dockerfile' },
+                },
+                intelephense = {
+                    -- Masonのパッケージ名: intelephense
+                    -- インストールされる実行可能ファイル: intelephense
+                    cmd = { 'intelephense', '--stdio' },
+                    filetypes = { 'php' },
+                    root_markers = { 'composer.json' },
+                },
             }
 
             -- Apply configurations
@@ -245,6 +265,73 @@ return {
                     vim.log.levels.WARN
                 )
             end
+
+            -- LSP Diagnostic Configuration (migrated from lsp.lua)
+            vim.diagnostic.config({
+                virtual_text = false,
+                update_in_insert = true,
+                underline = true,
+                severity_sort = true,
+                float = {
+                    focusable = false,
+                    style = "minimal",
+                    source = "always",
+                    header = "",
+                    prefix = "",
+                    border = "rounded",
+                },
+                signs = {
+                    text = {
+                        [vim.diagnostic.severity.ERROR] = "",
+                        [vim.diagnostic.severity.WARN] = "",
+                        [vim.diagnostic.severity.HINT] = "",
+                        [vim.diagnostic.severity.INFO] = "",
+                    },
+                },
+            })
+
+            -- LSP Handlers Configuration (migrated from lsp.lua)
+            vim.lsp.handlers["textDocument/hover"] = vim.lsp.with(
+                vim.lsp.handlers.hover, {
+                    border = "rounded",
+                }
+            )
+
+            vim.lsp.handlers["textDocument/signatureHelp"] = vim.lsp.with(
+                vim.lsp.handlers.signature_help, {
+                    border = "rounded",
+                }
+            )
+
+            -- LSP Keymaps (migrated from lsp.lua)
+            vim.keymap.set('n', 'K',  '<cmd>lua vim.lsp.buf.hover()<CR>')
+            vim.keymap.set('n', 'gf', '<cmd>lua vim.lsp.buf.formatting()<CR>')
+            vim.keymap.set('n', 'gr', '<cmd>lua vim.lsp.buf.references()<CR>')
+            vim.keymap.set('n', '<F12>', '<cmd>lua vim.lsp.buf.definition()<CR>')
+            vim.keymap.set('n', 'gD', '<cmd>lua vim.lsp.buf.declaration()<CR>')
+            vim.keymap.set('n', 'gi', '<cmd>lua vim.lsp.buf.implementation()<CR>')
+            vim.keymap.set('n', 'gt', '<cmd>lua vim.lsp.buf.type_definition()<CR>')
+            vim.keymap.set('n', 'gn', '<cmd>lua vim.lsp.buf.rename()<CR>')
+            vim.keymap.set('n', 'ga', '<cmd>lua vim.lsp.buf.code_action()<CR>')
+            vim.keymap.set('n', 'ge', '<cmd>lua vim.diagnostic.open_float()<CR>')
+            vim.keymap.set('n', 'g]', '<cmd>lua vim.diagnostic.goto_next()<CR>')
+            vim.keymap.set('n', 'g[', '<cmd>lua vim.diagnostic.goto_prev()<CR>')
+
+            -- LSP Diagnostic Hover Autocmd (migrated from lsp.lua)
+            local diagnostic_hover_augroup = vim.api.nvim_create_augroup(
+                "lspconfig-diagnostic",
+                { clear = true }
+            )
+
+            vim.api.nvim_create_autocmd(
+                { "CursorHold" },
+                {
+                    group = diagnostic_hover_augroup,
+                    callback = function()
+                        vim.diagnostic.open_float()
+                    end,
+                }
+            )
         end,
     },
 

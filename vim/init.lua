@@ -15,10 +15,12 @@ vim.g.mapleader = " "
 vim.g.maplocalleader = "\\"
 
 -- lazy.nvim プラグインマネージャーの読み込み
-local ok, err = pcall(require, "lazy")
-if not ok then
-  vim.notify("Failed to load lazy.nvim: " .. tostring(err), vim.log.levels.ERROR)
-end
+-- NOTE: Phase 5での互換性モード中は init.vim -> runtime! lua/*.lua で lazy.lua が読み込まれるため
+-- ここでは読み込まない（二重ロードを防ぐ）
+-- local ok, err = pcall(require, "lazy")
+-- if not ok then
+--   vim.notify("Failed to load lazy.nvim: " .. tostring(err), vim.log.levels.ERROR)
+-- end
 
 -- 移行済みの設定モジュールを読み込む
 -- Phase 4.2: Autocmd migration
