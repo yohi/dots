@@ -56,14 +56,14 @@ Neovim設定のモダナイゼーション: Vim scriptからLuaへの完全移�
   - _Note: 要件4（起動性能）の受け入れ基準2と要件5（セキュリティ）の受け入れ基準3,4を満たすための設定を `config/options.lua` に追加します。実装上の依存関係はPhase 1とPhase 2.1のみです_
 
 - [ ] 4. キーマップと自動コマンドをLuaに移植する
-- [ ] 4.1 汎用キーマップを移植する
+- [x] 4.1 汎用キーマップを移植する
   - `rc/keymap.vim` の内容を分析し、有効なキーマップのみを `config/keymaps.lua` に変換する
   - モードごとに `vim.keymap.set` を使用してキーマップを定義する
   - 未使用キーマップとコメントアウトされたマッピングは除外する
   - 主要キーマップ（`;` → `:`, 分割移動等）が動作することを確認する
   - _Requirements: 1, 3 (受け入れ基準 3.2)_
 
-- [ ] 4.2 自動コマンドを移植する
+- [x] 4.2 自動コマンドを移植する
   - `rc/basic.vim` 内の `augroup` を `config/autocmds.lua` に変換する
   - `vim.api.nvim_create_augroup` と `vim.api.nvim_create_autocmd` を使用する
   - WezTerm IME連携用の自動コマンドを移植する
