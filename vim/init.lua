@@ -20,6 +20,14 @@ if not ok then
   vim.notify("Failed to load lazy.nvim: " .. tostring(err), vim.log.levels.ERROR)
 end
 
+-- 移行済みの設定モジュールを読み込む
+-- Phase 4.2: Autocmd migration
+local ok_autocmds, err_autocmds = pcall(require, "config.autocmds")
+if not ok_autocmds then
+  vim.notify("Failed to load config.autocmds: " .. tostring(err_autocmds), vim.log.levels.ERROR)
+end
+
+
 -- レガシーinit.vimの読み込み（互換性モード）
 if vim.fn.filereadable(legacy_init) == 1 then
   vim.cmd.source(vim.fn.fnameescape(legacy_init))
