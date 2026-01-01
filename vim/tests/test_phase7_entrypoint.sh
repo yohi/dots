@@ -22,7 +22,6 @@ fi
 
 # Test 2: init.lua でロード順序が正しいこと (options → keymaps → autocmds → lazy)
 echo -n "Test 2: init.lua loads modules in correct order... "
-init_content=$(cat "${VIM_DIR}/init.lua")
 options_line=$(grep -n 'require.*config\.options' "${VIM_DIR}/init.lua" | head -1 | cut -d: -f1 || echo "0")
 keymaps_line=$(grep -n 'require.*config\.keymaps' "${VIM_DIR}/init.lua" | head -1 | cut -d: -f1 || echo "0")
 autocmds_line=$(grep -n 'require.*config\.autocmds' "${VIM_DIR}/init.lua" | head -1 | cut -d: -f1 || echo "0")
@@ -54,7 +53,22 @@ fi
 
 # Test 4: lazy_bootstrap.lua で checker.enabled が false であること (要件4.3)
 echo -n "Test 4: lazy_bootstrap.lua has checker.enabled = false... "
-if grep -P 'checker\s*=\s*\{[^}]*enabled\s*=\s*false' "${VIM_DIR}/lua/lazy_bootstrap.lua"; then
+# awk を使って checker ブロック内で enabled = false が設定されているかチェック
+if awk '
+  /checker[[:space:]]*=[[:space:]]*\{/ {
+    in_checker = 1
+  }
+  in_checker && /enabled[[:space:]]*=[[:space:]]*false/ {
+    found = 1
+    exit 0
+  }
+  in_checker && /\}/ {
+    in_checker = 0
+  }
+  END {
+    exit !found
+  }
+' "${VIM_DIR}/lua/lazy_bootstrap.lua"; then
   echo "PASS"
 else
   echo "FAIL: checker.enabled should be false in lazy_bootstrap.lua"
