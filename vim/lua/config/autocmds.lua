@@ -46,7 +46,7 @@ vim.api.nvim_create_autocmd({ "BufNewFile", "BufRead", "BufEnter" }, {
   callback = function()
     local filepath = vim.fn.expand("%:p:h")
     if filepath ~= "" then
-      vim.cmd("lcd " .. filepath)
+      vim.fn.chdir(filepath)
     end
   end,
   desc = "Change directory to file's directory",
@@ -59,7 +59,9 @@ if vim.env.TERM_PROGRAM == "WezTerm" then
 
   -- Helper function to set WezTerm user variable for IME control
   local function set_wezterm_mode(mode)
-    vim.fn.system(string.format('printf "\\033]1337;SetUserVar=NVIM_MODE=%s\\007" "%s"', mode, mode))
+    -- Base64-encode the mode value as required by WezTerm SetUserVar
+    local encoded_mode = vim.fn.system(string.format('printf "%%s" "%s" | base64 -w 0', mode)):gsub("\n", "")
+    vim.fn.system(string.format('printf "\\033]1337;SetUserVar=NVIM_MODE=%s\\007"', encoded_mode))
   end
 
   -- Normal mode: IME OFF

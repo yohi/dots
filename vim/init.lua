@@ -27,6 +27,12 @@ if not ok_autocmds then
   vim.notify("Failed to load config.autocmds: " .. tostring(err_autocmds), vim.log.levels.ERROR)
 end
 
+-- Phase 4.2: Keymap migration
+local ok_keymaps, err_keymaps = pcall(require, "config.keymaps")
+if not ok_keymaps then
+  vim.notify("Failed to load config.keymaps: " .. tostring(err_keymaps), vim.log.levels.ERROR)
+end
+
 
 -- レガシーinit.vimの読み込み（互換性モード）
 if vim.fn.filereadable(legacy_init) == 1 then
