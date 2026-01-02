@@ -1,6 +1,7 @@
 return {
     "airblade/vim-gitgutter",
-    config = function ()
+    event = { "BufReadPost", "BufNewFile" },
+    config = function()
         vim.g.gitgutter_map_keys = 0
         vim.g.gitgutter_sign_priority = 1
         vim.g.gitgutter_sign_added              = '▌'
