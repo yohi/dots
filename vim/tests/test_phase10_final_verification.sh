@@ -149,7 +149,7 @@ test_checkhealth() {
     health_file=$(mktemp /tmp/checkhealth.XXXXXX.txt)
     
     # Register trap to ensure temp file is deleted on exit
-    trap "rm -f '${health_file}'" RETURN
+    trap 'rm -f "${health_file}"' RETURN
     
     nvim --headless -c "checkhealth" -c "redir! > ${health_file}" -c "qa" 2>&1 || true
     
