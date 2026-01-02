@@ -144,22 +144,27 @@ test_primary_keymaps() {
 test_checkhealth() {
     log_test "checkhealth has no critical errors"
     
-    local health_output
-    health_output=$(nvim --headless -c "checkhealth" -c "redir! > /tmp/checkhealth.txt" -c "qa" 2>&1 || true)
+    # Create unique temp file via mktemp
+    local health_file
+    health_file=$(mktemp /tmp/checkhealth.XXXXXX.txt)
+    
+    # Register trap to ensure temp file is deleted on exit
+    trap "rm -f '${health_file}'" RETURN
+    
+    nvim --headless -c "checkhealth" -c "redir! > ${health_file}" -c "qa" 2>&1 || true
     
     # Give nvim time to write the file
     sleep 1
     
-    if [[ -f /tmp/checkhealth.txt ]]; then
-        if grep -qi "ERROR" /tmp/checkhealth.txt; then
+    if [[ -f "${health_file}" ]]; then
+        if grep -qi "ERROR" "${health_file}"; then
             echo "  Health check errors found:"
-            grep -i "ERROR" /tmp/checkhealth.txt | head -5
+            grep -i "ERROR" "${health_file}" | head -5
             log_fail "Critical errors in checkhealth"
             return 1
         else
             log_pass "No critical errors in checkhealth"
         fi
-        rm -f /tmp/checkhealth.txt
     else
         # Alternative check - just verify startup works
         if nvim --headless +qa 2>&1; then
