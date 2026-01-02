@@ -16,8 +16,8 @@ if vim.fn.has("imdisable") == 1 then
   opt.imdisable = true
 end
 
-opt.noswapfile = true
-opt.noundofile = true
+opt.swapfile = false
+opt.undofile = false
 opt.autoread = true
 opt.hidden = true
 opt.history = 1000
@@ -66,7 +66,7 @@ opt.ignorecase = true
 opt.smartcase = true
 opt.incsearch = true
 opt.hlsearch = true
-opt.nowrapscan = true
+opt.wrapscan = false
 
 opt.updatetime = 300
 opt.exrc = false
