@@ -1,1 +1,2 @@
-rc/vimrc
+runtime! rc/*.vim
+runtime! lua/*.lua
