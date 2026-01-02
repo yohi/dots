@@ -29,9 +29,9 @@ fail() {
 # Telescopeにeventまたはcmd/keysが設定されているか
 test_telescope_lazy_loading() {
     local telescope_file="${PLUGINS_DIR}/telescope.lua"
-    if grep -q 'cmd\s*=' "${telescope_file}" || \
-       grep -q 'event\s*=' "${telescope_file}" || \
-       grep -q 'keys\s*=' "${telescope_file}"; then
+    if grep -q -E 'cmd\s*=' "${telescope_file}" || \
+       grep -q -E 'event\s*=' "${telescope_file}" || \
+       grep -q -E 'keys\s*=' "${telescope_file}"; then
         pass "telescope.lua: 遅延ロード設定あり"
     else
         fail "telescope.lua: 遅延ロード設定がありません (cmd/event/keys のいずれかを設定してください)"
@@ -41,8 +41,8 @@ test_telescope_lazy_loading() {
 # Comment.nvimにeventまたはkeysが設定されているか
 test_comment_lazy_loading() {
     local comment_file="${PLUGINS_DIR}/Comment.lua"
-    if grep -q 'event\s*=' "${comment_file}" || \
-       grep -q 'keys\s*=' "${comment_file}"; then
+    if grep -q -E 'event\s*=' "${comment_file}" || \
+       grep -q -E 'keys\s*=' "${comment_file}"; then
         pass "Comment.lua: 遅延ロード設定あり"
     else
         fail "Comment.lua: 遅延ロード設定がありません (event/keys のいずれかを設定してください)"
@@ -52,8 +52,8 @@ test_comment_lazy_loading() {
 # blamerにeventまたはcmdが設定されているか
 test_blamer_lazy_loading() {
     local blamer_file="${PLUGINS_DIR}/blamer.lua"
-    if grep -q 'event\s*=' "${blamer_file}" || \
-       grep -q 'cmd\s*=' "${blamer_file}"; then
+    if grep -q -E 'event\s*=' "${blamer_file}" || \
+       grep -q -E 'cmd\s*=' "${blamer_file}"; then
         pass "blamer.lua: 遅延ロード設定あり"
     else
         fail "blamer.lua: 遅延ロード設定がありません (event/cmd のいずれかを設定してください)"
@@ -63,7 +63,7 @@ test_blamer_lazy_loading() {
 # vim-gitgutterにeventが設定されているか
 test_gitgutter_lazy_loading() {
     local gitgutter_file="${PLUGINS_DIR}/vim-gitgutter.lua"
-    if grep -q 'event\s*=' "${gitgutter_file}"; then
+    if grep -q -E 'event\s*=' "${gitgutter_file}"; then
         pass "vim-gitgutter.lua: 遅延ロード設定あり"
     else
         fail "vim-gitgutter.lua: 遅延ロード設定がありません (event を設定してください)"
@@ -73,7 +73,7 @@ test_gitgutter_lazy_loading() {
 # indentLineにeventが設定されているか
 test_indentline_lazy_loading() {
     local indentline_file="${PLUGINS_DIR}/indentLine.lua"
-    if grep -q 'event\s*=' "${indentline_file}"; then
+    if grep -q -E 'event\s*=' "${indentline_file}"; then
         pass "indentLine.lua: 遅延ロード設定あり"
     else
         fail "indentLine.lua: 遅延ロード設定がありません (event を設定してください)"
@@ -83,7 +83,7 @@ test_indentline_lazy_loading() {
 # bufferlineにeventが設定されているか
 test_bufferline_lazy_loading() {
     local bufferline_file="${PLUGINS_DIR}/bufferline.lua"
-    if grep -q 'event\s*=' "${bufferline_file}"; then
+    if grep -q -E 'event\s*=' "${bufferline_file}"; then
         pass "bufferline.lua: 遅延ロード設定あり"
     else
         fail "bufferline.lua: 遅延ロード設定がありません (event を設定してください)"
@@ -93,7 +93,7 @@ test_bufferline_lazy_loading() {
 # fidgetにeventが設定されているか  
 test_fidget_lazy_loading() {
     local fidget_file="${PLUGINS_DIR}/fidget.lua"
-    if grep -q 'event\s*=' "${fidget_file}"; then
+    if grep -q -E 'event\s*=' "${fidget_file}"; then
         pass "fidget.lua: 遅延ロード設定あり"
     else
         fail "fidget.lua: 遅延ロード設定がありません (event を設定してください)"
@@ -105,7 +105,7 @@ test_already_lazy_plugins() {
     local errors=0
     
     # copilot: event = "InsertEnter"
-    if grep -q 'event\s*=\s*"InsertEnter"' "${PLUGINS_DIR}/copilot.lua"; then
+    if grep -q -E 'event\s*=\s*"InsertEnter"' "${PLUGINS_DIR}/copilot.lua"; then
         pass "copilot.lua: 遅延ロード設定あり (InsertEnter)"
     else
         fail "copilot.lua: InsertEnter イベント設定が見つかりません"
@@ -113,7 +113,7 @@ test_already_lazy_plugins() {
     fi
     
     # trouble: cmd = "Trouble"
-    if grep -q 'cmd\s*=\s*"Trouble"' "${PLUGINS_DIR}/trouble.lua"; then
+    if grep -q -E 'cmd\s*=\s*"Trouble"' "${PLUGINS_DIR}/trouble.lua"; then
         pass "trouble.lua: 遅延ロード設定あり (cmd)"
     else
         fail "trouble.lua: cmd 設定が見つかりません"
@@ -121,7 +121,7 @@ test_already_lazy_plugins() {
     fi
     
     # noice: event = "VeryLazy"
-    if grep -q 'event\s*=\s*"VeryLazy"' "${PLUGINS_DIR}/noice.lua"; then
+    if grep -q -E 'event\s*=\s*"VeryLazy"' "${PLUGINS_DIR}/noice.lua"; then
         pass "noice.lua: 遅延ロード設定あり (VeryLazy)"
     else
         fail "noice.lua: VeryLazy イベント設定が見つかりません"
@@ -129,7 +129,7 @@ test_already_lazy_plugins() {
     fi
     
     # nvim-cmp: event = { "InsertEnter", "CmdlineEnter" }
-    if grep -q 'event\s*=' "${PLUGINS_DIR}/nvim-cmp.lua"; then
+    if grep -q -E 'event\s*=' "${PLUGINS_DIR}/nvim-cmp.lua"; then
         pass "nvim-cmp.lua: 遅延ロード設定あり (event)"
     else
         fail "nvim-cmp.lua: event 設定が見つかりません"
@@ -137,7 +137,7 @@ test_already_lazy_plugins() {
     fi
     
     # markdown-preview: ft = { "markdown" }
-    if grep -q 'ft\s*=' "${PLUGINS_DIR}/markdown-preview.lua"; then
+    if grep -q -E 'ft\s*=' "${PLUGINS_DIR}/markdown-preview.lua"; then
         pass "markdown-preview.lua: 遅延ロード設定あり (ft)"
     else
         fail "markdown-preview.lua: ft 設定が見つかりません"
@@ -145,7 +145,7 @@ test_already_lazy_plugins() {
     fi
     
     # lazygit: cmd = {...}, keys = {...}
-    if grep -q 'cmd\s*=' "${PLUGINS_DIR}/lazygit.lua" && grep -q 'keys\s*=' "${PLUGINS_DIR}/lazygit.lua"; then
+    if grep -q -E 'cmd\s*=' "${PLUGINS_DIR}/lazygit.lua" && grep -q -E 'keys\s*=' "${PLUGINS_DIR}/lazygit.lua"; then
         pass "lazygit.lua: 遅延ロード設定あり (cmd, keys)"
     else
         fail "lazygit.lua: cmd または keys 設定が見つかりません"
@@ -153,7 +153,7 @@ test_already_lazy_plugins() {
     fi
     
     # nvim-autopairs: event = "InsertEnter"
-    if grep -q 'event\s*=\s*"InsertEnter"' "${PLUGINS_DIR}/nvim-autopairs.lua"; then
+    if grep -q -E 'event\s*=\s*"InsertEnter"' "${PLUGINS_DIR}/nvim-autopairs.lua"; then
         pass "nvim-autopairs.lua: 遅延ロード設定あり (InsertEnter)"
     else
         fail "nvim-autopairs.lua: InsertEnter イベント設定が見つかりません"
@@ -165,7 +165,11 @@ test_already_lazy_plugins() {
 
 # テスト: 9.2 自動更新チェック無効化
 test_checker_disabled() {
-    if grep -q 'checker\s*=\s*{\s*enabled\s*=\s*false\s*}' "${LAZY_BOOTSTRAP}"; then
+    # 複数行にわたるLuaテーブル構文にも対応するため、2段階でチェック
+    # 1. checker = が存在するか
+    # 2. enabled = false が存在するか
+    if grep -q -E 'checker[[:space:]]*=' "${LAZY_BOOTSTRAP}" && \
+       grep -q -E 'enabled[[:space:]]*=[[:space:]]*false' "${LAZY_BOOTSTRAP}"; then
         pass "lazy_bootstrap.lua: checker.enabled = false"
     else
         fail "lazy_bootstrap.lua: checker.enabled が false に設定されていません"
@@ -175,9 +179,9 @@ test_checker_disabled() {
 # lazy-lock.json がGit管理下にあるか
 test_lazy_lock_git_managed() {
     if [ -f "${VIM_DIR}/lazy-lock.json" ]; then
-        if git -C "${VIM_DIR}" ls-files --error-unmatch "lazy-lock.json" &>/dev/null 2>&1; then
+        if git -C "${VIM_DIR}" ls-files --error-unmatch "lazy-lock.json" &>/dev/null; then
             pass "lazy-lock.json: Git管理下にあります"
-        elif git -C "${VIM_DIR}/.." ls-files --error-unmatch "vim/lazy-lock.json" &>/dev/null 2>&1; then
+        elif git -C "${VIM_DIR}/.." ls-files --error-unmatch "vim/lazy-lock.json" &>/dev/null; then
             pass "lazy-lock.json: Git管理下にあります (dotfiles レポジトリ)"
         else
             # Git管理されていなくてもファイルが存在すればOKとする（.gitignoreの影響）
