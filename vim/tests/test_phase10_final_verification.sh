@@ -151,7 +151,7 @@ test_checkhealth() {
     # Register trap to ensure temp file is deleted on exit
     trap 'rm -f "${health_file}"' RETURN
     
-    nvim --headless -c "checkhealth" -c "redir! > ${health_file}" -c "qa" 2>&1 || true
+    nvim --headless -c "redir! > ${health_file}" -c "checkhealth" -c "redir END" -c "qa" 2>&1 || true
     
     # Give nvim time to write the file
     sleep 1
