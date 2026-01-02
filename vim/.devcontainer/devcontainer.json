@@ -1,0 +1,9 @@
+{
+  "name": "neovim-config",
+  "image": "nvim-devcontainer:local",
+  "workspaceMount": "source=${localWorkspaceFolder}/..,target=/workspaces/dotfiles,type=bind,consistency=cached",
+  "workspaceFolder": "/workspaces/dotfiles",
+  "postCreateCommand": "mkdir -p /root/.config /home/vscode/.config && ln -sfn /workspaces/dotfiles/vim /root/.config/nvim && ln -sfn /workspaces/dotfiles/vim /home/vscode/.config/nvim",
+  "remoteUser": "root",
+  "runArgs": ["--network=host", "--dns=1.1.1.1", "--dns=8.8.8.8"]
+}

@@ -64,6 +64,7 @@ __pycache__/
 # Gemini
 GEMINI.md
 .gemini/
+supergemini/
 
 # Codex
 .codex/
@@ -73,6 +74,10 @@ GEMINI.md
 
 # Session
 .sessions
+
+# Claude
+CLAUDE.md
+.claude
 
 # TODO
 codex/
