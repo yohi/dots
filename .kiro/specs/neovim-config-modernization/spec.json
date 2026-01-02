@@ -1,8 +1,8 @@
 {
     "name": "neovim-config-modernization",
     "description": "Neovim設定のモダナイゼーション: Vim scriptからLuaへの完全移行、LSP設定の一元化、レガシーコードの削除",
-    "status": "tasks-generated",
-    "phase": "tasks-generated",
+    "status": "completed",
+    "phase": "completed",
     "approvals": {
         "requirements": {
             "generated": true,
