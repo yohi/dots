@@ -21,7 +21,7 @@
 2. **init.vim競合**: `init.lua` と `init.vim` が共存するとNeovimが競合エラーを出すため、`init.vim` をバックアップ
 
 ## テスト結果
-```
+```text
 === Phase 7: Entrypoint Completion Tests ===
 Test 1: init.lua has no legacy compatibility code... PASS
 Test 2: init.lua loads modules in correct order... PASS
@@ -34,6 +34,7 @@ Test 6: Neovim starts without errors... PASS
 ```
 
 ## 変更ファイル
+
 | ファイル | 変更内容 |
 |---------|---------|
 | `vim/init.lua` | 互換モード削除、ロード順序確定、全モジュール pcall ラップ |

@@ -56,21 +56,30 @@ echo -n "Test 4: lazy_bootstrap.lua has checker.enabled = false... "
 # awk を使って checker ブロック内で enabled = false が設定されているかチェック
 # ブレースのネストを追跡して、ネストされたテーブルに対応
 if awk '
+  BEGIN {
+    found = 0
+    brace_count = 0
+  }
   /checker[[:space:]]*=[[:space:]]*\{/ {
-    brace_count = 1
+    # checker 行のブレースをカウント（開き括弧を二重カウントしないため）
+    open_braces = gsub(/\{/, "{", $0)
+    close_braces = gsub(/\}/, "}", $0)
+    brace_count = open_braces - close_braces
   }
   brace_count > 0 {
-    # 開き括弧と閉じ括弧をカウント
-    for (i = 1; i <= length($0); i++) {
-      char = substr($0, i, 1)
-      if (char == "{") brace_count++
-      else if (char == "}") brace_count--
-    }
-    
     # checker ブロック内で enabled = false を検索
     if (/enabled[[:space:]]*=[[:space:]]*false/) {
       found = 1
       exit 0
+    }
+    
+    # 開き括弧と閉じ括弧をカウント（checker行以外）
+    if (!/checker[[:space:]]*=[[:space:]]*\{/) {
+      for (i = 1; i <= length($0); i++) {
+        char = substr($0, i, 1)
+        if (char == "{") brace_count++
+        else if (char == "}") brace_count--
+      }
     }
     
     # ブレースカウントが0に戻ったら checker ブロック終了
