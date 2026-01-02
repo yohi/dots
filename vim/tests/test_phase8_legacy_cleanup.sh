@@ -101,14 +101,9 @@ test_no_orphan_requires() {
     echo -n "Test 8.2.3: No orphan requires for deleted modules... "
     local orphans=()
     
-    # Check for requires that would fail
-    if grep -rq 'require.*"lsp"' "${VIM_DIR}/lua/" 2>/dev/null; then
-        # Exclude lsp_cfg which is valid
-        if ! grep -rq 'require.*"lsp"' "${VIM_DIR}/lua/" 2>/dev/null | grep -v "lsp_cfg" | grep -v "lsp.lua.bak"; then
-            :  # No actual orphan
-        else
-            orphans+=("lsp module")
-        fi
+    # Check for requires that would fail (excluding allowed matches)
+    if grep -r 'require.*"lsp"' "${VIM_DIR}/lua/" 2>/dev/null | grep -v -e "lsp_cfg" -e "lsp.lua.bak" >/dev/null; then
+        orphans+=("lsp module")
     fi
     
     if [[ ${#orphans[@]} -gt 0 ]]; then
@@ -132,7 +127,7 @@ test_lua_modules_loadable() {
     for mod in "${modules[@]}"; do
         if ! nvim --headless -u NONE \
             --cmd "set rtp+=${VIM_DIR}" \
-            -c "lua pcall(require, '${mod}')" \
+            -c "lua local ok = pcall(require, '${mod}'); if not ok then os.exit(1) end" \
             +qa 2>/dev/null; then
             failed+=("$mod")
         fi
