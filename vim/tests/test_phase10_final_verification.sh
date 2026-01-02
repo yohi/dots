@@ -286,11 +286,11 @@ test_lazy_lock_git() {
     fi
     
     # Check if file is tracked by Git
-    if git -C "${VIM_DIR}" ls-files --error-unmatch "lazy-lock.json" &>/dev/null; then
+    if git -C "${VIM_DIR}/.." ls-files --error-unmatch "vim/lazy-lock.json" &>/dev/null; then
         log_pass "lazy-lock.json is tracked by Git"
     else
         # Check if it's staged
-        if git -C "${VIM_DIR}" diff --cached --name-only | grep -q "lazy-lock.json"; then
+        if git -C "${VIM_DIR}/.." diff --cached --name-only | grep -q "vim/lazy-lock.json"; then
             log_pass "lazy-lock.json is staged for Git"
         else
             log_fail "lazy-lock.json is not managed by Git"
