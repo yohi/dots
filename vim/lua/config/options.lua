@@ -1,8 +1,13 @@
 local opt = vim.opt
 
 vim.g.loaded_python_provider = 0
+-- vim.env.HOME might not be reliable in some contexts, using absolute path if possible or ensure it resolves correctly
+vim.g.python3_host_prog = "/home/y_ohi/.local/share/nvim/venv/bin/python"
 vim.g.loaded_ruby_provider = 0
 vim.g.loaded_perl_provider = 0
+
+-- Disable vim-virtualenv auto activation to prevent startup crashes
+vim.g.virtualenv_auto_activate = 0
 
 opt.compatible = false
 opt.encoding = "utf-8"

@@ -23,12 +23,21 @@ return {
 
         cmp.setup({
             formatting = {
+                fields = { "kind", "abbr", "menu" },
                 format = lspkind.cmp_format({
                     mode = "symbol",
                     maxwidth = 50,
-                    symbole_map = {
+                    symbol_map = {
                         -- Copilot = "" ,
                     },
+                    menu = ({
+                        buffer = "",
+                        nvim_lsp = "",
+                        luasnip = "",
+                        nvim_lua = "",
+                        path = "",
+                        cmdline = "",
+                    }),
                     ellipsis_char = "...",
                     before = function(entry, vim_item)
                         return vim_item
@@ -41,8 +50,14 @@ return {
                 end,
             },
             window = {
-                completion = cmp.config.window.bordered(),
-                documentation = cmp.config.window.bordered(),
+                completion = cmp.config.window.bordered({
+                    border = "rounded",
+                    winhighlight = "Normal:Pmenu,FloatBorder:FloatBorder,CursorLine:PmenuSel,Search:None",
+                }),
+                documentation = cmp.config.window.bordered({
+                    border = "rounded",
+                    winhighlight = "Normal:Pmenu,FloatBorder:FloatBorder,CursorLine:PmenuSel,Search:None",
+                }),
             },
             mapping = cmp.mapping.preset.insert({
                 ['<C-j>'] = cmp.mapping.select_next_item(),
