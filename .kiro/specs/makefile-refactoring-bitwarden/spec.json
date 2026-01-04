@@ -1,0 +1,22 @@
+{
+    "feature_name": "makefile-refactoring-bitwarden",
+    "created_at": "2026-01-05T07:43:09+09:00",
+    "updated_at": "2026-01-05T07:47:44+09:00",
+    "language": "ja",
+    "phase": "requirements-generated",
+    "approvals": {
+        "requirements": {
+            "generated": true,
+            "approved": false
+        },
+        "design": {
+            "generated": false,
+            "approved": false
+        },
+        "tasks": {
+            "generated": false,
+            "approved": false
+        }
+    },
+    "ready_for_implementation": false
+}
