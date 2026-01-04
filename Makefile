@@ -22,6 +22,7 @@ include mk/memory.mk
 include mk/codex.mk
 include mk/superclaude.mk
 include mk/cc-sdd.mk
+include docker-mcp-gateway/docker-mcp.mk
 
 .PHONY: all
 all: menu
