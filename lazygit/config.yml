@@ -4,42 +4,19 @@ customCommands:
   - key: "<c-a>"
     description: "AI Commit: Generate commit messages with AI"
     context: "files"
-    loadingText: "Generating commit messages with AI..."
+    loadingText: "🤖 AI is generating commit message... (Please wait)"
     prompts:
       - type: "menuFromCommand"
-        title: "Select a commit message"
-        command: |
-          set -o pipefail  # Requirement 8.2: Catch pipeline failures
-          
-          # Requirement 7.1, 7.3: Configure AI backend via environment variable
-          # Set AI_BACKEND to one of: gemini, claude, ollama, mock
-          # Default: mock (for testing without API keys)
-          export AI_BACKEND="${AI_BACKEND:-mock}"
-          
-          # Requirement 7.1: API key management via environment variables
-          # For Gemini: export GEMINI_API_KEY="your-key"
-          # For Claude: export ANTHROPIC_API_KEY="your-key"
-          # For Ollama: No API key needed (local)
-          
-          # Optional configuration
-          export TIMEOUT_SECONDS="${TIMEOUT_SECONDS:-30}"
-          export GEMINI_MODEL="${GEMINI_MODEL:-gemini-1.5-flash}"
-          export CLAUDE_MODEL="${CLAUDE_MODEL:-claude-3-5-haiku-20241022}"
-          export OLLAMA_MODEL="${OLLAMA_MODEL:-mistral}"
-          
-          if git diff --cached --quiet; then
-            echo "Error: No staged changes. Please stage files first."
-            exit 1
-          fi
-          # Complete pipeline: Get staged diff → Limit size → AI generation → Parse output
-          # Requirement 7.2: Execute configured command with diff as input
-          # Requirement 8.2, 8.4: Enhanced error handling with pipefail and timeout
-          git diff --cached | head -c 12000 | scripts/lazygit-ai-commit/ai-commit-generator.sh | scripts/lazygit-ai-commit/parse-ai-output.sh
+        key: "AiMsg"
+        title: "Select generated message (Press Enter)"
+        command: bash -c "$HOME/.config/lazygit/scripts/lazygit-ai-commit/generate-menu-items.sh"
         filter: "^(?P<msg>.+\\S.*)$"
         valueFormat: "{{ .msg }}"
         labelFormat: "{{ .msg | green }}"
-    command: 'git commit -m {{.Form.SelectedMsg | quote}}'
-  
+      - type: "confirm"
+        title: "Commit Message Preview"
+        body: "{{ .Form.AiMsg }}"
+    command: 'git commit -m "$(echo -e {{.Form.AiMsg | quote}})"'
   # Legacy commands (kept for reference)
   - command: |
       if git diff --staged --quiet; then
