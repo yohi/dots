@@ -70,6 +70,7 @@ Ubuntu開発環境のセットアップ用dotfilesリポジトリです。日本
 - 🎨 **GUI環境最適化**: GNOME Extensions, テーマ, ショートカット
 - ⌨️ **キーボード問題対策**: SHIFTキー固定モード自動解除（詳細: [sticky-keys/README.md](sticky-keys/README.md)）
 - 🔧 **カスタマイズ可能**: モジュラー設計で必要な部分のみ選択可能
+- 🧠 **AI駆動開発支援**: `cc-sdd`による仕様駆動開発プロセスの導入
 
 ---
 
@@ -959,6 +960,18 @@ make cc-sdd-info
 - **GitHubリポジトリ**: https://github.com/gotalab/cc-sdd
 - **NPMパッケージ**: https://www.npmjs.com/package/cc-sdd
 - **関連記事**: [Kiroの仕様書駆動開発プロセスをClaude Codeで徹底的に再現した](https://zenn.dev/gotalab/articles/3db0621ce3d6d2)
+
+---
+
+## 🧠 プロジェクトメモリ (Kiro Steering)
+
+このプロジェクトはAIとの協調開発を最適化するため、`.kiro/steering/`にプロジェクトの「ステアリング（指針）」を保持しています。
+
+- **product.md**: プロダクトのビジョンとコアバリュー
+- **tech.md**: 技術スタックとアーキテクチャの決定事項
+- **structure.md**: ディレクトリ構成と命名規則
+
+AIエージェント（Claude Code, Gemini CLI, Cursor等）はこれらのドキュメントを参照して、プロジェクトの文脈に沿った一貫性のある提案・実装を行います。
 
 ---
 
