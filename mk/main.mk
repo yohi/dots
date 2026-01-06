@@ -19,30 +19,30 @@ setup-all:
 	@echo ""
 
 	@echo "📋 2. Homebrewインストール実行中..."
-	@$(MAKE) install-packages-homebrew
+	@$(MAKE) install-homebrew
 	@echo ""
 
 	@echo "📋 3. アプリケーションインストール実行中..."
-	@$(MAKE) install-packages-apps
+	@$(MAKE) install-apps
 	@echo ""
 
 	@echo "📋 4. Claude Codeエコシステムインストール実行中..."
-	@$(MAKE) install-packages-claude-ecosystem
+	@$(MAKE) install-claude-ecosystem
 	@echo ""
 
 	@echo "📋 5. 設定セットアップ実行中..."
-	@$(MAKE) setup-config-vim
-	@$(MAKE) setup-config-zsh
-	@$(MAKE) setup-config-git
-	@$(MAKE) setup-config-wezterm
-	@$(MAKE) setup-config-vscode
-	@$(MAKE) setup-config-cursor
-	@$(MAKE) setup-config-mcp-tools
-	@$(MAKE) setup-config-docker
+	@$(MAKE) setup-vim
+	@$(MAKE) setup-zsh
+	@$(MAKE) setup-git
+	@$(MAKE) setup-wezterm
+	@$(MAKE) setup-vscode
+	@$(MAKE) setup-cursor
+	@$(MAKE) setup-mcp-tools
+	@$(MAKE) setup-docker
 	@$(MAKE) setup-development
 	@$(MAKE) setup-shortcuts
-	@$(MAKE) setup-config-claude
-	@$(MAKE) setup-config-mozc
+	@$(MAKE) setup-claude
+	@$(MAKE) setup-mozc
 	@echo ""
 
 	@echo "📋 6. 拡張機能インストール実行中..."
@@ -117,7 +117,7 @@ debug:
 	@echo "✅ デバッグ情報の表示が完了しました。"
 
 # WEZTERMのインストール
-install-packages-wezterm:
+install-wezterm:
 	@echo "📱 WEZTERMをインストール中..."
 
 	# WEZTERMのインストール
@@ -159,8 +159,12 @@ setup-system: system-setup
 setup-config-all: setup-all
 
 # ========================================
-# 注意: 後方互換性エイリアスは mk/deprecated-targets.mk で集中管理
+# 後方互換性のためのエイリアス
 # ========================================
+
+# 古いターゲット名を維持（既に実装済み）
+# setup-all: は既に実装済み
+# system-setup: は既に実装済み
 
 # Playwright エイリアス（短縮形）
 playwright: install-packages-playwright  ## Playwright E2Eテストフレームワークをインストール

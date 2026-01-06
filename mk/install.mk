@@ -1,5 +1,5 @@
 # Homebrewのインストール
-install-packages-homebrew:
+install-homebrew:
 	@echo "🍺 Homebrewをインストール中..."
 	@if ! command -v brew >/dev/null 2>&1; then \
 		echo "📥 Homebrewをダウンロード・インストール..."; \
@@ -67,7 +67,7 @@ install-packages-homebrew:
 	@echo "✅ Homebrewのインストールが完了しました。"
 
 # AppImage実行用のFUSEパッケージをインストール
-install-packages-fuse:
+install-fuse:
 	@echo "📦 AppImage実行用のFUSEパッケージをインストール中..."
 	@echo "ℹ️  これによりCursor、PostmanなどのAppImageアプリケーションが実行可能になります"
 
@@ -121,7 +121,7 @@ install-packages-fuse:
 	@echo "✅ FUSEパッケージのインストールが完了しました。"
 
 # Brewfileを使用してアプリケーションをインストール
-install-packages-apps:
+install-apps:
 	@echo "📦 アプリケーションをインストール中..."
 	@if command -v brew >/dev/null 2>&1; then \
 		eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"; \
@@ -129,13 +129,14 @@ install-packages-apps:
 		brew bundle --file=$(DOTFILES_DIR)/Brewfile --no-upgrade || true; \
 		echo "⚠️  一部のパッケージでエラーが発生した可能性がありますが、処理を続行します"; \
 	else \
-		echo "❌ Homebrewがインストールされていません。先に 'make install-packages-homebrew' を実行してください。"; \
+		echo "❌ Homebrewがインストールされていません。先に 'make install-homebrew' を実行してください。"; \
+		exit 1; \
 		exit 1; \
 	fi
 	@echo "✅ アプリケーションのインストールが完了しました。"
 
 # Cursor IDEのインストール
-install-packages-cursor:
+install-cursor:
 	@echo "📝 Cursor IDEのインストールを開始します..."
 	@CURSOR_INSTALLED=false && \
 	\
@@ -434,7 +435,7 @@ check-cursor-version:
 	fi
 
 # MySQL Workbench のインストール
-install-packages-mysql-workbench:
+install-mysql-workbench:
 	@echo "🐬 MySQL Workbench のインストールを開始..."
 
 	# MySQL APTリポジトリの設定パッケージをダウンロード
@@ -479,7 +480,7 @@ install-packages-mysql-workbench:
 	@echo "🎉 MySQL Workbench インストール完了"
 
 # Claude Code のインストール
-install-packages-claude-code:
+install-claude-code:
 	@echo "🤖 Claude Code のインストールを開始..."
 
 	# Node.jsの確認
@@ -568,7 +569,7 @@ install-packages-claude-code:
 	@echo "✅ Claude Code のインストールが完了しました"
 
 # Claudia (Claude Code GUI) のインストール
-install-packages-claudia:
+install-claudia:
 	@echo "🖥️  Claudia (Claude Code GUI) のインストールを開始..."
 	@echo "ℹ️  注意: ClaudiaはまだRelease版が公開されていないため、ソースからビルドします"
 	@echo "⏱️  ビルドには10-15分かかる場合があります（システム環境により変動）"
@@ -751,22 +752,22 @@ install-packages-claudia:
 	@rm -rf /tmp/claudia-build 2>/dev/null || true
 
 	@echo ""; \
-	echo "🎉 Claudia のセットアップが完了しました！"; \
-	echo ""; \
-	echo "🚀 使用方法:"; \
-	echo "1. アプリケーションメニューから 'Claudia' を起動"; \
-	echo "2. または、ターミナルから: /opt/claudia/claudia"; \
-	echo "3. 初回起動時にClaude Codeディレクトリ（~/.claude）が自動検出されます"; \
-	echo ""; \
-	echo "✨ Claudia の主要機能:"; \
-	echo "- 📁 プロジェクト & セッション管理（~/.claude/projects/）"; \
-	echo "- 🤖 カスタムAIエージェント作成・実行"; \
-	echo "- 📊 使用状況分析ダッシュボード（コスト・トークン追跡）"; \
-	echo "- 🔌 MCP サーバー管理（Model Context Protocol）"; \
-	echo "- ⏰ タイムライン & チェックポイント（セッション履歴）"; \
-	echo "- 📝 CLAUDE.md ファイル管理・編集"; \
-	echo ""; \
-	echo "📚 詳細なドキュメント: https://github.com/getAsterisk/claudia"
+	@echo "🎉 Claudia のセットアップが完了しました！" \
+	@echo ""; \
+	@echo "🚀 使用方法:" \
+	@echo "1. アプリケーションメニューから 'Claudia' を起動" \
+	@echo "2. または、ターミナルから: /opt/claudia/claudia" \
+	@echo "3. 初回起動時にClaude Codeディレクトリ（~/.claude）が自動検出されます" \
+	@echo ""; \
+	@echo "✨ Claudia の主要機能:" \
+	@echo "- 📁 プロジェクト & セッション管理（~/.claude/projects/）" \
+	@echo "- 🤖 カスタムAIエージェント作成・実行" \
+	@echo "- 📊 使用状況分析ダッシュボード（コスト・トークン追跡）" \
+	@echo "- 🔌 MCP サーバー管理（Model Context Protocol）" \
+	@echo "- ⏰ タイムライン & チェックポイント（セッション履歴）" \
+	@echo "- 📝 CLAUDE.md ファイル管理・編集" \
+	@echo ""; \
+	@echo "📚 詳細なドキュメント: https://github.com/getAsterisk/claudia" \
 	@echo "🔗 公式サイト: https://claudiacode.com" \
 	@echo ""; \
 	@echo "💡 次のステップ:" \
@@ -780,7 +781,7 @@ install-packages-claudia:
 # - SHA256ハッシュ検証 (PyPI公式ハッシュ値使用)
 # - --require-hashes フラグによる強制整合性チェック
 # - PyPI Trusted Publishing対応パッケージ (GPG署名の代替)
-install-packages-superclaude:
+install-superclaude:
 	@echo "🚀 SuperClaude v3 (Claude Code Framework) のインストールを開始..."
 
 	# Claude Code の確認
@@ -1074,7 +1075,7 @@ fix-superclaude:
 	@echo "✅ SuperClaude 修復プロセスが完了しました"
 
 # Claude Code エコシステム一括インストール
-install-packages-claude-ecosystem:
+install-claude-ecosystem:
 	@echo "🌟 Claude Code エコシステム一括インストールを開始..."
 	@echo "ℹ️  以下の3つのツールを順次インストールします:"
 	@echo "   1. Claude Code (AI コードエディタ・CLI)"
@@ -1084,7 +1085,7 @@ install-packages-claude-ecosystem:
 
 	# Step 1: Claude Code のインストール
 	@echo "📋 Step 1/3: Claude Code をインストール中..."
-	@$(MAKE) install-packages-claude-code
+	@$(MAKE) install-claude-code
 	@echo "✅ Claude Code のインストールが完了しました"
 	@echo ""
 
@@ -1096,14 +1097,14 @@ install-packages-claude-ecosystem:
 		echo "   有効化方法: SKIP_SUPERCLAUDE=0 make install-claude-ecosystem"; \
 	else \
 		echo "📦 SuperClaude をインストール中..."; \
-		$(MAKE) install-packages-superclaude || (echo "❌ SuperClaude インストールに失敗しました"; exit 1); \
+		$(MAKE) install-superclaude || (echo "❌ SuperClaude インストールに失敗しました"; exit 1); \
 		echo "✅ SuperClaude のインストールが完了しました"; \
 	fi
 	@echo ""
 
 	# Step 3: Claudia のインストール
 	@echo "📋 Step 3/3: Claudia をインストール中..."
-	@$(MAKE) install-packages-claudia
+	@$(MAKE) install-claudia
 	@echo "✅ Claudia のインストールが完了しました"
 	@echo ""
 
@@ -1165,7 +1166,7 @@ install-packages-claude-ecosystem:
 	@echo "✅ Claude Code エコシステムの一括インストールが完了しました"
 
 # DEBパッケージをインストール（IDE・ブラウザ含む）
-install-packages-deb:
+install-deb:
 	@echo "📦 DEBパッケージをインストール中..."
 	@echo "ℹ️  IDE・ブラウザ・開発ツールをインストールします"
 
@@ -1226,11 +1227,11 @@ install-packages-deb:
 
 	# FUSE（AppImage実行用）のインストール
 	@echo "🔧 FUSE（AppImage実行用）のインストール中..."
-	@$(MAKE) install-packages-fuse
+	@$(MAKE) install-fuse
 
 	# Cursor IDE のインストール
 	@echo "💻 Cursor IDE のインストール中..."
-	@$(MAKE) install-packages-cursor
+	@$(MAKE) install-cursor
 
 	# WezTerm のインストール
 	@echo "🖥️  WezTerm のインストール中..."
@@ -1255,7 +1256,7 @@ install-packages-deb:
 	@echo "   - WezTerm"
 
 # Playwright E2Eテストフレームワークのインストール
-install-packages-playwright:
+install-playwright:
 	@echo "🎭 Playwright E2Eテストフレームワークのインストールを開始..."
 
 	# Node.jsの確認
@@ -1416,8 +1417,25 @@ install-packages-playwright:
 	@echo "✅ Playwright のインストールが完了しました"
 
 # ========================================
-# 注意: 後方互換性エイリアスは mk/deprecated-targets.mk で集中管理
+# 新しい階層的な命名規則のターゲット
 # ========================================
+
+# パッケージ・ソフトウェアインストール系
+install-packages-homebrew: install-homebrew
+install-packages-apps: install-apps
+install-packages-deb: install-deb
+install-packages-flatpak: install-flatpak
+install-packages-fuse: install-fuse
+install-packages-wezterm: install-wezterm
+install-packages-cursor: install-cursor
+install-packages-claude-code: install-claude-code
+install-packages-claudia: install-claudia
+install-packages-superclaude: install-superclaude
+install-packages-claude-ecosystem: install-claude-ecosystem
+install-packages-cica-fonts: install-cica-fonts
+install-packages-mysql-workbench: install-mysql-workbench
+install-packages-playwright: install-playwright
+install-packages-gemini-cli: install-gemini-cli
 
 # ccusage のインストール
 install-packages-ccusage:
@@ -1466,9 +1484,9 @@ install-packages-chrome-beta:
 # ========================================
 
 # 古いターゲット名を維持（新しいターゲットを呼び出すエイリアス）
-# install-packages-homebrew: は既に実装済み
-# install-packages-apps: は既に実装済み
-# install-packages-deb: は既に実装済み
+# install-homebrew: は既に実装済み
+# install-apps: は既に実装済み
+# install-deb: は既に実装済み
 # その他の既存ターゲットはそのまま
 
 # SuperCopilot Framework for VSCode のインストール
@@ -1565,7 +1583,7 @@ install-supercursor:
 	@echo "✅ SuperCursor のインストールが完了しました"
 
 # Gemini CLI のインストール
-install-packages-gemini-cli:
+install-gemini-cli:
 	@echo "🤖 Gemini CLI のインストールを開始..."
 
 	# Node.jsの確認
@@ -1736,7 +1754,7 @@ install-gemini-ecosystem:
 
 	# Step 1: Gemini CLI のインストール
 	@echo "📋 Step 1/2: Gemini CLI をインストール中..."
-	@$(MAKE) install-packages-gemini-cli
+	@$(MAKE) install-gemini-cli
 	@echo "✅ Gemini CLI のインストールが完了しました"
 	@echo "";
 
