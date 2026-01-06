@@ -463,9 +463,16 @@ ifndef WITH_BW
 	@echo "[WARN] Bitwarden integration is disabled." >&2
 	@echo "       To enable, run with: make bw-unlock WITH_BW=1" >&2
 else
+	@# jq 必須チェック
+	@if ! command -v jq >/dev/null 2>&1; then \
+		echo "[ERROR] jq is required for Bitwarden integration." >&2; \
+		echo "        Install with: brew install jq" >&2; \
+		echo "        Or: apt install jq" >&2; \
+		exit 1; \
+	fi
 	@# 既存セッションの有効性チェック
 	@if [ -n "$$BW_SESSION" ]; then \
-		status=$$(BW_SESSION="$$BW_SESSION" bw status 2>/dev/null | jq -r '.status' 2>/dev/null); \
+		status=$$(BW_SESSION="$$BW_SESSION" bw status 2>/dev/null | jq -r '.status' 2>/dev/null || echo "error"); \
 		if [ "$$status" = "unlocked" ]; then \
 			echo "export BW_SESSION=\"$$BW_SESSION\""; \
 			exit 0; \
@@ -475,13 +482,15 @@ else
 	@if ! command -v bw >/dev/null 2>&1; then \
 		echo "[ERROR] Bitwarden CLI (bw) is not installed." >&2; \
 		echo "        Install with: brew install bitwarden-cli" >&2; \
+		echo "        Or run: make install-packages-apps" >&2; \
 		exit 1; \
 	fi
 	@# ログイン状態の確認
-	@status=$$(bw status 2>/dev/null | jq -r '.status' 2>/dev/null); \
+	@status=$$(bw status 2>/dev/null | jq -r '.status' 2>/dev/null || echo "error"); \
 	if [ "$$status" = "unauthenticated" ]; then \
 		echo "[ERROR] Bitwarden CLI is not logged in." >&2; \
 		echo "        Run: bw login" >&2; \
+		echo "        Or set BW_CLIENTID and BW_CLIENTSECRET for API key login." >&2; \
 		exit 1; \
 	fi
 	@# アンロック実行

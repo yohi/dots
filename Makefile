@@ -18,6 +18,7 @@ include mk/clean.mk
 include mk/main.mk
 include mk/menu.mk
 include mk/shortcuts.mk
+include mk/deprecated-targets.mk
 include mk/memory.mk
 include mk/codex.mk
 include mk/superclaude.mk

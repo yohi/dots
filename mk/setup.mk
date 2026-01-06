@@ -1,7 +1,7 @@
 # 設定セットアップ関連のターゲット
 
 # VIMの設定をセットアップ
-setup-vim:
+setup-config-vim:
 	@echo "🖥️  VIMの設定をセットアップ中..."
 	@mkdir -p $(HOME_DIR)/.vim
 	@mkdir -p $(CONFIG_DIR)/nvim
@@ -26,7 +26,7 @@ setup-vim:
 	@echo "✅ VIMの設定が完了しました。"
 
 # ZSHの設定をセットアップ
-setup-zsh:
+setup-config-zsh:
 	@echo "🐚 ZSHの設定をセットアップ中..."
 	@mkdir -p $(DOTFILES_DIR)/zsh
 
@@ -127,7 +127,7 @@ setup-zsh:
 	@echo "✅ ZSHの設定が完了しました。"
 
 # WEZTERMの設定をセットアップ
-setup-wezterm:
+setup-config-wezterm:
 	@echo "🖥️  WEZTERMの設定をセットアップ中..."
 	@mkdir -p $(CONFIG_DIR)/wezterm
 
@@ -143,7 +143,7 @@ setup-wezterm:
 	@echo "✅ WEZTERMの設定が完了しました。"
 
 # VS Codeの設定をセットアップ
-setup-vscode:
+setup-config-vscode:
 	@echo "💻 VS Codeの設定をセットアップ中..."
 	@mkdir -p $(CONFIG_DIR)/Code/User
 
@@ -185,7 +185,7 @@ setup-vscode:
 	@echo "✅ VS Codeの設定が完了しました。"
 
 # VS Code用のSuperCopilotフレームワークをセットアップ
-setup-vscode-copilot:
+setup-config-vscode-copilot:
 	@echo "🧠 VS Code用のSuperCopilotフレームワークをセットアップ中..."
 	@mkdir -p $(HOME_DIR)/.vscode/copilot-instructions
 
@@ -211,7 +211,7 @@ setup-vscode-copilot:
 	@echo ""
 
 # Cursorの設定をセットアップ
-setup-cursor:
+setup-config-cursor:
 	@echo "🖱️  Cursorの設定をセットアップ中..."
 	@mkdir -p $(CONFIG_DIR)/Cursor/User
 
@@ -232,7 +232,7 @@ setup-cursor:
 	@echo "✅ Cursorの設定が完了しました。"
 
 # Cursor MCP Toolsの設定をセットアップ
-setup-mcp-tools:
+setup-config-mcp-tools:
 	@echo "🔧 Cursor MCP Toolsの設定をセットアップ中..."
 	@mkdir -p $(HOME_DIR)/.cursor
 
@@ -268,7 +268,7 @@ setup-mcp-tools:
 	@echo "ℹ️  Cursorを再起動してMCPツールを有効化してください。"
 
 # Git設定のセットアップ
-setup-git:
+setup-config-git:
 	@echo "🖥️  Git設定をセットアップ中..."
 
 	# 既存のGit設定をチェック
@@ -319,7 +319,7 @@ setup-git:
 	@echo "✅ Git設定が完了しました。"
 
 # Docker設定のセットアップ
-setup-docker:
+setup-config-docker:
 	@echo "🐳 Docker設定をセットアップ中..."
 
 	# 必要なパッケージを先にインストール
@@ -472,7 +472,7 @@ setup-shortcuts:
 	@echo "⚠️  設定を反映するため、一度ログアウト・ログインすることを推奨します。"
 
 # 日本語入力環境の設定
-setup-ime:
+setup-config-ime:
 	@echo "🈹 日本語入力環境をセットアップ中..."
 
 	# IBusの設定確認
@@ -507,30 +507,14 @@ setup-ime:
 	@echo "   ibus-setup を実行して手動設定してください"
 
 # ========================================
-# 新しい階層的な命名規則のターゲット
+# 注意: 後方互換性エイリアスは mk/deprecated-targets.mk で集中管理
 # ========================================
-
-# 設定ファイル・コンフィグセットアップ系
-setup-config-vim: setup-vim
-setup-config-zsh: setup-zsh
-setup-config-wezterm: setup-wezterm
-setup-config-vscode: setup-vscode
-setup-config-vscode-copilot: setup-vscode-copilot
-setup-config-cursor: setup-cursor
-setup-config-mcp-tools: setup-mcp-tools
-setup-config-git: setup-git
-setup-config-docker: setup-docker
-setup-config-development: setup-development
-setup-config-shortcuts: setup-shortcuts
-setup-config-ime: setup-ime
-setup-config-claude: setup-claude
-setup-config-lazygit: setup-lazygit
 
 # ========================================
 # Claude Code設定のセットアップ
 # ========================================
 
-setup-claude:
+setup-config-claude:
 	@echo "🤖 Claude Code設定をセットアップ中..."
 	@mkdir -p $(HOME_DIR)/.claude
 
@@ -590,7 +574,7 @@ setup-claude:
 
 
 # Lazygitの設定をセットアップ
-setup-lazygit:
+setup-config-lazygit:
 	@echo "📦 Lazygitの設定をセットアップ中..."
 	@mkdir -p $(CONFIG_DIR)/lazygit
 

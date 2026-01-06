@@ -1,5 +1,5 @@
 # Homebrewのインストール
-install-homebrew:
+install-packages-homebrew:
 	@echo "🍺 Homebrewをインストール中..."
 	@if ! command -v brew >/dev/null 2>&1; then \
 		echo "📥 Homebrewをダウンロード・インストール..."; \
@@ -67,7 +67,7 @@ install-homebrew:
 	@echo "✅ Homebrewのインストールが完了しました。"
 
 # AppImage実行用のFUSEパッケージをインストール
-install-fuse:
+install-packages-fuse:
 	@echo "📦 AppImage実行用のFUSEパッケージをインストール中..."
 	@echo "ℹ️  これによりCursor、PostmanなどのAppImageアプリケーションが実行可能になります"
 
@@ -121,7 +121,7 @@ install-fuse:
 	@echo "✅ FUSEパッケージのインストールが完了しました。"
 
 # Brewfileを使用してアプリケーションをインストール
-install-apps:
+install-packages-apps:
 	@echo "📦 アプリケーションをインストール中..."
 	@if command -v brew >/dev/null 2>&1; then \
 		eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"; \
@@ -129,14 +129,14 @@ install-apps:
 		brew bundle --file=$(DOTFILES_DIR)/Brewfile --no-upgrade || true; \
 		echo "⚠️  一部のパッケージでエラーが発生した可能性がありますが、処理を続行します"; \
 	else \
-		echo "❌ Homebrewがインストールされていません。先に 'make install-homebrew' を実行してください。"; \
+		echo "❌ Homebrewがインストールされていません。先に 'make install-packages-homebrew' を実行してください。"; \
 		exit 1; \
 		exit 1; \
 	fi
 	@echo "✅ アプリケーションのインストールが完了しました。"
 
 # Cursor IDEのインストール
-install-cursor:
+install-packages-cursor:
 	@echo "📝 Cursor IDEのインストールを開始します..."
 	@CURSOR_INSTALLED=false && \
 	\
@@ -435,7 +435,7 @@ check-cursor-version:
 	fi
 
 # MySQL Workbench のインストール
-install-mysql-workbench:
+install-packages-mysql-workbench:
 	@echo "🐬 MySQL Workbench のインストールを開始..."
 
 	# MySQL APTリポジトリの設定パッケージをダウンロード
@@ -480,7 +480,7 @@ install-mysql-workbench:
 	@echo "🎉 MySQL Workbench インストール完了"
 
 # Claude Code のインストール
-install-claude-code:
+install-packages-claude-code:
 	@echo "🤖 Claude Code のインストールを開始..."
 
 	# Node.jsの確認
@@ -569,7 +569,7 @@ install-claude-code:
 	@echo "✅ Claude Code のインストールが完了しました"
 
 # Claudia (Claude Code GUI) のインストール
-install-claudia:
+install-packages-claudia:
 	@echo "🖥️  Claudia (Claude Code GUI) のインストールを開始..."
 	@echo "ℹ️  注意: ClaudiaはまだRelease版が公開されていないため、ソースからビルドします"
 	@echo "⏱️  ビルドには10-15分かかる場合があります（システム環境により変動）"
@@ -781,7 +781,7 @@ install-claudia:
 # - SHA256ハッシュ検証 (PyPI公式ハッシュ値使用)
 # - --require-hashes フラグによる強制整合性チェック
 # - PyPI Trusted Publishing対応パッケージ (GPG署名の代替)
-install-superclaude:
+install-packages-superclaude:
 	@echo "🚀 SuperClaude v3 (Claude Code Framework) のインストールを開始..."
 
 	# Claude Code の確認
@@ -1075,7 +1075,7 @@ fix-superclaude:
 	@echo "✅ SuperClaude 修復プロセスが完了しました"
 
 # Claude Code エコシステム一括インストール
-install-claude-ecosystem:
+install-packages-claude-ecosystem:
 	@echo "🌟 Claude Code エコシステム一括インストールを開始..."
 	@echo "ℹ️  以下の3つのツールを順次インストールします:"
 	@echo "   1. Claude Code (AI コードエディタ・CLI)"
@@ -1166,7 +1166,7 @@ install-claude-ecosystem:
 	@echo "✅ Claude Code エコシステムの一括インストールが完了しました"
 
 # DEBパッケージをインストール（IDE・ブラウザ含む）
-install-deb:
+install-packages-deb:
 	@echo "📦 DEBパッケージをインストール中..."
 	@echo "ℹ️  IDE・ブラウザ・開発ツールをインストールします"
 
@@ -1256,7 +1256,7 @@ install-deb:
 	@echo "   - WezTerm"
 
 # Playwright E2Eテストフレームワークのインストール
-install-playwright:
+install-packages-playwright:
 	@echo "🎭 Playwright E2Eテストフレームワークのインストールを開始..."
 
 	# Node.jsの確認
@@ -1417,25 +1417,8 @@ install-playwright:
 	@echo "✅ Playwright のインストールが完了しました"
 
 # ========================================
-# 新しい階層的な命名規則のターゲット
+# 注意: 後方互換性エイリアスは mk/deprecated-targets.mk で集中管理
 # ========================================
-
-# パッケージ・ソフトウェアインストール系
-install-packages-homebrew: install-homebrew
-install-packages-apps: install-apps
-install-packages-deb: install-deb
-install-packages-flatpak: install-flatpak
-install-packages-fuse: install-fuse
-install-packages-wezterm: install-wezterm
-install-packages-cursor: install-cursor
-install-packages-claude-code: install-claude-code
-install-packages-claudia: install-claudia
-install-packages-superclaude: install-superclaude
-install-packages-claude-ecosystem: install-claude-ecosystem
-install-packages-cica-fonts: install-cica-fonts
-install-packages-mysql-workbench: install-mysql-workbench
-install-packages-playwright: install-playwright
-install-packages-gemini-cli: install-gemini-cli
 
 # ccusage のインストール
 install-packages-ccusage:
@@ -1484,9 +1467,9 @@ install-packages-chrome-beta:
 # ========================================
 
 # 古いターゲット名を維持（新しいターゲットを呼び出すエイリアス）
-# install-homebrew: は既に実装済み
-# install-apps: は既に実装済み
-# install-deb: は既に実装済み
+# install-packages-homebrew: は既に実装済み
+# install-packages-apps: は既に実装済み
+# install-packages-deb: は既に実装済み
 # その他の既存ターゲットはそのまま
 
 # SuperCopilot Framework for VSCode のインストール
@@ -1583,7 +1566,7 @@ install-supercursor:
 	@echo "✅ SuperCursor のインストールが完了しました"
 
 # Gemini CLI のインストール
-install-gemini-cli:
+install-packages-gemini-cli:
 	@echo "🤖 Gemini CLI のインストールを開始..."
 
 	# Node.jsの確認

@@ -201,7 +201,7 @@ install-ibm-plex-fonts:
 	fi
 
 # Cica Nerd Fonts のインストール（単独実行用）
-install-cica-fonts:
+install-packages-cica-fonts:
 	@echo "🔤 Cica Nerd Fonts のインストールを開始..."
 	@mkdir -p $(HOME_DIR)/.local/share/fonts/cica
 	@cd /tmp && \
