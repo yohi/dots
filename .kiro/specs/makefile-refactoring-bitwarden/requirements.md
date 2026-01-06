@@ -57,7 +57,7 @@
 
 **方式:** 静的マッピングファイルによる管理
 
-**ファイルパス:** `makefiles/deprecated-targets.mk`
+**ファイルパス:** `mk/deprecated-targets.mk`
 
 **フォーマット:**
 ```makefile
@@ -97,6 +97,12 @@ endef
 
 **出力先:** 標準エラー出力（stderr）
 
+**出力条件（重要）:**
+- デフォルトでは、旧名→新名の移行ガイダンス（warning/transition）は **出力しない**（後方互換性とノイズ削減を優先）
+- `MAKE_DEPRECATION_WARN=1` の場合のみ、warning/transition のガイダンスを stderr に出力する
+- `MAKE_DEPRECATION_STRICT=1` の場合は、warning/transition を **エラー扱い（exit 1）** とし、stderr に出力する
+- `removed` は常に stderr にエラーを出力し、exit 1 で終了する（`MAKE_DEPRECATION_QUIET` の対象外）
+
 **理由:**
 1. 通常の実行出力（stdout）を汚染しない
 2. パイプライン処理で出力をフィルタリング可能
@@ -130,6 +136,7 @@ Exit code: 1
 **ログレベル設定:**
 | 環境変数 | 値 | 動作 |
 |---------|-----|------|
+| `MAKE_DEPRECATION_WARN` | `1` | 廃止ガイダンス出力を有効化（warning/transition） |
 | `MAKE_DEPRECATION_QUIET` | `1` | 廃止警告を抑制（removed 以外） |
 | `MAKE_DEPRECATION_STRICT` | `1` | 警告を即座にエラーとして扱う（exit 1） |
 
@@ -139,8 +146,8 @@ Exit code: 1
 
 | フェーズ | 期間 | 動作 | 終了コード |
 |---------|------|------|-----------|
-| 警告（warning） | 廃止開始日から6ヶ月間 | 警告を stderr に出力し、新ターゲットにリダイレクト | 0 |
-| 移行（transition） | 削除予定日の1ヶ月前から | 警告を stderr に出力し、旧ターゲットの動作を実行 | 0 |
+| 警告（warning） | 廃止開始日から6ヶ月間 | （`MAKE_DEPRECATION_WARN=1` の場合）警告を stderr に出力し、新ターゲットにリダイレクト | 0 |
+| 移行（transition） | 削除予定日の1ヶ月前から | （`MAKE_DEPRECATION_WARN=1` の場合）警告を stderr に出力し、旧ターゲットの動作を実行 | 0 |
 | 削除（removed） | 削除予定日以降 | エラーを stderr に出力し、処理を中断 | 1 |
 
 **タイムラインルール:**
@@ -155,8 +162,8 @@ Exit code: 1
 
 ##### 2.4 廃止予定ターゲット管理の受け入れ基準
 
-1. The Makefile自動化システム shall 廃止予定ターゲット移行マップを `makefiles/deprecated-targets.mk` で管理する。
-2. When 廃止予定ターゲットが呼び出される, the Makefile自動化システム shall 廃止ガイダンスを stderr に出力する。
+1. The Makefile自動化システム shall 廃止予定ターゲット移行マップを `mk/deprecated-targets.mk` で管理する。
+2. When 廃止予定ターゲットが呼び出される and (`MAKE_DEPRECATION_WARN=1` or `MAKE_DEPRECATION_STRICT=1`), the Makefile自動化システム shall 廃止ガイダンスを stderr に出力する。
 3. When 廃止予定ターゲットが警告フェーズにある, the Makefile自動化システム shall 新ターゲットにリダイレクトして実行し、exit 0 で終了する。
 4. When 廃止予定ターゲットが移行フェーズにある, the Makefile自動化システム shall 旧ターゲットの動作を実行し、exit 0 で終了する。
 5. When 廃止予定ターゲットが削除済みフェーズにある, the Makefile自動化システム shall エラーメッセージを表示し、exit 1 で終了する。
@@ -175,7 +182,7 @@ Exit code: 1
 | ターゲット種別 | 動作 | 理由 |
 |--------------|------|------|
 | 汎用ターゲット（`install`, `setup`等） | Bitwarden連携部分をスキップし、他の処理は正常実行 | 後方互換性維持 |
-| Bitwarden専用ターゲット（`bw-*`） | 警告表示後、exit 0 で終了 | 既存スクリプトの破壊防止 |
+| Bitwarden専用ターゲット（`bw-*`） | エラー表示後、exit 1 で終了 | 明示的なオプトイン（`WITH_BW=1`）を必須化し、安全性を優先 |
 
 ##### 2.7 CI/ローカル環境でのオプトイン・オプトアウト
 
@@ -203,7 +210,7 @@ make install WITH_BW=0
 ```
 
 ##### 2.8 WITH_BW 受け入れ基準
-1. When `WITH_BW` が未設定, the Makefile自動化システム shall すべてのBitwarden連携をスキップし、警告なく正常終了する。
+1. When `WITH_BW` が未設定, the Makefile自動化システム shall 汎用ターゲットではBitwarden連携をスキップし警告なく正常終了するが、`bw-*` ターゲットは案内を stderr に出力して exit 1 で終了する。
 2. When `WITH_BW=1` が設定されているがBitwarden環境が不完全, the Makefile自動化システム shall 具体的なエラーメッセージとともに exit 1 で終了する。
 3. The Makefile自動化システム shall CI環境とローカル環境の両方で同一の `WITH_BW` セマンティクスを提供する。
 4. When レガシースクリプトが `WITH_BW` を認識しない状態でターゲットを呼び出す, the Makefile自動化システム shall 破壊的変更なく従来通りの動作を維持する。
@@ -456,9 +463,16 @@ ifndef WITH_BW
 	@echo "[WARN] Bitwarden integration is disabled." >&2
 	@echo "       To enable, run with: make bw-unlock WITH_BW=1" >&2
 else
+	@# jq 必須チェック
+	@if ! command -v jq >/dev/null 2>&1; then \
+		echo "[ERROR] jq is required for Bitwarden integration." >&2; \
+		echo "        Install with: brew install jq" >&2; \
+		echo "        Or: apt install jq" >&2; \
+		exit 1; \
+	fi
 	@# 既存セッションの有効性チェック
 	@if [ -n "$$BW_SESSION" ]; then \
-		status=$$(BW_SESSION="$$BW_SESSION" bw status 2>/dev/null | jq -r '.status' 2>/dev/null); \
+		status=$$(BW_SESSION="$$BW_SESSION" bw status 2>/dev/null | jq -r '.status' 2>/dev/null || echo "error"); \
 		if [ "$$status" = "unlocked" ]; then \
 			echo "export BW_SESSION=\"$$BW_SESSION\""; \
 			exit 0; \
@@ -468,13 +482,15 @@ else
 	@if ! command -v bw >/dev/null 2>&1; then \
 		echo "[ERROR] Bitwarden CLI (bw) is not installed." >&2; \
 		echo "        Install with: brew install bitwarden-cli" >&2; \
+		echo "        Or run: make install-packages-apps" >&2; \
 		exit 1; \
 	fi
 	@# ログイン状態の確認
-	@status=$$(bw status 2>/dev/null | jq -r '.status' 2>/dev/null); \
+	@status=$$(bw status 2>/dev/null | jq -r '.status' 2>/dev/null || echo "error"); \
 	if [ "$$status" = "unauthenticated" ]; then \
 		echo "[ERROR] Bitwarden CLI is not logged in." >&2; \
 		echo "        Run: bw login" >&2; \
+		echo "        Or set BW_CLIENTID and BW_CLIENTSECRET for API key login." >&2; \
 		exit 1; \
 	fi
 	@# アンロック実行
