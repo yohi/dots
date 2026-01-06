@@ -1097,14 +1097,14 @@ install-packages-claude-ecosystem:
 		echo "   有効化方法: SKIP_SUPERCLAUDE=0 make install-claude-ecosystem"; \
 	else \
 		echo "📦 SuperClaude をインストール中..."; \
-		$(MAKE) install-superclaude || (echo "❌ SuperClaude インストールに失敗しました"; exit 1); \
+		$(MAKE) install-packages-superclaude || (echo "❌ SuperClaude インストールに失敗しました"; exit 1); \
 		echo "✅ SuperClaude のインストールが完了しました"; \
 	fi
 	@echo ""
 
 	# Step 3: Claudia のインストール
 	@echo "📋 Step 3/3: Claudia をインストール中..."
-	@$(MAKE) install-claudia
+	@$(MAKE) install-packages-claudia
 	@echo "✅ Claudia のインストールが完了しました"
 	@echo ""
 
@@ -1227,11 +1227,11 @@ install-packages-deb:
 
 	# FUSE（AppImage実行用）のインストール
 	@echo "🔧 FUSE（AppImage実行用）のインストール中..."
-	@$(MAKE) install-fuse
+	@$(MAKE) install-packages-fuse
 
 	# Cursor IDE のインストール
 	@echo "💻 Cursor IDE のインストール中..."
-	@$(MAKE) install-cursor
+	@$(MAKE) install-packages-cursor
 
 	# WezTerm のインストール
 	@echo "🖥️  WezTerm のインストール中..."

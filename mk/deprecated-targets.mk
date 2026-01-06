@@ -30,11 +30,14 @@ DEPRECATED_TARGETS := \
     setup-zsh:setup-config-zsh:2026-02-01:2026-08-01:warning \
     setup-wezterm:setup-config-wezterm:2026-02-01:2026-08-01:warning \
     setup-vscode:setup-config-vscode:2026-02-01:2026-08-01:warning \
+    setup-vscode-copilot:setup-config-vscode-copilot:2026-02-01:2026-08-01:warning \
     setup-cursor:setup-config-cursor:2026-02-01:2026-08-01:warning \
     setup-git:setup-config-git:2026-02-01:2026-08-01:warning \
     setup-docker:setup-config-docker:2026-02-01:2026-08-01:warning \
     setup-ime:setup-config-ime:2026-02-01:2026-08-01:warning \
     setup-claude:setup-config-claude:2026-02-01:2026-08-01:warning \
+    setup-mcp-tools:setup-config-mcp-tools:2026-02-01:2026-08-01:warning \
+    setup-lazygit:setup-config-lazygit:2026-02-01:2026-08-01:warning \
     setup-all:setup-config-all:2026-02-01:2026-08-01:warning
 
 # ============================================================
@@ -176,6 +179,18 @@ setup-ime: setup-config-ime
 .PHONY: setup-claude
 setup-claude: setup-config-claude
 	$(call deprecation_warning,setup-claude,setup-config-claude,2026-08-01)
+
+.PHONY: setup-vscode-copilot
+setup-vscode-copilot: setup-config-vscode-copilot
+	$(call deprecation_warning,setup-vscode-copilot,setup-config-vscode-copilot,2026-08-01)
+
+.PHONY: setup-mcp-tools
+setup-mcp-tools: setup-config-mcp-tools
+	$(call deprecation_warning,setup-mcp-tools,setup-config-mcp-tools,2026-08-01)
+
+.PHONY: setup-lazygit
+setup-lazygit: setup-config-lazygit
+	$(call deprecation_warning,setup-lazygit,setup-config-lazygit,2026-08-01)
 
 .PHONY: setup-all
 setup-all: setup-config-all
