@@ -15,7 +15,6 @@ DEPRECATED_TARGETS := \
     install-homebrew:install-packages-homebrew:2026-02-01:2026-08-01:warning \
     install-apps:install-packages-apps:2026-02-01:2026-08-01:warning \
     install-deb:install-packages-deb:2026-02-01:2026-08-01:warning \
-    install-flatpak:install-packages-flatpak:2026-02-01:2026-08-01:warning \
     install-fuse:install-packages-fuse:2026-02-01:2026-08-01:warning \
     install-wezterm:install-packages-wezterm:2026-02-01:2026-08-01:warning \
     install-cursor:install-packages-cursor:2026-02-01:2026-08-01:warning \
@@ -98,10 +97,6 @@ install-apps: install-packages-apps
 .PHONY: install-deb
 install-deb: install-packages-deb
 	$(call deprecation_warning,install-deb,install-packages-deb,2026-08-01)
-
-.PHONY: install-flatpak
-install-flatpak: install-packages-flatpak
-	$(call deprecation_warning,install-flatpak,install-packages-flatpak,2026-08-01)
 
 .PHONY: install-fuse
 install-fuse: install-packages-fuse

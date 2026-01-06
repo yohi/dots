@@ -131,7 +131,6 @@ install-packages-apps:
 	else \
 		echo "❌ Homebrewがインストールされていません。先に 'make install-packages-homebrew' を実行してください。"; \
 		exit 1; \
-		exit 1; \
 	fi
 	@echo "✅ アプリケーションのインストールが完了しました。"
 
@@ -752,22 +751,22 @@ install-packages-claudia:
 	@rm -rf /tmp/claudia-build 2>/dev/null || true
 
 	@echo ""; \
-	@echo "🎉 Claudia のセットアップが完了しました！" \
-	@echo ""; \
-	@echo "🚀 使用方法:" \
-	@echo "1. アプリケーションメニューから 'Claudia' を起動" \
-	@echo "2. または、ターミナルから: /opt/claudia/claudia" \
-	@echo "3. 初回起動時にClaude Codeディレクトリ（~/.claude）が自動検出されます" \
-	@echo ""; \
-	@echo "✨ Claudia の主要機能:" \
-	@echo "- 📁 プロジェクト & セッション管理（~/.claude/projects/）" \
-	@echo "- 🤖 カスタムAIエージェント作成・実行" \
-	@echo "- 📊 使用状況分析ダッシュボード（コスト・トークン追跡）" \
-	@echo "- 🔌 MCP サーバー管理（Model Context Protocol）" \
-	@echo "- ⏰ タイムライン & チェックポイント（セッション履歴）" \
-	@echo "- 📝 CLAUDE.md ファイル管理・編集" \
-	@echo ""; \
-	@echo "📚 詳細なドキュメント: https://github.com/getAsterisk/claudia" \
+	echo "🎉 Claudia のセットアップが完了しました！"; \
+	echo ""; \
+	echo "🚀 使用方法:"; \
+	echo "1. アプリケーションメニューから 'Claudia' を起動"; \
+	echo "2. または、ターミナルから: /opt/claudia/claudia"; \
+	echo "3. 初回起動時にClaude Codeディレクトリ（~/.claude）が自動検出されます"; \
+	echo ""; \
+	echo "✨ Claudia の主要機能:"; \
+	echo "- 📁 プロジェクト & セッション管理（~/.claude/projects/）"; \
+	echo "- 🤖 カスタムAIエージェント作成・実行"; \
+	echo "- 📊 使用状況分析ダッシュボード（コスト・トークン追跡）"; \
+	echo "- 🔌 MCP サーバー管理（Model Context Protocol）"; \
+	echo "- ⏰ タイムライン & チェックポイント（セッション履歴）"; \
+	echo "- 📝 CLAUDE.md ファイル管理・編集"; \
+	echo ""; \
+	echo "📚 詳細なドキュメント: https://github.com/getAsterisk/claudia"
 	@echo "🔗 公式サイト: https://claudiacode.com" \
 	@echo ""; \
 	@echo "💡 次のステップ:" \
@@ -1085,7 +1084,7 @@ install-packages-claude-ecosystem:
 
 	# Step 1: Claude Code のインストール
 	@echo "📋 Step 1/3: Claude Code をインストール中..."
-	@$(MAKE) install-claude-code
+	@$(MAKE) install-packages-claude-code
 	@echo "✅ Claude Code のインストールが完了しました"
 	@echo ""
 
@@ -1737,7 +1736,7 @@ install-gemini-ecosystem:
 
 	# Step 1: Gemini CLI のインストール
 	@echo "📋 Step 1/2: Gemini CLI をインストール中..."
-	@$(MAKE) install-gemini-cli
+	@$(MAKE) install-packages-gemini-cli
 	@echo "✅ Gemini CLI のインストールが完了しました"
 	@echo "";
 
