@@ -1,9 +1,9 @@
 {
     "feature_name": "makefile-refactoring-bitwarden",
     "created_at": "2026-01-05T07:43:09+09:00",
-    "updated_at": "2026-01-06T15:45:00+09:00",
+    "updated_at": "2026-01-06T17:57:36+09:00",
     "language": "ja",
-    "phase": "design-generated",
+    "phase": "tasks-generated",
     "approvals": {
         "requirements": {
             "generated": true,
@@ -11,10 +11,10 @@
         },
         "design": {
             "generated": true,
-            "approved": false
+            "approved": true
         },
         "tasks": {
-            "generated": false,
+            "generated": true,
             "approved": false
         }
     },
