@@ -1,5 +1,30 @@
 # 段階的セットアップ関連のターゲット
 
+# ==================== ステージ完了チェック用ヘルパーマクロ ====================
+# 各ステージの完了状態をチェックする再利用可能なマクロ
+# 戻り値: 0 = 完了, 1 = 未完了
+
+define _check_stage_1
+	command -v brew >/dev/null 2>&1
+endef
+
+define _check_stage_2
+	command -v cursor >/dev/null 2>&1 && command -v wezterm >/dev/null 2>&1
+endef
+
+define _check_stage_3
+	[ -f ~/.zshrc ] && [ -f ~/.vimrc ]
+endef
+
+define _check_stage_4
+	command -v gnome-extensions >/dev/null 2>&1
+endef
+
+define _check_stage_5
+	command -v claude-code >/dev/null 2>&1
+endef
+
+
 .PHONY: stage1 stage2 stage3 stage4 stage5
 stage1: ## ステージ1: システム基盤セットアップ（Homebrew + 基本パッケージ）
 	@echo "🚀 ステージ1: システム基盤セットアップを開始します..."
@@ -49,15 +74,15 @@ stage-status: ## 各ステージの完了状況を確認
 	@echo "📊 セットアップ進捗状況:"
 	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 	@echo -n "📦 ステージ1 (Homebrew): "
-	@if command -v brew >/dev/null 2>&1; then echo "✅ 完了"; else echo "❌ 未完了"; fi
+	@if $(call _check_stage_1); then echo "✅ 完了"; else echo "❌ 未完了"; fi
 	@echo -n "💻 ステージ2 (アプリ): "
-	@if command -v cursor >/dev/null 2>&1 && command -v wezterm >/dev/null 2>&1; then echo "✅ 完了"; else echo "❌ 未完了"; fi
+	@if $(call _check_stage_2); then echo "✅ 完了"; else echo "❌ 未完了"; fi
 	@echo -n "⚙️  ステージ3 (設定): "
-	@if [ -f ~/.zshrc ] && [ -f ~/.vimrc ]; then echo "✅ 完了"; else echo "❌ 未完了"; fi
+	@if $(call _check_stage_3); then echo "✅ 完了"; else echo "❌ 未完了"; fi
 	@echo -n "🖥️  ステージ4 (GNOME): "
-	@if command -v gnome-extensions >/dev/null 2>&1; then echo "✅ 完了"; else echo "❌ 未完了"; fi
+	@if $(call _check_stage_4); then echo "✅ 完了"; else echo "❌ 未完了"; fi
 	@echo -n "🤖 ステージ5 (AI/その他): "
-	@if command -v claude-code >/dev/null 2>&1; then echo "✅ 完了"; else echo "❌ 未完了"; fi
+	@if $(call _check_stage_5); then echo "✅ 完了"; else echo "❌ 未完了"; fi
 	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
 .PHONY: stage-guide
@@ -93,15 +118,15 @@ stage-guide: ## 段階的セットアップの完全ガイド
 .PHONY: next-stage
 next-stage: ## 次に実行すべきステージを提案
 	@echo "🔍 次のステージを確認中..."
-	@if ! command -v brew >/dev/null 2>&1; then \
+	@if ! $(call _check_stage_1); then \
 		echo "📦 次は: make stage1 (または make s1)"; \
-	elif ! command -v cursor >/dev/null 2>&1; then \
+	elif ! $(call _check_stage_2); then \
 		echo "💻 次は: make stage2 (または make s2)"; \
-	elif ! [ -f ~/.zshrc ]; then \
+	elif ! $(call _check_stage_3); then \
 		echo "⚙️  次は: make stage3 (または make s3)"; \
-	elif ! command -v gnome-extensions >/dev/null 2>&1; then \
+	elif ! $(call _check_stage_4); then \
 		echo "🖥️  次は: make stage4 (または make s4)"; \
-	elif ! command -v claude-code >/dev/null 2>&1; then \
+	elif ! $(call _check_stage_5); then \
 		echo "🤖 次は: make stage5 (または make s5)"; \
 	else \
 		echo "🎉 全てのステージが完了しています!"; \
@@ -110,18 +135,38 @@ next-stage: ## 次に実行すべきステージを提案
 .PHONY: stage-all
 stage-all: ## 全ステージを順次実行（各ステージ後に確認）
 	@echo "⚠️  全5ステージを順次実行します。各ステージ後に継続確認があります。"
-	@read -p "続行しますか？ (y/N): " confirm && [ "$$confirm" = "y" ]
+	@if [ "$$NON_INTERACTIVE" = "1" ] || ! [ -t 0 ]; then \
+		echo "ℹ️  非インタラクティブモードで実行します（確認をスキップ）"; \
+	else \
+		read -p "続行しますか？ (y/N): " confirm && echo "$$confirm" | grep -iq '^y'; \
+	fi
 	@$(MAKE) stage1
 	@echo "ステージ1完了。ステージ2に進みますか？"
-	@read -p "続行しますか？ (y/N): " confirm && [ "$$confirm" = "y" ]
+	@if [ "$$NON_INTERACTIVE" = "1" ] || ! [ -t 0 ]; then \
+		echo "→ 自動的に次のステージに進みます"; \
+	else \
+		read -p "続行しますか？ (y/N): " confirm && echo "$$confirm" | grep -iq '^y'; \
+	fi
 	@$(MAKE) stage2
 	@echo "ステージ2完了。ステージ3に進みますか？"
-	@read -p "続行しますか？ (y/N): " confirm && [ "$$confirm" = "y" ]
+	@if [ "$$NON_INTERACTIVE" = "1" ] || ! [ -t 0 ]; then \
+		echo "→ 自動的に次のステージに進みます"; \
+	else \
+		read -p "続行しますか？ (y/N): " confirm && echo "$$confirm" | grep -iq '^y'; \
+	fi
 	@$(MAKE) stage3
 	@echo "ステージ3完了。ステージ4に進みますか？"
-	@read -p "続行しますか？ (y/N): " confirm && [ "$$confirm" = "y" ]
+	@if [ "$$NON_INTERACTIVE" = "1" ] || ! [ -t 0 ]; then \
+		echo "→ 自動的に次のステージに進みます"; \
+	else \
+		read -p "続行しますか？ (y/N): " confirm && echo "$$confirm" | grep -iq '^y'; \
+	fi
 	@$(MAKE) stage4
 	@echo "ステージ4完了。ステージ5に進みますか？"
-	@read -p "続行しますか？ (y/N): " confirm && [ "$$confirm" = "y" ]
+	@if [ "$$NON_INTERACTIVE" = "1" ] || ! [ -t 0 ]; then \
+		echo "→ 自動的に次のステージに進みます"; \
+	else \
+		read -p "続行しますか？ (y/N): " confirm && echo "$$confirm" | grep -iq '^y'; \
+	fi
 	@$(MAKE) stage5
 	@echo "🎉 全ステージ完了！"

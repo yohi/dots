@@ -33,8 +33,8 @@ full: ## フルセットアップ - 全ての機能を含む完全なセット�
 	@$(MAKE) dev-setup
 	@$(MAKE) install-packages-cica-fonts
 	@$(MAKE) install-packages-mysql-workbench
-	@$(MAKE) gnome-settings
-	@$(MAKE) gnome-extensions
+	@$(MAKE) setup-gnome-tweaks
+	@$(MAKE) setup-gnome-extensions
 	@$(MAKE) setup-config-all
 	@echo "✅ フルセットアップが完了しました！"
 
@@ -139,7 +139,19 @@ check-all: ## 全ての設定・インストール状況をチェック
 update-all: ## 全てのソフトウェアをアップデート
 	@echo "🔄 全体アップデートを開始します..."
 	@echo "1/3 システムパッケージ更新中..."
-	@sudo apt update && sudo apt upgrade -y
+	@if [ "$$(uname)" = "Linux" ] && command -v apt >/dev/null 2>&1; then \
+		echo "📦 Debian/Ubuntu: apt update & upgrade を実行中..."; \
+		sudo apt update && sudo apt upgrade -y; \
+	elif [ "$$(uname)" = "Darwin" ]; then \
+		echo "🍎 macOS: Homebrew update & upgrade を実行中..."; \
+		if command -v brew >/dev/null 2>&1; then \
+			brew update && brew upgrade; \
+		else \
+			echo "⚠️  Homebrewがインストールされていません"; \
+		fi; \
+	else \
+		echo "ℹ️  このOSではシステムパッケージの自動更新はサポートされていません (OS: $$(uname))"; \
+	fi
 	@echo "2/3 Cursor IDEアップデート中..."
 	@$(MAKE) update-cursor
 	@echo "3/3 Homebrewアップデート中..."

@@ -32,7 +32,7 @@ include mk/cc-sdd.mk
 all: help
 
 .PHONY: setup
-setup: gnome-settings gnome-extensions system
+setup: setup-gnome-tweaks setup-gnome-extensions system
 # Run sticky-keys setup only when GNOME schema is available
 	@if command -v gsettings >/dev/null 2>&1 && \
 	gsettings list-schemas | grep -qx 'org.gnome.desktop.a11y.keyboard'; then \
