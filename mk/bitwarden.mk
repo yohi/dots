@@ -32,12 +32,15 @@ fi
 # Targets
 # ============================================================
 .PHONY: bw-status
-bw-status:
+bw-status: ## Bitwarden 連携の有効化状態を確認（基盤実装）
 	@$(call bw_require_opt_in,$@); \
-	echo "[INFO] Bitwarden integration is enabled."
+	echo "[INFO] Bitwarden integration is enabled."; \
+	exit 0
 
 .PHONY: bw-unlock
-bw-unlock:
+bw-unlock: ## Bitwarden セッションをアンロック（基盤実装、完全実装はタスク3.3）
 	@$(call bw_require_opt_in,$@); \
 	$(BW_REQUIRE_CLI); \
-	echo "[INFO] Bitwarden CLI detected. Unlock is not implemented yet." >&2
+	echo "[INFO] Bitwarden CLI detected." >&2; \
+	echo "[INFO] Full unlock implementation will be completed in task 3.3." >&2; \
+	exit 0
