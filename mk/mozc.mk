@@ -314,3 +314,6 @@ setup-config-ime: setup-mozc
 # 古いターゲット名を維持（既に実装済み）
 # setup-mozc-ut-dictionaries: は既に実装済み
 # setup-mozc-ut-dictionaries-manual: は既に実装済み
+
+# エクスポートコマンドの後方互換性
+mozc-export-keymap: export-config-mozc-keymap

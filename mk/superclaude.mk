@@ -225,3 +225,9 @@ info-superclaude: ## SuperClaudeフレームワークの情報を表示
 	@echo "   設定ファイル: ~/.claude/CLAUDE.md"
 	@echo "   ソースコード: $(DOTFILES_CLAUDE_DIR)/"
 
+# ========================================
+# エイリアス
+# ========================================
+
+.PHONY: claudecode
+claudecode: install-superclaude  ## Claude Code用のSuperClaudeフレームワークをインストール(エイリアス)
