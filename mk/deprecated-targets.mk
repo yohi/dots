@@ -14,11 +14,28 @@ define get_new_target
 $(word 2,$(subst :, ,$(filter $(1):%,$(DEPRECATED_TARGETS))))
 endef
 
-# Generate an alias rule that forwards to the mapped new target
+# Extract metadata fields from deprecated target entry
+define get_deprecation_date
+$(word 3,$(subst :, ,$(filter $(1):%,$(DEPRECATED_TARGETS))))
+endef
+
+define get_removal_date
+$(word 4,$(subst :, ,$(filter $(1):%,$(DEPRECATED_TARGETS))))
+endef
+
+define get_status
+$(word 5,$(subst :, ,$(filter $(1):%,$(DEPRECATED_TARGETS))))
+endef
+
+# Generate an alias rule that forwards to the mapped new target with warning
 define _deprecated_target_rule
 $(if $(call get_new_target,$(1)),,$(error Deprecated target '$(1)' is not mapped.))
 .PHONY: $(1)
-$(1): $(call get_new_target,$(1))
+$(1):
+	@echo "⚠️  Warning: Target '$(1)' is deprecated since $(call get_deprecation_date,$(1))"
+	@echo "   Please use '$(call get_new_target,$(1))' instead."
+	@echo "   This target will be removed on $(call get_removal_date,$(1))"
+	@$(MAKE) $(call get_new_target,$(1))
 endef
 
 _DEPRECATED_OLD_TARGETS := $(foreach entry,$(DEPRECATED_TARGETS),$(word 1,$(subst :, ,$(entry))))

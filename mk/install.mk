@@ -131,7 +131,6 @@ install-packages-apps:
 	else \
 		echo "❌ Homebrewがインストールされていません。先に 'make install-packages-homebrew' を実行してください。"; \
 		exit 1; \
-		exit 1; \
 	fi
 	@echo "✅ アプリケーションのインストールが完了しました。"
 
