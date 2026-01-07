@@ -1,6 +1,9 @@
 # Ubuntu開発環境セットアップ用Makefile
 # 更新日: 2024年3月版
 
+# デフォルトターゲット
+.DEFAULT_GOAL := help
+
 # 分割されたMakefileをinclude
 include mk/variables.mk
 include mk/help.mk
@@ -24,7 +27,7 @@ include mk/superclaude.mk
 include mk/cc-sdd.mk
 
 .PHONY: all
-all: menu
+all: help
 
 .PHONY: setup
 setup: gnome-settings gnome-extensions system
