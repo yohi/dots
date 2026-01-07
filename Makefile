@@ -8,6 +8,7 @@
 include mk/variables.mk
 include mk/help.mk
 include mk/help-short.mk
+include mk/deprecated-targets.mk
 include mk/system.mk
 include mk/fonts.mk
 include mk/install.mk

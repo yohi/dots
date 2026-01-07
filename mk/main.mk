@@ -19,11 +19,11 @@ setup-all:
 	@echo ""
 
 	@echo "📋 2. Homebrewインストール実行中..."
-	@$(MAKE) install-homebrew
+	@$(MAKE) install-packages-homebrew
 	@echo ""
 
 	@echo "📋 3. アプリケーションインストール実行中..."
-	@$(MAKE) install-apps
+	@$(MAKE) install-packages-apps
 	@echo ""
 
 	@echo "📋 4. Claude Codeエコシステムインストール実行中..."
@@ -31,9 +31,9 @@ setup-all:
 	@echo ""
 
 	@echo "📋 5. 設定セットアップ実行中..."
-	@$(MAKE) setup-vim
-	@$(MAKE) setup-zsh
-	@$(MAKE) setup-git
+	@$(MAKE) setup-config-vim
+	@$(MAKE) setup-config-zsh
+	@$(MAKE) setup-config-git
 	@$(MAKE) setup-wezterm
 	@$(MAKE) setup-vscode
 	@$(MAKE) setup-cursor
