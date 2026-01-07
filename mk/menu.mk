@@ -49,7 +49,7 @@ sys:
 	@read -p "選択してください [0-5]: " choice; \
 	case $$choice in \
 		1) $(MAKE) setup-system ;; \
-		2) $(MAKE) gnome-settings ;; \
+		2) $(MAKE) setup-gnome-tweaks ;; \
 		3) $(MAKE) setup-config-mozc ;; \
 		4) $(MAKE) setup-config-shortcuts ;; \
 		5) $(MAKE) sticky-keys-menu ;; \
