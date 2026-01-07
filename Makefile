@@ -9,6 +9,7 @@ include mk/variables.mk
 include mk/help.mk
 include mk/help-short.mk
 include mk/presets.mk
+include mk/bitwarden.mk
 include mk/system.mk
 include mk/fonts.mk
 include mk/install.mk

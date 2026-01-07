@@ -2,6 +2,9 @@
 
 # SuperCopilot Framework インストールスクリプト
 # VSCode/GitHub Copilotのペルソナ自動選択機能を設定します
+#
+# Note: This script supports both Linux and macOS.
+# For best results, install jq: brew install jq (macOS) or apt install jq (Linux)
 
 # 色の定義
 GREEN='\033[0;32m'
@@ -124,14 +127,29 @@ else
         # 末尾が}で終わるか確認
         if grep -q "}" "$VSCODE_SETTINGS"; then
           # 最後の閉じ括弧を見つけて、その前に設定を追加
-          sed -i '$ s/}/,\n  '"$CONFIG_ENTRY"'\n}/' "$VSCODE_SETTINGS"
+          # Note: Using actual newline in sed replacement for BSD sed compatibility
+          if sed '$ s/}/,\
+  '"$CONFIG_ENTRY"'\
+}/' "$VSCODE_SETTINGS" > "$VSCODE_SETTINGS.tmp"; then
+            if mv "$VSCODE_SETTINGS.tmp" "$VSCODE_SETTINGS"; then
+              echo -e "   ${GREEN}✓ settings.jsonに設定を追加しました${NC}"
+            else
+              echo -e "   ${RED}✗ 設定の追加に失敗しました（mvエラー）${NC}"
+              rm -f "$VSCODE_SETTINGS.tmp"
+              exit 1
+            fi
+          else
+            echo -e "   ${RED}✗ 設定の追加に失敗しました（sedエラー）${NC}"
+            rm -f "$VSCODE_SETTINGS.tmp"
+            exit 1
+          fi
         else
           # JSONが不完全な場合、単純に追加
           echo "," >> "$VSCODE_SETTINGS"
           echo "  $CONFIG_ENTRY" >> "$VSCODE_SETTINGS"
           echo "}" >> "$VSCODE_SETTINGS"
+          echo -e "   ${GREEN}✓ settings.jsonに設定を追加しました${NC}"
         fi
-        echo -e "   ${GREEN}✓ settings.jsonに設定を追加しました${NC}"
       fi
     fi
   else

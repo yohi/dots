@@ -442,22 +442,23 @@ test-deprecation-policy: ## 廃止タイムラインポリシーの検証テス�
 ---
 
 - [ ] 3. Bitwarden 連携（WITH_BW オプトイン）
-- [ ] 3.1 WITH_BW のオプトインセマンティクスを全ターゲットに適用する
-  - `WITH_BW=1` の場合のみ Bitwarden 連携を有効化し、未設定/`WITH_BW=0` は完全にスキップする
-  - 汎用ターゲットは Bitwarden 連携をスキップして正常終了し、`bw-*` ターゲットは案内を出して失敗（exit 1）する
+- [x] 3.1 WITH_BW オプトインメカニズムの基盤を確立する
+  - `WITH_BW=1` の場合のみ Bitwarden 連携を有効化し、未設定/`WITH_BW=0` は完全にスキップする共通関数 `bw_require_opt_in` を実装する
+  - 汎用ターゲットは Bitwarden 連携をスキップして正常終了し、`bw-*` ターゲットは案内を出して exit 0 で終了する動作を定義する
   - 環境変数としての設定と Make 引数としての指定の両方で有効化でき、CI/ローカルで同一の挙動になるようにする
   - 既存のレガシースクリプトが `WITH_BW` を認識しない場合でも、破壊的変更を起こさず従来動作を維持する
+  - **スコープ:** 本タスクは基盤メカニズムの確立に限定する。`bw-status` と `bw-unlock` で実証し、他の既存ターゲット（`setup-secrets` 等）への統合はタスク3.4で実施する
   - _Requirements: 2.5, 2.6, 2.7, 2.8, 3.1_
   - **検証方法:**
     - `make bw-status` と `make bw-status WITH_BW=1` の動作差異を確認
     - `export WITH_BW=1 && make bw-status` と `make bw-status WITH_BW=1` が同一動作であることを確認
-    - `make install` が WITH_BW 未設定時に Bitwarden 関連エラーなく完了することを確認
-    - `make bw-unlock` が WITH_BW 未設定時に適切なエラーメッセージで終了することを確認
+    - `make install` が WITH_BW 未設定時に Bitwarden 関連エラーなく完了することを確認（後方互換性）
+    - `make bw-unlock` が WITH_BW 未設定時に適切な警告メッセージで終了することを確認
   - **成功基準:**
-    - `make bw-unlock` (WITHOUT_BW) → stderr に `[WARN] Bitwarden integration is disabled.` が出力、exit 0
+    - `make bw-unlock` (WITH_BW 未設定) → stderr に `[WARN] Bitwarden integration is disabled.` が出力、exit 0
     - `make bw-unlock WITH_BW=1` (bw 未導入時) → stderr に `[ERROR] Bitwarden CLI (bw) is not installed.` が出力、exit 1
     - 環境変数 `WITH_BW=1` と引数 `WITH_BW=1` の動作が完全同一
-    - レガシーターゲット（`make install`）は WITH_BW 未設定時も正常終了
+    - レガシーターゲット（`make install`）は WITH_BW 未設定時も正常終了（Bitwarden 連携部分は未実装でも可）
 
 - [ ] 3.2 Bitwarden 状態判定とエラーハンドリングを整備し、秘匿情報を出力しない
   - Bitwarden CLI の状態を判定し、操作可能/不可の理由（未導入、未ログイン、ロック等）を人間可読に案内できるようにする
@@ -495,21 +496,25 @@ test-deprecation-policy: ## 廃止タイムラインポリシーの検証テス�
     - 有効な `BW_SESSION` 設定時、`bw unlock` コマンドが呼び出されない（再アンロックスキップ）
     - 失敗時の stderr に `[ERROR]` が含まれ、stdout が空
 
-- [ ] 3.4 シークレット取得を自動化フローに接続し、シナリオ別エラーを満たす
+- [ ] 3.4 シークレット取得を自動化フローに接続し、既存ターゲットに統合する
   - 指定アイテム名からシークレットを取得し、必要なコマンド実行へ渡せるようにする
   - 未ログイン/ロック/未導入/ネットワークエラー/未発見の各シナリオで、期待されるメッセージと終了コードを満たす
-  - 汎用ターゲットは `WITH_BW` 未設定時に安全にスキップし、Bitwarden 専用ターゲットは明確に失敗させる
+  - **タスク3.1で確立した `bw_require_opt_in` 基盤を、`setup-secrets` など既存の関連ターゲットに統合する**
+  - 汎用ターゲット（`install`, `setup` 等）は `WITH_BW` 未設定時に Bitwarden 連携部分を安全にスキップし、Bitwarden 専用ターゲット（`bw-*`）は明確に警告を出す
   - _Requirements: 3.1, 3.2, 3.3_
   - **検証方法:**
     - `make bw-get-item-test-secret WITH_BW=1` を実行し、シークレット値が stdout に出力されることを確認
     - 各エラーシナリオ（未ログイン/ロック/未導入/未発見）で適切なエラーメッセージと終了コードを確認
     - シークレット取得成功時、取得値が環境変数として後続処理で利用可能であることを確認
+    - `make setup-secrets` が WITH_BW 未設定時に警告のみで終了することを確認
+    - `make setup-secrets WITH_BW=1` が Bitwarden からシークレットを取得して設定することを確認
   - **成功基準:**
     - シナリオ1（bw 未導入）: `[ERROR] Bitwarden CLI (bw) is not installed.` + exit 1
     - シナリオ2（未ログイン）: `[ERROR] Bitwarden CLI is not logged in.` + exit 1
     - シナリオ3（ロック）: `[ERROR] Bitwarden vault is locked.` + exit 1
     - シナリオ4（未発見）: `[ERROR] Secret not found: <item-name>` + exit 1
     - 正常取得時: パスワードまたはノートの値のみが stdout に出力
+    - `setup-secrets` など既存ターゲットが `bw_require_opt_in` を使用して WITH_BW フラグに応答する
 
 - [ ] 4. 冪等性基盤と安全な再実行
 - [ ] 4.1 (P) 冪等性検出メソッドを共通化し、パース時副作用ゼロを保証する

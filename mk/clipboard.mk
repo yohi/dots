@@ -1,6 +1,9 @@
 # クリップボード管理ツールのセットアップ
 # CopyQ + Wayland対応の包括的な設定
 # 
+# Note: This module is Linux-specific (Ubuntu/Debian) and uses GNU sed.
+# It configures CopyQ, Wayland clipboard tools, and GNOME extensions.
+#
 # インストール方法:
 # sudo apt install software-properties-common python3-software-properties
 # sudo add-apt-repository ppa:hluk/copyq
