@@ -2,6 +2,9 @@
 
 # SuperCopilot Framework インストールスクリプト
 # VSCode/GitHub Copilotのペルソナ自動選択機能を設定します
+#
+# Note: This script supports both Linux and macOS.
+# For best results, install jq: brew install jq (macOS) or apt install jq (Linux)
 
 # 色の定義
 GREEN='\033[0;32m'
@@ -124,7 +127,8 @@ else
         # 末尾が}で終わるか確認
         if grep -q "}" "$VSCODE_SETTINGS"; then
           # 最後の閉じ括弧を見つけて、その前に設定を追加
-          sed -i '$ s/}/,\n  '"$CONFIG_ENTRY"'\n}/' "$VSCODE_SETTINGS"
+          # Note: Using temp file for cross-platform compatibility (GNU sed vs BSD sed)
+          sed '$ s/}/,\n  '"$CONFIG_ENTRY"'\n}/' "$VSCODE_SETTINGS" > "$VSCODE_SETTINGS.tmp" && mv "$VSCODE_SETTINGS.tmp" "$VSCODE_SETTINGS"
         else
           # JSONが不完全な場合、単純に追加
           echo "," >> "$VSCODE_SETTINGS"

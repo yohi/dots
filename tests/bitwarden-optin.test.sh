@@ -16,7 +16,8 @@ include $(ROOT_DIR)/mk/bitwarden.mk
 EOF_MAKE
 
 # Inject the actual root path after heredoc to avoid nested expansion issues.
-sed -i "s|__ROOT_DIR__|$ROOT_DIR|" "$MAKEFILE_PATH"
+# Use temp file for cross-platform compatibility (GNU sed vs BSD sed).
+sed "s|__ROOT_DIR__|$ROOT_DIR|" "$MAKEFILE_PATH" > "$MAKEFILE_PATH.tmp" && mv "$MAKEFILE_PATH.tmp" "$MAKEFILE_PATH"
 
 run_make() {
 	MAKEFLAGS=--no-print-directory "$MAKE_BIN" -f "$MAKEFILE_PATH" "$@"
