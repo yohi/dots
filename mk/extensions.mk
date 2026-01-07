@@ -1,7 +1,7 @@
 # 拡張機能関連のターゲット
 
 # 拡張機能の依存関係をインストール
-install-extensions-dependencies:
+_install-extensions-dependencies:
 	@echo "📦 拡張機能の依存関係をインストール中..."
 	@sudo DEBIAN_FRONTEND=noninteractive apt-get update || true
 	@sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
@@ -78,7 +78,7 @@ install-extensions-simple:
 	@echo "✅ 基本的なGNOME拡張機能のインストールが完了しました。"
 
 # 拡張機能のテスト
-test-extensions:
+_test-extensions:
 	@echo "🔍 GNOME拡張機能の状態を確認中..."
 	
 	@if command -v gnome-extensions >/dev/null 2>&1; then \
@@ -97,7 +97,7 @@ test-extensions:
 	@echo "✅ 拡張機能の状態確認が完了しました。"
 
 # 拡張機能の状態表示
-extensions-status:
+_extensions-status:
 	@echo "📊 GNOME拡張機能の詳細状態を表示中..."
 	
 	@if command -v gnome-extensions >/dev/null 2>&1; then \
