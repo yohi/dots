@@ -56,8 +56,19 @@ _deprecated_guard_$(1):
 		printf '%s\n' "[ERROR] Invalid removal date format for '$$$$old': $$$$rem_date" >&2; \
 		exit 2; \
 	fi; \
-	dep_epoch=$$$$(date -d "$$$$dep_date" +%s 2>/dev/null || true); \
-	rem_epoch=$$$$(date -d "$$$$rem_date" +%s 2>/dev/null || true); \
+	date_to_epoch() { \
+		if command -v gdate >/dev/null 2>&1; then \
+			gdate -d "$$$$1" +%s 2>/dev/null || echo; \
+		elif date -d "$$$$1" +%s >/dev/null 2>&1; then \
+			date -d "$$$$1" +%s; \
+		elif date -j -f "%Y-%m-%d" "$$$$1" +%s >/dev/null 2>&1; then \
+			date -j -f "%Y-%m-%d" "$$$$1" +%s; \
+		else \
+			echo; \
+		fi; \
+	}; \
+	dep_epoch=$$$$(date_to_epoch "$$$$dep_date"); \
+	rem_epoch=$$$$(date_to_epoch "$$$$rem_date"); \
 	if [ -z "$$$$dep_epoch" ] || [ -z "$$$$rem_epoch" ]; then \
 		printf '%s\n' "[ERROR] Failed to parse deprecation dates for '$$$$old'." >&2; \
 		exit 2; \
