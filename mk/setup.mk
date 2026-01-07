@@ -1,7 +1,7 @@
 # 設定セットアップ関連のターゲット
 
 # VIMの設定をセットアップ
-setup-vim:
+setup-config-vim:
 	@echo "🖥️  VIMの設定をセットアップ中..."
 	@mkdir -p $(HOME_DIR)/.vim
 	@mkdir -p $(CONFIG_DIR)/nvim
@@ -26,7 +26,7 @@ setup-vim:
 	@echo "✅ VIMの設定が完了しました。"
 
 # ZSHの設定をセットアップ
-setup-zsh:
+setup-config-zsh:
 	@echo "🐚 ZSHの設定をセットアップ中..."
 	@mkdir -p $(DOTFILES_DIR)/zsh
 
@@ -268,7 +268,7 @@ setup-mcp-tools:
 	@echo "ℹ️  Cursorを再起動してMCPツールを有効化してください。"
 
 # Git設定のセットアップ
-setup-git:
+setup-config-git:
 	@echo "🖥️  Git設定をセットアップ中..."
 
 	# 既存のGit設定をチェック
@@ -511,14 +511,11 @@ setup-ime:
 # ========================================
 
 # 設定ファイル・コンフィグセットアップ系
-setup-config-vim: setup-vim
-setup-config-zsh: setup-zsh
 setup-config-wezterm: setup-wezterm
 setup-config-vscode: setup-vscode
 setup-config-vscode-copilot: setup-vscode-copilot
 setup-config-cursor: setup-cursor
 setup-config-mcp-tools: setup-mcp-tools
-setup-config-git: setup-git
 setup-config-docker: setup-docker
 setup-config-development: setup-development
 setup-config-shortcuts: setup-shortcuts

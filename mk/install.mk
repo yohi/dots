@@ -1,5 +1,5 @@
 # Homebrewのインストール
-install-homebrew:
+install-packages-homebrew:
 	@echo "🍺 Homebrewをインストール中..."
 	@if ! command -v brew >/dev/null 2>&1; then \
 		echo "📥 Homebrewをダウンロード・インストール..."; \
@@ -121,7 +121,7 @@ install-fuse:
 	@echo "✅ FUSEパッケージのインストールが完了しました。"
 
 # Brewfileを使用してアプリケーションをインストール
-install-apps:
+install-packages-apps:
 	@echo "📦 アプリケーションをインストール中..."
 	@if command -v brew >/dev/null 2>&1; then \
 		eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"; \
@@ -129,8 +129,7 @@ install-apps:
 		brew bundle --file=$(DOTFILES_DIR)/Brewfile --no-upgrade || true; \
 		echo "⚠️  一部のパッケージでエラーが発生した可能性がありますが、処理を続行します"; \
 	else \
-		echo "❌ Homebrewがインストールされていません。先に 'make install-homebrew' を実行してください。"; \
-		exit 1; \
+		echo "❌ Homebrewがインストールされていません。先に 'make install-packages-homebrew' を実行してください。"; \
 		exit 1; \
 	fi
 	@echo "✅ アプリケーションのインストールが完了しました。"
@@ -1166,7 +1165,7 @@ install-claude-ecosystem:
 	@echo "✅ Claude Code エコシステムの一括インストールが完了しました"
 
 # DEBパッケージをインストール（IDE・ブラウザ含む）
-install-deb:
+install-packages-deb:
 	@echo "📦 DEBパッケージをインストール中..."
 	@echo "ℹ️  IDE・ブラウザ・開発ツールをインストールします"
 
@@ -1421,9 +1420,6 @@ install-playwright:
 # ========================================
 
 # パッケージ・ソフトウェアインストール系
-install-packages-homebrew: install-homebrew
-install-packages-apps: install-apps
-install-packages-deb: install-deb
 install-packages-flatpak: install-flatpak
 install-packages-fuse: install-fuse
 install-packages-wezterm: install-wezterm

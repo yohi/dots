@@ -1,24 +1,42 @@
-# 廃止予定ターゲット管理
-# 旧ターゲット名→新ターゲット名のエイリアスマッピングを定義
-# 短縮エイリアス (i, s, c, u, m, h, claudecode, s1-s5, ss, sg) は mk/shortcuts.mk で管理
+# Deprecated target compatibility aliases
 
-# ==================== 廃止予定マップ ====================
-# フォーマット: 旧名:新名:廃止開始日:削除予定日:ステータス
-# ステータス: warning (警告フェーズ) / transition (移行期間) / removed (削除済み)
-DEPRECATED_TARGETS :=
+# Mapping format: OLD:NEW:DEPRECATION_DATE:REMOVAL_DATE:STATUS
+DEPRECATED_TARGETS := \
+	install-homebrew:install-packages-homebrew:2026-02-01:2026-08-01:warning \
+	install-apps:install-packages-apps:2026-02-01:2026-08-01:warning \
+	install-deb:install-packages-deb:2026-02-01:2026-08-01:warning \
+	setup-vim:setup-config-vim:2026-02-01:2026-08-01:warning \
+	setup-zsh:setup-config-zsh:2026-02-01:2026-08-01:warning \
+	setup-git:setup-config-git:2026-02-01:2026-08-01:warning
 
-# ==================== 旧名→新名エイリアス ====================
-# レガシーターゲット名から新しい命名規則に準拠したターゲット名へのマッピング
-# 現在は後方互換性のためサイレントリダイレクトを提供
-# 将来的に MAKE_DEPRECATION_WARN=1 で警告出力を有効化可能
+# Return the new target for a given deprecated target
+define get_new_target
+$(word 2,$(subst :, ,$(filter $(1):%,$(DEPRECATED_TARGETS))))
+endef
 
-# 例: 旧パッケージ管理ターゲット
-# .PHONY: install-homebrew
-# install-homebrew: install-packages-homebrew
+# Extract metadata fields from deprecated target entry
+define get_deprecation_date
+$(word 3,$(subst :, ,$(filter $(1):%,$(DEPRECATED_TARGETS))))
+endef
 
-# 例: 旧設定ターゲット
-# .PHONY: setup-secrets
-# setup-secrets: setup-config-secrets
+define get_removal_date
+$(word 4,$(subst :, ,$(filter $(1):%,$(DEPRECATED_TARGETS))))
+endef
 
-# 注: 現在は具体的なエイリアスは未定義
-# 廃止予定ターゲットが発生した際にここに追加する
+define get_status
+$(word 5,$(subst :, ,$(filter $(1):%,$(DEPRECATED_TARGETS))))
+endef
+
+# Generate an alias rule that forwards to the mapped new target with warning
+define _deprecated_target_rule
+$(if $(call get_new_target,$(1)),,$(error Deprecated target '$(1)' is not mapped.))
+.PHONY: $(1)
+$(1):
+	@echo "⚠️  Warning: Target '$(1)' is deprecated since $(call get_deprecation_date,$(1))"
+	@echo "   Please use '$(call get_new_target,$(1))' instead."
+	@echo "   This target will be removed on $(call get_removal_date,$(1))"
+	@$(MAKE) $(call get_new_target,$(1))
+endef
+
+_DEPRECATED_OLD_TARGETS := $(foreach entry,$(DEPRECATED_TARGETS),$(word 1,$(subst :, ,$(entry))))
+$(foreach t,$(_DEPRECATED_OLD_TARGETS),$(eval $(call _deprecated_target_rule,$(t))))
