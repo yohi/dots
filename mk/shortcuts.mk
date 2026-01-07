@@ -2,13 +2,14 @@
 
 # ==================== 短縮エイリアス ====================
 # よく使うコマンドの短縮形
-.PHONY: i s c u m h
+.PHONY: i s c u m h claudecode
 i: install                ## 短縮: make install
 s: setup                  ## 短縮: make setup
 c: check-cursor-version   ## 短縮: Cursorバージョン確認
 u: update-cursor          ## 短縮: Cursorアップデート
 m: menu                   ## 短縮: インタラクティブメニュー
 h: help                   ## 短縮: ヘルプ表示
+claudecode: install-superclaude  ## 短縮: SuperClaudeフレームワークインストール
 
 # ==================== プリセット実行 ====================
 # クイックセットアップ（基本環境）

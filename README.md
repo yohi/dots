@@ -792,16 +792,16 @@ SuperClaudeフレームワークは、Claude Codeでの開発体験を向上さ�
 
 ```bash
 # SuperClaudeフレームワークをインストール
-make superclaude-install
+make install-superclaude
 
 # または短縮形
 make claudecode
 
 # インストール状態を確認
-make superclaude-check
+make check-superclaude
 
 # フレームワーク情報を表示
-make superclaude-info
+make info-superclaude
 ```
 
 #### 📦 インストール内容
@@ -835,10 +835,10 @@ make superclaude-info
 
 ```bash
 # 最新版に更新
-make superclaude-update
+make update-superclaude
 
 # アンインストール
-make superclaude-uninstall
+make uninstall-superclaude
 ```
 
 #### 📝 使用方法

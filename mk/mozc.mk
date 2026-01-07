@@ -153,7 +153,7 @@ setup-mozc:
 	@echo "   export GTK_IM_MODULE=ibus QT_IM_MODULE=ibus XMODIFIERS=@im=ibus"
 
 # Mozcキーマップのエクスポート
-mozc-export-keymap:
+export-config-mozc-keymap: ## Mozcキーマップをエクスポート
 	@echo "📋 現在のMozcキーマップをエクスポート中..."
 	@mkdir -p $(MOZC_DOTFILES_CONFIG_DIR)
 	/usr/lib/mozc/mozc_tool --mode=keymap_editor --export_file=$(MOZC_DOTFILES_CONFIG_DIR)/my_keymap.txt
@@ -314,3 +314,6 @@ setup-config-ime: setup-mozc
 # 古いターゲット名を維持（既に実装済み）
 # setup-mozc-ut-dictionaries: は既に実装済み
 # setup-mozc-ut-dictionaries-manual: は既に実装済み
+
+# エクスポートコマンドの後方互換性
+mozc-export-keymap: export-config-mozc-keymap
