@@ -155,5 +155,11 @@ update-all: ## 全てのソフトウェアをアップデート
 	@echo "2/3 Cursor IDEアップデート中..."
 	@$(MAKE) update-cursor
 	@echo "3/3 Homebrewアップデート中..."
-	@command -v brew >/dev/null && brew update && brew upgrade || echo "Homebrew未インストール"
+	@if [ "$$(uname)" != "Darwin" ] && command -v brew >/dev/null 2>&1; then \
+		brew update && brew upgrade; \
+	elif [ "$$(uname)" = "Darwin" ]; then \
+		echo "✅ Homebrew は既にステップ1で更新済みです"; \
+	else \
+		echo "Homebrew未インストール"; \
+	fi
 	@echo "✅ 全体アップデートが完了しました！"
