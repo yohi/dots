@@ -90,7 +90,15 @@ debug:
 	@echo -n "Cursor: "; \
 	if [ -f /opt/cursor/cursor.AppImage ]; then \
 		FILE_DATE=$$(stat -c%Y /opt/cursor/cursor.AppImage 2>/dev/null || echo "0"); \
-		FORMATTED_DATE=$$(date -d @$$FILE_DATE '+%Y-%m-%d' 2>/dev/null || echo '不明'); \
+		if command -v gdate >/dev/null 2>&1; then \
+			FORMATTED_DATE=$$(gdate -d @$$FILE_DATE '+%Y-%m-%d' 2>/dev/null || echo '不明'); \
+		elif date -d @0 '+%Y' >/dev/null 2>&1; then \
+			FORMATTED_DATE=$$(date -d @$$FILE_DATE '+%Y-%m-%d' 2>/dev/null || echo '不明'); \
+		elif date -r 0 '+%Y' >/dev/null 2>&1; then \
+			FORMATTED_DATE=$$(date -r $$FILE_DATE '+%Y-%m-%d' 2>/dev/null || echo '不明'); \
+		else \
+			FORMATTED_DATE='不明'; \
+		fi; \
 		echo "✅ インストール済み (更新日: $$FORMATTED_DATE)"; \
 	elif command -v cursor >/dev/null 2>&1; then \
 		echo "✅ インストール済み"; \

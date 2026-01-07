@@ -361,18 +361,56 @@ $ echo $?
 
 #### 単体テスト（make test-deprecation-policy）
 
+**注意:** 日付パース処理は GNU/Linux と macOS/BSD の両方で動作するクロスプラットフォーム実装を使用。
+
 ```makefile
+# ============================================================
+# クロスプラットフォーム日付変換ヘルパー
+# GNU date (Linux, gdate on macOS) と BSD date (macOS) の両方に対応
+# ============================================================
+# 使用方法: $(call date_to_epoch,YYYY-MM-DD)
+# 戻り値: Unix epoch 秒、または失敗時は 0
+define date_to_epoch
+$(shell \
+	if command -v gdate >/dev/null 2>&1; then \
+		gdate -d "$(1)" +%s 2>/dev/null || echo 0; \
+	elif date -d "$(1)" +%s >/dev/null 2>&1; then \
+		date -d "$(1)" +%s; \
+	elif date -j -f "%Y-%m-%d" "$(1)" +%s >/dev/null 2>&1; then \
+		date -j -f "%Y-%m-%d" "$(1)" +%s; \
+	else \
+		echo 0; \
+	fi \
+)
+endef
+
 .PHONY: test-deprecation-policy
 test-deprecation-policy: ## 廃止タイムラインポリシーの検証テスト
 	@echo "=== Deprecation Timeline Policy Tests ==="
-	@# TL-001: 最小警告期間の遵守確認
-	@echo "[TEST] TL-001: Minimum warning period validation..."
-	@for entry in $(DEPRECATED_TARGETS); do \
+	@# クロスプラットフォーム日付変換関数（シェル内で定義）
+	@date_to_epoch() { \
+		if command -v gdate >/dev/null 2>&1; then \
+			gdate -d "$$1" +%s 2>/dev/null || echo 0; \
+		elif date -d "$$1" +%s >/dev/null 2>&1; then \
+			date -d "$$1" +%s; \
+		elif date -j -f "%Y-%m-%d" "$$1" +%s >/dev/null 2>&1; then \
+			date -j -f "%Y-%m-%d" "$$1" +%s; \
+		else \
+			echo 0; \
+		fi; \
+	}; \
+	echo "[TEST] TL-001: Minimum warning period validation..."; \
+	for entry in $(DEPRECATED_TARGETS); do \
 		old=$$(echo "$$entry" | cut -d: -f1); \
 		dep_date=$$(echo "$$entry" | cut -d: -f3); \
 		rem_date=$$(echo "$$entry" | cut -d: -f4); \
-		dep_epoch=$$(date -d "$$dep_date" +%s 2>/dev/null || echo 0); \
-		rem_epoch=$$(date -d "$$rem_date" +%s 2>/dev/null || echo 0); \
+		dep_epoch=$$(date_to_epoch "$$dep_date"); \
+		rem_epoch=$$(date_to_epoch "$$rem_date"); \
+		if [ "$$dep_epoch" = "0" ] || [ "$$rem_epoch" = "0" ]; then \
+			echo "[FAIL] $$old: Failed to parse deprecation dates (dep=$$dep_date, rem=$$rem_date)"; \
+			echo "       Install GNU coreutils: brew install coreutils (macOS)"; \
+			exit 2; \
+		fi; \
 		diff_days=$$(( (rem_epoch - dep_epoch) / 86400 )); \
 		if [ $$diff_days -lt 180 ]; then \
 			echo "[FAIL] $$old: $$diff_days days < 180 required"; \
