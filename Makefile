@@ -8,6 +8,7 @@
 include mk/variables.mk
 include mk/help.mk
 include mk/help-short.mk
+include mk/presets.mk
 include mk/system.mk
 include mk/fonts.mk
 include mk/install.mk
@@ -19,6 +20,7 @@ include mk/clipboard.mk
 include mk/sticky-keys.mk
 include mk/clean.mk
 include mk/main.mk
+include mk/stages.mk
 include mk/menu.mk
 include mk/shortcuts.mk
 include mk/memory.mk
