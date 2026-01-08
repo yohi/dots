@@ -205,10 +205,27 @@
 - マーカーファイルは `${XDG_STATE_HOME}/dots/` に配置
 - `FORCE=1` で強制再実行を許可
 
+**実装関数マッピング:**
+
+| メソッド識別子 | 実装関数名 | 用途 |
+|--------------|-----------|------|
+| `FILE_EXISTS` | `check_symlink` | シンボリックリンクの存在と参照先の検証 |
+| `VERSION_CHECK` | `check_min_version` | コマンドバージョンの最小要件チェック |
+| `MARKER_FILE` | `check_marker` / `create_marker` | 完了マーカーファイルの確認/作成 |
+| `COMMAND_CHECK` | `check_command` | コマンドの存在確認 |
+
+**関数シグネチャ:**
+- `check_symlink(link_path, expected_target)` - シンボリックリンク検証
+- `check_min_version(version_cmd, tool_name, min_version)` - バージョン比較
+- `check_marker(target_name)` - マーカーファイル存在確認
+- `create_marker(target_name, version)` - マーカーファイル作成
+- `check_command(command_name)` - コマンド存在確認
+
 **理由:**
 - ターゲット特性に応じた最適な検出方式の選択
 - XDG 準拠によるクリーンなホームディレクトリ
 - CI/デバッグ用の再実行オプション確保
+- 実装関数名の明示による設計と実装の整合性確保
 
 ---
 

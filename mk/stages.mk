@@ -63,7 +63,7 @@ stage4: ## ステージ4: システム設定・GNOME設定
 stage5: ## ステージ5: オプション機能（AI開発ツール・フォント等）
 	@echo "🚀 ステージ5: オプション機能のインストール..."
 	@echo "   🤖 AI開発ツール・フォント・その他ツール"
-	@$(MAKE) install-packages-claude-ecosystem
+	@$(MAKE) install-claude-ecosystem
 	@$(MAKE) install-packages-cica-fonts
 	@$(MAKE) install-packages-mysql-workbench
 	@$(MAKE) setup-mozc

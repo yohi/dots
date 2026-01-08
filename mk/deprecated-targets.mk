@@ -15,6 +15,7 @@ DEPRECATED_TARGETS ?= \
 	install-superclaude:install-packages-superclaude:2026-02-01:2026-08-01:warning \
 	install-claudia:install-packages-claudia:2026-02-01:2026-08-01:warning \
 	install-cica-fonts:install-packages-cica-fonts:2026-02-01:2026-08-01:warning \
+	install-ibm-plex-fonts:install-packages-ibm-plex-fonts:2026-02-01:2026-08-01:warning \
 	install-mysql-workbench:install-packages-mysql-workbench:2026-02-01:2026-08-01:warning \
 	install-chrome-beta:install-packages-chrome-beta:2026-02-01:2026-08-01:warning \
 	install-playwright:install-packages-playwright:2026-02-01:2026-08-01:warning \

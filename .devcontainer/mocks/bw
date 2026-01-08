@@ -12,7 +12,17 @@ set -euo pipefail
 # Default state if not specified
 MOCK_STATE="${BW_MOCK_STATE:-unlocked}"
 
-case "$1" in
+# Get first argument with default to handle missing arguments gracefully
+INPUT="${1:-}"
+
+# Check if command is provided
+if [ -z "$INPUT" ]; then
+    echo "Mock bw: command required" >&2
+    echo "Usage: bw <command> [options]" >&2
+    exit 1
+fi
+
+case "$INPUT" in
     status)
         # Return JSON status based on mock state
         case "$MOCK_STATE" in

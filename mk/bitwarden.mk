@@ -195,9 +195,9 @@ bw-unlock: ## Bitwarden セッションをアンロックして BW_SESSION を�
 		session=$$(bw unlock --raw 2>/dev/null); \
 	fi; \
 	if [ -z "$$session" ]; then \
-	echo "$(BW_ERROR_UNLOCK_FAILED)" >&2; \
-	echo "$(BW_ERROR_UNLOCK_HINT1)" >&2; \
-	exit 1; \
+		echo "$(BW_ERROR_UNLOCK_FAILED)" >&2; \
+		echo "$(BW_ERROR_UNLOCK_HINT1)" >&2; \
+		exit 1; \
 	fi; \
 	echo "export BW_SESSION=\"$$session\""
 

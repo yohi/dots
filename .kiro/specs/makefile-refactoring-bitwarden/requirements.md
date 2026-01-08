@@ -548,6 +548,24 @@ endif
 | **マーカーファイル** | `MARKER_FILE` | `.done-<target>` 形式のマーカーファイルの存在を確認 | 複合的なセットアップ処理、一度限りの初期化処理 |
 | **コマンド成功チェック** | `COMMAND_CHECK` | 特定のコマンドの終了コードで状態を判定 | サービスの起動状態、認証状態 |
 
+**実装関数マッピング:**
+
+各メソッド識別子に対応する `mk/idempotency.mk` の実装関数名:
+
+| メソッド識別子 | 実装関数名 | 用途 |
+|--------------|-----------|------|
+| `FILE_EXISTS` | `check_symlink` | シンボリックリンクの存在と参照先の検証 |
+| `VERSION_CHECK` | `check_min_version` | コマンドバージョンの最小要件チェック |
+| `MARKER_FILE` | `check_marker` / `create_marker` | 完了マーカーファイルの確認/作成 |
+| `COMMAND_CHECK` | `check_command` | コマンドの存在確認 |
+
+**実装関数シグネチャ:**
+- `check_symlink(link_path, expected_target)` - シンボリックリンクの存在と参照先を検証
+- `check_min_version(version_cmd, tool_name, min_version)` - コマンドバージョンの最小要件をチェック
+- `check_marker(target_name)` - マーカーファイルの存在を確認
+- `create_marker(target_name, version)` - マーカーファイルを作成
+- `check_command(command_name)` - コマンドの存在を確認
+
 ##### 4.2 ターゲット別冪等性検出メソッド宣言
 
 各公開ターゲットは、使用する冪等性検出メソッドを明示的に宣言しなければならない。
@@ -783,6 +801,7 @@ endif
 8. When `FORCE=1` が設定されている, the Makefile自動化システム shall 冪等性チェックをスキップしてターゲットを再実行する。
 9. The Makefile自動化システム shall 冪等性検出によりスキップする場合、`[SKIP] <target> is already completed.` 形式のメッセージを標準出力に表示する。
 10. The Makefile自動化システム shall マーカーファイルを `${XDG_STATE_HOME:-$HOME/.local/state}/dots/` ディレクトリに配置する。
+11. The Makefile自動化システム shall `mk/idempotency.mk` で定義された実装関数 (`check_symlink`, `check_min_version`, `check_marker`, `create_marker`, `check_command`) を使用する。
 
 ### 5. Devcontainer内のテスト環境
 **目的:** 開発者として、Devcontainer内で完全にテストできる環境が必要である。これによりホスト環境差異を排除できる。
@@ -884,8 +903,8 @@ make test-bw-integration WITH_BW=1
 
 ### 承認必須項目
 
-| 項番 | 設計決定 | セクション | 承認状態 ||
-|-----|---------|-----------|---------|--|
+| 項番 | 設計決定 | セクション | 承認状態 |
+|-----|---------|-----------|---------|
 | 1 | Makefile構造の再編（エントリポイント・公開ターゲット・エイリアスポリシー） | §1.1-1.4, [architecture.md](./architecture.md) | [ ] 未承認 |
 | 2 | 廃止予定ターゲット移行ロードマップ（マップ形式・出力仕様・タイムラインポリシー） | §2.1-2.4 | [ ] 未承認 |
 | 3 | WITH_BW フラグの動作仕様 | §2.5-2.8 | [ ] 未承認 |

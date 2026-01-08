@@ -785,6 +785,61 @@ install-packages-claudia:
 	@echo "- カスタムエージェントを作成して開発タスクを自動化" \
 	@echo "✅ Claudia のインストールが完了しました"
 
+# SuperClaude のインストール
+install-superclaude:
+	@echo "🚀 SuperClaude v3 のインストールを開始..."
+	@echo "ℹ️  注意: SuperClaude v3.0.0.2 (セキュリティ強化版) をインストールします"
+	@echo ""
+
+	# Python の確認
+	@echo "🔍 Python の確認中..."
+	@if ! command -v python3 >/dev/null 2>&1; then \
+		echo "❌ Python 3 がインストールされていません"; \
+		echo ""; \
+		echo "📥 Python 3 のインストール手順:"; \
+		echo "1. Ubuntu/Debian: sudo apt install python3 python3-pip"; \
+		echo "2. macOS: brew install python3"; \
+		echo "3. 公式サイト: https://www.python.org/"; \
+		echo ""; \
+		echo "ℹ️  Python 3.8+ が必要です"; \
+		exit 1; \
+	else \
+		PYTHON_VERSION=$$(python3 --version | grep -oE '[0-9]+\.[0-9]+' | head -1); \
+		echo "✅ Python が見つかりました: $$(python3 --version)"; \
+		MAJOR=$$(echo "$$PYTHON_VERSION" | cut -d'.' -f1); \
+		MINOR=$$(echo "$$PYTHON_VERSION" | cut -d'.' -f2); \
+		if [ "$$MAJOR" -lt 3 ] || { [ "$$MAJOR" -eq 3 ] && [ "$$MINOR" -lt 8 ]; }; then \
+			echo "⚠️  Python 3.8+ が推奨されています (現在: $$PYTHON_VERSION)"; \
+			echo "   古いバージョンでも動作する可能性がありますが、問題が発生する場合があります"; \
+		fi; \
+	fi
+
+	# pip の確認
+	@echo "🔍 pip の確認中..."
+	@if ! command -v pip3 >/dev/null 2>&1 && ! command -v pip >/dev/null 2>&1; then \
+		echo "❌ pip がインストールされていません"; \
+		echo "ℹ️  通常はPython 3と一緒にインストールされます"; \
+		echo "   インストール: python3 -m ensurepip --upgrade"; \
+		exit 1; \
+	else \
+		echo "✅ pip が見つかりました: $$(pip3 --version 2>/dev/null || pip --version)"; \
+	fi
+
+	# uv の確認とインストール（推奨）
+	@echo "🔍 uv (高速Pythonパッケージマネージャー) の確認中..."
+	@if ! command -v uv >/dev/null 2>&1; then \
+		echo "📦 uv をインストール中..."; \
+		curl -LsSf https://astral.sh/uv/install.sh | sh; \
+		echo "🔄 uvのパスを更新中..."; \
+		export PATH="$$HOME/.local/bin:$$PATH"; \
+		if ! command -v uv >/dev/null 2>&1; then \
+			echo "⚠️  uvのインストールが完了しましたが、現在のセッションで認識されていません"; \
+			echo "   新しいターミナルセッションで再実行するか、以下を実行してください:"; \
+			echo "   source $$HOME/.bashrc"; \
+			echo "   source $$HOME/.zshrc (zshの場合)"; \
+			echo ""; \
+			echo "ℹ️  uvなしでもpipを使用してインストールを続行できます"; \
+		fi; \
 	else \
 		echo "✅ uv が見つかりました: $$(uv --version)"; \
 	fi
