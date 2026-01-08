@@ -1402,7 +1402,7 @@ install-packages-ccusage:
 		if ! command -v bun >/dev/null 2>&1; then \
 			echo "❌ bun のインストールに失敗しました。PATH を確認してください。"; \
 			exit 1; \
-		fi \
+		fi; \
 	fi
 	@echo "🔧 ccusage をグローバル導入中..."
 	@export PATH="$(HOME)/.bun/bin:$$PATH"; \

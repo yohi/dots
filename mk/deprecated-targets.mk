@@ -116,7 +116,7 @@ _deprecated_guard_$(1):
 			fi; \
 			if [ "$$$${MAKE_DEPRECATION_WARN:-0}" = "1" ] && [ "$$$${MAKE_DEPRECATION_QUIET:-0}" != "1" ]; then \
 				printf '%s\n' "[DEPRECATED] Target '$$$$old' is deprecated and scheduled for removal on $$$$rem_date." >&2; \
-				printf '%s\n' "             This target will be removed in the next major version." >&2; \
+				printf '%s\n' "             This target is in transition phase (removal imminent)." >&2; \
 				printf '%s\n' "             Migrate now: make $$$$new" >&2; \
 				printf '%s\n' "             Proceeding with legacy behavior..." >&2; \
 			fi; \
