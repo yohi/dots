@@ -91,7 +91,7 @@ help:
 	@echo "  make stop-cursor                      - 実行中のCursor IDEを停止"
 	@echo "  make check-cursor-version             - Cursor IDEのバージョン情報を確認"
 	@echo "  make clean                            - シンボリックリンクを削除"
-	@echo "  make clean-repos                      - リポジリとGPGキーをクリーンアップ"
+	@echo "  make clean-repos                      - リポジトリとGPGキーをクリーンアップ"
 	@echo "  make help                             - このヘルプメッセージを表示"
 	@echo ""
 	@echo "🧪 テスト:"

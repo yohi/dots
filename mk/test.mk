@@ -16,6 +16,13 @@ test-bw-mock: ## Run Bitwarden tests with mock (no authentication required)
 	@echo "Running Bitwarden Mock Tests"
 	@echo "=========================================="
 	@echo ""
+	@# 0. Check dependencies
+	@for cmd in jq grep; do \
+		if ! command -v $$cmd >/dev/null 2>&1; then \
+			echo "[ERROR] Required command '$$cmd' is not installed." >&2; \
+			exit 1; \
+		fi \
+	done
 	@# 1. Verify mock bw script exists
 	@if [ ! -f "$(MOCK_BW_PATH)" ]; then \
 		echo "[ERROR] Mock bw script not found: $(MOCK_BW_PATH)" >&2; \
