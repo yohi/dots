@@ -3,7 +3,7 @@
 FROM mcr.microsoft.com/devcontainers/base:ubuntu-22.04
 
 # Bitwarden CLI version
-ARG BW_CLI_VERSION=2024.9.0
+ARG BW_CLI_VERSION=2025.12.0
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
@@ -17,10 +17,12 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Bitwarden CLI
-RUN curl -L "https://github.com/bitwarden/clients/releases/download/cli-v${BW_CLI_VERSION}/bw-linux-${BW_CLI_VERSION}.zip" -o /tmp/bw.zip \
+RUN curl -fsSL "https://github.com/bitwarden/clients/releases/download/cli-v${BW_CLI_VERSION}/bw-linux-${BW_CLI_VERSION}.zip" -o /tmp/bw.zip \
+    && curl -fsSL "https://github.com/bitwarden/clients/releases/download/cli-v${BW_CLI_VERSION}/bw-linux-${BW_CLI_VERSION}.zip.sha256" -o /tmp/bw.sha256 \
+    && echo "$(cat /tmp/bw.sha256 | awk '{print $1}')  /tmp/bw.zip" | sha256sum -c - \
     && unzip /tmp/bw.zip -d /usr/local/bin \
     && chmod +x /usr/local/bin/bw \
-    && rm /tmp/bw.zip
+    && rm /tmp/bw.zip /tmp/bw.sha256
 
 # Verify installations
 RUN make --version && echo "make: OK" \
