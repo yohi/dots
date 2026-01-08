@@ -1,5 +1,9 @@
 # Homebrewのインストール
 install-packages-homebrew:
+	@if $(call check_command,brew); then \
+		echo "$(call IDEMPOTENCY_SKIP_MSG,install-packages-homebrew)"; \
+		exit 0; \
+	fi
 	@echo "🍺 Homebrewをインストール中..."
 	@if ! command -v brew >/dev/null 2>&1; then \
 		echo "📥 Homebrewをダウンロード・インストール..."; \
