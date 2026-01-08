@@ -1,5 +1,11 @@
 # システムレベルの基本設定
 system-setup:
+ifndef FORCE
+	@if $(call check_marker,setup-system) 2>/dev/null; then \
+		echo "$(call IDEMPOTENCY_SKIP_MSG,setup-system)"; \
+		exit 0; \
+	fi
+endif
 	@echo "🔧 システムレベルの基本設定を開始..."
 
 	# tzdataの入力を省略するための設定
@@ -126,6 +132,7 @@ system-setup:
 		echo "✅ スワップ積極度は既に最適化されています ($$CURRENT_SWAPPINESS)"; \
 	fi
 
+	@$(call create_marker,setup-system,N/A)
 	@echo "✅ システムレベルの基本設定が完了しました。"
 	@echo "🌏 タイムゾーン: $$(timedatectl show --property=Timezone --value 2>/dev/null || echo '取得に失敗')"
 	@echo "🌐 ロケール: $$(locale | grep LANG 2>/dev/null || echo '取得に失敗')"

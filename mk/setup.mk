@@ -2,6 +2,12 @@
 
 # VIMの設定をセットアップ
 setup-config-vim:
+ifndef FORCE
+	@if $(call check_symlink,$(CONFIG_DIR)/nvim,$(DOTFILES_DIR)/vim) 2>/dev/null; then \
+		echo "$(call IDEMPOTENCY_SKIP_MSG,setup-config-vim)"; \
+		exit 0; \
+	fi
+endif
 	@echo "🖥️  VIMの設定をセットアップ中..."
 	@mkdir -p $(HOME_DIR)/.vim
 	@mkdir -p $(CONFIG_DIR)/nvim
@@ -27,6 +33,12 @@ setup-config-vim:
 
 # ZSHの設定をセットアップ
 setup-config-zsh:
+ifndef FORCE
+	@if $(call check_symlink,$(HOME_DIR)/.zshrc,$(DOTFILES_DIR)/zsh/zshrc) 2>/dev/null; then \
+		echo "$(call IDEMPOTENCY_SKIP_MSG,setup-config-zsh)"; \
+		exit 0; \
+	fi
+endif
 	@echo "🐚 ZSHの設定をセットアップ中..."
 	@mkdir -p $(DOTFILES_DIR)/zsh
 
@@ -275,9 +287,10 @@ setup-config-git:
 	@CURRENT_EMAIL=$$(git config --global user.email 2>/dev/null || echo ""); \
 	CURRENT_NAME=$$(git config --global user.name 2>/dev/null || echo ""); \
 	if [ -n "$$CURRENT_EMAIL" ] && [ -n "$$CURRENT_NAME" ]; then \
-		echo "✅ Git設定は既に存在します:"; \
+		echo "$(call IDEMPOTENCY_SKIP_MSG,setup-config-git)"; \
 		echo "   Name: $$CURRENT_NAME"; \
 		echo "   Email: $$CURRENT_EMAIL"; \
+		exit 0; \
 	else \
 		echo "📧 Git設定をセットアップします。"; \
 		if [ -n "$(GIT_USER_NAME)" ]; then \

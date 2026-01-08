@@ -1,5 +1,9 @@
 # Homebrewのインストール
 install-packages-homebrew:
+	@if $(call check_command,brew); then \
+		echo "$(call IDEMPOTENCY_SKIP_MSG,install-packages-homebrew)"; \
+		exit 0; \
+	fi
 	@echo "🍺 Homebrewをインストール中..."
 	@if ! command -v brew >/dev/null 2>&1; then \
 		echo "📥 Homebrewをダウンロード・インストール..."; \
@@ -122,6 +126,12 @@ install-fuse:
 
 # Brewfileを使用してアプリケーションをインストール
 install-packages-apps:
+ifndef FORCE
+	@if $(call check_marker,install-packages-apps) 2>/dev/null; then \
+		echo "$(call IDEMPOTENCY_SKIP_MSG,install-packages-apps)"; \
+		exit 0; \
+	fi
+endif
 	@echo "📦 アプリケーションをインストール中..."
 	@if command -v brew >/dev/null 2>&1; then \
 		eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"; \
@@ -132,6 +142,7 @@ install-packages-apps:
 		echo "❌ Homebrewがインストールされていません。先に 'make install-packages-homebrew' を実行してください。"; \
 		exit 1; \
 	fi
+	@$(call create_marker,install-packages-apps,N/A)
 	@echo "✅ アプリケーションのインストールが完了しました。"
 
 # Cursor IDEのインストール
@@ -1166,6 +1177,12 @@ install-claude-ecosystem:
 
 # DEBパッケージをインストール（IDE・ブラウザ含む）
 install-packages-deb:
+ifndef FORCE
+	@if $(call check_marker,install-packages-deb) 2>/dev/null; then \
+		echo "$(call IDEMPOTENCY_SKIP_MSG,install-packages-deb)"; \
+		exit 0; \
+	fi
+endif
 	@echo "📦 DEBパッケージをインストール中..."
 	@echo "ℹ️  IDE・ブラウザ・開発ツールをインストールします"
 
@@ -1244,6 +1261,7 @@ install-packages-deb:
 		echo "✅ WezTerm は既にインストールされています"; \
 	fi
 
+	@$(call create_marker,install-packages-deb,N/A)
 	@echo "✅ DEBパッケージのインストールが完了しました"
 	@echo "📋 インストール完了項目:"
 	@echo "   - Visual Studio Code"
