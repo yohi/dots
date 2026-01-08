@@ -23,7 +23,7 @@
       }
     }
   },
-  "postCreateCommand": "make --version && jq --version && bw --version && echo 'Devcontainer ready!'",
+  "postCreateCommand": "/workspaces/dots/.devcontainer/scripts/post-create.sh",
   "features": {},
   "forwardPorts": [],
   "mounts": [],
