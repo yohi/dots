@@ -16,10 +16,9 @@ MK_DIR="$DOTFILES_DIR/mk"
 TEMP_DIR="/tmp/make-test-$$"
 
 mkdir -p "$TEMP_DIR"
-cd "$TEMP_DIR"
-
+cd "$TEMP_DIR" || { echo "failed to cd to $TEMP_DIR" >&2; exit 1; }
 # Clean up on exit
-trap "rm -rf $TEMP_DIR" EXIT
+trap 'rm -rf "$TEMP_DIR"' EXIT
 
 echo "=== Makefile Deprecation Logic Tests ==="
 

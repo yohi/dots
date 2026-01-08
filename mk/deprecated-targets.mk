@@ -180,6 +180,7 @@ test-deprecation-policy: ## Validate all deprecated targets against timeline pol
 	echo ""; \
 	echo "[TEST] TL-002: Date format validation (ISO 8601)..."; \
 	for entry in $(DEPRECATED_TARGETS); do \
+		old=$$(echo "$$entry" | cut -d: -f1); \
 		dep_date=$$(echo "$$entry" | cut -d: -f3); \
 		rem_date=$$(echo "$$entry" | cut -d: -f4); \
 		if ! echo "$$dep_date" | grep -qE '^[0-9]{4}-[0-9]{2}-[0-9]{2}$$'; then \

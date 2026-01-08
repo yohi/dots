@@ -352,7 +352,7 @@ update-cursor:
 		fi; \
 	else \
 		echo "❌ Cursor IDEがインストールされていません"; \
-		echo "   'make install-cursor' でインストールしてください"; \
+		echo "   'make install-packages-cursor' でインストールしてください"; \
 	fi && \
 	\
 	if [ "$$CURSOR_UPDATED" = "false" ]; then \
@@ -1200,11 +1200,11 @@ endif
 
 	# FUSE（AppImage実行用）のインストール
 	@echo "🔧 FUSE（AppImage実行用）のインストール中..."
-	@$(MAKE) install-fuse
+	@$(MAKE) install-packages-fuse
 
 	# Cursor IDE のインストール
 	@echo "💻 Cursor IDE のインストール中..."
-	@$(MAKE) install-cursor
+	@$(MAKE) install-packages-cursor
 
 	# WezTerm のインストール
 	@echo "🖥️  WezTerm のインストール中..."
@@ -1390,26 +1390,10 @@ install-playwright:
 	@echo ""; \
 	@echo "✅ Playwright のインストールが完了しました"
 
-# ========================================
-# 新しい階層的な命名規則のターゲット
-# ========================================
-
-# パッケージ・ソフトウェアインストール系
-install-packages-flatpak: install-flatpak
-install-packages-fuse: install-fuse
-install-packages-wezterm: install-wezterm
-install-packages-cursor: install-cursor
-install-packages-claude-code: install-claude-code
-install-packages-claudia: install-claudia
-install-packages-superclaude: install-superclaude
-install-packages-claude-ecosystem: install-claude-ecosystem
-install-packages-cica-fonts: install-cica-fonts
-install-packages-mysql-workbench: install-mysql-workbench
-install-packages-playwright: install-playwright
-install-packages-gemini-cli: install-gemini-cli
 
 # ccusage のインストール
 install-packages-ccusage:
+
 	@echo "📦 ccusage をインストールしています..."
 	@if ! command -v bun >/dev/null 2>&1; then \
 		echo "bun が見つからないため、インストールします..."; \

@@ -244,7 +244,7 @@ setup-config-cursor:
 	@echo "✅ Cursorの設定が完了しました。"
 
 # Cursor MCP Toolsの設定をセットアップ
-setup-mcp-tools:
+setup-config-mcp-tools:
 	@echo "🔧 Cursor MCP Toolsの設定をセットアップ中..."
 	@mkdir -p $(HOME_DIR)/.cursor
 
@@ -397,7 +397,7 @@ setup-config-docker:
 	@echo "ℹ️  ターミナルを再起動してからDockerを使用してください。"
 
 # 追加の開発環境設定
-setup-development:
+setup-config-development:
 	@echo "⚙️  追加の開発環境設定を実行中..."
 
 	# Tilixの設定
@@ -439,10 +439,10 @@ setup-logiops-deps:
 	@sudo DEBIAN_FRONTEND=noninteractive apt-get update || true
 	@sudo DEBIAN_FRONTEND=noninteractive apt-get install -y cmake libevdev-dev libudev-dev libconfig++-dev || true
 	@echo "✅ logiops依存関係のインストールが完了しました"
-	@echo "ℹ️  logiopsの設定を適用するには: make setup-development"
+	@echo "ℹ️  logiopsの設定を適用するには: make setup-config-development"
 
 # キーボードショートカットの設定
-setup-shortcuts:
+setup-config-shortcuts:
 	@echo "⌨️  キーボードショートカットの設定を実行中..."
 
 	# ウィンドウマネージャのキーバインド設定
@@ -517,7 +517,7 @@ setup-config-ime:
 	@echo "   3. WezTermでCtrl+SpaceまたはAlt+半角/全角で日本語入力を切り替え"
 	@echo ""
 	@echo "🔧 手動で日本語入力を設定する場合:"
-		echo "   ibus-setup を実行して手動設定してください"
+	@echo "   ibus-setup を実行して手動設定してください"
 
 
 # ========================================
