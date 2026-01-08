@@ -110,7 +110,12 @@ echo "[Step 5/5] Checking Bitwarden integration..."
 
 if [ "${WITH_BW:-0}" = "1" ]; then
     if [ -n "${BW_SESSION:-}" ]; then
-        bw_status=$(BW_SESSION="$BW_SESSION" bw status 2>/dev/null | jq -r '.status' 2>/dev/null || echo "error")
+        bw_status=$(
+            (
+                export BW_SESSION="$BW_SESSION"
+                bw status 2>/dev/null
+            ) | jq -r '.status' 2>/dev/null || echo "error"
+        )
         if [ "$bw_status" = "unlocked" ]; then
             echo "  [✓] Bitwarden session is active and unlocked"
         else
