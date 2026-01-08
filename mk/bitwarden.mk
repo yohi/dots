@@ -209,6 +209,7 @@ bw-get-item-%: ## 指定アイテムのシークレットを取得
 .PHONY: setup-config-secrets
 setup-config-secrets: ## Bitwarden からシークレットを取得して保存
 	@$(call bw_require_opt_in,$@); \
+	set -euo pipefail; \
 	if [ -z "$$BW_SECRET_ITEM" ]; then \
 		echo "[ERROR] BW_SECRET_ITEM is required." >&2; \
 		exit 1; \
@@ -222,10 +223,6 @@ setup-config-secrets: ## Bitwarden からシークレットを取得して保存
 		exit 1; \
 	fi; \
 	secret="$$( $(call bw_get_item,$$BW_SECRET_ITEM) )"; \
-	status="$$?"; \
-	if [ "$$status" -ne 0 ]; then \
-		exit "$$status"; \
-	fi; \
 	secrets_file="$$BW_SECRETS_FILE"; \
 	key="$$BW_SECRET_KEY"; \
 	tmp_file="$$secrets_file.tmp"; \
