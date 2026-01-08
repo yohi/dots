@@ -211,11 +211,6 @@ _cursor_download:
 			echo "ℹ️  TODO: 将来的に 'sha256sum -c' による検証に置き換える予定です"; \
 			verify_download_size 100000000 500000000 || exit 1; \
 		fi; \
-		else \
-			echo "⚠️  SHA256チェックサム未定義: 暫定的なサイズ検証を実行します"; \
-			# TODO: When checksums are published, replace this size check with 'sha256sum -c' \
-			verify_download_size 60000000 600000000 || true; \
-		fi; \
 		\
 		if [ "$$VALID_DOWNLOAD" -eq 1 ]; then \
 			echo "✅ ダウンロード完了"; \
