@@ -62,7 +62,12 @@ cc-sdd-check: ## cc-sddのインストール状態を確認
 	fi
 
 .PHONY: cc-sdd-install
-cc-sdd-install: ## cc-sddをインストール（デフォルト: 日本語、Claude Code）
+cc-sdd-install: ## cc-sddをインストール(デフォルト: 日本語、Claude Code)
+	@# 冪等性チェック: .claude/commands/kiro と .kiro が存在する場合はスキップ
+	@if [ -d ".claude/commands/kiro" ] && [ -d ".kiro" ]; then \
+		echo "$(call IDEMPOTENCY_SKIP_MSG,cc-sdd-install)"; \
+		exit 0; \
+	fi
 	@echo "🚀 cc-sdd (Spec-Driven Development) のインストールを開始..."
 	@echo ""
 	@# Node.jsの確認
