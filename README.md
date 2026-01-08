@@ -323,6 +323,30 @@ EMAIL=your@email.com make setup-git
 make setup-git
 ```
 
+### 🔄 冪等性（Idempotency）と強制再実行
+
+セットアップ時間の短縮のため、`install-packages-apps` などの重い処理は一度完了するとマーカーが作成され、次回以降は自動的にスキップされます（`check_marker` 関数を使用）。
+
+**`install-packages-apps` の役割**:
+`Brewfile` に定義された多数のアプリケーションを一括インストールします。これには時間がかかるため、デフォルトでは再実行を防止しています。
+
+**制御コマンド**:
+
+- **強制再実行**: `FORCE=1` を指定すると、マーカーを無視して再実行します。`Brewfile` を更新した場合などに使用します。
+  ```bash
+  make FORCE=1 install-packages-apps
+  ```
+
+- **状態確認**: どのタスクが完了済みかを確認できます。
+  ```bash
+  make check-idempotency
+  ```
+
+- **マーカー削除**: 全ての完了状態をリセットします。
+  ```bash
+  make clean-markers
+  ```
+
 ### 🎯 部分的セットアップ
 
 必要な部分のみセットアップする場合：

@@ -9,7 +9,7 @@ c: check-cursor-version   ## 短縮: Cursorバージョン確認
 u: update-cursor          ## 短縮: Cursorアップデート
 m: menu                   ## 短縮: インタラクティブメニュー
 h: help                   ## 短縮: ヘルプ表示
-claudecode: install-packages-superclaude  ## 短縮: SuperClaudeフレームワークインストール
+claudecode: install-superclaude  ## 短縮: SuperClaudeフレームワークインストール
 
 # 段階的セットアップの短縮形
 .PHONY: s1 s2 s3 s4 s5 ss sg

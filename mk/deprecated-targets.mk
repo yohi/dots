@@ -12,7 +12,7 @@ DEPRECATED_TARGETS ?= \
 	install-wezterm:install-packages-wezterm:2026-02-01:2026-08-01:warning \
 	install-cursor:install-packages-cursor:2026-02-01:2026-08-01:warning \
 	install-claude-code:install-packages-claude-code:2026-02-01:2026-08-01:warning \
-	install-superclaude:install-packages-superclaude:2026-02-01:2026-08-01:warning \
+	install-packages-superclaude:install-superclaude:2026-02-01:2026-08-01:warning \
 	install-claudia:install-packages-claudia:2026-02-01:2026-08-01:warning \
 	install-cica-fonts:install-packages-cica-fonts:2026-02-01:2026-08-01:warning \
 	install-ibm-plex-fonts:install-packages-ibm-plex-fonts:2026-02-01:2026-08-01:warning \

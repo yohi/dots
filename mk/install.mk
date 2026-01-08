@@ -145,9 +145,9 @@ endif
 	@$(call create_marker,install-packages-apps,N/A)
 	@echo "✅ アプリケーションのインストールが完了しました。"
 
-# Cursor AppImageのSHA256ハッシュ (更新時はここを変更)
-# 取得方法: curl -L https://downloader.cursor.sh/linux/appImage/x64 | sha256sum
-# 空欄の場合はハッシュ検証がスキップされます (非推奨)
+# Cursor AppImageのSHA256ハッシュ
+# TODO: Cursor公式にSHA256チェックサムの公開をリクエスト中
+# チェックサムが公開されるまでは、空欄にしてサイズ検証（暫定策）を使用します
 CURSOR_SHA256 :=
 
 # Cursor IDEのインストール
@@ -174,19 +174,38 @@ _cursor_download:
 		#    Reject outliers (e.g. < 60MB small pages, > 600MB corrupted files). \
 		\
 		VALID_DOWNLOAD=0; \
+		echo "🔐 ダウンロードファイルの整合性を検証中 (SHA256)..."; \
+		ACTUAL_HASH=$$(sha256sum cursor.AppImage | awk '{print $$1}'); \
 		if [ -n "$(CURSOR_SHA256)" ]; then \
-			echo "🔐 ダウンロードファイルの整合性を検証中 (SHA256)..."; \
-			ACTUAL_HASH=$$(sha256sum cursor.AppImage | awk '{print $$1}'); \
 			if [ "$$ACTUAL_HASH" != "$(CURSOR_SHA256)" ]; then \
 				echo "❌ ハッシュ不一致エラー"; \
 				echo "   期待値: $(CURSOR_SHA256)"; \
 				echo "   実際値: $$ACTUAL_HASH"; \
+				echo "   (バージョンが更新された可能性があります。mk/install.mk の CURSOR_SHA256 を更新してください)"; \
 				rm -f cursor.AppImage; \
 				exit 1; \
 			else \
 				echo "✅ ハッシュ検証に成功しました"; \
 				VALID_DOWNLOAD=1; \
 			fi; \
+		else \
+			echo "⚠️  SHA256チェックサム未定義: 暫定的なサイズ検証を実行します"; \
+			echo "ℹ️  TODO: 将来的に 'sha256sum -c' による検証に置き換える予定です"; \
+			FILE_SIZE=$$(stat -c%s cursor.AppImage 2>/dev/null || echo "0"); \
+			MIN_SIZE=100000000; # 100 MB (Typical: ~240MB) \
+			MAX_SIZE=500000000; # 500 MB \
+			if [ "$$FILE_SIZE" -ge "$$MIN_SIZE" ] && [ "$$FILE_SIZE" -le "$$MAX_SIZE" ]; then \
+				echo "✅ サイズ検証に成功しました ($$FILE_SIZE bytes)"; \
+				echo "   (範囲: $$(($$MIN_SIZE/1024/1024))MB - $$(($$MAX_SIZE/1024/1024))MB)"; \
+				VALID_DOWNLOAD=1; \
+			else \
+				echo "❌ ダウンロードファイルのサイズが不正です ($$FILE_SIZE bytes)"; \
+				echo "   許容範囲: $$(($$MIN_SIZE/1024/1024))MB - $$(($$MAX_SIZE/1024/1024))MB"; \
+				echo "   ファイルが破損しているか、改ざんされた可能性があります"; \
+				rm -f cursor.AppImage; \
+				exit 1; \
+			fi; \
+		fi; \
 		else \
 			echo "⚠️  SHA256チェックサム未定義: 暫定的なサイズ検証を実行します"; \
 			# TODO: When checksums are published, replace this size check with 'sha256sum -c' \
@@ -822,50 +841,14 @@ SUPERCLAUDE_HASH_TARGZ := bb73f5c3d11f222bb84704f99e671ef53b1cd7d3951c044947fab8
 SUPERCLAUDE_HASH_WHEEL := 46e5dcb5f03bd9775d01198a96cfe16279d14cc8c081c9619e270a96fb469821
 
 # SuperClaude のインストール
-install-packages-superclaude:
-	@echo "🚀 SuperClaude v$(SUPERCLAUDE_VERSION) のインストールを開始..."
-	@echo "ℹ️  注意: SuperClaude v$(SUPERCLAUDE_VERSION) (最新安定版) をインストールします"
-	@echo ""
+install-superclaude:
 	@$(MAKE) _superclaude_check_dependencies
 	@$(MAKE) _superclaude_install_package
 	@$(MAKE) _superclaude_setup_framework
 	@$(MAKE) _superclaude_verify_installation
-	@echo ""; \
-	@echo "🎉 SuperClaude v$(SUPERCLAUDE_VERSION) のセットアップが完了しました！" \
-	@echo ""; \
-	@echo "🚀 使用方法:" \
-	@echo "1. Claude Code を起動: claude" \
-	@echo "2. SuperClaude コマンドを使用:" \
-	@echo ""; \
-	@echo "📋 利用可能なコマンド例:" \
-	@echo "   /sc:implement <feature>    - 機能の実装" \
-	@echo "   /sc:build                  - ビルド・パッケージング" \
-	@echo "   /sc:design <ui>            - UI/UXデザイン" \
-	@echo "   /sc:analyze <code>         - コード分析" \
-	@echo "   /sc:troubleshoot <issue>   - 問題のデバッグ" \
-	@echo "   /sc:test <suite>           - テストスイート" \
-	@echo "   /sc:improve <code>         - コード改善" \
-	@echo "   /sc:cleanup                - コードクリーンアップ" \
-	@echo "   /sc:document <code>        - ドキュメント生成" \
-	@echo "   /sc:git <operation>        - Git操作" \
-	@echo "   /sc:estimate <task>        - 時間見積もり" \
-	@echo "   /sc:task <management>      - タスク管理" \
-	@echo ""; \
-	@echo "🎭 スマートペルソナ:" \
-	@echo "   🏗️  architect   - システム設計・アーキテクチャ" \
-	@echo "   🎨 frontend    - UI/UX・アクセシビリティ" \
-	@echo "   ⚙️  backend     - API・インフラストラクチャ" \
-	@echo "   🔍 analyzer    - デバッグ・問題解決" \
-	@echo "   🛡️  security    - セキュリティ・脆弱性評価" \
-	@echo "   ✍️  scribe      - ドキュメント・技術文書" \
-	@echo ""; \
-	@echo "🔌 MCP サーバー統合:" \
-	@echo "   - Context7 (公式ドキュメント)" \
-	@echo "   - Sequential (マルチステップ思考)" \
-	@echo "   - Magic (UIコンポーネント)" \
-	@echo ""; \
-	@echo "📚 詳細なドキュメント: https://superclaude-org.github.io/" \
-	@echo "✅ SuperClaude v$(SUPERCLAUDE_VERSION) のインストールが完了しました"
+
+# 後方互換性のためのエイリアス
+install-packages-superclaude: install-superclaude
 
 _superclaude_check_dependencies:
 	# Python の確認
@@ -883,6 +866,8 @@ _superclaude_check_dependencies:
 	else \
 		PYTHON_VERSION=$$(python3 --version 2>&1 | grep -oE '[0-9]+\.[0-9]+' | head -1); \
 		echo "✅ Python が見つかりました: $$(python3 --version 2>&1)"; \
+		\
+		# バージョン文字列の検証と解析 \
 		if echo "$$PYTHON_VERSION" | grep -qE '^[0-9]+\.[0-9]+$$'; then \
 			MAJOR=$$(echo "$$PYTHON_VERSION" | cut -d'.' -f1); \
 			MINOR=$$(echo "$$PYTHON_VERSION" | cut -d'.' -f2); \
@@ -891,9 +876,13 @@ _superclaude_check_dependencies:
 			MAJOR=0; \
 			MINOR=0; \
 		fi; \
-		if [ "$$MAJOR" -lt 3 ] || { [ "$$MAJOR" -eq 3 ] && [ "$$MINOR" -lt 8 ]; }; then \
+		\
+		# バージョン要件の確認 (3.8+) \
+		if [ "$$MAJOR" -eq 0 ]; then \
+			echo "⚠️  バージョンを特定できませんでした。Python 3.8+ がインストールされていることを確認してください。"; \
+		elif [ "$$MAJOR" -lt 3 ] || { [ "$$MAJOR" -eq 3 ] && [ "$$MINOR" -lt 8 ]; }; then \
 			echo "⚠️  Python 3.8+ が推奨されています (検出: $$PYTHON_VERSION)"; \
-			echo "   古いバージョンまたは不明なバージョンのため、問題が発生する可能性があります"; \
+			echo "   古いバージョンでは動作しない可能性があります"; \
 		fi; \
 	fi
 	# pip の確認
@@ -947,7 +936,7 @@ _superclaude_install_package:
 				echo "✅ SuperClaude $(SUPERCLAUDE_VERSION)へのアップデートが完了しました"; \
 			else \
 				echo "⚠️  標準アップデートに失敗しました。pipでの多重セキュリティ検証インストールを試行中..."; \
-				: "ハッシュ更新手順: pip hash <file> (ローカル) または https://pypi.org/pypi/SuperClaude/json (JSON API) から wheel と sdist の SHA256 を確認し、更新時は該当の --hash=sha256:... 値を両方とも（wheel と sdist）追加または置換してください"; \
+				: "ハッシュ更新手順: 'pip hash <file>' でローカルファイルのハッシュを取得するか、https://pypi.org/pypi/SuperClaude/json から wheel と sdist の SHA256 を確認し、更新時は該当の --hash=sha256:... 値を両方（wheel と sdist）に追加または置換してください"; \
 				pip install --upgrade --force-reinstall "SuperClaude==$(SUPERCLAUDE_VERSION)" \
 					--hash=sha256:$(SUPERCLAUDE_HASH_TARGZ) \
 					--require-hashes || \
@@ -1137,7 +1126,7 @@ fix-superclaude:
 		fi; \
 	else \
 		echo "❌ SuperClaude がインストールされていません"; \
-		echo "ℹ️  先に 'make install-packages-superclaude' を実行してください"; \
+		echo "ℹ️  先に 'make install-superclaude' を実行してください"; \
 	fi
 
 	@echo ""; \
@@ -1166,7 +1155,7 @@ install-claude-ecosystem:
 		echo "   有効化方法: SKIP_SUPERCLAUDE=0 make install-claude-ecosystem"; \
 	else \
 		echo "📦 SuperClaude をインストール中..."; \
-		$(MAKE) install-packages-superclaude || (echo "❌ SuperClaude インストールに失敗しました"; exit 1); \
+		$(MAKE) install-superclaude || (echo "❌ SuperClaude インストールに失敗しました"; exit 1); \
 		echo "✅ SuperClaude のインストールが完了しました"; \
 	fi
 	@echo ""
@@ -1513,8 +1502,8 @@ install-packages-ccusage:
 	fi
 	@echo "🔧 ccusage をグローバル導入中..."
 	@export PATH="$(HOME)/.bun/bin:$$PATH"; \
-	CCUSAGE_VERSION="17.2.1"; \
-	echo "📦 ccusage v$$CCUSAGE_VERSION をインストール中..."; \
+	CCUSAGE_VERSION="latest"; \
+	echo "📦 ccusage ($$CCUSAGE_VERSION) をインストール中..."; \
 	if ! bun add -g ccusage@$$CCUSAGE_VERSION; then \
 		echo "⚠️ bun add -g に失敗。bunx での実行にフォールバックします"; \
 	fi
