@@ -1393,7 +1393,6 @@ install-playwright:
 
 # ccusage のインストール
 install-packages-ccusage:
-
 	@echo "📦 ccusage をインストールしています..."
 	@if ! command -v bun >/dev/null 2>&1; then \
 		echo "bun が見つからないため、インストールします..."; \
