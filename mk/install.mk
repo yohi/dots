@@ -148,126 +148,118 @@ endif
 # Cursor IDEのインストール
 install-packages-cursor:
 	@echo "📝 Cursor IDEのインストールを開始します..."
-	@CURSOR_INSTALLED=false && \
-	\
-	@echo "🔍 既存のCursor IDEを確認中..." && \
-	if [ -f /opt/cursor/cursor.AppImage ]; then \
+	@if [ -f /opt/cursor/cursor.AppImage ]; then \
 		echo "✅ Cursor IDEは既にインストールされています"; \
-		CURSOR_INSTALLED=true; \
-	fi && \
-	\
-	if [ "$$CURSOR_INSTALLED" = "false" ]; then \
-		echo "📦 方法1: 自動ダウンロードを試行中..." && \
-		cd /tmp && \
-		if curl -L --user-agent "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36" \
-			--max-time 60 --retry 2 --retry-delay 3 \
-			-o cursor.AppImage "https://downloader.cursor.sh/linux/appImage/x64" 2>/dev/null; then \
-			FILE_SIZE=$$(stat -c%s cursor.AppImage 2>/dev/null || echo "0"); \
-			if [ "$$FILE_SIZE" -gt 10000000 ]; then \
-				echo "✅ 自動ダウンロードが成功しました"; \
-				chmod +x cursor.AppImage && \
-				sudo mkdir -p /opt/cursor && \
-				sudo mv cursor.AppImage /opt/cursor/cursor.AppImage && \
-				CURSOR_INSTALLED=true; \
-			else \
-				echo "❌ ダウンロードファイルが不完全です"; \
-				rm -f cursor.AppImage; \
+	else \
+		$(MAKE) _cursor_download; \
+	fi
+	@$(MAKE) _cursor_setup_desktop
+	@echo "✅ Cursor IDEのインストールが完了しました"
+
+_cursor_download:
+	@echo "📦 方法1: 自動ダウンロードを試行中..."
+	@cd /tmp && \
+	if curl -L --user-agent "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36" \
+		--max-time 60 --retry 2 --retry-delay 3 \
+		-o cursor.AppImage "https://downloader.cursor.sh/linux/appImage/x64" 2>/dev/null; then \
+		FILE_SIZE=$$(stat -c%s cursor.AppImage 2>/dev/null || echo "0"); \
+		if [ "$$FILE_SIZE" -gt 10000000 ]; then \
+			echo "✅ 自動ダウンロードが成功しました"; \
+			chmod +x cursor.AppImage; \
+			sudo mkdir -p /opt/cursor; \
+			sudo mv cursor.AppImage /opt/cursor/cursor.AppImage; \
+			exit 0; \
+		else \
+			echo "❌ ダウンロードファイルが不完全です"; \
+			rm -f cursor.AppImage; \
+		fi; \
+	fi; \
+	echo "📦 方法2: ダウンロードフォルダから検索中..."; \
+	FOUND=false; \
+	for DIR in $(HOME_DIR)/Downloads $(HOME_DIR)/Desktop /tmp; do \
+		if [ -d "$$DIR" ]; then \
+			CURSOR_FILE=$$(ls "$$DIR"/cursor*.AppImage 2>/dev/null | head -1); \
+			if [ -n "$$CURSOR_FILE" ]; then \
+				echo "✅ $$CURSOR_FILE が見つかりました"; \
+				chmod +x "$$CURSOR_FILE"; \
+				sudo mkdir -p /opt/cursor; \
+				sudo cp "$$CURSOR_FILE" /opt/cursor/cursor.AppImage; \
+				FOUND=true; \
+				break; \
 			fi; \
 		fi; \
-	fi && \
-	\
-	if [ "$$CURSOR_INSTALLED" = "false" ]; then \
-		echo "📦 方法2: ダウンロードフォルダから検索中..." && \
-		cd $(HOME_DIR)/Downloads 2>/dev/null || cd $(HOME_DIR)/Desktop 2>/dev/null || cd /tmp && \
-		if ls cursor*.AppImage 2>/dev/null; then \
-			CURSOR_FILE=$$(ls cursor*.AppImage | head -1); \
-			echo "✅ $$CURSOR_FILE が見つかりました"; \
-			chmod +x "$$CURSOR_FILE" && \
-			sudo mkdir -p /opt/cursor && \
-			sudo cp "$$CURSOR_FILE" /opt/cursor/cursor.AppImage && \
-			CURSOR_INSTALLED=true; \
-		fi; \
-	fi && \
-	\
-	if [ "$$CURSOR_INSTALLED" = "true" ]; then \
-		echo "📝 デスクトップエントリーとアイコンを作成中..." && \
-		\
-		echo "🎨 アイコンを設定中..." && \
-		ICON_EXTRACTED=false && \
-		cd /tmp && \
-		\
-		echo "📥 公式アイコンをダウンロード中..." && \
-		if curl -f -L --connect-timeout 10 --max-time 30 \
-			-H 'user-agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36' \
-			-o cursor-favicon.ico "https://cursor.com/favicon.ico" 2>/dev/null; then \
-			if command -v convert >/dev/null 2>&1; then \
-				if convert cursor-favicon.ico cursor-icon.png 2>/dev/null; then \
-					sudo mkdir -p /usr/share/pixmaps && \
-					sudo cp cursor-icon.png /usr/share/pixmaps/cursor.png && \
-					ICON_EXTRACTED=true && \
-					echo "✅ 公式アイコンをダウンロードして設定しました"; \
-				fi; \
-			else \
-				sudo mkdir -p /usr/share/pixmaps && \
-				sudo cp cursor-favicon.ico /usr/share/pixmaps/cursor.ico && \
-				ICON_EXTRACTED=true && \
-				echo "✅ 公式アイコン（ICO形式）をダウンロードして設定しました"; \
-			fi; \
-			rm -f cursor-favicon.ico cursor-icon.png 2>/dev/null || true; \
-		fi && \
-		\
-		if [ "$$ICON_EXTRACTED" = "false" ]; then \
-			echo "🔍 AppImageからアイコンを抽出中..." && \
-			if command -v unzip >/dev/null 2>&1; then \
-				if timeout 30 unzip -j /opt/cursor/cursor.AppImage "*.png" 2>/dev/null || timeout 30 unzip -j /opt/cursor/cursor.AppImage "usr/share/pixmaps/*.png" 2>/dev/null || timeout 30 unzip -j /opt/cursor/cursor.AppImage "resources/*.png" 2>/dev/null; then \
-					ICON_FILE=$$(ls -1 *.png 2>/dev/null | grep -i "cursor\|icon\|app" | head -1); \
-					if [ -z "$$ICON_FILE" ]; then \
-						ICON_FILE=$$(ls -1 *.png 2>/dev/null | head -1); \
-					fi; \
-					if [ ! -z "$$ICON_FILE" ] && [ -f "$$ICON_FILE" ]; then \
-						sudo mkdir -p /usr/share/pixmaps && \
-						sudo cp "$$ICON_FILE" /usr/share/pixmaps/cursor.png && \
-						ICON_EXTRACTED=true && \
-						echo "✅ AppImageからアイコンを抽出しました: $$ICON_FILE"; \
-					fi; \
-					rm -f *.png 2>/dev/null || true; \
-				fi; \
-			fi; \
-		fi && \
-		\
-		ICON_PATH="applications-development" && \
-		if [ "$$ICON_EXTRACTED" = "true" ]; then \
-			if [ -f /usr/share/pixmaps/cursor.png ]; then \
+	done; \
+	if [ "$$FOUND" = "false" ]; then \
+		echo "❌ Cursor IDEのインストールに失敗しました"; \
+		echo ""; \
+		echo "📥 手動インストール手順:"; \
+		echo "1. ブラウザで https://cursor.sh/ を開く"; \
+		echo "2. 'Download for Linux' をクリック"; \
+		echo "3. ダウンロード後、再度このコマンドを実行"; \
+		exit 1; \
+	fi
+
+_cursor_setup_desktop:
+	@echo "📝 デスクトップエントリーとアイコンを作成中..."
+	@ICON_PATH="applications-development"; \
+	ICON_EXTRACTED=false; \
+	echo "🎨 アイコンを設定中..."; \
+	cd /tmp; \
+	echo "📥 公式アイコンをダウンロード中..."; \
+	if curl -f -L --connect-timeout 10 --max-time 30 \
+		-H 'user-agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36' \
+		-o cursor-favicon.ico "https://cursor.com/favicon.ico" 2>/dev/null; then \
+		sudo mkdir -p /usr/share/pixmaps; \
+		if command -v convert >/dev/null 2>&1; then \
+			if convert cursor-favicon.ico cursor-icon.png 2>/dev/null; then \
+				sudo cp cursor-icon.png /usr/share/pixmaps/cursor.png; \
+				ICON_EXTRACTED=true; \
 				ICON_PATH="/usr/share/pixmaps/cursor.png"; \
-			elif [ -f /usr/share/pixmaps/cursor.ico ]; then \
-				ICON_PATH="/usr/share/pixmaps/cursor.ico"; \
+				echo "✅ 公式アイコンをダウンロードして設定しました"; \
 			fi; \
 		else \
-			echo "⚠️  アイコンの設定に失敗しました。デフォルトアイコンを使用します"; \
-		fi && \
-		\
-		echo "📝 デスクトップエントリーを作成中..." && \
-		echo "[Desktop Entry]" | sudo tee /usr/share/applications/cursor.desktop > /dev/null && \
-		echo "Name=Cursor" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
-		echo "Comment=The AI-first code editor" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
-		echo "Exec=/opt/cursor/cursor.AppImage --no-sandbox %F" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
-		echo "Icon=$$ICON_PATH" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
-		echo "Terminal=false" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
-		echo "Type=Application" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
-		echo "Categories=Development;IDE;TextEditor;" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
-		echo "MimeType=text/plain;inode/directory;" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
-		echo "StartupWMClass=cursor" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
-		sudo chmod +x /usr/share/applications/cursor.desktop && \
-		sudo update-desktop-database 2>/dev/null || true && \
-		echo "✅ Cursor IDEのインストールが完了しました";
-	else
-		echo "❌ Cursor IDEのインストールに失敗しました";
-		echo "";
-		echo "📥 手動インストール手順:";
-		echo "1. ブラウザで https://cursor.sh/ を開く";
-		echo "2. 'Download for Linux' をクリック";
-		echo "3. ダウンロード後、再度このコマンドを実行";
-	fi
+			sudo cp cursor-favicon.ico /usr/share/pixmaps/cursor.ico; \
+			ICON_EXTRACTED=true; \
+			ICON_PATH="/usr/share/pixmaps/cursor.ico"; \
+			echo "✅ 公式アイコン（ICO形式）をダウンロードして設定しました"; \
+		fi; \
+		rm -f cursor-favicon.ico cursor-icon.png 2>/dev/null || true; \
+	fi; \
+	if [ "$$ICON_EXTRACTED" = "false" ]; then \
+		echo "🔍 AppImageからアイコンを抽出中..."; \
+		if command -v unzip >/dev/null 2>&1; then \
+			if timeout 30 unzip -j /opt/cursor/cursor.AppImage "*.png" 2>/dev/null || \
+			   timeout 30 unzip -j /opt/cursor/cursor.AppImage "usr/share/pixmaps/*.png" 2>/dev/null || \
+			   timeout 30 unzip -j /opt/cursor/cursor.AppImage "resources/*.png" 2>/dev/null; then \
+				ICON_FILE=$$(ls -1 *.png 2>/dev/null | grep -i "cursor\|icon\|app" | head -1); \
+				if [ -z "$$ICON_FILE" ]; then ICON_FILE=$$(ls -1 *.png 2>/dev/null | head -1); fi; \
+				if [ -n "$$ICON_FILE" ] && [ -f "$$ICON_FILE" ]; then \
+					sudo mkdir -p /usr/share/pixmaps; \
+					sudo cp "$$ICON_FILE" /usr/share/pixmaps/cursor.png; \
+					ICON_PATH="/usr/share/pixmaps/cursor.png"; \
+					echo "✅ AppImageからアイコンを抽出しました: $$ICON_FILE"; \
+				fi; \
+				rm -f *.png 2>/dev/null || true; \
+			fi; \
+		fi; \
+	fi; \
+	if [ "$$ICON_EXTRACTED" = "false" ]; then \
+		echo "⚠️  アイコンの設定に失敗しました。デフォルトアイコンを使用します"; \
+	fi; \
+	echo "📝 デスクトップエントリーを作成中..."; \
+	echo "[Desktop Entry]" | sudo tee /usr/share/applications/cursor.desktop > /dev/null; \
+	echo "Name=Cursor" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null; \
+	echo "Comment=The AI-first code editor" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null; \
+	echo "Exec=/opt/cursor/cursor.AppImage --no-sandbox %F" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null; \
+	echo "Icon=$$ICON_PATH" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null; \
+	echo "Terminal=false" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null; \
+	echo "Type=Application" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null; \
+	echo "Categories=Development;IDE;TextEditor;" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null; \
+	echo "MimeType=text/plain;inode/directory;" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null; \
+	echo "StartupWMClass=cursor" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null; \
+	sudo chmod +x /usr/share/applications/cursor.desktop; \
+	sudo update-desktop-database 2>/dev/null || true; \
+	echo "✅ Cursor IDEのセットアップが完了しました";
 
 # Cursor IDEのアップデート
 update-cursor:
