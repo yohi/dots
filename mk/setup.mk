@@ -139,7 +139,7 @@ endif
 	@echo "✅ ZSHの設定が完了しました。"
 
 # WEZTERMの設定をセットアップ
-setup-wezterm:
+setup-config-wezterm:
 	@echo "🖥️  WEZTERMの設定をセットアップ中..."
 	@mkdir -p $(CONFIG_DIR)/wezterm
 
@@ -155,7 +155,7 @@ setup-wezterm:
 	@echo "✅ WEZTERMの設定が完了しました。"
 
 # VS Codeの設定をセットアップ
-setup-vscode:
+setup-config-vscode:
 	@echo "💻 VS Codeの設定をセットアップ中..."
 	@mkdir -p $(CONFIG_DIR)/Code/User
 
@@ -223,7 +223,7 @@ setup-vscode-copilot:
 	@echo ""
 
 # Cursorの設定をセットアップ
-setup-cursor:
+setup-config-cursor:
 	@echo "🖱️  Cursorの設定をセットアップ中..."
 	@mkdir -p $(CONFIG_DIR)/Cursor/User
 
@@ -332,7 +332,7 @@ setup-config-git:
 	@echo "✅ Git設定が完了しました。"
 
 # Docker設定のセットアップ
-setup-docker:
+setup-config-docker:
 	@echo "🐳 Docker設定をセットアップ中..."
 
 	# 必要なパッケージを先にインストール
@@ -485,7 +485,7 @@ setup-shortcuts:
 	@echo "⚠️  設定を反映するため、一度ログアウト・ログインすることを推奨します。"
 
 # 日本語入力環境の設定
-setup-ime:
+setup-config-ime:
 	@echo "🈹 日本語入力環境をセットアップ中..."
 
 	# IBusの設定確認
@@ -517,30 +517,14 @@ setup-ime:
 	@echo "   3. WezTermでCtrl+SpaceまたはAlt+半角/全角で日本語入力を切り替え"
 	@echo ""
 	@echo "🔧 手動で日本語入力を設定する場合:"
-	@echo "   ibus-setup を実行して手動設定してください"
+		echo "   ibus-setup を実行して手動設定してください"
 
-# ========================================
-# 新しい階層的な命名規則のターゲット
-# ========================================
-
-# 設定ファイル・コンフィグセットアップ系
-setup-config-wezterm: setup-wezterm
-setup-config-vscode: setup-vscode
-setup-config-vscode-copilot: setup-vscode-copilot
-setup-config-cursor: setup-cursor
-setup-config-mcp-tools: setup-mcp-tools
-setup-config-docker: setup-docker
-setup-config-development: setup-development
-setup-config-shortcuts: setup-shortcuts
-setup-config-ime: setup-ime
-setup-config-claude: setup-claude
-setup-config-lazygit: setup-lazygit
 
 # ========================================
 # Claude Code設定のセットアップ
 # ========================================
 
-setup-claude:
+setup-config-claude:
 	@echo "🤖 Claude Code設定をセットアップ中..."
 	@mkdir -p $(HOME_DIR)/.claude
 

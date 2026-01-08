@@ -42,15 +42,14 @@ check-superclaude: ## SuperClaudeフレームワークのインストール状�
 		fi; \
 	else \
 		echo "❌ Claude設定ディレクトリが存在しません: $(CLAUDE_DIR)"; \
-		echo "ℹ️  'make install-superclaude' を実行してください"; \
+		echo "ℹ️  'make install-packages-superclaude' を実行してください"; \
 	fi
 
-.PHONY: install-superclaude
-install-superclaude: ## SuperClaudeフレームワークをClaude Code向けにインストール
-	@# 冪等性チェック: CLAUDE.mdシンボリックリンクとSuperClaudeツールが存在する場合はスキップ
+.PHONY: install-packages-superclaude
+install-packages-superclaude: ## SuperClaudeフレームワークをClaude Code向けにインストール
 	@if [ -L "$(CLAUDE_DIR)/CLAUDE.md" ] && command -v SuperClaude >/dev/null 2>&1 && \
 	   [ -f "$(CLAUDE_DIR)/MODE_Brainstorming.md" ] && [ -f "$(CLAUDE_DIR)/PRINCIPLES.md" ]; then \
-		echo "$(call IDEMPOTENCY_SKIP_MSG,install-superclaude)"; \
+		echo "$(call IDEMPOTENCY_SKIP_MSG,install-packages-superclaude)"; \
 		exit 0; \
 	fi
 	@echo "🚀 SuperClaude Framework for Claude Code のインストールを開始..."
@@ -221,7 +220,7 @@ info-superclaude: ## SuperClaudeフレームワークの情報を表示
 	done
 	@echo ""
 	@echo "🔧 コマンド:"
-	@echo "   make install-superclaude     - フレームワークをインストール"
+	@echo "   make install-packages-superclaude - フレームワークをインストール"
 	@echo "   make check-superclaude       - インストール状態を確認"
 	@echo "   make update-superclaude      - 最新版に更新"
 	@echo "   make uninstall-superclaude   - アンインストール"
@@ -236,4 +235,4 @@ info-superclaude: ## SuperClaudeフレームワークの情報を表示
 # ========================================
 
 .PHONY: claudecode
-claudecode: install-superclaude  ## Claude Code用のSuperClaudeフレームワークをインストール(エイリアス)
+claudecode: install-packages-superclaude  ## Claude Code用のSuperClaudeフレームワークをインストール(エイリアス)

@@ -71,7 +71,7 @@ install-packages-homebrew:
 	@echo "✅ Homebrewのインストールが完了しました。"
 
 # AppImage実行用のFUSEパッケージをインストール
-install-fuse:
+install-packages-fuse:
 	@echo "📦 AppImage実行用のFUSEパッケージをインストール中..."
 	@echo "ℹ️  これによりCursor、PostmanなどのAppImageアプリケーションが実行可能になります"
 
@@ -146,7 +146,7 @@ endif
 	@echo "✅ アプリケーションのインストールが完了しました。"
 
 # Cursor IDEのインストール
-install-cursor:
+install-packages-cursor:
 	@echo "📝 Cursor IDEのインストールを開始します..."
 	@CURSOR_INSTALLED=false && \
 	\
@@ -445,7 +445,7 @@ check-cursor-version:
 	fi
 
 # MySQL Workbench のインストール
-install-mysql-workbench:
+install-packages-mysql-workbench:
 	@echo "🐬 MySQL Workbench のインストールを開始..."
 
 	# MySQL APTリポジトリの設定パッケージをダウンロード
@@ -490,7 +490,7 @@ install-mysql-workbench:
 	@echo "🎉 MySQL Workbench インストール完了"
 
 # Claude Code のインストール
-install-claude-code:
+install-packages-claude-code:
 	@echo "🤖 Claude Code のインストールを開始..."
 
 	# Node.jsの確認
@@ -579,7 +579,7 @@ install-claude-code:
 	@echo "✅ Claude Code のインストールが完了しました"
 
 # Claudia (Claude Code GUI) のインストール
-install-claudia:
+install-packages-claudia:
 	@echo "🖥️  Claudia (Claude Code GUI) のインストールを開始..."
 	@echo "ℹ️  注意: ClaudiaはまだRelease版が公開されていないため、ソースからビルドします"
 	@echo "⏱️  ビルドには10-15分かかる場合があります（システム環境により変動）"
@@ -785,49 +785,6 @@ install-claudia:
 	@echo "- カスタムエージェントを作成して開発タスクを自動化" \
 	@echo "✅ Claudia のインストールが完了しました"
 
-# SuperClaude (Claude Code Framework) のインストール
-# セキュリティ強化 2025年1月実装:
-# - バージョン3.0.0.2の厳格指定によるCVE対策
-# - SHA256ハッシュ検証 (PyPI公式ハッシュ値使用)
-# - --require-hashes フラグによる強制整合性チェック
-# - PyPI Trusted Publishing対応パッケージ (GPG署名の代替)
-install-superclaude:
-	@echo "🚀 SuperClaude v3 (Claude Code Framework) のインストールを開始..."
-
-	# Claude Code の確認
-	@echo "🔍 Claude Code の確認中..."
-	@if ! command -v claude >/dev/null 2>&1; then \
-		echo "❌ Claude Code がインストールされていません"; \
-		echo "ℹ️  先に 'make install-packages-claude-code' を実行してください"; \
-		exit 1; \
-	else \
-		echo "✅ Claude Code が見つかりました: $$(claude --version 2>/dev/null)"; \
-	fi
-
-	# Python の確認
-	@echo "🔍 Python の確認中..."
-	@if ! command -v python3 >/dev/null 2>&1; then \
-		echo "❌ Python3 がインストールされていません"; \
-		echo "📥 Pythonをインストールしてください: sudo apt install python3 python3-pip"; \
-		exit 1; \
-	else \
-		echo "✅ Python が見つかりました: $$(python3 --version)"; \
-	fi
-
-	# uv の確認とインストール
-	@echo "🔍 uv (Python パッケージマネージャー) の確認中..."
-	@if ! command -v uv >/dev/null 2>&1; then \
-		{ \
-			echo "📦 uv をインストール中..."; \
-			curl -LsSf https://astral.sh/uv/install.sh | sh; \
-			echo "🔄 uvのパスを更新中..."; \
-			export PATH="$$HOME/.local/bin:$$PATH"; \
-			if ! command -v uv >/dev/null 2>&1; then \
-				echo "⚠️  uvのインストールが完了しましたが、現在のセッションで認識されていません"; \
-				echo "   新しいターミナルセッションで再実行するか、以下を実行してください:"; \
-				echo "   source $(HOME_DIR)/.bashrc"; \
-			fi; \
-		}; \
 	else \
 		echo "✅ uv が見つかりました: $$(uv --version)"; \
 	fi
