@@ -479,7 +479,7 @@ test-deprecation-policy: ## 廃止タイムラインポリシーの検証テス�
     - jq 未導入時: `[ERROR] jq is required for Bitwarden integration.` が表示
     - `make bw-unlock WITH_BW=1 2>&1 | grep -E 'BW_SESSION=[^"]'` が空（セッションキー漏洩なし）
 
-- [ ] 3.3 `bw-unlock` を eval パターンで提供し、BW_SESSION を永続化しない
+- [x] 3.3 `bw-unlock` を eval パターンで提供し、BW_SESSION を永続化しない
   - 成功時は `export BW_SESSION="..."` 形式のみを stdout に出力し、`eval` で設定できるようにする
   - `BW_SESSION` が既に設定済みかつ有効な場合は、再アンロックせず既存セッションを再出力する
   - `BW_PASSWORD` が設定されている場合は、非対話的にアンロックできるようにする
