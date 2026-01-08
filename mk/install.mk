@@ -147,7 +147,8 @@ endif
 
 # Cursor AppImageのSHA256ハッシュ
 # TODO: Cursor公式にSHA256チェックサムの公開をリクエスト中
-# チェックサムが公開されるまでは、空欄にしてサイズ検証（暫定策）を使用します
+# チェックサムが公開されるまでは、空欄に設定されていますが、インストール時には
+# CURSOR_NO_VERIFY_HASH=true を指定しない限りエラーとなります（セキュリティ強化）
 CURSOR_SHA256 :=
 
 # Cursor IDEのインストール
@@ -207,9 +208,25 @@ _cursor_download:
 				VALID_DOWNLOAD=1; \
 			fi; \
 		else \
-			echo "⚠️  SHA256チェックサム未定義: 暫定的なサイズ検証を実行します"; \
-			echo "ℹ️  TODO: 将来的に 'sha256sum -c' による検証に置き換える予定です"; \
-			verify_download_size 100000000 500000000 || exit 1; \
+			if [ "$${CURSOR_NO_VERIFY_HASH}" = "true" ]; then \
+				echo "⚠️  【セキュリティ警告】SHA256チェックサム検証をスキップします (ユーザー要求)"; \
+				echo "ℹ️  TLS(HTTPS)による通信経路の保護と、ファイルサイズ検証による簡易チェックを実行します"; \
+				echo "   ダウンロード元: https://downloader.cursor.sh (TLS origin verified by curl)"; \
+				verify_download_size 100000000 500000000 || exit 1; \
+			else \
+				echo "❌ エラー: CURSOR_SHA256 が設定されていません"; \
+				echo "   セキュリティポリシーにより、整合性検証のないインストールはブロックされました。"; \
+				echo "   (Cursor公式からチェックサムが提供されていないため、現在はハッシュが空になっています)"; \
+				echo ""; \
+				echo "   【暫定的な対処方法】"; \
+				echo "   TLS(HTTPS)の安全性とファイルサイズ検証のみでインストールを続行する場合は、"; \
+				echo "   以下のコマンドを実行してください:"; \
+				echo ""; \
+				echo "   make install-packages-cursor CURSOR_NO_VERIFY_HASH=true"; \
+				echo ""; \
+				rm -f cursor.AppImage; \
+				exit 1; \
+			fi; \
 		fi; \
 		\
 		if [ "$$VALID_DOWNLOAD" -eq 1 ]; then \
@@ -646,10 +663,10 @@ install-packages-claudia:
 	else \
 		RUST_VERSION=$$(rustc --version | grep -o '[0-9]\+\.[0-9]\+' | head -1); \
 		echo "✅ Rust が見つかりました: $$(rustc --version)"; \
-		MAJOR=$(echo "$RUST_VERSION" | cut -d'.' -f1); \
-		MINOR=$(echo "$RUST_VERSION" | cut -d'.' -f2); \
-		if [ "$MAJOR" -lt 1 ] || { [ "$MAJOR" -eq 1 ] && [ "$MINOR" -lt 70 ]; }; then \
-			echo "⚠️  Rust 1.70.0+ が推奨されています (現在: $RUST_VERSION)"; \
+		MAJOR=$$(echo "$$RUST_VERSION" | cut -d'.' -f1); \
+		MINOR=$$(echo "$$RUST_VERSION" | cut -d'.' -f2); \
+		if [ "$$MAJOR" -lt 1 ] || { [ "$$MAJOR" -eq 1 ] && [ "$$MINOR" -lt 70 ]; }; then \
+			echo "⚠️  Rust 1.70.0+ が推奨されています (現在: $$RUST_VERSION)"; \
 			echo "💡 アップデート: rustup update または brew upgrade rust"; \
 		fi; \
 	fi
@@ -1579,10 +1596,10 @@ install-supercursor:
 		exit 1; \
 	fi; \
 	\
-	@echo "📁 必要なディレクトリを作成中..."; \
+	echo "📁 必要なディレクトリを作成中..."; \
 	mkdir -p $(HOME_DIR)/.cursor/ || true; \
 	\
-	@echo "🔗 シンボリックリンクを作成中..."; \
+	echo "🔗 シンボリックリンクを作成中..."; \
 	# SuperCursor本体へのリンク \
 	rm -rf $(HOME_DIR)/.cursor/supercursor; \
 	ln -sT $(DOTFILES_DIR)/cursor/supercursor $(HOME_DIR)/.cursor/supercursor || true; \
@@ -1597,7 +1614,7 @@ install-supercursor:
 	rm -f $(HOME_DIR)/.cursor/CURSOR.md; \
 	ln -sf $(DOTFILES_DIR)/cursor/supercursor/README.md $(HOME_DIR)/.cursor/CURSOR.md || true; \
 	\
-	@echo "✅ SuperCursor フレームワークのシンボリックリンク設定が完了しました"
+	echo "✅ SuperCursor フレームワークのシンボリックリンク設定が完了しました"
 
 	@echo ""; \
 	@echo "🎉 SuperCursor のセットアップが完了しました！" \
@@ -1732,13 +1749,13 @@ install-supergemini:
 	@echo "⚙️  SuperGemini フレームワークをセットアップ中..."
 	@export PATH="$$HOME/.local/bin:$$PATH"; \
 	echo "🔧 SuperGemini セットアップ準備中..."; \
-	@echo "ℹ️  フレームワークファイル、ユーザーツール、Gemini CLI設定をシンボリックリンクで構成します"; \
+	echo "ℹ️  フレームワークファイル、ユーザーツール、Gemini CLI設定をシンボリックリンクで構成します"; \
 	\
-	@echo "📁 必要なディレクトリを作成中..."; \
+	echo "📁 必要なディレクトリを作成中..."; \
 	mkdir -p $(HOME_DIR)/.gemini/ || true; \
 	mkdir -p $(HOME_DIR)/.gemini/user-tools/ || true; \
 	\
-	@echo "🔗 シンボリックリンクを作成中..."; \
+	echo "🔗 シンボリックリンクを作成中..."; \
 	# SuperGemini本体へのリンク \
 	ln -sf $(DOTFILES_DIR)/gemini/supergemini $(HOME_DIR)/.gemini/supergemini || true; \
 	# 各種ディレクトリへのリンク \
@@ -1747,7 +1764,7 @@ install-supergemini:
 	# 重要なファイルへの直接リンク \
 	ln -sf $(DOTFILES_DIR)/gemini/supergemini/GEMINI.md $(HOME_DIR)/.gemini/GEMINI.md || true; \
 	\
-	@echo "📝 カスタムツールファイルを作成中..."; \
+	echo "📝 カスタムツールファイルを作成中..."; \
 	cp -f $(DOTFILES_DIR)/gemini/supergemini/Commands/help.md $(HOME_DIR)/.gemini/user-tools/user-help.md 2>/dev/null || \
 	echo "import-help: # /user-help コマンド\n\nSuperGeminiフレームワークのコマンド一覧を表示します。" > $(HOME_DIR)/.gemini/user-tools/user-help.md; \
 	\
@@ -1757,10 +1774,10 @@ install-supergemini:
 	cp -f $(DOTFILES_DIR)/gemini/supergemini/Commands/implement.md $(HOME_DIR)/.gemini/user-tools/user-implement.md 2>/dev/null || \
 	echo "import-implement: # /user-implement コマンド\n\n新機能を実装します。" > $(HOME_DIR)/.gemini/user-tools/user-implement.md; \
 	\
-	@echo "🔧 Gemini CLI設定ファイルを更新中..."; \
+	echo "🔧 Gemini CLI設定ファイルを更新中..."; \
 	echo '{"selectedAuthType":"oauth-personal","usageStatisticsEnabled":false,"customToolsDirectory":"~/.gemini/user-tools","enableCustomTools":true}' > $(HOME_DIR)/.gemini/settings.json || true; \
 	\
-	@echo "✅ SuperGemini フレームワークのシンボリックリンク設定が完了しました"; \
+	echo "✅ SuperGemini フレームワークのシンボリックリンク設定が完了しました"; \
 	@echo ""; \
 	@echo "🎉 SuperGemini のセットアップが完了しました！" \
 	@echo ""; \
