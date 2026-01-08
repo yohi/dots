@@ -1,7 +1,7 @@
 .PHONY: codex codex-install codex-update codex-setup
 
 codex: ## Install and setup Codex CLI
-	@if command -v codex >/dev/null 2>&1 && ( [ -L "$(HOME_DIR)/.codex" ] || [ -f "$(DOTFILES_DIR)/codex/config.toml" ] ); then \
+	@if command -v codex >/dev/null 2>&1 && [ -L "$(HOME_DIR)/.codex" ] && [ -f "$(DOTFILES_DIR)/codex/config.toml" ]; then \
 		echo "$(call IDEMPOTENCY_SKIP_MSG,codex)"; \
 		exit 0; \
 	fi
