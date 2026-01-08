@@ -17,7 +17,7 @@ current_ver=$$($(1) 2>/dev/null | grep -oE '[0-9]+\.[0-9]+(\.[0-9]+)?' | head -1
 endef
 
 define check_symlink
-if [ -L "$(1)" ]; then actual=$$(readlink -f "$(1)"); expected=$$(readlink -f "$(2)"); if [ "$$actual" = "$$expected" ]; then echo "[SKIP] $(1) -> $(2) (already configured)"; exit 0; else echo "[UPDATE] $(1) points to $$actual, expected $(2)"; exit 1; fi; elif [ -e "$(1)" ]; then echo "[CONFLICT] $(1) exists but is not a symlink"; exit 1; else exit 1; fi
+if [ -L "$(1)" ]; then actual=$$(python3 -c "import os; print(os.path.realpath('$(1)'))"); expected=$$(python3 -c "import os; print(os.path.realpath('$(2)'))"); if [ "$$actual" = "$$expected" ]; then echo "[SKIP] $(1) -> $(2) (already configured)"; exit 0; else echo "[UPDATE] $(1) points to $$actual, expected $(2)"; exit 1; fi; elif [ -e "$(1)" ]; then echo "[CONFLICT] $(1) exists but is not a symlink"; exit 1; else exit 1; fi
 endef
 
 define check_command
