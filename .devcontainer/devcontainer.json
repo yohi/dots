@@ -1,0 +1,31 @@
+{
+  "name": "dots - Makefile Automation System",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "args": {
+      "BW_CLI_VERSION": "2024.9.0"
+    }
+  },
+  "remoteEnv": {
+    "BW_SESSION": "${localEnv:BW_SESSION}",
+    "WITH_BW": "${localEnv:WITH_BW}"
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-vscode.makefile-tools",
+        "timonwong.shellcheck",
+        "foxundermoon.shell-format"
+      ],
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "bash",
+        "files.eol": "\n"
+      }
+    }
+  },
+  "postCreateCommand": "make --version && jq --version && bw --version && echo 'Devcontainer ready!'",
+  "features": {},
+  "forwardPorts": [],
+  "mounts": [],
+  "remoteUser": "vscode"
+}
