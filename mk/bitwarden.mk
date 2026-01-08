@@ -22,6 +22,18 @@ BW_ERROR_SESSION_INVALID := [ERROR] Invalid Bitwarden session token.
 BW_ERROR_SESSION_INVALID_HINT :=         Your session may have been invalidated.
 BW_ERROR_SESSION_HINT1 :=         Run: eval $$(make bw-unlock WITH_BW=1)
 BW_ERROR_SESSION_HINT2 :=         Or: export BW_SESSION=$$(bw unlock --raw)
+BW_ERROR_NOT_LOGGED_IN := [ERROR] Bitwarden CLI is not logged in.
+BW_ERROR_NOT_LOGGED_IN_HINT1 :=         Run: bw login
+BW_ERROR_NOT_LOGGED_IN_HINT2 :=         Or set BW_CLIENTID and BW_CLIENTSECRET for API key login.
+BW_ERROR_VAULT_LOCKED := [ERROR] Bitwarden vault is locked.
+BW_ERROR_VAULT_LOCKED_HINT1 :=         Run: eval $$(make bw-unlock WITH_BW=1)
+BW_ERROR_VAULT_LOCKED_HINT2 :=         Or: export BW_SESSION=$$(bw unlock --raw)
+BW_ERROR_SECRET_NOT_FOUND := [ERROR] Secret not found:
+BW_ERROR_SECRET_NOT_FOUND_HINT1 :=         Verify the item exists in your Bitwarden vault.
+BW_ERROR_SECRET_NOT_FOUND_HINT2 :=         Search with: bw list items --search
+BW_ERROR_NETWORK := [ERROR] Failed to connect to Bitwarden server.
+BW_ERROR_NETWORK_HINT1 :=         Check your network connection and try again.
+BW_ERROR_NETWORK_HINT2 :=         If using self-hosted, verify BW_SERVER is set correctly.
 
 # Use a single-line shell block so "exit 0" stops the recipe.
 bw_require_opt_in = if [ "$${WITH_BW:-0}" != "1" ]; then \
@@ -62,6 +74,49 @@ define _bw_check_status_impl
 		*) echo "error" ;; \
 	esac
 endef
+
+bw_get_item = $(BW_REQUIRE_CLI); \
+	$(BW_REQUIRE_JQ); \
+	if [ -z "$$BW_SESSION" ]; then \
+		echo "$(BW_ERROR_VAULT_LOCKED)" >&2; \
+		echo "$(BW_ERROR_VAULT_LOCKED_HINT1)" >&2; \
+		echo "$(BW_ERROR_VAULT_LOCKED_HINT2)" >&2; \
+		exit 1; \
+	fi; \
+	status=$$(BW_SESSION="$$BW_SESSION" bw status 2>/dev/null | jq -r '.status' 2>/dev/null || echo "error"); \
+	if [ "$$status" = "unauthenticated" ]; then \
+		echo "$(BW_ERROR_NOT_LOGGED_IN)" >&2; \
+		echo "$(BW_ERROR_NOT_LOGGED_IN_HINT1)" >&2; \
+		echo "$(BW_ERROR_NOT_LOGGED_IN_HINT2)" >&2; \
+		exit 1; \
+	fi; \
+	if [ "$$status" = "locked" ]; then \
+		echo "$(BW_ERROR_VAULT_LOCKED)" >&2; \
+		echo "$(BW_ERROR_VAULT_LOCKED_HINT1)" >&2; \
+		echo "$(BW_ERROR_VAULT_LOCKED_HINT2)" >&2; \
+		exit 1; \
+	fi; \
+	if [ "$$status" != "unlocked" ]; then \
+		echo "$(BW_ERROR_NETWORK)" >&2; \
+		echo "$(BW_ERROR_NETWORK_HINT1)" >&2; \
+		echo "$(BW_ERROR_NETWORK_HINT2)" >&2; \
+		exit 1; \
+	fi; \
+	item=$$(BW_SESSION="$$BW_SESSION" bw get item "$(1)" 2>/dev/null || true); \
+	if [ -z "$$item" ]; then \
+		echo "$(BW_ERROR_SECRET_NOT_FOUND) $(1)" >&2; \
+		echo "$(BW_ERROR_SECRET_NOT_FOUND_HINT1)" >&2; \
+		echo "$(BW_ERROR_SECRET_NOT_FOUND_HINT2) \"$(1)\"" >&2; \
+		exit 1; \
+	fi; \
+	secret=$$(printf '%s\n' "$$item" | jq -r '.login.password // .notes // empty'); \
+	if [ -z "$$secret" ]; then \
+		echo "$(BW_ERROR_SECRET_NOT_FOUND) $(1)" >&2; \
+		echo "$(BW_ERROR_SECRET_NOT_FOUND_HINT1)" >&2; \
+		echo "$(BW_ERROR_SECRET_NOT_FOUND_HINT2) \"$(1)\"" >&2; \
+		exit 1; \
+	fi; \
+	printf '%s\n' "$$secret"
 
 # ============================================================
 # Targets
@@ -140,8 +195,44 @@ bw-unlock: ## Bitwarden セッションをアンロックして BW_SESSION を�
 		session=$$(bw unlock --raw 2>/dev/null); \
 	fi; \
 	if [ -z "$$session" ]; then \
-		echo "$(BW_ERROR_UNLOCK_FAILED)" >&2; \
-		echo "$(BW_ERROR_UNLOCK_HINT1)" >&2; \
-		exit 1; \
+	echo "$(BW_ERROR_UNLOCK_FAILED)" >&2; \
+	echo "$(BW_ERROR_UNLOCK_HINT1)" >&2; \
+	exit 1; \
 	fi; \
 	echo "export BW_SESSION=\"$$session\""
+
+.PHONY: bw-get-item-%
+bw-get-item-%: ## 指定アイテムのシークレットを取得
+	@$(call bw_require_opt_in,$@); \
+	$(call bw_get_item,$*)
+
+.PHONY: setup-config-secrets
+setup-config-secrets: ## Bitwarden からシークレットを取得して保存
+	@$(call bw_require_opt_in,$@); \
+	set -euo pipefail; \
+	if [ -z "$$BW_SECRET_ITEM" ]; then \
+		echo "[ERROR] BW_SECRET_ITEM is required." >&2; \
+		exit 1; \
+	fi; \
+	if [ -z "$$BW_SECRET_KEY" ]; then \
+		echo "[ERROR] BW_SECRET_KEY is required." >&2; \
+		exit 1; \
+	fi; \
+	if [ -z "$$BW_SECRETS_FILE" ]; then \
+		echo "[ERROR] BW_SECRETS_FILE is required." >&2; \
+		exit 1; \
+	fi; \
+	secret="$$( $(call bw_get_item,$$BW_SECRET_ITEM) )"; \
+	secrets_file="$$BW_SECRETS_FILE"; \
+	key="$$BW_SECRET_KEY"; \
+	tmp_file="$$secrets_file.tmp"; \
+	mkdir -p "$$(dirname "$$secrets_file")"; \
+	if [ -f "$$secrets_file" ]; then \
+		grep -v "^$$key=" "$$secrets_file" > "$$tmp_file"; \
+	else \
+		: > "$$tmp_file"; \
+	fi; \
+	printf '%s=%s\n' "$$key" "$$secret" >> "$$tmp_file"; \
+	chmod 600 "$$tmp_file"; \
+	mv "$$tmp_file" "$$secrets_file"; \
+	echo "[OK] Stored secret for $$key in $$secrets_file."

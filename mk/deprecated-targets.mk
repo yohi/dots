@@ -7,7 +7,8 @@ DEPRECATED_TARGETS ?= \
 	install-deb:install-packages-deb:2026-02-01:2026-08-01:warning \
 	setup-vim:setup-config-vim:2026-02-01:2026-08-01:warning \
 	setup-zsh:setup-config-zsh:2026-02-01:2026-08-01:warning \
-	setup-git:setup-config-git:2026-02-01:2026-08-01:warning
+	setup-git:setup-config-git:2026-02-01:2026-08-01:warning \
+	setup-secrets:setup-config-secrets:2026-02-01:2026-08-01:warning
 
 DEPRECATION_MIN_DAYS ?= 180
 
