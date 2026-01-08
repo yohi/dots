@@ -46,6 +46,9 @@ fi
 .PHONY: install
 install: ## Install dotfiles only (without SuperCopilot)
 	@bash install.sh
+	@if [ "$${WITH_BW:-0}" = "1" ]; then \
+		$(MAKE) --no-print-directory setup-secrets WITH_BW=1; \
+	fi
 
 .PHONY: install-all
 install-all: install vscode-supercopilot ## Install dotfiles and SuperCopilot

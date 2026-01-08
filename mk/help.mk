@@ -47,6 +47,7 @@ help:
 	@echo "  make setup-config-cursor              - Cursorの設定をセットアップ"
 	@echo "  make setup-config-mcp-tools           - Cursor MCP Toolsの設定をセットアップ"
 	@echo "  make setup-config-git                 - Git設定をセットアップ"
+	@echo "  make setup-config-secrets             - Bitwarden からシークレットを取得して .env に保存"
 	@echo "  make setup-config-docker              - Dockerの設定をセットアップ"
 	@echo "  make setup-config-development         - 開発環境の設定をセットアップ"
 	@echo "  make setup-config-shortcuts           - キーボードショートカットの設定をセットアップ"
