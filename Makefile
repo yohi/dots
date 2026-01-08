@@ -6,6 +6,7 @@
 
 # 分割されたMakefileをinclude
 include mk/variables.mk
+include mk/idempotency.mk
 include mk/help.mk
 include mk/help-short.mk
 include mk/presets.mk
