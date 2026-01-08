@@ -1052,7 +1052,7 @@ install-claude-ecosystem:
 
 	# Step 1: Claude Code のインストール
 	@echo "📋 Step 1/3: Claude Code をインストール中..."
-	@$(MAKE) install-claude-code
+	@$(MAKE) install-packages-claude-code
 	@echo "✅ Claude Code のインストールが完了しました"
 	@echo ""
 
@@ -1071,7 +1071,7 @@ install-claude-ecosystem:
 
 	# Step 3: Claudia のインストール
 	@echo "📋 Step 3/3: Claudia をインストール中..."
-	@$(MAKE) install-claudia
+	@$(MAKE) install-packages-claudia
 	@echo "✅ Claudia のインストールが完了しました"
 	@echo ""
 
@@ -1395,8 +1395,14 @@ install-playwright:
 install-packages-ccusage:
 	@echo "📦 ccusage をインストールしています..."
 	@if ! command -v bun >/dev/null 2>&1; then \
-		echo "bun が見つからないため、インストールします..."; \
-		curl -fsSL https://bun.sh/install | bash; \
+		if command -v brew >/dev/null 2>&1; then \
+			echo "🍺 Homebrewを使用してbunをインストール中..."; \
+			brew install bun; \
+		else \
+			echo "🔐 Bunをインストール中（公式インストーラー使用）..."; \
+			curl -fsSL https://bun.sh/install | bash; \
+			echo "⚠️  注意: インストール後、Bunのバージョンを確認してください"; \
+		fi; \
 		export PATH="$(HOME)/.bun/bin:$$PATH"; \
 		if ! command -v bun >/dev/null 2>&1; then \
 			echo "❌ bun のインストールに失敗しました。PATH を確認してください。"; \
@@ -1405,7 +1411,9 @@ install-packages-ccusage:
 	fi
 	@echo "🔧 ccusage をグローバル導入中..."
 	@export PATH="$(HOME)/.bun/bin:$$PATH"; \
-	if ! bun add -g ccusage; then \
+	CCUSAGE_VERSION="17.2.0"; \
+	echo "📦 ccusage v$$CCUSAGE_VERSION をインストール中..."; \
+	if ! bun add -g ccusage@$$CCUSAGE_VERSION; then \
 		echo "⚠️ bun add -g に失敗。bunx での実行にフォールバックします"; \
 	fi
 	@echo "🔍 動作確認: ccusage --version"
@@ -1434,14 +1442,12 @@ install-packages-chrome-beta:
 	@echo "✅ Google Chrome Beta のインストールが完了しました"
 
 # ========================================
-# 後方互換性のためのエイリアス
+# 後方互換性のためのエイリアス (一部のみここに定義)
+# ほとんどの後方互換エイリアスは mk/deprecated-targets.mk で一元管理されています。
 # ========================================
 
-# 古いターゲット名を維持（新しいターゲットを呼び出すエイリアス）
-# install-homebrew: は既に実装済み
-# install-apps: は既に実装済み
-# install-deb: は既に実装済み
-# その他の既存ターゲットはそのまま
+# ここでは、単純な転送のみが必要な少数のエイリアスのみを定義しています。
+# 詳細な非推奨ポリシー（警告、期限など）は mk/deprecated-targets.mk を参照してください。
 
 # SuperCopilot Framework for VSCode のインストール
 install-packages-vscode-supercopilot:
