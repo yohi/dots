@@ -23,3 +23,43 @@ endef
 define check_command
 command -v $(1) >/dev/null 2>&1
 endef
+
+# ============================================================
+# FORCE flag support
+# ============================================================
+ifdef FORCE
+  SKIP_IDEMPOTENCY_CHECK := true
+endif
+
+# ============================================================
+# Marker file cleanup targets
+# ============================================================
+.PHONY: clean-markers
+clean-markers: ## 全てのマーカーファイルを削除（再セットアップを強制）
+	@echo "[CLEAN] Removing all completion markers..."
+	@rm -f "$(MARKER_DIR)"/.done-*
+	@echo "[DONE] All markers removed. Next run will re-execute all targets."
+
+.PHONY: clean-marker-%
+clean-marker-%: ## 特定ターゲットのマーカーを削除
+	@echo "[CLEAN] Removing marker for $*..."
+	@rm -f "$(MARKER_DIR)/.done-$*"
+
+# ============================================================
+# Idempotency status check
+# ============================================================
+.PHONY: check-idempotency
+check-idempotency: ## 各ターゲットの冪等性状態を表示
+	@echo "=== Idempotency Status ==="
+	@echo ""
+	@echo "Marker Files ($(MARKER_DIR)):"
+	@ls -la "$(MARKER_DIR)"/.done-* 2>/dev/null || echo "  (no markers found)"
+	@echo ""
+	@echo "Package Installation Status:"
+	@command -v brew >/dev/null 2>&1 && echo "  [✓] Homebrew: $$(brew --version | head -1)" || echo "  [ ] Homebrew: not installed"
+	@command -v node >/dev/null 2>&1 && echo "  [✓] Node.js: $$(node --version)" || echo "  [ ] Node.js: not installed"
+	@command -v python3 >/dev/null 2>&1 && echo "  [✓] Python: $$(python3 --version)" || echo "  [ ] Python: not installed"
+	@echo ""
+	@echo "Config Symlinks Status:"
+	@test -L "$(HOME)/.zshrc" && echo "  [✓] .zshrc -> $$(readlink $(HOME)/.zshrc)" || echo "  [ ] .zshrc: not a symlink"
+	@test -L "$(HOME)/.vimrc" && echo "  [✓] .vimrc -> $$(readlink $(HOME)/.vimrc)" || echo "  [ ] .vimrc: not a symlink"
