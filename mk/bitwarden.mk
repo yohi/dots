@@ -210,6 +210,10 @@ bw-get-item-%: ## 指定アイテムのシークレットを取得
 setup-config-secrets: ## Bitwarden からシークレットを取得して保存
 	@$(call bw_require_opt_in,$@); \
 	set -euo pipefail; \
+	if [ "$${FORCE:-0}" != "1" ] && $(call check_marker,setup-config-secrets) 2>/dev/null; then \
+		echo "$(call IDEMPOTENCY_SKIP_MSG,setup-config-secrets)"; \
+		exit 0; \
+	fi; \
 	if [ -z "$$BW_SECRET_ITEM" ]; then \
 		echo "[ERROR] BW_SECRET_ITEM is required." >&2; \
 		exit 1; \
@@ -235,4 +239,5 @@ setup-config-secrets: ## Bitwarden からシークレットを取得して保存
 	printf '%s=%s\n' "$$key" "$$secret" >> "$$tmp_file"; \
 	chmod 600 "$$tmp_file"; \
 	mv "$$tmp_file" "$$secrets_file"; \
+	$(call create_marker,setup-config-secrets,N/A); \
 	echo "[OK] Stored secret for $$key in $$secrets_file."
