@@ -1,0 +1,102 @@
+#!/bin/bash
+# Mock Bitwarden CLI for testing
+# Simulates bw command behavior without requiring actual authentication
+#
+# Usage:
+#   BW_MOCK_STATE=unlocked ./bw status
+#   BW_MOCK_STATE=locked ./bw status
+#   BW_MOCK_STATE=unauthenticated ./bw status
+
+set -euo pipefail
+
+# Default state if not specified
+MOCK_STATE="${BW_MOCK_STATE:-unlocked}"
+
+case "$1" in
+    status)
+        # Return JSON status based on mock state
+        case "$MOCK_STATE" in
+            unlocked)
+                echo '{"status":"unlocked","userEmail":"mock-user@example.com","userId":"mock-user-id"}'
+                ;;
+            locked)
+                echo '{"status":"locked","userEmail":"mock-user@example.com","userId":"mock-user-id"}'
+                ;;
+            unauthenticated)
+                echo '{"status":"unauthenticated"}'
+                ;;
+            *)
+                echo '{"status":"error"}' >&2
+                exit 1
+                ;;
+        esac
+        ;;
+        
+    get)
+        # bw get item <item-name>
+        if [ "${2:-}" = "item" ]; then
+            ITEM_NAME="${3:-}"
+            case "$ITEM_NAME" in
+                "github-token")
+                    echo '{"id":"mock-id-1","name":"github-token","login":{"password":"ghp_mocktoken12345678901234567890"}}'
+                    ;;
+                "test-secret")
+                    echo '{"id":"mock-id-2","name":"test-secret","login":{"password":"mock-secret-value-12345"}}'
+                    ;;
+                "")
+                    echo "[ERROR] Item name required" >&2
+                    exit 1
+                    ;;
+                *)
+                    echo "[ERROR] Secret not found: $ITEM_NAME" >&2
+                    exit 1
+                    ;;
+            esac
+        else
+            echo "[ERROR] Unknown get subcommand: ${2:-}" >&2
+            exit 1
+        fi
+        ;;
+        
+    unlock)
+        # Return mock session key
+        if [ "${2:-}" = "--raw" ]; then
+            echo "mock-session-key-for-testing-abcdef123456"
+        else
+            echo "export BW_SESSION=\"mock-session-key-for-testing-abcdef123456\""
+        fi
+        ;;
+        
+    list)
+        # bw list items --search <query>
+        if [ "${2:-}" = "items" ]; then
+            if [ "${3:-}" = "--search" ]; then
+                SEARCH_QUERY="${4:-}"
+                echo '{"data":[{"id":"mock-id","name":"'"$SEARCH_QUERY"'","login":{"password":"mock-password"}}]}'
+            else
+                echo '{"data":[{"id":"mock-id-1","name":"github-token","login":{"password":"ghp_mock"}},{"id":"mock-id-2","name":"test-secret","login":{"password":"mock-secret"}}]}'
+            fi
+        else
+            echo "[ERROR] Unknown list subcommand: ${2:-}" >&2
+            exit 1
+        fi
+        ;;
+        
+    --version)
+        echo "2024.9.0 (mock)"
+        ;;
+        
+    sync)
+        # Mock sync command (used for session keepalive)
+        echo "Syncing complete." >&2
+        ;;
+        
+    login)
+        echo "You are logged in!" >&2
+        ;;
+        
+    *)
+        echo "Mock bw: unknown command $1" >&2
+        exit 1
+        ;;
+esac

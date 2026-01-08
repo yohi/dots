@@ -30,6 +30,7 @@ include mk/memory.mk
 include mk/codex.mk
 include mk/superclaude.mk
 include mk/cc-sdd.mk
+include mk/test.mk
 
 .PHONY: all
 all: help
