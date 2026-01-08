@@ -27,47 +27,52 @@ endef
 
 .PHONY: stage1 stage2 stage3 stage4 stage5
 stage1: ## ステージ1: システム基盤セットアップ（Homebrew + 基本パッケージ）
-	@echo "🚀 ステージ1: システム基盤セットアップを開始します..."
-	@echo "   📦 Homebrew + 基本パッケージのインストール"
-	@$(MAKE) install-packages-homebrew
-	@$(MAKE) install-packages-fuse
-	@echo "✅ ステージ1完了! 次は 'make stage2' でアプリケーションをインストールしてください"
+	@set -e; \
+	echo "🚀 ステージ1: システム基盤セットアップを開始します..."; \
+	echo "   📦 Homebrew + 基本パッケージのインストール"; \
+	$(MAKE) install-packages-homebrew || { echo "❌ ステージ1失敗: Homebrewパッケージのインストールに失敗しました (install-packages-homebrew)"; exit 1; }; \
+	$(MAKE) install-packages-fuse || { echo "❌ ステージ1失敗: FUSEのインストールに失敗しました (install-packages-fuse)"; exit 1; }; \
+	echo "✅ ステージ1完了! 次は 'make stage2' でアプリケーションをインストールしてください"
 
 stage2: ## ステージ2: 必須アプリケーションのインストール
-	@echo "🚀 ステージ2: 必須アプリケーションのインストール..."
-	@echo "   💻 IDE・エディタ・ブラウザなどの必須ツール"
-	@$(MAKE) install-packages-apps
-	@$(MAKE) install-packages-deb
-	@$(MAKE) install-packages-cursor
-	@$(MAKE) install-packages-wezterm
-	@echo "✅ ステージ2完了! 次は 'make stage3' で設定ファイルをセットアップしてください"
+	@set -e; \
+	echo "🚀 ステージ2: 必須アプリケーションのインストール..."; \
+	echo "   💻 IDE・エディタ・ブラウザなどの必須ツール"; \
+	$(MAKE) install-packages-apps || { echo "❌ ステージ2失敗: 必須アプリケーションのインストールに失敗しました (install-packages-apps)"; exit 1; }; \
+	$(MAKE) install-packages-deb || { echo "❌ ステージ2失敗: DEBパッケージのインストールに失敗しました (install-packages-deb)"; exit 1; }; \
+	$(MAKE) install-packages-cursor || { echo "❌ ステージ2失敗: Cursorのインストールに失敗しました (install-packages-cursor)"; exit 1; }; \
+	$(MAKE) install-packages-wezterm || { echo "❌ ステージ2失敗: WezTermのインストールに失敗しました (install-packages-wezterm)"; exit 1; }; \
+	echo "✅ ステージ2完了! 次は 'make stage3' で設定ファイルをセットアップしてください"
 
 stage3: ## ステージ3: 設定ファイル・dotfilesのセットアップ
-	@echo "🚀 ステージ3: 設定ファイル・dotfilesのセットアップ..."
-	@echo "   ⚙️  ZSH・Vim・WezTerm・VS Codeの設定"
-	@$(MAKE) install
-	@$(MAKE) setup-config-zsh
-	@$(MAKE) setup-config-vim
-	@$(MAKE) setup-config-wezterm
-	@$(MAKE) setup-config-vscode
-	@echo "✅ ステージ3完了! 次は 'make stage4' でシステム設定をセットアップしてください"
+	@set -e; \
+	echo "🚀 ステージ3: 設定ファイル・dotfilesのセットアップ..."; \
+	echo "   ⚙️  ZSH・Vim・WezTerm・VS Codeの設定"; \
+	$(MAKE) install || { echo "❌ ステージ3失敗: dotfilesのリンク作成に失敗しました (install)"; exit 1; }; \
+	$(MAKE) setup-config-zsh || { echo "❌ ステージ3失敗: ZSHの設定に失敗しました (setup-config-zsh)"; exit 1; }; \
+	$(MAKE) setup-config-vim || { echo "❌ ステージ3失敗: Vimの設定に失敗しました (setup-config-vim)"; exit 1; }; \
+	$(MAKE) setup-config-wezterm || { echo "❌ ステージ3失敗: WezTermの設定に失敗しました (setup-config-wezterm)"; exit 1; }; \
+	$(MAKE) setup-config-vscode || { echo "❌ ステージ3失敗: VS Codeの設定に失敗しました (setup-config-vscode)"; exit 1; }; \
+	echo "✅ ステージ3完了! 次は 'make stage4' でシステム設定をセットアップしてください"
 
 stage4: ## ステージ4: システム設定・GNOME設定
-	@echo "🚀 ステージ4: システム設定・GNOME設定..."
-	@echo "   🖥️  GNOME拡張機能・システムTweaks"
-	@$(MAKE) setup-gnome-extensions
-	@$(MAKE) setup-gnome-tweaks
-	@$(MAKE) setup-system
-	@echo "✅ ステージ4完了! 次は 'make stage5' でオプション機能をインストールしてください"
+	@set -e; \
+	echo "🚀 ステージ4: システム設定・GNOME設定..."; \
+	echo "   🖥️  GNOME拡張機能・システムTweaks"; \
+	$(MAKE) setup-gnome-extensions || { echo "❌ ステージ4失敗: GNOME拡張機能の設定に失敗しました (setup-gnome-extensions)"; exit 1; }; \
+	$(MAKE) setup-gnome-tweaks || { echo "❌ ステージ4失敗: GNOME Tweaksの設定に失敗しました (setup-gnome-tweaks)"; exit 1; }; \
+	$(MAKE) setup-system || { echo "❌ ステージ4失敗: その他システム設定に失敗しました (setup-system)"; exit 1; }; \
+	echo "✅ ステージ4完了! 次は 'make stage5' でオプション機能をインストールしてください"
 
 stage5: ## ステージ5: オプション機能（AI開発ツール・フォント等）
-	@echo "🚀 ステージ5: オプション機能のインストール..."
-	@echo "   🤖 AI開発ツール・フォント・その他ツール"
-	@$(MAKE) install-claude-ecosystem
-	@$(MAKE) install-packages-cica-fonts
-	@$(MAKE) install-packages-mysql-workbench
-	@$(MAKE) setup-mozc
-	@echo "✅ ステージ5完了! セットアップ完了です 🎉"
+	@set -e; \
+	echo "🚀 ステージ5: オプション機能のインストール..."; \
+	echo "   🤖 AI開発ツール・フォント・その他ツール"; \
+	$(MAKE) install-claude-ecosystem || { echo "❌ ステージ5失敗: Claudeエコシステムのインストールに失敗しました (install-claude-ecosystem)"; exit 1; }; \
+	$(MAKE) install-packages-cica-fonts || { echo "❌ ステージ5失敗: Cicaフォントのインストールに失敗しました (install-packages-cica-fonts)"; exit 1; }; \
+	$(MAKE) install-packages-mysql-workbench || { echo "❌ ステージ5失敗: MySQL Workbenchのインストールに失敗しました (install-packages-mysql-workbench)"; exit 1; }; \
+	$(MAKE) setup-mozc || { echo "❌ ステージ5失敗: Mozcの設定に失敗しました (setup-mozc)"; exit 1; }; \
+	echo "✅ ステージ5完了! セットアップ完了です 🎉"
 
 .PHONY: stage-status
 stage-status: ## 各ステージの完了状況を確認
@@ -140,33 +145,53 @@ stage-all: ## 全ステージを順次実行（各ステージ後に確認）
 	else \
 		read -p "続行しますか？ (y/N): " confirm && echo "$$confirm" | grep -iq '^y' || { echo "中止します"; exit 1; }; \
 	fi
-	@$(MAKE) stage1
-	@echo "ステージ1完了。ステージ2に進みますか？"
-	@if [ "$$NON_INTERACTIVE" = "1" ] || ! [ -t 0 ]; then \
-		echo "→ 自動的に次のステージに進みます"; \
+	@if $(MAKE) stage1; then \
+		echo "ステージ1完了。ステージ2に進みますか？"; \
+		if [ "$$NON_INTERACTIVE" = "1" ] || ! [ -t 0 ]; then \
+			echo "→ 自動的に次のステージに進みます"; \
+		else \
+			read -p "続行しますか？ (y/N): " confirm && echo "$$confirm" | grep -iq '^y' || { echo "中止します"; exit 1; }; \
+		fi; \
 	else \
-		read -p "続行しますか？ (y/N): " confirm && echo "$$confirm" | grep -iq '^y' || { echo "中止します"; exit 1; }; \
+		echo "❌ ステージ1の実行に失敗しました"; \
+		exit 1; \
 	fi
-	@$(MAKE) stage2
-	@echo "ステージ2完了。ステージ3に進みますか？"
-	@if [ "$$NON_INTERACTIVE" = "1" ] || ! [ -t 0 ]; then \
-		echo "→ 自動的に次のステージに進みます"; \
+	@if $(MAKE) stage2; then \
+		echo "ステージ2完了。ステージ3に進みますか？"; \
+		if [ "$$NON_INTERACTIVE" = "1" ] || ! [ -t 0 ]; then \
+			echo "→ 自動的に次のステージに進みます"; \
+		else \
+			read -p "続行しますか？ (y/N): " confirm && echo "$$confirm" | grep -iq '^y' || { echo "中止します"; exit 1; }; \
+		fi; \
 	else \
-		read -p "続行しますか？ (y/N): " confirm && echo "$$confirm" | grep -iq '^y' || { echo "中止します"; exit 1; }; \
+		echo "❌ ステージ2の実行に失敗しました"; \
+		exit 1; \
 	fi
-	@$(MAKE) stage3
-	@echo "ステージ3完了。ステージ4に進みますか？"
-	@if [ "$$NON_INTERACTIVE" = "1" ] || ! [ -t 0 ]; then \
-		echo "→ 自動的に次のステージに進みます"; \
+	@if $(MAKE) stage3; then \
+		echo "ステージ3完了。ステージ4に進みますか？"; \
+		if [ "$$NON_INTERACTIVE" = "1" ] || ! [ -t 0 ]; then \
+			echo "→ 自動的に次のステージに進みます"; \
+		else \
+			read -p "続行しますか？ (y/N): " confirm && echo "$$confirm" | grep -iq '^y' || { echo "中止します"; exit 1; }; \
+		fi; \
 	else \
-		read -p "続行しますか？ (y/N): " confirm && echo "$$confirm" | grep -iq '^y' || { echo "中止します"; exit 1; }; \
+		echo "❌ ステージ3の実行に失敗しました"; \
+		exit 1; \
 	fi
-	@$(MAKE) stage4
-	@echo "ステージ4完了。ステージ5に進みますか？"
-	@if [ "$$NON_INTERACTIVE" = "1" ] || ! [ -t 0 ]; then \
-		echo "→ 自動的に次のステージに進みます"; \
+	@if $(MAKE) stage4; then \
+		echo "ステージ4完了。ステージ5に進みますか？"; \
+		if [ "$$NON_INTERACTIVE" = "1" ] || ! [ -t 0 ]; then \
+			echo "→ 自動的に次のステージに進みます"; \
+		else \
+			read -p "続行しますか？ (y/N): " confirm && echo "$$confirm" | grep -iq '^y' || { echo "中止します"; exit 1; }; \
+		fi; \
 	else \
-		read -p "続行しますか？ (y/N): " confirm && echo "$$confirm" | grep -iq '^y' || { echo "中止します"; exit 1; }; \
+		echo "❌ ステージ4の実行に失敗しました"; \
+		exit 1; \
 	fi
-	@$(MAKE) stage5
-	@echo "🎉 全ステージ完了！"
+	@if $(MAKE) stage5; then \
+		echo "🎉 全ステージ完了！"; \
+	else \
+		echo "❌ ステージ5の実行に失敗しました"; \
+		exit 1; \
+	fi

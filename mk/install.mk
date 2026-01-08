@@ -787,7 +787,7 @@ install-packages-claudia:
 
 # SuperClaude のインストール
 install-superclaude:
-	@echo "🚀 SuperClaude v3 のインストールを開始..."
+	@echo "🚀 SuperClaude v4.1.9 のインストールを開始..."
 	@echo "ℹ️  注意: SuperClaude v4.1.9 (最新安定版) をインストールします"
 	@echo ""
 
@@ -1017,7 +1017,7 @@ install-superclaude:
 	fi
 
 	@echo ""; \
-	@echo "🎉 SuperClaude v3 のセットアップが完了しました！" \
+	@echo "🎉 SuperClaude v4.1.9 のセットアップが完了しました！" \
 	@echo ""; \
 	@echo "🚀 使用方法:" \
 	@echo "1. Claude Code を起動: claude" \
@@ -1051,7 +1051,7 @@ install-superclaude:
 	@echo "   - Magic (UIコンポーネント)" \
 	@echo ""; \
 	@echo "📚 詳細なドキュメント: https://superclaude-org.github.io/" \
-	@echo "✅ SuperClaude v3 のインストールが完了しました"
+	@echo "✅ SuperClaude v4.1.9 のインストールが完了しました"
 
 # SuperClaude 設定修復ヘルパー
 fix-superclaude:
