@@ -164,6 +164,24 @@ install-packages-cursor:
 _cursor_download:
 	@echo "📦 方法1: 自動ダウンロードを試行中..."
 	@cd /tmp && \
+	verify_download_size() { \
+		local min_size="$$1"; \
+		local max_size="$$2"; \
+		local file="cursor.AppImage"; \
+		local file_size=$$(stat -c%s "$$file" 2>/dev/null || echo "0"); \
+		if [ "$$file_size" -ge "$$min_size" ] && [ "$$file_size" -le "$$max_size" ]; then \
+			echo "✅ サイズ検証に成功しました ($$file_size bytes)"; \
+			echo "   (範囲: $$(($$min_size/1024/1024))MB - $$(($$max_size/1024/1024))MB)"; \
+			VALID_DOWNLOAD=1; \
+			return 0; \
+		else \
+			echo "❌ ダウンロードファイルのサイズが不正です ($$file_size bytes)"; \
+			echo "   許容範囲: $$(($$min_size/1024/1024))MB - $$(($$max_size/1024/1024))MB"; \
+			echo "   ファイルが破損しているか、改ざんされた可能性があります"; \
+			rm -f "$$file"; \
+			return 1; \
+		fi; \
+	}; \
 	if curl -L --user-agent "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36" \
 		--max-time 120 --retry 2 --retry-delay 3 \
 		-o cursor.AppImage "https://downloader.cursor.sh/linux/appImage/x64" 2>/dev/null; then \
@@ -191,35 +209,12 @@ _cursor_download:
 		else \
 			echo "⚠️  SHA256チェックサム未定義: 暫定的なサイズ検証を実行します"; \
 			echo "ℹ️  TODO: 将来的に 'sha256sum -c' による検証に置き換える予定です"; \
-			FILE_SIZE=$$(stat -c%s cursor.AppImage 2>/dev/null || echo "0"); \
-			MIN_SIZE=100000000; # 100 MB (Typical: ~240MB) \
-			MAX_SIZE=500000000; # 500 MB \
-			if [ "$$FILE_SIZE" -ge "$$MIN_SIZE" ] && [ "$$FILE_SIZE" -le "$$MAX_SIZE" ]; then \
-				echo "✅ サイズ検証に成功しました ($$FILE_SIZE bytes)"; \
-				echo "   (範囲: $$(($$MIN_SIZE/1024/1024))MB - $$(($$MAX_SIZE/1024/1024))MB)"; \
-				VALID_DOWNLOAD=1; \
-			else \
-				echo "❌ ダウンロードファイルのサイズが不正です ($$FILE_SIZE bytes)"; \
-				echo "   許容範囲: $$(($$MIN_SIZE/1024/1024))MB - $$(($$MAX_SIZE/1024/1024))MB"; \
-				echo "   ファイルが破損しているか、改ざんされた可能性があります"; \
-				rm -f cursor.AppImage; \
-				exit 1; \
-			fi; \
+			verify_download_size 100000000 500000000 || exit 1; \
 		fi; \
 		else \
 			echo "⚠️  SHA256チェックサム未定義: 暫定的なサイズ検証を実行します"; \
 			# TODO: When checksums are published, replace this size check with 'sha256sum -c' \
-			FILE_SIZE=$$(stat -c%s cursor.AppImage 2>/dev/null || echo "0"); \
-			MIN_SIZE=60000000;  # 60 MB \
-			MAX_SIZE=600000000; # 600 MB \
-			if [ "$$FILE_SIZE" -ge "$$MIN_SIZE" ] && [ "$$FILE_SIZE" -le "$$MAX_SIZE" ]; then \
-				echo "✅ サイズ検証に成功しました ($$FILE_SIZE bytes)"; \
-				VALID_DOWNLOAD=1; \
-			else \
-				echo "❌ ダウンロードファイルのサイズが不正です ($$FILE_SIZE bytes)"; \
-				echo "   許容範囲: $$MIN_SIZE - $$MAX_SIZE bytes"; \
-				rm -f cursor.AppImage; \
-			fi; \
+			verify_download_size 60000000 600000000 || true; \
 		fi; \
 		\
 		if [ "$$VALID_DOWNLOAD" -eq 1 ]; then \

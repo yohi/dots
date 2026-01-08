@@ -61,7 +61,8 @@ endef
 define _deprecated_target_rule
 $(if $(call get_deprecation_entry,$(1)),,$(error Deprecated target '$(1)' is not mapped.))
 .PHONY: $(1) _deprecated_guard_$(1)
-$(1): _deprecated_guard_$(1) .WAIT $(call get_new_target,$(1))
+$(1): _deprecated_guard_$(1)
+	@$(MAKE) $(call get_new_target,$(1))
 
 _deprecated_guard_$(1):
 	@old="$(1)"; \
@@ -134,6 +135,11 @@ _deprecated_guard_$(1):
 				printf '%s\n' "             Use '$$$$new' instead." >&2; \
 				printf '%s\n' "             Migration: make $$$$new" >&2; \
 			fi; \
+			;; \
+		*) \
+			printf '%s\n' "[ERROR] Unexpected deprecation phase '$$$$active_phase' for '$$$$old'." >&2; \
+			printf '%s\n' "        Debug info: dep_date=$$$$dep_date, rem_date=$$$$rem_date, status=$$$$status, now=$$$$now_epoch" >&2; \
+			exit 1; \
 			;; \
 	esac
 endef
