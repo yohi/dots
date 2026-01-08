@@ -159,6 +159,10 @@ install-packages-cursor:
 _cursor_download:
 	@echo "📦 方法1: 自動ダウンロードを試行中..."
 	@cd /tmp && \
+	# TODO: ダウンロードファイルの整合性検証が不十分です。\
+	# Cursor AppImageのダウンロード時にSHA256ハッシュ検証が行われていません。\
+	# ファイルサイズチェック（10MB超）のみでは、改ざんや不完全なダウンロードを検出できません。\
+	# セキュリティ向上のため、公式ハッシュ値との検証を追加することを検討してください。\
 	if curl -L --user-agent "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36" \
 		--max-time 60 --retry 2 --retry-delay 3 \
 		-o cursor.AppImage "https://downloader.cursor.sh/linux/appImage/x64" 2>/dev/null; then \
@@ -651,6 +655,8 @@ install-packages-claudia:
 	@CLAUDIA_DIR="/tmp/claudia-build" && \
 	rm -rf "$$CLAUDIA_DIR" 2>/dev/null || true && \
 	if git clone https://github.com/getAsterisk/claudia.git "$$CLAUDIA_DIR"; then \
+		# TODO: 将来的にClaudiaのリリース版が公開されたら、特定のタグ(例: --branch v1.0.0)やコミットハッシュでバージョンを固定してください。\
+		# 現在はリリース版がないため、デフォルトブランチの最新を使用しています。\
 		echo "✅ Claudia のクローンが完了しました"; \
 		cd "$$CLAUDIA_DIR" && \
 		\
