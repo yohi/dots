@@ -1,7 +1,7 @@
 # 統合ターゲットとその他のターゲット
 
 # 全体のセットアップ
-setup-all:
+setup-config-all:
 	@echo "🚀 全体のセットアップを開始中..."
 	@echo "ℹ️  以下の順序で実行します:"
 	@echo "   1. システムセットアップ（メモリ最適化含む）"
@@ -34,15 +34,15 @@ setup-all:
 	@$(MAKE) setup-config-vim
 	@$(MAKE) setup-config-zsh
 	@$(MAKE) setup-config-git
-	@$(MAKE) setup-wezterm
-	@$(MAKE) setup-vscode
-	@$(MAKE) setup-cursor
-	@$(MAKE) setup-mcp-tools
-	@$(MAKE) setup-docker
-	@$(MAKE) setup-development
-	@$(MAKE) setup-shortcuts
-	@$(MAKE) setup-claude
-	@$(MAKE) setup-mozc
+	@$(MAKE) setup-config-wezterm
+	@$(MAKE) setup-config-vscode
+	@$(MAKE) setup-config-cursor
+	@$(MAKE) setup-config-mcp-tools
+	@$(MAKE) setup-config-docker
+	@$(MAKE) setup-config-development
+	@$(MAKE) setup-config-shortcuts
+	@$(MAKE) setup-config-claude
+	@$(MAKE) setup-config-mozc
 	@echo ""
 
 	@echo "📋 6. 拡張機能インストール実行中..."
@@ -125,7 +125,7 @@ debug:
 	@echo "✅ デバッグ情報の表示が完了しました。"
 
 # WEZTERMのインストール
-install-wezterm:
+install-packages-wezterm:
 	@echo "📱 WEZTERMをインストール中..."
 
 	# WEZTERMのインストール
@@ -162,9 +162,6 @@ install-wezterm:
 
 # システム設定系
 setup-system: system-setup
-
-# 統合セットアップ系
-setup-config-all: setup-all
 
 # ========================================
 # 後方互換性のためのエイリアス

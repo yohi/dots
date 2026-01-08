@@ -148,7 +148,7 @@ endif
 	@echo "    make clean-repos"
 
 # IBM Plex Sans フォントのインストール（単独実行用）
-install-ibm-plex-fonts:
+install-packages-ibm-plex-fonts:
 	@echo "🔤 IBM Plex Sans フォントのインストールを開始..."
 	@mkdir -p $(HOME_DIR)/.local/share/fonts/ibm-plex
 	@cd /tmp && \
@@ -208,7 +208,7 @@ install-ibm-plex-fonts:
 	fi
 
 # Cica Nerd Fonts のインストール（単独実行用）
-install-cica-fonts:
+install-packages-cica-fonts:
 	@echo "🔤 Cica Nerd Fonts のインストールを開始..."
 	@mkdir -p $(HOME_DIR)/.local/share/fonts/cica
 	@cd /tmp && \

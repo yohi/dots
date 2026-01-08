@@ -163,7 +163,7 @@ make setup-secrets WITH_BW=1
     - 新規公開ターゲット名が全て `^(install|setup|update|check|clean|backup|export)-` にマッチ
     - 内部ターゲット名が全て `^_` で始まる
 
-- [ ] 2. 既存ターゲット互換と廃止予定ターゲット管理
+- [x] 2. 既存ターゲット互換と廃止予定ターゲット管理
 - [x] 2.1 (P) 短縮エイリアスを維持し、主要導線が壊れないようにする
   - 既存の短縮エイリアス（`i`, `s`, `c`, `u`, `m`, `h`, `claudecode`, `s1`〜`s5`, `ss`, `sg` など）が従来どおりに動作するようにする
   - 短縮エイリアスが「廃止予定の旧名エイリアス」と混在しないよう、責務を分離して管理できる状態にする
@@ -441,7 +441,7 @@ test-deprecation-policy: ## 廃止タイムラインポリシーの検証テス�
 
 ---
 
-- [ ] 3. Bitwarden 連携（WITH_BW オプトイン）
+- [x] 3. Bitwarden 連携（WITH_BW オプトイン）
 - [x] 3.1 WITH_BW オプトインメカニズムの基盤を確立する
   - `WITH_BW=1` の場合のみ Bitwarden 連携を有効化し、未設定/`WITH_BW=0` は完全にスキップする共通関数 `bw_require_opt_in` を実装する
   - 汎用ターゲットは Bitwarden 連携をスキップして正常終了し、`bw-*` ターゲットは案内を出して exit 0 で終了する動作を定義する
@@ -516,7 +516,7 @@ test-deprecation-policy: ## 廃止タイムラインポリシーの検証テス�
     - 正常取得時: パスワードまたはノートの値のみが stdout に出力
     - `setup-secrets` など既存ターゲットが `bw_require_opt_in` を使用して WITH_BW フラグに応答する
 
-- [ ] 4. 冪等性基盤と安全な再実行
+- [x] 4. 冪等性基盤と安全な再実行
 - [x] 4.1 (P) 冪等性検出メソッドを共通化し、パース時副作用ゼロを保証する
   - 許可された冪等性検出メソッド（ファイル存在/バージョン/マーカー/コマンド成功）を共通の仕組みとして提供する
   - マーカーファイルを規定ディレクトリに作成し、権限や内容フォーマットの要件を満たす
@@ -564,7 +564,7 @@ test-deprecation-policy: ## 廃止タイムラインポリシーの検証テス�
     - `make check-idempotency` 出力に「Marker Files」「Package Installation Status」「Config Symlinks Status」セクションが含まれる
     - `FORCE=1` 時に `[FORCE] Re-running <target>.` メッセージが表示される
 
-- [ ] 5. Devcontainer 内のテスト環境
+- [x] 5. Devcontainer 内のテスト環境
 - [x] 5.1 (P) Devcontainer を用意し、コンテナ内で Make ターゲットのテストが完結するようにする
   - ベースイメージと必要な依存関係を揃え、コンテナ内で Make ターゲットが実行できる状態にする
   - Bitwarden CLI を指定バージョン以上でインストールできるようにする

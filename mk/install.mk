@@ -71,7 +71,7 @@ install-packages-homebrew:
 	@echo "✅ Homebrewのインストールが完了しました。"
 
 # AppImage実行用のFUSEパッケージをインストール
-install-fuse:
+install-packages-fuse:
 	@echo "📦 AppImage実行用のFUSEパッケージをインストール中..."
 	@echo "ℹ️  これによりCursor、PostmanなどのAppImageアプリケーションが実行可能になります"
 
@@ -146,7 +146,7 @@ endif
 	@echo "✅ アプリケーションのインストールが完了しました。"
 
 # Cursor IDEのインストール
-install-cursor:
+install-packages-cursor:
 	@echo "📝 Cursor IDEのインストールを開始します..."
 	@CURSOR_INSTALLED=false && \
 	\
@@ -352,7 +352,7 @@ update-cursor:
 		fi; \
 	else \
 		echo "❌ Cursor IDEがインストールされていません"; \
-		echo "   'make install-cursor' でインストールしてください"; \
+		echo "   'make install-packages-cursor' でインストールしてください"; \
 	fi && \
 	\
 	if [ "$$CURSOR_UPDATED" = "false" ]; then \
@@ -445,7 +445,7 @@ check-cursor-version:
 	fi
 
 # MySQL Workbench のインストール
-install-mysql-workbench:
+install-packages-mysql-workbench:
 	@echo "🐬 MySQL Workbench のインストールを開始..."
 
 	# MySQL APTリポジトリの設定パッケージをダウンロード
@@ -490,7 +490,7 @@ install-mysql-workbench:
 	@echo "🎉 MySQL Workbench インストール完了"
 
 # Claude Code のインストール
-install-claude-code:
+install-packages-claude-code:
 	@echo "🤖 Claude Code のインストールを開始..."
 
 	# Node.jsの確認
@@ -579,7 +579,7 @@ install-claude-code:
 	@echo "✅ Claude Code のインストールが完了しました"
 
 # Claudia (Claude Code GUI) のインストール
-install-claudia:
+install-packages-claudia:
 	@echo "🖥️  Claudia (Claude Code GUI) のインストールを開始..."
 	@echo "ℹ️  注意: ClaudiaはまだRelease版が公開されていないため、ソースからビルドします"
 	@echo "⏱️  ビルドには10-15分かかる場合があります（システム環境により変動）"
@@ -785,49 +785,6 @@ install-claudia:
 	@echo "- カスタムエージェントを作成して開発タスクを自動化" \
 	@echo "✅ Claudia のインストールが完了しました"
 
-# SuperClaude (Claude Code Framework) のインストール
-# セキュリティ強化 2025年1月実装:
-# - バージョン3.0.0.2の厳格指定によるCVE対策
-# - SHA256ハッシュ検証 (PyPI公式ハッシュ値使用)
-# - --require-hashes フラグによる強制整合性チェック
-# - PyPI Trusted Publishing対応パッケージ (GPG署名の代替)
-install-superclaude:
-	@echo "🚀 SuperClaude v3 (Claude Code Framework) のインストールを開始..."
-
-	# Claude Code の確認
-	@echo "🔍 Claude Code の確認中..."
-	@if ! command -v claude >/dev/null 2>&1; then \
-		echo "❌ Claude Code がインストールされていません"; \
-		echo "ℹ️  先に 'make install-packages-claude-code' を実行してください"; \
-		exit 1; \
-	else \
-		echo "✅ Claude Code が見つかりました: $$(claude --version 2>/dev/null)"; \
-	fi
-
-	# Python の確認
-	@echo "🔍 Python の確認中..."
-	@if ! command -v python3 >/dev/null 2>&1; then \
-		echo "❌ Python3 がインストールされていません"; \
-		echo "📥 Pythonをインストールしてください: sudo apt install python3 python3-pip"; \
-		exit 1; \
-	else \
-		echo "✅ Python が見つかりました: $$(python3 --version)"; \
-	fi
-
-	# uv の確認とインストール
-	@echo "🔍 uv (Python パッケージマネージャー) の確認中..."
-	@if ! command -v uv >/dev/null 2>&1; then \
-		{ \
-			echo "📦 uv をインストール中..."; \
-			curl -LsSf https://astral.sh/uv/install.sh | sh; \
-			echo "🔄 uvのパスを更新中..."; \
-			export PATH="$$HOME/.local/bin:$$PATH"; \
-			if ! command -v uv >/dev/null 2>&1; then \
-				echo "⚠️  uvのインストールが完了しましたが、現在のセッションで認識されていません"; \
-				echo "   新しいターミナルセッションで再実行するか、以下を実行してください:"; \
-				echo "   source $(HOME_DIR)/.bashrc"; \
-			fi; \
-		}; \
 	else \
 		echo "✅ uv が見つかりました: $$(uv --version)"; \
 	fi
@@ -1095,7 +1052,7 @@ install-claude-ecosystem:
 
 	# Step 1: Claude Code のインストール
 	@echo "📋 Step 1/3: Claude Code をインストール中..."
-	@$(MAKE) install-claude-code
+	@$(MAKE) install-packages-claude-code
 	@echo "✅ Claude Code のインストールが完了しました"
 	@echo ""
 
@@ -1114,7 +1071,7 @@ install-claude-ecosystem:
 
 	# Step 3: Claudia のインストール
 	@echo "📋 Step 3/3: Claudia をインストール中..."
-	@$(MAKE) install-claudia
+	@$(MAKE) install-packages-claudia
 	@echo "✅ Claudia のインストールが完了しました"
 	@echo ""
 
@@ -1243,11 +1200,11 @@ endif
 
 	# FUSE（AppImage実行用）のインストール
 	@echo "🔧 FUSE（AppImage実行用）のインストール中..."
-	@$(MAKE) install-fuse
+	@$(MAKE) install-packages-fuse
 
 	# Cursor IDE のインストール
 	@echo "💻 Cursor IDE のインストール中..."
-	@$(MAKE) install-cursor
+	@$(MAKE) install-packages-cursor
 
 	# WezTerm のインストール
 	@echo "🖥️  WezTerm のインストール中..."
@@ -1433,39 +1390,30 @@ install-playwright:
 	@echo ""; \
 	@echo "✅ Playwright のインストールが完了しました"
 
-# ========================================
-# 新しい階層的な命名規則のターゲット
-# ========================================
-
-# パッケージ・ソフトウェアインストール系
-install-packages-flatpak: install-flatpak
-install-packages-fuse: install-fuse
-install-packages-wezterm: install-wezterm
-install-packages-cursor: install-cursor
-install-packages-claude-code: install-claude-code
-install-packages-claudia: install-claudia
-install-packages-superclaude: install-superclaude
-install-packages-claude-ecosystem: install-claude-ecosystem
-install-packages-cica-fonts: install-cica-fonts
-install-packages-mysql-workbench: install-mysql-workbench
-install-packages-playwright: install-playwright
-install-packages-gemini-cli: install-gemini-cli
 
 # ccusage のインストール
 install-packages-ccusage:
 	@echo "📦 ccusage をインストールしています..."
 	@if ! command -v bun >/dev/null 2>&1; then \
-		echo "bun が見つからないため、インストールします..."; \
-		curl -fsSL https://bun.sh/install | bash; \
+		if command -v brew >/dev/null 2>&1; then \
+			echo "🍺 Homebrewを使用してbunをインストール中..."; \
+			brew install bun; \
+		else \
+			echo "🔐 Bunをインストール中（公式インストーラー使用）..."; \
+			curl -fsSL https://bun.sh/install | bash; \
+			echo "⚠️  注意: インストール後、Bunのバージョンを確認してください"; \
+		fi; \
 		export PATH="$(HOME)/.bun/bin:$$PATH"; \
 		if ! command -v bun >/dev/null 2>&1; then \
 			echo "❌ bun のインストールに失敗しました。PATH を確認してください。"; \
 			exit 1; \
-		fi \
+		fi; \
 	fi
 	@echo "🔧 ccusage をグローバル導入中..."
 	@export PATH="$(HOME)/.bun/bin:$$PATH"; \
-	if ! bun add -g ccusage; then \
+	CCUSAGE_VERSION="17.2.0"; \
+	echo "📦 ccusage v$$CCUSAGE_VERSION をインストール中..."; \
+	if ! bun add -g ccusage@$$CCUSAGE_VERSION; then \
 		echo "⚠️ bun add -g に失敗。bunx での実行にフォールバックします"; \
 	fi
 	@echo "🔍 動作確認: ccusage --version"
@@ -1494,14 +1442,12 @@ install-packages-chrome-beta:
 	@echo "✅ Google Chrome Beta のインストールが完了しました"
 
 # ========================================
-# 後方互換性のためのエイリアス
+# 後方互換性のためのエイリアス (一部のみここに定義)
+# ほとんどの後方互換エイリアスは mk/deprecated-targets.mk で一元管理されています。
 # ========================================
 
-# 古いターゲット名を維持（新しいターゲットを呼び出すエイリアス）
-# install-homebrew: は既に実装済み
-# install-apps: は既に実装済み
-# install-deb: は既に実装済み
-# その他の既存ターゲットはそのまま
+# ここでは、単純な転送のみが必要な少数のエイリアスのみを定義しています。
+# 詳細な非推奨ポリシー（警告、期限など）は mk/deprecated-targets.mk を参照してください。
 
 # SuperCopilot Framework for VSCode のインストール
 install-packages-vscode-supercopilot:
