@@ -47,6 +47,11 @@ check-superclaude: ## SuperClaudeフレームワークのインストール状�
 
 .PHONY: install-superclaude
 install-superclaude: ## SuperClaudeフレームワークをClaude Code向けにインストール
+	@# 冪等性チェック: CLAUDE.mdシンボリックリンクとSuperClaudeツールが存在する場合はスキップ
+	@if [ -L "$(CLAUDE_DIR)/CLAUDE.md" ] && command -v SuperClaude >/dev/null 2>&1; then \
+		echo "$(call IDEMPOTENCY_SKIP_MSG,install-superclaude)"; \
+		exit 0; \
+	fi
 	@echo "🚀 SuperClaude Framework for Claude Code のインストールを開始..."
 	@echo ""
 	@# Claude Codeの確認

@@ -1,6 +1,11 @@
 .PHONY: codex codex-install codex-update codex-setup
 
-codex: codex-install codex-setup ## Install and setup Codex CLI
+codex: ## Install and setup Codex CLI
+	@if command -v codex >/dev/null 2>&1; then \
+		echo "$(call IDEMPOTENCY_SKIP_MSG,codex)"; \
+		exit 0; \
+	fi
+	@$(MAKE) codex-install codex-setup
 
 codex-install: ## Install Codex CLI using npm
 	@echo "Uninstalling existing Codex CLI (if any)..."
