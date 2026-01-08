@@ -138,35 +138,35 @@ stage-all: ## 全ステージを順次実行（各ステージ後に確認）
 	@if [ "$$NON_INTERACTIVE" = "1" ] || ! [ -t 0 ]; then \
 		echo "ℹ️  非インタラクティブモードで実行します（確認をスキップ）"; \
 	else \
-		read -p "続行しますか？ (y/N): " confirm && echo "$$confirm" | grep -iq '^y'; \
+		read -p "続行しますか？ (y/N): " confirm && echo "$$confirm" | grep -iq '^y' || { echo "中止します"; exit 1; }; \
 	fi
 	@$(MAKE) stage1
 	@echo "ステージ1完了。ステージ2に進みますか？"
 	@if [ "$$NON_INTERACTIVE" = "1" ] || ! [ -t 0 ]; then \
 		echo "→ 自動的に次のステージに進みます"; \
 	else \
-		read -p "続行しますか？ (y/N): " confirm && echo "$$confirm" | grep -iq '^y'; \
+		read -p "続行しますか？ (y/N): " confirm && echo "$$confirm" | grep -iq '^y' || { echo "中止します"; exit 1; }; \
 	fi
 	@$(MAKE) stage2
 	@echo "ステージ2完了。ステージ3に進みますか？"
 	@if [ "$$NON_INTERACTIVE" = "1" ] || ! [ -t 0 ]; then \
 		echo "→ 自動的に次のステージに進みます"; \
 	else \
-		read -p "続行しますか？ (y/N): " confirm && echo "$$confirm" | grep -iq '^y'; \
+		read -p "続行しますか？ (y/N): " confirm && echo "$$confirm" | grep -iq '^y' || { echo "中止します"; exit 1; }; \
 	fi
 	@$(MAKE) stage3
 	@echo "ステージ3完了。ステージ4に進みますか？"
 	@if [ "$$NON_INTERACTIVE" = "1" ] || ! [ -t 0 ]; then \
 		echo "→ 自動的に次のステージに進みます"; \
 	else \
-		read -p "続行しますか？ (y/N): " confirm && echo "$$confirm" | grep -iq '^y'; \
+		read -p "続行しますか？ (y/N): " confirm && echo "$$confirm" | grep -iq '^y' || { echo "中止します"; exit 1; }; \
 	fi
 	@$(MAKE) stage4
 	@echo "ステージ4完了。ステージ5に進みますか？"
 	@if [ "$$NON_INTERACTIVE" = "1" ] || ! [ -t 0 ]; then \
 		echo "→ 自動的に次のステージに進みます"; \
 	else \
-		read -p "続行しますか？ (y/N): " confirm && echo "$$confirm" | grep -iq '^y'; \
+		read -p "続行しますか？ (y/N): " confirm && echo "$$confirm" | grep -iq '^y' || { echo "中止します"; exit 1; }; \
 	fi
 	@$(MAKE) stage5
 	@echo "🎉 全ステージ完了！"

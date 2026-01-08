@@ -788,7 +788,7 @@ install-packages-claudia:
 # SuperClaude のインストール
 install-superclaude:
 	@echo "🚀 SuperClaude v3 のインストールを開始..."
-	@echo "ℹ️  注意: SuperClaude v3.0.0.2 (セキュリティ強化版) をインストールします"
+	@echo "ℹ️  注意: SuperClaude v4.1.9 (最新安定版) をインストールします"
 	@echo ""
 
 	# Python の確認
@@ -855,68 +855,68 @@ install-superclaude:
 		CURRENT_VERSION=$$(SuperClaude --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+(\.[0-9]+)?' || echo "不明"); \
 		echo "✅ SuperClaude は既にインストールされています"; \
 		echo "   現在のバージョン: $$CURRENT_VERSION"; \
-		echo "   対象バージョン: 3.0.0.2"; \
-		if [ "$$CURRENT_VERSION" != "3.0.0.2" ]; then \
+		echo "   対象バージョン: 4.1.9"; \
+		if [ "$$CURRENT_VERSION" != "4.1.9" ]; then \
 			echo ""; \
-			echo "🔄 バージョン3.0.0.2にアップデート中..."; \
+			echo "🔄 バージョン4.1.9にアップデート中..."; \
 			echo "🔐 セキュリティ: 複数ハッシュ検証を実行します"; \
-			if uv tool upgrade SuperClaude==3.0.0.2 --verify-hashes 2>/dev/null || \
-			   uv add SuperClaude==3.0.0.2 --upgrade 2>/dev/null; then \
-				echo "✅ SuperClaude 3.0.0.2へのアップデートが完了しました"; \
+			if uv tool upgrade SuperClaude==4.1.9 --verify-hashes 2>/dev/null || \
+			   uv add SuperClaude==4.1.9 --upgrade 2>/dev/null; then \
+				echo "✅ SuperClaude 4.1.9へのアップデートが完了しました"; \
 			else \
 				echo "⚠️  標準アップデートに失敗しました。pipでの多重セキュリティ検証インストールを試行中..."; \
-				pip install --upgrade --force-reinstall "SuperClaude==3.0.0.2" \
-					--hash=sha256:0bb45f9494eee17c950f17c94b6f7128ed7d1e71750c39f47da89023e812a031 \
+				pip install --upgrade --force-reinstall "SuperClaude==4.1.9" \
+					--hash=sha256:bb73f5c3d11f222bb84704f99e671ef53b1cd7d3951c044947fab8d998a6ac13 \
 					--require-hashes || \
-				pip install --upgrade --force-reinstall "SuperClaude==3.0.0.2" \
-					--hash=sha256:3d30c60d06b7e7f430799adee4d7ac2575d3ea5b94d93771647965ee49aaf870 \
+				pip install --upgrade --force-reinstall "SuperClaude==4.1.9" \
+					--hash=sha256:46e5dcb5f03bd9775d01198a96cfe16279d14cc8c081c9619e270a96fb469821 \
 					--require-hashes; \
 			fi; \
 		else \
-			echo "✅ 既に最新バージョン(3.0.0.2)がインストールされています"; \
+			echo "✅ 既に最新バージョン(4.1.9)がインストールされています"; \
 		fi; \
 	else \
-		echo "📦 SuperClaude v3.0.0.2 をインストール中..."; \
+		echo "📦 SuperClaude v4.1.9 をインストール中..."; \
 		echo "🔐 強化セキュリティ機能:"; \
-		echo "   ✓ バージョン固定: 3.0.0.2 (2025年7月23日リリース)"; \
+		echo "   ✓ バージョン固定: 4.1.9 (2025年11月14日リリース)"; \
 		echo "   ✓ SHA256ハッシュ検証有効 (PyPI公式)"; \
 		echo "   ✓ --require-hashes フラグ (強制検証)"; \
 		echo "   ✓ PyPI公式パッケージからのインストール"; \
 		echo "   ✓ 署名者: mithungowda.b (PyPI verified)"; \
 		echo ""; \
-		echo "ℹ️  多重セキュリティ検証インストールを実行します: uv add SuperClaude==3.0.0.2"; \
+		echo "ℹ️  多重セキュリティ検証インストールを実行します: uv add SuperClaude==4.1.9"; \
 		\
 		# uvでのハッシュ検証付きインストールを試行
-		if uv tool install SuperClaude==3.0.0.2 --verify-hashes 2>/dev/null || \
-		   uv add SuperClaude==3.0.0.2; then \
-			echo "✅ SuperClaude 3.0.0.2 のパッケージインストールが完了しました"; \
+		if uv tool install SuperClaude==4.1.9 --verify-hashes 2>/dev/null || \
+		   uv add SuperClaude==4.1.9; then \
+			echo "✅ SuperClaude 4.1.9 のパッケージインストールが完了しました"; \
 		else \
 			echo "⚠️  uvでのインストールに失敗しました。pipでのSHA256ハッシュ検証インストールを試行中..."; \
 			echo "🔐 SHA256強制検証モードでインストールします"; \
 			\
 			# pipでのSHA256ハッシュ検証付きインストール（tar.gz形式）
-			if pip install "SuperClaude==3.0.0.2" \
-				--hash=sha256:0bb45f9494eee17c950f17c94b6f7128ed7d1e71750c39f47da89023e812a031 \
+			if pip install "SuperClaude==4.1.9" \
+				--hash=sha256:bb73f5c3d11f222bb84704f99e671ef53b1cd7d3951c044947fab8d998a6ac13 \
 				--require-hashes; then \
-				echo "✅ SuperClaude 3.0.0.2 のセキュアインストールが完了しました (source distribution)"; \
-				echo "   ✓ SHA256検証済み: 0bb45f9494eee17c950f17c94b6f7128ed7d1e71750c39f47da89023e812a031"; \
+				echo "✅ SuperClaude 4.1.9 のセキュアインストールが完了しました (source distribution)"; \
+				echo "   ✓ SHA256検証済み: bb73f5c3d11f222bb84704f99e671ef53b1cd7d3951c044947fab8d998a6ac13"; \
 			# フォールバック: wheel形式でのSHA256ハッシュ検証
-			elif pip install "SuperClaude==3.0.0.2" \
-				--hash=sha256:3d30c60d06b7e7f430799adee4d7ac2575d3ea5b94d93771647965ee49aaf870 \
+			elif pip install "SuperClaude==4.1.9" \
+				--hash=sha256:46e5dcb5f03bd9775d01198a96cfe16279d14cc8c081c9619e270a96fb469821 \
 				--require-hashes; then \
-				echo "✅ SuperClaude 3.0.0.2 のセキュアインストールが完了しました (wheel distribution)"; \
-				echo "   ✓ SHA256検証済み: 3d30c60d06b7e7f430799adee4d7ac2575d3ea5b94d93771647965ee49aaf870"; \
+				echo "✅ SuperClaude 4.1.9 のセキュアインストールが完了しました (wheel distribution)"; \
+				echo "   ✓ SHA256検証済み: 46e5dcb5f03bd9775d01198a96cfe16279d14cc8c081c9619e270a96fb469821"; \
 			else \
 				echo "❌ SuperClaude のセキュアインストールに失敗しました"; \
 				echo ""; \
 				echo "🔧 トラブルシューティング:"; \
 				echo "1. ネットワーク接続の確認"; \
 				echo "2. Python環境の確認: python3 --version"; \
-				echo "3. 手動での厳格インストール: pip install SuperClaude==3.0.0.2 --require-hashes"; \
-				echo "4. 権限の問題: pip install --user SuperClaude==3.0.0.2"; \
+				echo "3. 手動での厳格インストール: pip install SuperClaude==4.1.9 --require-hashes"; \
+				echo "4. 権限の問題: pip install --user SuperClaude==4.1.9"; \
 				echo ""; \
 				echo "⚠️  セキュリティに関する重要な注意:"; \
-				echo "   手動インストール時はバージョン3.0.0.2を必ず指定してください"; \
+				echo "   手動インストール時はバージョン4.1.9を必ず指定してください"; \
 				echo "   公式PyPIリポジトリ以外からのインストールは推奨されません"; \
 				echo "   --require-hashes フラグの使用を強く推奨します"; \
 				echo ""; \
@@ -929,8 +929,8 @@ install-superclaude:
 		echo "🔍 インストール後のセキュリティ検証を実行中..."; \
 		if command -v SuperClaude >/dev/null 2>&1; then \
 			INSTALLED_VERSION=$$(SuperClaude --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+(\.[0-9]+)?' || echo "不明"); \
-			if [ "$$INSTALLED_VERSION" = "3.0.0.2" ]; then \
-				echo "✅ バージョン検証成功: SuperClaude 3.0.0.2"; \
+			if [ "$$INSTALLED_VERSION" = "4.1.9" ]; then \
+				echo "✅ バージョン検証成功: SuperClaude 4.1.9"; \
 				echo "✅ コマンド実行可能性確認済み"; \
 				echo "✅ パッケージ整合性確認済み"; \
 				# パッケージの追加情報取得を試行
@@ -939,7 +939,7 @@ install-superclaude:
 				echo "   $$PACKAGE_INFO" | sed 's/^/   /'; \
 				echo "🔐 セキュリティ状態: 検証済みパッケージ"; \
 			else \
-				echo "⚠️  バージョン不一致: 期待値=3.0.0.2, 実際=$$INSTALLED_VERSION"; \
+				echo "⚠️  バージョン不一致: 期待値=4.1.9, 実際=$$INSTALLED_VERSION"; \
 				echo "❌ セキュリティ検証失敗"; \
 			fi; \
 		else \
@@ -951,7 +951,7 @@ install-superclaude:
 	@echo ""; \
 	@echo "🛡️  セキュリティ検証状況:" \
 	@echo "   ✓ PyPI公式リポジトリからのダウンロード" \
-	@echo "   ✓ バージョン3.0.0.2固定 (CVE対策)" \
+	@echo "   ✓ バージョン4.1.9固定 (最新安定版)" \
 	@echo "   ✓ SHA256ハッシュ検証 (パッケージ整合性)" \
 	@echo "   ✓ --require-hashes 強制検証モード" \
 	@echo "   ✓ 認証済みメンテナー: mithungowda.b" \
@@ -1115,7 +1115,7 @@ install-claude-ecosystem:
 	@echo "📋 Step 2/3: SuperClaude をインストール中..."
 	@if [ "$${SKIP_SUPERCLAUDE:-0}" = "1" ]; then \
 		echo "⚠️  SuperClaude のインストールはスキップされています (SKIP_SUPERCLAUDE=1)"; \
-		echo "   手動インストール例: pip install SuperClaude==3.0.0.2"; \
+		echo "   手動インストール例: pip install SuperClaude==4.1.9"; \
 		echo "   有効化方法: SKIP_SUPERCLAUDE=0 make install-claude-ecosystem"; \
 	else \
 		echo "📦 SuperClaude をインストール中..."; \
