@@ -616,6 +616,9 @@ install-packages-claude-code:
 	@echo "📚 詳細なドキュメント: https://docs.anthropic.com/claude-code"
 	@echo "✅ Claude Code のインストールが完了しました"
 
+# Claudia (Claude Code GUI) のバージョン固定
+CLAUDIA_COMMIT := 70c16d8a4910db48cd9684aeacdd431caefd7d71
+
 # Claudia (Claude Code GUI) のインストール
 install-packages-claudia:
 	@echo "🖥️  Claudia (Claude Code GUI) のインストールを開始..."
@@ -693,12 +696,12 @@ install-packages-claudia:
 	fi
 
 	# Claudia のクローンとビルド
-	@echo "📥 Claudia をクローン中..."
+	@echo "📥 Claudia をクローン中 (Commit: $(CLAUDIA_COMMIT))..."
 	@CLAUDIA_DIR="/tmp/claudia-build" && \
 	rm -rf "$$CLAUDIA_DIR" 2>/dev/null || true && \
-	if git clone https://github.com/getAsterisk/claudia.git "$$CLAUDIA_DIR"; then \
-		# TODO: 将来的にClaudiaのリリース版が公開されたら、特定のタグ(例: --branch v1.0.0)やコミットハッシュでバージョンを固定してください。\
-		# 現在はリリース版がないため、デフォルトブランチの最新を使用しています。\
+	if git clone --depth 1 https://github.com/getAsterisk/claudia.git "$$CLAUDIA_DIR" && \
+	   git -C "$$CLAUDIA_DIR" fetch --depth=1 origin $(CLAUDIA_COMMIT) && \
+	   git -C "$$CLAUDIA_DIR" checkout $(CLAUDIA_COMMIT); then \
 		echo "✅ Claudia のクローンが完了しました"; \
 		cd "$$CLAUDIA_DIR" && \
 		\
@@ -1478,7 +1481,10 @@ install-packages-ccusage:
 	@if ! command -v bun >/dev/null 2>&1; then \
 		if command -v brew >/dev/null 2>&1; then \
 			echo "🍺 Homebrewを使用してbunをインストール中..."; \
-			brew install bun; \
+			if ! brew install bun; then \
+				echo "⚠️  Homebrewでのインストールに失敗しました。公式インストーラーにフォールバックします..."; \
+				curl -fsSL https://bun.sh/install | bash; \
+			fi; \
 		else \
 			echo "🔐 Bunをインストール中（公式インストーラー使用）..."; \
 			curl -fsSL https://bun.sh/install | bash; \
