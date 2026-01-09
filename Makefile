@@ -1,10 +1,17 @@
 # Ubuntu開発環境セットアップ用Makefile
 # 更新日: 2024年3月版
 
+# デフォルトターゲット
+.DEFAULT_GOAL := help
+
 # 分割されたMakefileをinclude
 include mk/variables.mk
+include mk/helpers.mk
+include mk/idempotency.mk
 include mk/help.mk
 include mk/help-short.mk
+include mk/presets.mk
+include mk/bitwarden.mk
 include mk/system.mk
 include mk/fonts.mk
 include mk/install.mk
@@ -16,29 +23,35 @@ include mk/clipboard.mk
 include mk/sticky-keys.mk
 include mk/clean.mk
 include mk/main.mk
+include mk/stages.mk
 include mk/menu.mk
 include mk/shortcuts.mk
+include mk/deprecated-targets.mk
 include mk/memory.mk
 include mk/codex.mk
 include mk/superclaude.mk
 include mk/cc-sdd.mk
+include mk/test.mk
 
 .PHONY: all
-all: menu
+all: help
 
 .PHONY: setup
-setup: gnome-settings gnome-extensions system
+setup: setup-gnome-tweaks setup-gnome-extensions system
 # Run sticky-keys setup only when GNOME schema is available
 	@if command -v gsettings >/dev/null 2>&1 && \
-	gsettings list-schemas | grep -qx 'org.gnome.desktop.a11y.keyboard'; then \
-	$(MAKE) setup-sticky-keys; \
-else \
-	echo "ℹ️  GNOME 環境が見つからないため sticky-keys セットアップをスキップしました"; \
-fi
+	   gsettings list-schemas | grep -qx 'org.gnome.desktop.a11y.keyboard'; then \
+		$(MAKE) setup-sticky-keys; \
+	else \
+		echo "ℹ️  GNOME 環境が見つからないため sticky-keys セットアップをスキップしました"; \
+	fi
 
 .PHONY: install
 install: ## Install dotfiles only (without SuperCopilot)
 	@bash install.sh
+	@if [ "$${WITH_BW:-0}" = "1" ]; then \
+		$(MAKE) --no-print-directory setup-config-secrets WITH_BW=1; \
+	fi
 
 .PHONY: install-all
 install-all: install vscode-supercopilot ## Install dotfiles and SuperCopilot

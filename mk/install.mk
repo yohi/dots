@@ -1,5 +1,9 @@
 # Homebrewのインストール
-install-homebrew:
+install-packages-homebrew:
+	@if $(call check_command,brew); then \
+		echo "$(call IDEMPOTENCY_SKIP_MSG,install-packages-homebrew)"; \
+		exit 0; \
+	fi
 	@echo "🍺 Homebrewをインストール中..."
 	@if ! command -v brew >/dev/null 2>&1; then \
 		echo "📥 Homebrewをダウンロード・インストール..."; \
@@ -67,7 +71,7 @@ install-homebrew:
 	@echo "✅ Homebrewのインストールが完了しました。"
 
 # AppImage実行用のFUSEパッケージをインストール
-install-fuse:
+install-packages-fuse:
 	@echo "📦 AppImage実行用のFUSEパッケージをインストール中..."
 	@echo "ℹ️  これによりCursor、PostmanなどのAppImageアプリケーションが実行可能になります"
 
@@ -121,7 +125,13 @@ install-fuse:
 	@echo "✅ FUSEパッケージのインストールが完了しました。"
 
 # Brewfileを使用してアプリケーションをインストール
-install-apps:
+install-packages-apps:
+ifndef FORCE
+	@if $(call check_marker,install-packages-apps) 2>/dev/null; then \
+		echo "$(call IDEMPOTENCY_SKIP_MSG,install-packages-apps)"; \
+		exit 0; \
+	fi
+endif
 	@echo "📦 アプリケーションをインストール中..."
 	@if command -v brew >/dev/null 2>&1; then \
 		eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"; \
@@ -129,135 +139,189 @@ install-apps:
 		brew bundle --file=$(DOTFILES_DIR)/Brewfile --no-upgrade || true; \
 		echo "⚠️  一部のパッケージでエラーが発生した可能性がありますが、処理を続行します"; \
 	else \
-		echo "❌ Homebrewがインストールされていません。先に 'make install-homebrew' を実行してください。"; \
-		exit 1; \
+		echo "❌ Homebrewがインストールされていません。先に 'make install-packages-homebrew' を実行してください。"; \
 		exit 1; \
 	fi
+	@$(call create_marker,install-packages-apps,N/A)
 	@echo "✅ アプリケーションのインストールが完了しました。"
 
+# Cursor AppImageのSHA256ハッシュ
+# TODO: Cursor公式にSHA256チェックサムの公開をリクエスト中
+# チェックサムが公開されるまでは、空欄に設定されていますが、インストール時には
+# CURSOR_NO_VERIFY_HASH=true を指定しない限りエラーとなります（セキュリティ強化）
+CURSOR_SHA256 :=
+
 # Cursor IDEのインストール
-install-cursor:
+install-packages-cursor:
 	@echo "📝 Cursor IDEのインストールを開始します..."
-	@CURSOR_INSTALLED=false && \
-	\
-	@echo "🔍 既存のCursor IDEを確認中..." && \
-	if [ -f /opt/cursor/cursor.AppImage ]; then \
+	@if [ -f /opt/cursor/cursor.AppImage ]; then \
 		echo "✅ Cursor IDEは既にインストールされています"; \
-		CURSOR_INSTALLED=true; \
-	fi && \
-	\
-	if [ "$$CURSOR_INSTALLED" = "false" ]; then \
-		echo "📦 方法1: 自動ダウンロードを試行中..." && \
-		cd /tmp && \
-		if curl -L --user-agent "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36" \
-			--max-time 60 --retry 2 --retry-delay 3 \
-			-o cursor.AppImage "https://downloader.cursor.sh/linux/appImage/x64" 2>/dev/null; then \
-			FILE_SIZE=$$(stat -c%s cursor.AppImage 2>/dev/null || echo "0"); \
-			if [ "$$FILE_SIZE" -gt 10000000 ]; then \
-				echo "✅ 自動ダウンロードが成功しました"; \
-				chmod +x cursor.AppImage && \
-				sudo mkdir -p /opt/cursor && \
-				sudo mv cursor.AppImage /opt/cursor/cursor.AppImage && \
-				CURSOR_INSTALLED=true; \
-			else \
-				echo "❌ ダウンロードファイルが不完全です"; \
+	else \
+		$(MAKE) _cursor_download; \
+	fi
+	@$(MAKE) _cursor_setup_desktop
+	@echo "✅ Cursor IDEのインストールが完了しました"
+
+_cursor_download:
+	@echo "📦 方法1: 自動ダウンロードを試行中..."
+	@cd /tmp && \
+	verify_download_size() { \
+		local min_size="$$1"; \
+		local max_size="$$2"; \
+		local file="cursor.AppImage"; \
+		local file_size=$$(stat -c%s "$$file" 2>/dev/null || echo "0"); \
+		if [ "$$file_size" -ge "$$min_size" ] && [ "$$file_size" -le "$$max_size" ]; then \
+			echo "✅ サイズ検証に成功しました ($$file_size bytes)"; \
+			echo "   (範囲: $$(($$min_size/1024/1024))MB - $$(($$max_size/1024/1024))MB)"; \
+			return 0; \
+		else \
+			echo "❌ ダウンロードファイルのサイズが不正です ($$file_size bytes)"; \
+			echo "   許容範囲: $$(($$min_size/1024/1024))MB - $$(($$max_size/1024/1024))MB"; \
+			echo "   ファイルが破損しているか、改ざんされた可能性があります"; \
+			rm -f "$$file"; \
+			return 1; \
+		fi; \
+	}; \
+	if curl -L --user-agent "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36" \
+		--max-time 120 --retry 2 --retry-delay 3 \
+		-o cursor.AppImage "https://downloader.cursor.sh/linux/appImage/x64" 2>/dev/null; then \
+		\
+		# Verification Strategy: \
+		# 1. Ideally, use SHA256 checksum (TODO: Request Cursor to publish checksums). \
+		# 2. Interim: Enforce strict file size range (Typical AppImage: ~100-300MB). \
+		#    Reject outliers (e.g. < 60MB small pages, > 600MB corrupted files). \
+		\
+		VALID_DOWNLOAD=0; \
+		echo "🔐 ダウンロードファイルの整合性を検証中 (SHA256)..."; \
+		ACTUAL_HASH=$$(sha256sum cursor.AppImage | awk '{print $$1}'); \
+		if [ -n "$(CURSOR_SHA256)" ]; then \
+			if [ "$$ACTUAL_HASH" != "$(CURSOR_SHA256)" ]; then \
+				echo "❌ ハッシュ不一致エラー"; \
+				echo "   期待値: $(CURSOR_SHA256)"; \
+				echo "   実際値: $$ACTUAL_HASH"; \
+				echo "   (バージョンが更新された可能性があります。mk/install.mk の CURSOR_SHA256 を更新してください)"; \
 				rm -f cursor.AppImage; \
-			fi; \
-		fi; \
-	fi && \
-	\
-	if [ "$$CURSOR_INSTALLED" = "false" ]; then \
-		echo "📦 方法2: ダウンロードフォルダから検索中..." && \
-		cd $(HOME_DIR)/Downloads 2>/dev/null || cd $(HOME_DIR)/Desktop 2>/dev/null || cd /tmp && \
-		if ls cursor*.AppImage 2>/dev/null; then \
-			CURSOR_FILE=$$(ls cursor*.AppImage | head -1); \
-			echo "✅ $$CURSOR_FILE が見つかりました"; \
-			chmod +x "$$CURSOR_FILE" && \
-			sudo mkdir -p /opt/cursor && \
-			sudo cp "$$CURSOR_FILE" /opt/cursor/cursor.AppImage && \
-			CURSOR_INSTALLED=true; \
-		fi; \
-	fi && \
-	\
-	if [ "$$CURSOR_INSTALLED" = "true" ]; then \
-		echo "📝 デスクトップエントリーとアイコンを作成中..." && \
-		\
-		echo "🎨 アイコンを設定中..." && \
-		ICON_EXTRACTED=false && \
-		cd /tmp && \
-		\
-		echo "📥 公式アイコンをダウンロード中..." && \
-		if curl -f -L --connect-timeout 10 --max-time 30 \
-			-H 'user-agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36' \
-			-o cursor-favicon.ico "https://cursor.com/favicon.ico" 2>/dev/null; then \
-			if command -v convert >/dev/null 2>&1; then \
-				if convert cursor-favicon.ico cursor-icon.png 2>/dev/null; then \
-					sudo mkdir -p /usr/share/pixmaps && \
-					sudo cp cursor-icon.png /usr/share/pixmaps/cursor.png && \
-					ICON_EXTRACTED=true && \
-					echo "✅ 公式アイコンをダウンロードして設定しました"; \
-				fi; \
+				exit 1; \
 			else \
-				sudo mkdir -p /usr/share/pixmaps && \
-				sudo cp cursor-favicon.ico /usr/share/pixmaps/cursor.ico && \
-				ICON_EXTRACTED=true && \
-				echo "✅ 公式アイコン（ICO形式）をダウンロードして設定しました"; \
-			fi; \
-			rm -f cursor-favicon.ico cursor-icon.png 2>/dev/null || true; \
-		fi && \
-		\
-		if [ "$$ICON_EXTRACTED" = "false" ]; then \
-			echo "🔍 AppImageからアイコンを抽出中..." && \
-			if command -v unzip >/dev/null 2>&1; then \
-				if timeout 30 unzip -j /opt/cursor/cursor.AppImage "*.png" 2>/dev/null || timeout 30 unzip -j /opt/cursor/cursor.AppImage "usr/share/pixmaps/*.png" 2>/dev/null || timeout 30 unzip -j /opt/cursor/cursor.AppImage "resources/*.png" 2>/dev/null; then \
-					ICON_FILE=$$(ls -1 *.png 2>/dev/null | grep -i "cursor\|icon\|app" | head -1); \
-					if [ -z "$$ICON_FILE" ]; then \
-						ICON_FILE=$$(ls -1 *.png 2>/dev/null | head -1); \
-					fi; \
-					if [ ! -z "$$ICON_FILE" ] && [ -f "$$ICON_FILE" ]; then \
-						sudo mkdir -p /usr/share/pixmaps && \
-						sudo cp "$$ICON_FILE" /usr/share/pixmaps/cursor.png && \
-						ICON_EXTRACTED=true && \
-						echo "✅ AppImageからアイコンを抽出しました: $$ICON_FILE"; \
-					fi; \
-					rm -f *.png 2>/dev/null || true; \
-				fi; \
-			fi; \
-		fi && \
-		\
-		ICON_PATH="applications-development" && \
-		if [ "$$ICON_EXTRACTED" = "true" ]; then \
-			if [ -f /usr/share/pixmaps/cursor.png ]; then \
-				ICON_PATH="/usr/share/pixmaps/cursor.png"; \
-			elif [ -f /usr/share/pixmaps/cursor.ico ]; then \
-				ICON_PATH="/usr/share/pixmaps/cursor.ico"; \
+				echo "✅ ハッシュ検証に成功しました"; \
+				VALID_DOWNLOAD=1; \
 			fi; \
 		else \
-			echo "⚠️  アイコンの設定に失敗しました。デフォルトアイコンを使用します"; \
-		fi && \
+			if [ "$${CURSOR_NO_VERIFY_HASH}" = "true" ]; then \
+				echo "⚠️  【セキュリティ警告】SHA256チェックサム検証をスキップします (ユーザー要求)"; \
+				echo "ℹ️  TLS(HTTPS)による通信経路の保護と、ファイルサイズ検証による簡易チェックを実行します"; \
+				echo "   ダウンロード元: https://downloader.cursor.sh (TLS origin verified by curl)"; \
+				if verify_download_size 100000000 500000000; then VALID_DOWNLOAD=1; else exit 1; fi; \
+			else \
+				echo "❌ エラー: CURSOR_SHA256 が設定されていません"; \
+				echo "   セキュリティポリシーにより、整合性検証のないインストールはブロックされました。"; \
+				echo "   (Cursor公式からチェックサムが提供されていないため、現在はハッシュが空になっています)"; \
+				echo ""; \
+				echo "   【暫定的な対処方法】"; \
+				echo "   TLS(HTTPS)の安全性とファイルサイズ検証のみでインストールを続行する場合は、"; \
+				echo "   以下のコマンドを実行してください:"; \
+				echo ""; \
+				echo "   make install-packages-cursor CURSOR_NO_VERIFY_HASH=true"; \
+				echo ""; \
+				rm -f cursor.AppImage; \
+				exit 1; \
+			fi; \
+		fi; \
 		\
-		echo "📝 デスクトップエントリーを作成中..." && \
-		echo "[Desktop Entry]" | sudo tee /usr/share/applications/cursor.desktop > /dev/null && \
-		echo "Name=Cursor" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
-		echo "Comment=The AI-first code editor" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
-		echo "Exec=/opt/cursor/cursor.AppImage --no-sandbox %F" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
-		echo "Icon=$$ICON_PATH" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
-		echo "Terminal=false" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
-		echo "Type=Application" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
-		echo "Categories=Development;IDE;TextEditor;" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
-		echo "MimeType=text/plain;inode/directory;" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
-		echo "StartupWMClass=cursor" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null && \
-		sudo chmod +x /usr/share/applications/cursor.desktop && \
-		sudo update-desktop-database 2>/dev/null || true && \
-		echo "✅ Cursor IDEのインストールが完了しました";
-	else
-		echo "❌ Cursor IDEのインストールに失敗しました";
-		echo "";
-		echo "📥 手動インストール手順:";
-		echo "1. ブラウザで https://cursor.sh/ を開く";
-		echo "2. 'Download for Linux' をクリック";
-		echo "3. ダウンロード後、再度このコマンドを実行";
+		if [ "$$VALID_DOWNLOAD" -eq 1 ]; then \
+			echo "✅ ダウンロード完了"; \
+			chmod +x cursor.AppImage; \
+			sudo mkdir -p /opt/cursor; \
+			sudo mv cursor.AppImage /opt/cursor/cursor.AppImage; \
+			exit 0; \
+		fi; \
+	fi; \
+	echo "📦 方法2: ダウンロードフォルダから検索中..."; \
+	FOUND=false; \
+	for DIR in $(HOME_DIR)/Downloads $(HOME_DIR)/Desktop /tmp; do \
+		if [ -d "$$DIR" ]; then \
+			CURSOR_FILE=$$(ls "$$DIR"/cursor*.AppImage 2>/dev/null | head -1); \
+			if [ -n "$$CURSOR_FILE" ]; then \
+				echo "✅ $$CURSOR_FILE が見つかりました"; \
+				chmod +x "$$CURSOR_FILE"; \
+				sudo mkdir -p /opt/cursor; \
+				sudo cp "$$CURSOR_FILE" /opt/cursor/cursor.AppImage; \
+				FOUND=true; \
+				break; \
+			fi; \
+		fi; \
+	done; \
+	if [ "$$FOUND" = "false" ]; then \
+		echo "❌ Cursor IDEのインストールに失敗しました"; \
+		echo ""; \
+		echo "📥 手動インストール手順:"; \
+		echo "1. ブラウザで https://cursor.sh/ を開く"; \
+		echo "2. 'Download for Linux' をクリック"; \
+		echo "3. ダウンロード後、再度このコマンドを実行"; \
+		exit 1; \
 	fi
+
+_cursor_setup_desktop:
+	@echo "📝 デスクトップエントリーとアイコンを作成中..."
+	@ICON_PATH="applications-development"; \
+	ICON_EXTRACTED=false; \
+	echo "🎨 アイコンを設定中..."; \
+	cd /tmp; \
+	echo "📥 公式アイコンをダウンロード中..."; \
+	if curl -f -L --connect-timeout 10 --max-time 30 \
+		-H 'user-agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36' \
+		-o cursor-favicon.ico "https://cursor.com/favicon.ico" 2>/dev/null; then \
+		sudo mkdir -p /usr/share/pixmaps; \
+		if command -v convert >/dev/null 2>&1; then \
+			if convert cursor-favicon.ico cursor-icon.png 2>/dev/null; then \
+				sudo cp cursor-icon.png /usr/share/pixmaps/cursor.png; \
+				ICON_EXTRACTED=true; \
+				ICON_PATH="/usr/share/pixmaps/cursor.png"; \
+				echo "✅ 公式アイコンをダウンロードして設定しました"; \
+			fi; \
+		else \
+			sudo cp cursor-favicon.ico /usr/share/pixmaps/cursor.ico; \
+			ICON_EXTRACTED=true; \
+			ICON_PATH="/usr/share/pixmaps/cursor.ico"; \
+			echo "✅ 公式アイコン（ICO形式）をダウンロードして設定しました"; \
+		fi; \
+		rm -f cursor-favicon.ico cursor-icon.png 2>/dev/null || true; \
+	fi; \
+	if [ "$$ICON_EXTRACTED" = "false" ]; then \
+		echo "🔍 AppImageからアイコンを抽出中..."; \
+		if command -v unzip >/dev/null 2>&1; then \
+			if timeout 30 unzip -j /opt/cursor/cursor.AppImage "*.png" 2>/dev/null || \
+			   timeout 30 unzip -j /opt/cursor/cursor.AppImage "usr/share/pixmaps/*.png" 2>/dev/null || \
+			   timeout 30 unzip -j /opt/cursor/cursor.AppImage "resources/*.png" 2>/dev/null; then \
+				ICON_FILE=$$(ls -1 *.png 2>/dev/null | grep -i "cursor\|icon\|app" | head -1); \
+				if [ -z "$$ICON_FILE" ]; then ICON_FILE=$$(ls -1 *.png 2>/dev/null | head -1); fi; \
+				if [ -n "$$ICON_FILE" ] && [ -f "$$ICON_FILE" ]; then \
+					sudo mkdir -p /usr/share/pixmaps; \
+					sudo cp "$$ICON_FILE" /usr/share/pixmaps/cursor.png; \
+					ICON_PATH="/usr/share/pixmaps/cursor.png"; \
+					echo "✅ AppImageからアイコンを抽出しました: $$ICON_FILE"; \
+				fi; \
+				rm -f *.png 2>/dev/null || true; \
+			fi; \
+		fi; \
+	fi; \
+	if [ "$$ICON_EXTRACTED" = "false" ]; then \
+		echo "⚠️  アイコンの設定に失敗しました。デフォルトアイコンを使用します"; \
+	fi; \
+	echo "📝 デスクトップエントリーを作成中..."; \
+	echo "[Desktop Entry]" | sudo tee /usr/share/applications/cursor.desktop > /dev/null; \
+	echo "Name=Cursor" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null; \
+	echo "Comment=The AI-first code editor" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null; \
+	echo "Exec=/opt/cursor/cursor.AppImage --no-sandbox %F" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null; \
+	echo "Icon=$$ICON_PATH" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null; \
+	echo "Terminal=false" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null; \
+	echo "Type=Application" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null; \
+	echo "Categories=Development;IDE;TextEditor;" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null; \
+	echo "MimeType=text/plain;inode/directory;" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null; \
+	echo "StartupWMClass=cursor" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null; \
+	sudo chmod +x /usr/share/applications/cursor.desktop; \
+	sudo update-desktop-database 2>/dev/null || true; \
+	echo "✅ Cursor IDEのセットアップが完了しました";
 
 # Cursor IDEのアップデート
 update-cursor:
@@ -342,7 +406,7 @@ update-cursor:
 		fi; \
 	else \
 		echo "❌ Cursor IDEがインストールされていません"; \
-		echo "   'make install-cursor' でインストールしてください"; \
+		echo "   'make install-packages-cursor' でインストールしてください"; \
 	fi && \
 	\
 	if [ "$$CURSOR_UPDATED" = "false" ]; then \
@@ -435,7 +499,7 @@ check-cursor-version:
 	fi
 
 # MySQL Workbench のインストール
-install-mysql-workbench:
+install-packages-mysql-workbench:
 	@echo "🐬 MySQL Workbench のインストールを開始..."
 
 	# MySQL APTリポジトリの設定パッケージをダウンロード
@@ -480,29 +544,11 @@ install-mysql-workbench:
 	@echo "🎉 MySQL Workbench インストール完了"
 
 # Claude Code のインストール
-install-claude-code:
+install-packages-claude-code:
 	@echo "🤖 Claude Code のインストールを開始..."
 
 	# Node.jsの確認
-	@echo "🔍 Node.js の確認中..."
-	@if ! command -v node >/dev/null 2>&1; then \
-		echo "❌ Node.js がインストールされていません"; \
-		echo ""; \
-		echo "📥 Node.js のインストール手順:"; \
-		echo "1. Homebrewを使用: brew install node"; \
-		echo "2. NodeVersionManager(nvm)を使用: https://github.com/nvm-sh/nvm"; \
-		echo "3. 公式サイト: https://nodejs.org/"; \
-		echo ""; \
-		echo "ℹ️  Node.js 18+ が必要です"; \
-		exit 1; \
-	else \
-		NODE_VERSION=$$(node --version | cut -d'v' -f2 | cut -d'.' -f1); \
-		echo "✅ Node.js が見つかりました (バージョン: $$(node --version))"; \
-		if [ "$$NODE_VERSION" -lt 18 ]; then \
-			echo "⚠️  Node.js 18+ が推奨されています (現在: $$(node --version))"; \
-			echo "   古いバージョンでも動作する可能性がありますが、問題が発生する場合があります"; \
-		fi; \
-	fi
+	@$(MAKE) check-nodejs
 
 	# npmの確認
 	@echo "🔍 npm の確認中..."
@@ -568,8 +614,11 @@ install-claude-code:
 	@echo "📚 詳細なドキュメント: https://docs.anthropic.com/claude-code"
 	@echo "✅ Claude Code のインストールが完了しました"
 
+# Claudia (Claude Code GUI) のバージョン固定
+CLAUDIA_COMMIT := 70c16d8a4910db48cd9684aeacdd431caefd7d71
+
 # Claudia (Claude Code GUI) のインストール
-install-claudia:
+install-packages-claudia:
 	@echo "🖥️  Claudia (Claude Code GUI) のインストールを開始..."
 	@echo "ℹ️  注意: ClaudiaはまだRelease版が公開されていないため、ソースからビルドします"
 	@echo "⏱️  ビルドには10-15分かかる場合があります（システム環境により変動）"
@@ -595,10 +644,10 @@ install-claudia:
 	else \
 		RUST_VERSION=$$(rustc --version | grep -o '[0-9]\+\.[0-9]\+' | head -1); \
 		echo "✅ Rust が見つかりました: $$(rustc --version)"; \
-		MAJOR=$(echo "$RUST_VERSION" | cut -d'.' -f1); \
-		MINOR=$(echo "$RUST_VERSION" | cut -d'.' -f2); \
-		if [ "$MAJOR" -lt 1 ] || { [ "$MAJOR" -eq 1 ] && [ "$MINOR" -lt 70 ]; }; then \
-			echo "⚠️  Rust 1.70.0+ が推奨されています (現在: $RUST_VERSION)"; \
+		MAJOR=$$(echo "$$RUST_VERSION" | cut -d'.' -f1); \
+		MINOR=$$(echo "$$RUST_VERSION" | cut -d'.' -f2); \
+		if [ "$$MAJOR" -lt 1 ] || { [ "$$MAJOR" -eq 1 ] && [ "$$MINOR" -lt 70 ]; }; then \
+			echo "⚠️  Rust 1.70.0+ が推奨されています (現在: $$RUST_VERSION)"; \
 			echo "💡 アップデート: rustup update または brew upgrade rust"; \
 		fi; \
 	fi
@@ -645,10 +694,12 @@ install-claudia:
 	fi
 
 	# Claudia のクローンとビルド
-	@echo "📥 Claudia をクローン中..."
+	@echo "📥 Claudia をクローン中 (Commit: $(CLAUDIA_COMMIT))..."
 	@CLAUDIA_DIR="/tmp/claudia-build" && \
 	rm -rf "$$CLAUDIA_DIR" 2>/dev/null || true && \
-	if git clone https://github.com/getAsterisk/claudia.git "$$CLAUDIA_DIR"; then \
+	if git clone --depth 1 https://github.com/getAsterisk/claudia.git "$$CLAUDIA_DIR" && \
+	   git -C "$$CLAUDIA_DIR" fetch --depth=1 origin $(CLAUDIA_COMMIT) && \
+	   git -C "$$CLAUDIA_DIR" checkout $(CLAUDIA_COMMIT); then \
 		echo "✅ Claudia のクローンが完了しました"; \
 		cd "$$CLAUDIA_DIR" && \
 		\
@@ -775,55 +826,88 @@ install-claudia:
 	@echo "- カスタムエージェントを作成して開発タスクを自動化" \
 	@echo "✅ Claudia のインストールが完了しました"
 
-# SuperClaude (Claude Code Framework) のインストール
-# セキュリティ強化 2025年1月実装:
-# - バージョン3.0.0.2の厳格指定によるCVE対策
-# - SHA256ハッシュ検証 (PyPI公式ハッシュ値使用)
-# - --require-hashes フラグによる強制整合性チェック
-# - PyPI Trusted Publishing対応パッケージ (GPG署名の代替)
+# SuperClaudeのバージョン管理
+SUPERCLAUDE_VERSION := 4.1.9
+SUPERCLAUDE_HASH_TARGZ := bb73f5c3d11f222bb84704f99e671ef53b1cd7d3951c044947fab8d998a6ac13
+SUPERCLAUDE_HASH_WHEEL := 46e5dcb5f03bd9775d01198a96cfe16279d14cc8c081c9619e270a96fb469821
+
+# SuperClaude のインストール
 install-superclaude:
-	@echo "🚀 SuperClaude v3 (Claude Code Framework) のインストールを開始..."
+	@$(MAKE) _superclaude_check_dependencies
+	@$(MAKE) _superclaude_install_package
+	@$(MAKE) _superclaude_setup_framework
+	@$(MAKE) _superclaude_verify_installation
 
-	# Claude Code の確認
-	@echo "🔍 Claude Code の確認中..."
-	@if ! command -v claude >/dev/null 2>&1; then \
-		echo "❌ Claude Code がインストールされていません"; \
-		echo "ℹ️  先に 'make install-packages-claude-code' を実行してください"; \
-		exit 1; \
-	else \
-		echo "✅ Claude Code が見つかりました: $$(claude --version 2>/dev/null)"; \
-	fi
+# 後方互換性のためのエイリアス
+install-packages-superclaude: install-superclaude
 
+_superclaude_check_dependencies:
 	# Python の確認
 	@echo "🔍 Python の確認中..."
 	@if ! command -v python3 >/dev/null 2>&1; then \
-		echo "❌ Python3 がインストールされていません"; \
-		echo "📥 Pythonをインストールしてください: sudo apt install python3 python3-pip"; \
+		echo "❌ Python 3 がインストールされていません"; \
+		echo ""; \
+		echo "📥 Python 3 のインストール手順:"; \
+		echo "1. Ubuntu/Debian: sudo apt install python3 python3-pip"; \
+		echo "2. macOS: brew install python3"; \
+		echo "3. 公式サイト: https://www.python.org/"; \
+		echo ""; \
+		echo "ℹ️  Python 3.8+ が必要です"; \
 		exit 1; \
 	else \
-		echo "✅ Python が見つかりました: $$(python3 --version)"; \
+		PYTHON_VERSION=$$(python3 --version 2>&1 | grep -oE '[0-9]+\.[0-9]+' | head -1); \
+		echo "✅ Python が見つかりました: $$(python3 --version 2>&1)"; \
+		\
+		# バージョン文字列の検証と解析 \
+		if echo "$$PYTHON_VERSION" | grep -qE '^[0-9]+\.[0-9]+$$'; then \
+			MAJOR=$$(echo "$$PYTHON_VERSION" | cut -d'.' -f1); \
+			MINOR=$$(echo "$$PYTHON_VERSION" | cut -d'.' -f2); \
+		else \
+			echo "⚠️  Pythonのバージョン解析に失敗しました: '$$PYTHON_VERSION'"; \
+			MAJOR=0; \
+			MINOR=0; \
+		fi; \
+		\
+		# バージョン要件の確認 (3.8+) \
+		if [ "$$MAJOR" -eq 0 ]; then \
+			echo "⚠️  バージョンを特定できませんでした。Python 3.8+ がインストールされていることを確認してください。"; \
+		elif [ "$$MAJOR" -lt 3 ] || { [ "$$MAJOR" -eq 3 ] && [ "$$MINOR" -lt 8 ]; }; then \
+			echo "⚠️  Python 3.8+ が推奨されています (検出: $$PYTHON_VERSION)"; \
+			echo "   古いバージョンでは動作しない可能性があります"; \
+		fi; \
 	fi
-
-	# uv の確認とインストール
-	@echo "🔍 uv (Python パッケージマネージャー) の確認中..."
+	# pip の確認
+	@echo "🔍 pip の確認中..."
+	@if ! command -v pip3 >/dev/null 2>&1 && ! command -v pip >/dev/null 2>&1; then \
+		echo "❌ pip がインストールされていません"; \
+		echo "ℹ️  通常はPython 3と一緒にインストールされます"; \
+		echo "   インストール: python3 -m ensurepip --upgrade"; \
+		exit 1; \
+	else \
+		echo "✅ pip が見つかりました: $$(pip3 --version 2>/dev/null || pip --version)"; \
+	fi
+	# uv の確認とインストール（推奨）
+	@echo "🔍 uv (高速Pythonパッケージマネージャー) の確認中..."
 	@if ! command -v uv >/dev/null 2>&1; then \
-		{ \
-			echo "📦 uv をインストール中..."; \
-			curl -LsSf https://astral.sh/uv/install.sh | sh; \
-			echo "🔄 uvのパスを更新中..."; \
-			export PATH="$$HOME/.local/bin:$$PATH"; \
-			if ! command -v uv >/dev/null 2>&1; then \
-				echo "⚠️  uvのインストールが完了しましたが、現在のセッションで認識されていません"; \
-				echo "   新しいターミナルセッションで再実行するか、以下を実行してください:"; \
-				echo "   source $(HOME_DIR)/.bashrc"; \
-			fi; \
-		}; \
+		echo "📦 uv をインストール中..."; \
+		curl -LsSf https://astral.sh/uv/install.sh | sh; \
+		echo "🔄 uvのパスを更新中..."; \
+		export PATH="$$HOME/.local/bin:$$PATH"; \
+		if ! command -v uv >/dev/null 2>&1; then \
+			echo "⚠️  uvのインストールが完了しましたが、現在のセッションで認識されていません"; \
+			echo "   新しいターミナルセッションで再実行するか、以下を実行してください:"; \
+			echo "   source $$HOME/.bashrc"; \
+			echo "   source $$HOME/.zshrc (zshの場合)"; \
+			echo ""; \
+			echo "ℹ️  uvなしでもpipを使用してインストールを続行できます"; \
+		fi; \
 	else \
 		echo "✅ uv が見つかりました: $$(uv --version)"; \
 	fi
 
+_superclaude_install_package:
 	# SuperClaude の既存インストール確認
-	# セキュリティ改善: v3.0.0.2固定 + SHA256ハッシュ検証
+	# セキュリティ改善: v$(SUPERCLAUDE_VERSION)固定 + SHA256ハッシュ検証
 	# - バージョン固定により依存関係の安定性を確保
 	# - SHA256ハッシュ検証により改ざん防止
 	# - 公式PyPIパッケージからの安全なインストール
@@ -833,68 +917,69 @@ install-superclaude:
 		CURRENT_VERSION=$$(SuperClaude --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+(\.[0-9]+)?' || echo "不明"); \
 		echo "✅ SuperClaude は既にインストールされています"; \
 		echo "   現在のバージョン: $$CURRENT_VERSION"; \
-		echo "   対象バージョン: 3.0.0.2"; \
-		if [ "$$CURRENT_VERSION" != "3.0.0.2" ]; then \
+		echo "   対象バージョン: $(SUPERCLAUDE_VERSION)"; \
+		if [ "$$CURRENT_VERSION" != "$(SUPERCLAUDE_VERSION)" ]; then \
 			echo ""; \
-			echo "🔄 バージョン3.0.0.2にアップデート中..."; \
+			echo "🔄 バージョン$(SUPERCLAUDE_VERSION)にアップデート中..."; \
 			echo "🔐 セキュリティ: 複数ハッシュ検証を実行します"; \
-			if uv tool upgrade SuperClaude==3.0.0.2 --verify-hashes 2>/dev/null || \
-			   uv add SuperClaude==3.0.0.2 --upgrade 2>/dev/null; then \
-				echo "✅ SuperClaude 3.0.0.2へのアップデートが完了しました"; \
+			if uv tool upgrade SuperClaude==$(SUPERCLAUDE_VERSION) --verify-hashes 2>/dev/null || \
+			   uv add SuperClaude==$(SUPERCLAUDE_VERSION) --upgrade 2>/dev/null; then \
+				echo "✅ SuperClaude $(SUPERCLAUDE_VERSION)へのアップデートが完了しました"; \
 			else \
 				echo "⚠️  標準アップデートに失敗しました。pipでの多重セキュリティ検証インストールを試行中..."; \
-				pip install --upgrade --force-reinstall "SuperClaude==3.0.0.2" \
-					--hash=sha256:0bb45f9494eee17c950f17c94b6f7128ed7d1e71750c39f47da89023e812a031 \
+				: "ハッシュ更新手順: 'pip hash <file>' でローカルファイルのハッシュを取得するか、https://pypi.org/pypi/SuperClaude/json から wheel と sdist の SHA256 を確認し、更新時は該当の --hash=sha256:... 値を両方（wheel と sdist）に追加または置換してください"; \
+				pip install --upgrade --force-reinstall "SuperClaude==$(SUPERCLAUDE_VERSION)" \
+					--hash=sha256:$(SUPERCLAUDE_HASH_TARGZ) \
 					--require-hashes || \
-				pip install --upgrade --force-reinstall "SuperClaude==3.0.0.2" \
-					--hash=sha256:3d30c60d06b7e7f430799adee4d7ac2575d3ea5b94d93771647965ee49aaf870 \
+				pip install --upgrade --force-reinstall "SuperClaude==$(SUPERCLAUDE_VERSION)" \
+					--hash=sha256:$(SUPERCLAUDE_HASH_WHEEL) \
 					--require-hashes; \
 			fi; \
 		else \
-			echo "✅ 既に最新バージョン(3.0.0.2)がインストールされています"; \
+			echo "✅ 既に最新バージョン($(SUPERCLAUDE_VERSION))がインストールされています"; \
 		fi; \
 	else \
-		echo "📦 SuperClaude v3.0.0.2 をインストール中..."; \
+		echo "📦 SuperClaude v$(SUPERCLAUDE_VERSION) をインストール中..."; \
 		echo "🔐 強化セキュリティ機能:"; \
-		echo "   ✓ バージョン固定: 3.0.0.2 (2025年7月23日リリース)"; \
+		echo "   ✓ バージョン固定: $(SUPERCLAUDE_VERSION) (2025年11月14日リリース)"; \
 		echo "   ✓ SHA256ハッシュ検証有効 (PyPI公式)"; \
 		echo "   ✓ --require-hashes フラグ (強制検証)"; \
 		echo "   ✓ PyPI公式パッケージからのインストール"; \
 		echo "   ✓ 署名者: mithungowda.b (PyPI verified)"; \
 		echo ""; \
-		echo "ℹ️  多重セキュリティ検証インストールを実行します: uv add SuperClaude==3.0.0.2"; \
+		echo "ℹ️  多重セキュリティ検証インストールを実行します: uv add SuperClaude==$(SUPERCLAUDE_VERSION)"; \
 		\
 		# uvでのハッシュ検証付きインストールを試行
-		if uv tool install SuperClaude==3.0.0.2 --verify-hashes 2>/dev/null || \
-		   uv add SuperClaude==3.0.0.2; then \
-			echo "✅ SuperClaude 3.0.0.2 のパッケージインストールが完了しました"; \
+		if uv tool install SuperClaude==$(SUPERCLAUDE_VERSION) --verify-hashes 2>/dev/null || \
+		   uv add SuperClaude==$(SUPERCLAUDE_VERSION); then \
+			echo "✅ SuperClaude $(SUPERCLAUDE_VERSION) のパッケージインストールが完了しました"; \
 		else \
 			echo "⚠️  uvでのインストールに失敗しました。pipでのSHA256ハッシュ検証インストールを試行中..."; \
 			echo "🔐 SHA256強制検証モードでインストールします"; \
 			\
 			# pipでのSHA256ハッシュ検証付きインストール（tar.gz形式）
-			if pip install "SuperClaude==3.0.0.2" \
-				--hash=sha256:0bb45f9494eee17c950f17c94b6f7128ed7d1e71750c39f47da89023e812a031 \
+			if pip install "SuperClaude==$(SUPERCLAUDE_VERSION)" \
+				--hash=sha256:$(SUPERCLAUDE_HASH_TARGZ) \
 				--require-hashes; then \
-				echo "✅ SuperClaude 3.0.0.2 のセキュアインストールが完了しました (source distribution)"; \
-				echo "   ✓ SHA256検証済み: 0bb45f9494eee17c950f17c94b6f7128ed7d1e71750c39f47da89023e812a031"; \
+				echo "✅ SuperClaude $(SUPERCLAUDE_VERSION) のセキュアインストールが完了しました (source distribution)"; \
+				echo "   ✓ SHA256検証済み: $(SUPERCLAUDE_HASH_TARGZ)"; \
 			# フォールバック: wheel形式でのSHA256ハッシュ検証
-			elif pip install "SuperClaude==3.0.0.2" \
-				--hash=sha256:3d30c60d06b7e7f430799adee4d7ac2575d3ea5b94d93771647965ee49aaf870 \
+			elif pip install "SuperClaude==$(SUPERCLAUDE_VERSION)" \
+				--hash=sha256:$(SUPERCLAUDE_HASH_WHEEL) \
 				--require-hashes; then \
-				echo "✅ SuperClaude 3.0.0.2 のセキュアインストールが完了しました (wheel distribution)"; \
-				echo "   ✓ SHA256検証済み: 3d30c60d06b7e7f430799adee4d7ac2575d3ea5b94d93771647965ee49aaf870"; \
+				echo "✅ SuperClaude $(SUPERCLAUDE_VERSION) のセキュアインストールが完了しました (wheel distribution)"; \
+				echo "   ✓ SHA256検証済み: $(SUPERCLAUDE_HASH_WHEEL)"; \
 			else \
 				echo "❌ SuperClaude のセキュアインストールに失敗しました"; \
 				echo ""; \
 				echo "🔧 トラブルシューティング:"; \
 				echo "1. ネットワーク接続の確認"; \
 				echo "2. Python環境の確認: python3 --version"; \
-				echo "3. 手動での厳格インストール: pip install SuperClaude==3.0.0.2 --require-hashes"; \
-				echo "4. 権限の問題: pip install --user SuperClaude==3.0.0.2"; \
+				echo "3. 手動での厳格インストール: pip install SuperClaude==$(SUPERCLAUDE_VERSION) --require-hashes"; \
+				echo "4. 権限の問題: pip install --user SuperClaude==$(SUPERCLAUDE_VERSION)"; \
 				echo ""; \
 				echo "⚠️  セキュリティに関する重要な注意:"; \
-				echo "   手動インストール時はバージョン3.0.0.2を必ず指定してください"; \
+				echo "   手動インストール時はバージョン$(SUPERCLAUDE_VERSION)を必ず指定してください"; \
 				echo "   公式PyPIリポジトリ以外からのインストールは推奨されません"; \
 				echo "   --require-hashes フラグの使用を強く推奨します"; \
 				echo ""; \
@@ -907,8 +992,8 @@ install-superclaude:
 		echo "🔍 インストール後のセキュリティ検証を実行中..."; \
 		if command -v SuperClaude >/dev/null 2>&1; then \
 			INSTALLED_VERSION=$$(SuperClaude --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+(\.[0-9]+)?' || echo "不明"); \
-			if [ "$$INSTALLED_VERSION" = "3.0.0.2" ]; then \
-				echo "✅ バージョン検証成功: SuperClaude 3.0.0.2"; \
+			if [ "$$INSTALLED_VERSION" = "$(SUPERCLAUDE_VERSION)" ]; then \
+				echo "✅ バージョン検証成功: SuperClaude $(SUPERCLAUDE_VERSION)"; \
 				echo "✅ コマンド実行可能性確認済み"; \
 				echo "✅ パッケージ整合性確認済み"; \
 				# パッケージの追加情報取得を試行
@@ -917,7 +1002,7 @@ install-superclaude:
 				echo "   $$PACKAGE_INFO" | sed 's/^/   /'; \
 				echo "🔐 セキュリティ状態: 検証済みパッケージ"; \
 			else \
-				echo "⚠️  バージョン不一致: 期待値=3.0.0.2, 実際=$$INSTALLED_VERSION"; \
+				echo "⚠️  バージョン不一致: 期待値=$(SUPERCLAUDE_VERSION), 実際=$$INSTALLED_VERSION"; \
 				echo "❌ セキュリティ検証失敗"; \
 			fi; \
 		else \
@@ -925,17 +1010,17 @@ install-superclaude:
 			echo "❌ インストール検証失敗"; \
 		fi; \
 	fi
-
 	@echo ""; \
 	@echo "🛡️  セキュリティ検証状況:" \
 	@echo "   ✓ PyPI公式リポジトリからのダウンロード" \
-	@echo "   ✓ バージョン3.0.0.2固定 (CVE対策)" \
+	@echo "   ✓ バージョン$(SUPERCLAUDE_VERSION)固定 (最新安定版)" \
 	@echo "   ✓ SHA256ハッシュ検証 (パッケージ整合性)" \
 	@echo "   ✓ --require-hashes 強制検証モード" \
 	@echo "   ✓ 認証済みメンテナー: mithungowda.b" \
 	@echo "   ⚠️ GPG署名: PyPIでは現在未提供 (Trusted Publishingで代替)" \
 	@echo "   ℹ️  PyPIのTrusted Publishingによる署名済み配信"
 
+_superclaude_setup_framework:
 	# SuperClaude フレームワークのセットアップ
 	@echo "⚙️  SuperClaude フレームワークをセットアップ中..."
 	@export PATH="$$HOME/.local/bin:$$PATH"; \
@@ -980,6 +1065,7 @@ install-superclaude:
 		exit 1; \
 	fi
 
+_superclaude_verify_installation:
 	# インストール確認とテスト
 	@echo "🔍 インストールの確認中..."
 	@export PATH="$$HOME/.local/bin:$$PATH"; \
@@ -993,43 +1079,6 @@ install-superclaude:
 		echo "   手動確認: which SuperClaude"; \
 		exit 1; \
 	fi
-
-	@echo ""; \
-	@echo "🎉 SuperClaude v3 のセットアップが完了しました！" \
-	@echo ""; \
-	@echo "🚀 使用方法:" \
-	@echo "1. Claude Code を起動: claude" \
-	@echo "2. SuperClaude コマンドを使用:" \
-	@echo ""; \
-	@echo "📋 利用可能なコマンド例:" \
-	@echo "   /sc:implement <feature>    - 機能の実装" \
-	@echo "   /sc:build                  - ビルド・パッケージング" \
-	@echo "   /sc:design <ui>            - UI/UXデザイン" \
-	@echo "   /sc:analyze <code>         - コード分析" \
-	@echo "   /sc:troubleshoot <issue>   - 問題のデバッグ" \
-	@echo "   /sc:test <suite>           - テストスイート" \
-	@echo "   /sc:improve <code>         - コード改善" \
-	@echo "   /sc:cleanup                - コードクリーンアップ" \
-	@echo "   /sc:document <code>        - ドキュメント生成" \
-	@echo "   /sc:git <operation>        - Git操作" \
-	@echo "   /sc:estimate <task>        - 時間見積もり" \
-	@echo "   /sc:task <management>      - タスク管理" \
-	@echo ""; \
-	@echo "🎭 スマートペルソナ:" \
-	@echo "   🏗️  architect   - システム設計・アーキテクチャ" \
-	@echo "   🎨 frontend    - UI/UX・アクセシビリティ" \
-	@echo "   ⚙️  backend     - API・インフラストラクチャ" \
-	@echo "   🔍 analyzer    - デバッグ・問題解決" \
-	@echo "   🛡️  security    - セキュリティ・脆弱性評価" \
-	@echo "   ✍️  scribe      - ドキュメント・技術文書" \
-	@echo ""; \
-	@echo "🔌 MCP サーバー統合:" \
-	@echo "   - Context7 (公式ドキュメント)" \
-	@echo "   - Sequential (マルチステップ思考)" \
-	@echo "   - Magic (UIコンポーネント)" \
-	@echo ""; \
-	@echo "📚 詳細なドキュメント: https://superclaude-org.github.io/" \
-	@echo "✅ SuperClaude v3 のインストールが完了しました"
 
 # SuperClaude 設定修復ヘルパー
 fix-superclaude:
@@ -1068,7 +1117,7 @@ fix-superclaude:
 		fi; \
 	else \
 		echo "❌ SuperClaude がインストールされていません"; \
-		echo "ℹ️  先に 'make install-packages-superclaude' を実行してください"; \
+		echo "ℹ️  先に 'make install-superclaude' を実行してください"; \
 	fi
 
 	@echo ""; \
@@ -1085,7 +1134,7 @@ install-claude-ecosystem:
 
 	# Step 1: Claude Code のインストール
 	@echo "📋 Step 1/3: Claude Code をインストール中..."
-	@$(MAKE) install-claude-code
+	@$(MAKE) install-packages-claude-code
 	@echo "✅ Claude Code のインストールが完了しました"
 	@echo ""
 
@@ -1093,7 +1142,7 @@ install-claude-ecosystem:
 	@echo "📋 Step 2/3: SuperClaude をインストール中..."
 	@if [ "$${SKIP_SUPERCLAUDE:-0}" = "1" ]; then \
 		echo "⚠️  SuperClaude のインストールはスキップされています (SKIP_SUPERCLAUDE=1)"; \
-		echo "   手動インストール例: pip install SuperClaude==3.0.0.2"; \
+		echo "   手動インストール例: pip install SuperClaude==$(SUPERCLAUDE_VERSION)"; \
 		echo "   有効化方法: SKIP_SUPERCLAUDE=0 make install-claude-ecosystem"; \
 	else \
 		echo "📦 SuperClaude をインストール中..."; \
@@ -1104,7 +1153,7 @@ install-claude-ecosystem:
 
 	# Step 3: Claudia のインストール
 	@echo "📋 Step 3/3: Claudia をインストール中..."
-	@$(MAKE) install-claudia
+	@$(MAKE) install-packages-claudia
 	@echo "✅ Claudia のインストールが完了しました"
 	@echo ""
 
@@ -1166,7 +1215,13 @@ install-claude-ecosystem:
 	@echo "✅ Claude Code エコシステムの一括インストールが完了しました"
 
 # DEBパッケージをインストール（IDE・ブラウザ含む）
-install-deb:
+install-packages-deb:
+ifndef FORCE
+	@if $(call check_marker,install-packages-deb) 2>/dev/null; then \
+		echo "$(call IDEMPOTENCY_SKIP_MSG,install-packages-deb)"; \
+		exit 0; \
+	fi
+endif
 	@echo "📦 DEBパッケージをインストール中..."
 	@echo "ℹ️  IDE・ブラウザ・開発ツールをインストールします"
 
@@ -1227,11 +1282,11 @@ install-deb:
 
 	# FUSE（AppImage実行用）のインストール
 	@echo "🔧 FUSE（AppImage実行用）のインストール中..."
-	@$(MAKE) install-fuse
+	@$(MAKE) install-packages-fuse
 
 	# Cursor IDE のインストール
 	@echo "💻 Cursor IDE のインストール中..."
-	@$(MAKE) install-cursor
+	@$(MAKE) install-packages-cursor
 
 	# WezTerm のインストール
 	@echo "🖥️  WezTerm のインストール中..."
@@ -1245,6 +1300,7 @@ install-deb:
 		echo "✅ WezTerm は既にインストールされています"; \
 	fi
 
+	@$(call create_marker,install-packages-deb,N/A)
 	@echo "✅ DEBパッケージのインストールが完了しました"
 	@echo "📋 インストール完了項目:"
 	@echo "   - Visual Studio Code"
@@ -1260,25 +1316,7 @@ install-playwright:
 	@echo "🎭 Playwright E2Eテストフレームワークのインストールを開始..."
 
 	# Node.jsの確認
-	@echo "🔍 Node.js の確認中..."
-	@if ! command -v node >/dev/null 2>&1; then \
-		echo "❌ Node.js がインストールされていません"; \
-		echo ""; \
-		echo "📥 Node.js のインストール手順:"; \
-		echo "1. Homebrewを使用: brew install node"; \
-		echo "2. NodeVersionManager(nvm)を使用: https://github.com/nvm-sh/nvm"; \
-		echo "3. 公式サイト: https://nodejs.org/"; \
-		echo ""; \
-		echo "ℹ️  Node.js 18+ が必要です"; \
-		exit 1; \
-	else \
-		NODE_VERSION=$$(node --version | cut -d'v' -f2 | cut -d'.' -f1); \
-		echo "✅ Node.js が見つかりました (バージョン: $$(node --version))"; \
-		if [ "$$NODE_VERSION" -lt 18 ]; then \
-			echo "⚠️  Node.js 18+ が推奨されています (現在: $$(node --version))"; \
-			echo "   古いバージョンでも動作する可能性がありますが、問題が発生する場合があります"; \
-		fi; \
-	fi
+	@$(MAKE) check-nodejs
 
 	# npmの確認
 	@echo "🔍 npm の確認中..."
@@ -1416,42 +1454,32 @@ install-playwright:
 	@echo ""; \
 	@echo "✅ Playwright のインストールが完了しました"
 
-# ========================================
-# 新しい階層的な命名規則のターゲット
-# ========================================
-
-# パッケージ・ソフトウェアインストール系
-install-packages-homebrew: install-homebrew
-install-packages-apps: install-apps
-install-packages-deb: install-deb
-install-packages-flatpak: install-flatpak
-install-packages-fuse: install-fuse
-install-packages-wezterm: install-wezterm
-install-packages-cursor: install-cursor
-install-packages-claude-code: install-claude-code
-install-packages-claudia: install-claudia
-install-packages-superclaude: install-superclaude
-install-packages-claude-ecosystem: install-claude-ecosystem
-install-packages-cica-fonts: install-cica-fonts
-install-packages-mysql-workbench: install-mysql-workbench
-install-packages-playwright: install-playwright
-install-packages-gemini-cli: install-gemini-cli
 
 # ccusage のインストール
 install-packages-ccusage:
 	@echo "📦 ccusage をインストールしています..."
 	@if ! command -v bun >/dev/null 2>&1; then \
-		echo "bun が見つからないため、インストールします..."; \
-		curl -fsSL https://bun.sh/install | bash; \
+		if command -v brew >/dev/null 2>&1; then \
+			echo "🍺 Homebrewを使用してbunをインストール中..."; \
+			if ! brew install bun; then \
+				echo "⚠️  Homebrewでのインストールに失敗しました。公式インストーラーにフォールバックします..."; \
+				curl -fsSL https://bun.sh/install | bash; \
+			fi; \
+		else \
+			echo "🔐 Bunをインストール中（公式インストーラー使用）..."; \
+			curl -fsSL https://bun.sh/install | bash; \
+		fi; \
 		export PATH="$(HOME)/.bun/bin:$$PATH"; \
 		if ! command -v bun >/dev/null 2>&1; then \
 			echo "❌ bun のインストールに失敗しました。PATH を確認してください。"; \
 			exit 1; \
-		fi \
+		fi; \
 	fi
 	@echo "🔧 ccusage をグローバル導入中..."
 	@export PATH="$(HOME)/.bun/bin:$$PATH"; \
-	if ! bun add -g ccusage; then \
+	CCUSAGE_VERSION="15.0.1"; \
+	echo "📦 ccusage ($$CCUSAGE_VERSION) をインストール中..."; \
+	if ! bun add -g ccusage@$$CCUSAGE_VERSION; then \
 		echo "⚠️ bun add -g に失敗。bunx での実行にフォールバックします"; \
 	fi
 	@echo "🔍 動作確認: ccusage --version"
@@ -1480,14 +1508,12 @@ install-packages-chrome-beta:
 	@echo "✅ Google Chrome Beta のインストールが完了しました"
 
 # ========================================
-# 後方互換性のためのエイリアス
+# 後方互換性のためのエイリアス (一部のみここに定義)
+# ほとんどの後方互換エイリアスは mk/deprecated-targets.mk で一元管理されています。
 # ========================================
 
-# 古いターゲット名を維持（新しいターゲットを呼び出すエイリアス）
-# install-homebrew: は既に実装済み
-# install-apps: は既に実装済み
-# install-deb: は既に実装済み
-# その他の既存ターゲットはそのまま
+# ここでは、単純な転送のみが必要な少数のエイリアスのみを定義しています。
+# 詳細な非推奨ポリシー（警告、期限など）は mk/deprecated-targets.mk を参照してください。
 
 # SuperCopilot Framework for VSCode のインストール
 install-packages-vscode-supercopilot:
@@ -1532,10 +1558,10 @@ install-supercursor:
 		exit 1; \
 	fi; \
 	\
-	@echo "📁 必要なディレクトリを作成中..."; \
+	echo "📁 必要なディレクトリを作成中..."; \
 	mkdir -p $(HOME_DIR)/.cursor/ || true; \
 	\
-	@echo "🔗 シンボリックリンクを作成中..."; \
+	echo "🔗 シンボリックリンクを作成中..."; \
 	# SuperCursor本体へのリンク \
 	rm -rf $(HOME_DIR)/.cursor/supercursor; \
 	ln -sT $(DOTFILES_DIR)/cursor/supercursor $(HOME_DIR)/.cursor/supercursor || true; \
@@ -1550,7 +1576,7 @@ install-supercursor:
 	rm -f $(HOME_DIR)/.cursor/CURSOR.md; \
 	ln -sf $(DOTFILES_DIR)/cursor/supercursor/README.md $(HOME_DIR)/.cursor/CURSOR.md || true; \
 	\
-	@echo "✅ SuperCursor フレームワークのシンボリックリンク設定が完了しました"
+	echo "✅ SuperCursor フレームワークのシンボリックリンク設定が完了しました"
 
 	@echo ""; \
 	@echo "🎉 SuperCursor のセットアップが完了しました！" \
@@ -1587,25 +1613,7 @@ install-gemini-cli:
 	@echo "🤖 Gemini CLI のインストールを開始..."
 
 	# Node.jsの確認
-	@echo "🔍 Node.js の確認中..."
-	@if ! command -v node >/dev/null 2>&1; then \
-		echo "❌ Node.js がインストールされていません"; \
-		echo ""; \
-		echo "📥 Node.js のインストール手順:"; \
-		echo "1. Homebrewを使用: brew install node"; \
-		echo "2. NodeVersionManager(nvm)を使用: https://github.com/nvm-sh/nvm"; \
-		echo "3. 公式サイト: https://nodejs.org/"; \
-		echo ""; \
-		echo "ℹ️  Node.js 18+ が必要です"; \
-		exit 1; \
-	else \
-		NODE_VERSION=$$(node --version | cut -d'v' -f2 | cut -d'.' -f1); \
-		echo "✅ Node.js が見つかりました (バージョン: $$(node --version))"; \
-		if [ "$$NODE_VERSION" -lt 18 ]; then \
-			echo "⚠️  Node.js 18+ が推奨されています (現在: $$(node --version))"; \
-			echo "   古いバージョンでも動作する可能性がありますが、問題が発生する場合があります"; \
-		fi; \
-	fi
+	@$(MAKE) check-nodejs
 
 	# npmの確認
 	@echo "🔍 npm の確認中..."
@@ -1685,13 +1693,13 @@ install-supergemini:
 	@echo "⚙️  SuperGemini フレームワークをセットアップ中..."
 	@export PATH="$$HOME/.local/bin:$$PATH"; \
 	echo "🔧 SuperGemini セットアップ準備中..."; \
-	@echo "ℹ️  フレームワークファイル、ユーザーツール、Gemini CLI設定をシンボリックリンクで構成します"; \
+	echo "ℹ️  フレームワークファイル、ユーザーツール、Gemini CLI設定をシンボリックリンクで構成します"; \
 	\
-	@echo "📁 必要なディレクトリを作成中..."; \
+	echo "📁 必要なディレクトリを作成中..."; \
 	mkdir -p $(HOME_DIR)/.gemini/ || true; \
 	mkdir -p $(HOME_DIR)/.gemini/user-tools/ || true; \
 	\
-	@echo "🔗 シンボリックリンクを作成中..."; \
+	echo "🔗 シンボリックリンクを作成中..."; \
 	# SuperGemini本体へのリンク \
 	ln -sf $(DOTFILES_DIR)/gemini/supergemini $(HOME_DIR)/.gemini/supergemini || true; \
 	# 各種ディレクトリへのリンク \
@@ -1700,7 +1708,7 @@ install-supergemini:
 	# 重要なファイルへの直接リンク \
 	ln -sf $(DOTFILES_DIR)/gemini/supergemini/GEMINI.md $(HOME_DIR)/.gemini/GEMINI.md || true; \
 	\
-	@echo "📝 カスタムツールファイルを作成中..."; \
+	echo "📝 カスタムツールファイルを作成中..."; \
 	cp -f $(DOTFILES_DIR)/gemini/supergemini/Commands/help.md $(HOME_DIR)/.gemini/user-tools/user-help.md 2>/dev/null || \
 	echo "import-help: # /user-help コマンド\n\nSuperGeminiフレームワークのコマンド一覧を表示します。" > $(HOME_DIR)/.gemini/user-tools/user-help.md; \
 	\
@@ -1710,10 +1718,10 @@ install-supergemini:
 	cp -f $(DOTFILES_DIR)/gemini/supergemini/Commands/implement.md $(HOME_DIR)/.gemini/user-tools/user-implement.md 2>/dev/null || \
 	echo "import-implement: # /user-implement コマンド\n\n新機能を実装します。" > $(HOME_DIR)/.gemini/user-tools/user-implement.md; \
 	\
-	@echo "🔧 Gemini CLI設定ファイルを更新中..."; \
+	echo "🔧 Gemini CLI設定ファイルを更新中..."; \
 	echo '{"selectedAuthType":"oauth-personal","usageStatisticsEnabled":false,"customToolsDirectory":"~/.gemini/user-tools","enableCustomTools":true}' > $(HOME_DIR)/.gemini/settings.json || true; \
 	\
-	@echo "✅ SuperGemini フレームワークのシンボリックリンク設定が完了しました"; \
+	echo "✅ SuperGemini フレームワークのシンボリックリンク設定が完了しました"; \
 	@echo ""; \
 	@echo "🎉 SuperGemini のセットアップが完了しました！" \
 	@echo ""; \

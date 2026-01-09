@@ -17,8 +17,8 @@ SUPERCLAUDE_ALL_FILES := $(SUPERCLAUDE_MODES) $(SUPERCLAUDE_MCP) $(SUPERCLAUDE_C
 CLAUDE_DIR := $(HOME)/.claude
 DOTFILES_CLAUDE_DIR := $(CURDIR)/claude
 
-.PHONY: superclaude-check
-superclaude-check: ## SuperClaudeフレームワークのインストール状態を確認
+.PHONY: check-superclaude
+check-superclaude: ## SuperClaudeフレームワークのインストール状態を確認
 	@echo "🔍 SuperClaude Framework のインストール状態を確認中..."
 	@echo ""
 	@if [ -d "$(CLAUDE_DIR)" ]; then \
@@ -42,11 +42,16 @@ superclaude-check: ## SuperClaudeフレームワークのインストール状�
 		fi; \
 	else \
 		echo "❌ Claude設定ディレクトリが存在しません: $(CLAUDE_DIR)"; \
-		echo "ℹ️  'make superclaude-install' を実行してください"; \
+		echo "ℹ️  'make install-packages-superclaude' を実行してください"; \
 	fi
 
-.PHONY: superclaude-install
-superclaude-install: ## SuperClaudeフレームワークをClaude Code向けにインストール
+.PHONY: install-packages-superclaude
+install-packages-superclaude: ## SuperClaudeフレームワークをClaude Code向けにインストール
+	@if [ -L "$(CLAUDE_DIR)/CLAUDE.md" ] && command -v SuperClaude >/dev/null 2>&1 && \
+	   [ -f "$(CLAUDE_DIR)/MODE_Brainstorming.md" ] && [ -f "$(CLAUDE_DIR)/PRINCIPLES.md" ]; then \
+		echo "$(call IDEMPOTENCY_SKIP_MSG,install-packages-superclaude)"; \
+		exit 0; \
+	fi
 	@echo "🚀 SuperClaude Framework for Claude Code のインストールを開始..."
 	@echo ""
 	@# Claude Codeの確認
@@ -118,7 +123,7 @@ superclaude-install: ## SuperClaudeフレームワークをClaude Code向けに�
 	@ln -sf "$(DOTFILES_CLAUDE_DIR)/CLAUDE.md" "$(CLAUDE_DIR)/CLAUDE.md"
 	@echo "✅ CLAUDE.md → $(DOTFILES_CLAUDE_DIR)/CLAUDE.md"
 	@echo ""
-	@$(MAKE) superclaude-check
+	@$(MAKE) check-superclaude
 	@echo ""
 	@echo "🎉 SuperClaude Framework のインストールが完了しました！"
 	@echo ""
@@ -126,8 +131,8 @@ superclaude-install: ## SuperClaudeフレームワークをClaude Code向けに�
 	@echo "   Claude Codeを起動すると、SuperClaudeフレームワークが自動的に読み込まれます"
 	@echo "   ~/.claude/CLAUDE.md に記載されているモードやMCPドキュメントが利用可能です"
 
-.PHONY: superclaude-uninstall
-superclaude-uninstall: ## SuperClaudeフレームワークをアンインストール
+.PHONY: uninstall-superclaude
+uninstall-superclaude: ## SuperClaudeフレームワークをアンインストール
 	@echo "🗑️  SuperClaude Framework のアンインストールを開始..."
 	@echo ""
 	@if [ ! -d "$(CLAUDE_DIR)" ]; then \
@@ -169,8 +174,8 @@ superclaude-uninstall: ## SuperClaudeフレームワークをアンインスト�
 		echo "❌ アンインストールをキャンセルしました"; \
 	fi
 
-.PHONY: superclaude-update
-superclaude-update: ## SuperClaudeフレームワークを最新版に更新
+.PHONY: update-superclaude
+update-superclaude: ## SuperClaudeフレームワークを最新版に更新
 	@echo "🔄 SuperClaude Framework を更新中..."
 	@echo ""
 	@# フレームワークファイルの更新確認
@@ -190,8 +195,8 @@ superclaude-update: ## SuperClaudeフレームワークを最新版に更新
 	@echo ""
 	@echo "✅ SuperClaude Framework の更新が完了しました！"
 
-.PHONY: superclaude-info
-superclaude-info: ## SuperClaudeフレームワークの情報を表示
+.PHONY: info-superclaude
+info-superclaude: ## SuperClaudeフレームワークの情報を表示
 	@echo "ℹ️  SuperClaude Framework for Claude Code"
 	@echo ""
 	@echo "📖 概要:"
@@ -215,15 +220,19 @@ superclaude-info: ## SuperClaudeフレームワークの情報を表示
 	done
 	@echo ""
 	@echo "🔧 コマンド:"
-	@echo "   make superclaude-install     - フレームワークをインストール"
-	@echo "   make superclaude-check       - インストール状態を確認"
-	@echo "   make superclaude-update      - 最新版に更新"
-	@echo "   make superclaude-uninstall   - アンインストール"
-	@echo "   make superclaude-info        - この情報を表示"
+	@echo "   make install-packages-superclaude - フレームワークをインストール"
+	@echo "   make check-superclaude       - インストール状態を確認"
+	@echo "   make update-superclaude      - 最新版に更新"
+	@echo "   make uninstall-superclaude   - アンインストール"
+	@echo "   make info-superclaude        - この情報を表示"
 	@echo ""
 	@echo "📚 ドキュメント:"
 	@echo "   設定ファイル: ~/.claude/CLAUDE.md"
 	@echo "   ソースコード: $(DOTFILES_CLAUDE_DIR)/"
 
+# ========================================
+# エイリアス
+# ========================================
+
 .PHONY: claudecode
-claudecode: superclaude-install ## Claude Code用のSuperClaudeフレームワークをインストール(エイリアス)
+claudecode: install-packages-superclaude  ## Claude Code用のSuperClaudeフレームワークをインストール(エイリアス)

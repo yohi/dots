@@ -1,7 +1,13 @@
 # 設定セットアップ関連のターゲット
 
 # VIMの設定をセットアップ
-setup-vim:
+setup-config-vim:
+ifndef FORCE
+	@if $(call check_symlink,$(CONFIG_DIR)/nvim,$(DOTFILES_DIR)/vim) 2>/dev/null; then \
+		echo "$(call IDEMPOTENCY_SKIP_MSG,setup-config-vim)"; \
+		exit 0; \
+	fi
+endif
 	@echo "🖥️  VIMの設定をセットアップ中..."
 	@mkdir -p $(HOME_DIR)/.vim
 	@mkdir -p $(CONFIG_DIR)/nvim
@@ -26,7 +32,13 @@ setup-vim:
 	@echo "✅ VIMの設定が完了しました。"
 
 # ZSHの設定をセットアップ
-setup-zsh:
+setup-config-zsh:
+ifndef FORCE
+	@if $(call check_symlink,$(HOME_DIR)/.zshrc,$(DOTFILES_DIR)/zsh/zshrc) 2>/dev/null; then \
+		echo "$(call IDEMPOTENCY_SKIP_MSG,setup-config-zsh)"; \
+		exit 0; \
+	fi
+endif
 	@echo "🐚 ZSHの設定をセットアップ中..."
 	@mkdir -p $(DOTFILES_DIR)/zsh
 
@@ -127,7 +139,7 @@ setup-zsh:
 	@echo "✅ ZSHの設定が完了しました。"
 
 # WEZTERMの設定をセットアップ
-setup-wezterm:
+setup-config-wezterm:
 	@echo "🖥️  WEZTERMの設定をセットアップ中..."
 	@mkdir -p $(CONFIG_DIR)/wezterm
 
@@ -143,7 +155,7 @@ setup-wezterm:
 	@echo "✅ WEZTERMの設定が完了しました。"
 
 # VS Codeの設定をセットアップ
-setup-vscode:
+setup-config-vscode:
 	@echo "💻 VS Codeの設定をセットアップ中..."
 	@mkdir -p $(CONFIG_DIR)/Code/User
 
@@ -211,7 +223,7 @@ setup-vscode-copilot:
 	@echo ""
 
 # Cursorの設定をセットアップ
-setup-cursor:
+setup-config-cursor:
 	@echo "🖱️  Cursorの設定をセットアップ中..."
 	@mkdir -p $(CONFIG_DIR)/Cursor/User
 
@@ -232,7 +244,7 @@ setup-cursor:
 	@echo "✅ Cursorの設定が完了しました。"
 
 # Cursor MCP Toolsの設定をセットアップ
-setup-mcp-tools:
+setup-config-mcp-tools:
 	@echo "🔧 Cursor MCP Toolsの設定をセットアップ中..."
 	@mkdir -p $(HOME_DIR)/.cursor
 
@@ -268,16 +280,17 @@ setup-mcp-tools:
 	@echo "ℹ️  Cursorを再起動してMCPツールを有効化してください。"
 
 # Git設定のセットアップ
-setup-git:
+setup-config-git:
 	@echo "🖥️  Git設定をセットアップ中..."
 
 	# 既存のGit設定をチェック
 	@CURRENT_EMAIL=$$(git config --global user.email 2>/dev/null || echo ""); \
 	CURRENT_NAME=$$(git config --global user.name 2>/dev/null || echo ""); \
 	if [ -n "$$CURRENT_EMAIL" ] && [ -n "$$CURRENT_NAME" ]; then \
-		echo "✅ Git設定は既に存在します:"; \
+		echo "$(call IDEMPOTENCY_SKIP_MSG,setup-config-git)"; \
 		echo "   Name: $$CURRENT_NAME"; \
 		echo "   Email: $$CURRENT_EMAIL"; \
+		exit 0; \
 	else \
 		echo "📧 Git設定をセットアップします。"; \
 		if [ -n "$(GIT_USER_NAME)" ]; then \
@@ -319,7 +332,7 @@ setup-git:
 	@echo "✅ Git設定が完了しました。"
 
 # Docker設定のセットアップ
-setup-docker:
+setup-config-docker:
 	@echo "🐳 Docker設定をセットアップ中..."
 
 	# 必要なパッケージを先にインストール
@@ -384,7 +397,7 @@ setup-docker:
 	@echo "ℹ️  ターミナルを再起動してからDockerを使用してください。"
 
 # 追加の開発環境設定
-setup-development:
+setup-config-development:
 	@echo "⚙️  追加の開発環境設定を実行中..."
 
 	# Tilixの設定
@@ -426,10 +439,10 @@ setup-logiops-deps:
 	@sudo DEBIAN_FRONTEND=noninteractive apt-get update || true
 	@sudo DEBIAN_FRONTEND=noninteractive apt-get install -y cmake libevdev-dev libudev-dev libconfig++-dev || true
 	@echo "✅ logiops依存関係のインストールが完了しました"
-	@echo "ℹ️  logiopsの設定を適用するには: make setup-development"
+	@echo "ℹ️  logiopsの設定を適用するには: make setup-config-development"
 
 # キーボードショートカットの設定
-setup-shortcuts:
+setup-config-shortcuts:
 	@echo "⌨️  キーボードショートカットの設定を実行中..."
 
 	# ウィンドウマネージャのキーバインド設定
@@ -472,7 +485,7 @@ setup-shortcuts:
 	@echo "⚠️  設定を反映するため、一度ログアウト・ログインすることを推奨します。"
 
 # 日本語入力環境の設定
-setup-ime:
+setup-config-ime:
 	@echo "🈹 日本語入力環境をセットアップ中..."
 
 	# IBusの設定確認
@@ -506,31 +519,12 @@ setup-ime:
 	@echo "🔧 手動で日本語入力を設定する場合:"
 	@echo "   ibus-setup を実行して手動設定してください"
 
-# ========================================
-# 新しい階層的な命名規則のターゲット
-# ========================================
-
-# 設定ファイル・コンフィグセットアップ系
-setup-config-vim: setup-vim
-setup-config-zsh: setup-zsh
-setup-config-wezterm: setup-wezterm
-setup-config-vscode: setup-vscode
-setup-config-vscode-copilot: setup-vscode-copilot
-setup-config-cursor: setup-cursor
-setup-config-mcp-tools: setup-mcp-tools
-setup-config-git: setup-git
-setup-config-docker: setup-docker
-setup-config-development: setup-development
-setup-config-shortcuts: setup-shortcuts
-setup-config-ime: setup-ime
-setup-config-claude: setup-claude
-setup-config-lazygit: setup-lazygit
 
 # ========================================
 # Claude Code設定のセットアップ
 # ========================================
 
-setup-claude:
+setup-config-claude:
 	@echo "🤖 Claude Code設定をセットアップ中..."
 	@mkdir -p $(HOME_DIR)/.claude
 

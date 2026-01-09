@@ -1,7 +1,7 @@
 # 統合ターゲットとその他のターゲット
 
 # 全体のセットアップ
-setup-all:
+setup-config-all:
 	@echo "🚀 全体のセットアップを開始中..."
 	@echo "ℹ️  以下の順序で実行します:"
 	@echo "   1. システムセットアップ（メモリ最適化含む）"
@@ -19,11 +19,11 @@ setup-all:
 	@echo ""
 
 	@echo "📋 2. Homebrewインストール実行中..."
-	@$(MAKE) install-homebrew
+	@$(MAKE) install-packages-homebrew
 	@echo ""
 
 	@echo "📋 3. アプリケーションインストール実行中..."
-	@$(MAKE) install-apps
+	@$(MAKE) install-packages-apps
 	@echo ""
 
 	@echo "📋 4. Claude Codeエコシステムインストール実行中..."
@@ -31,18 +31,18 @@ setup-all:
 	@echo ""
 
 	@echo "📋 5. 設定セットアップ実行中..."
-	@$(MAKE) setup-vim
-	@$(MAKE) setup-zsh
-	@$(MAKE) setup-git
-	@$(MAKE) setup-wezterm
-	@$(MAKE) setup-vscode
-	@$(MAKE) setup-cursor
-	@$(MAKE) setup-mcp-tools
-	@$(MAKE) setup-docker
-	@$(MAKE) setup-development
-	@$(MAKE) setup-shortcuts
-	@$(MAKE) setup-claude
-	@$(MAKE) setup-mozc
+	@$(MAKE) setup-config-vim
+	@$(MAKE) setup-config-zsh
+	@$(MAKE) setup-config-git
+	@$(MAKE) setup-config-wezterm
+	@$(MAKE) setup-config-vscode
+	@$(MAKE) setup-config-cursor
+	@$(MAKE) setup-config-mcp-tools
+	@$(MAKE) setup-config-docker
+	@$(MAKE) setup-config-development
+	@$(MAKE) setup-config-shortcuts
+	@$(MAKE) setup-config-claude
+	@$(MAKE) setup-config-mozc
 	@echo ""
 
 	@echo "📋 6. 拡張機能インストール実行中..."
@@ -90,7 +90,15 @@ debug:
 	@echo -n "Cursor: "; \
 	if [ -f /opt/cursor/cursor.AppImage ]; then \
 		FILE_DATE=$$(stat -c%Y /opt/cursor/cursor.AppImage 2>/dev/null || echo "0"); \
-		FORMATTED_DATE=$$(date -d @$$FILE_DATE '+%Y-%m-%d' 2>/dev/null || echo '不明'); \
+		if command -v gdate >/dev/null 2>&1; then \
+			FORMATTED_DATE=$$(gdate -d @$$FILE_DATE '+%Y-%m-%d' 2>/dev/null || echo '不明'); \
+		elif date -d @0 '+%Y' >/dev/null 2>&1; then \
+			FORMATTED_DATE=$$(date -d @$$FILE_DATE '+%Y-%m-%d' 2>/dev/null || echo '不明'); \
+		elif date -r 0 '+%Y' >/dev/null 2>&1; then \
+			FORMATTED_DATE=$$(date -r $$FILE_DATE '+%Y-%m-%d' 2>/dev/null || echo '不明'); \
+		else \
+			FORMATTED_DATE='不明'; \
+		fi; \
 		echo "✅ インストール済み (更新日: $$FORMATTED_DATE)"; \
 	elif command -v cursor >/dev/null 2>&1; then \
 		echo "✅ インストール済み"; \
@@ -117,7 +125,7 @@ debug:
 	@echo "✅ デバッグ情報の表示が完了しました。"
 
 # WEZTERMのインストール
-install-wezterm:
+install-packages-wezterm:
 	@echo "📱 WEZTERMをインストール中..."
 
 	# WEZTERMのインストール
@@ -154,9 +162,6 @@ install-wezterm:
 
 # システム設定系
 setup-system: system-setup
-
-# 統合セットアップ系
-setup-config-all: setup-all
 
 # ========================================
 # 後方互換性のためのエイリアス

@@ -1,5 +1,8 @@
 # Memory Management and Optimization
 # メモリ管理と最適化設定
+#
+# Note: This module is Linux-specific and uses GNU sed.
+# It modifies /etc/sysctl.conf and other Linux system files.
 
 .PHONY: memory-check memory-cleanup memory-monitor memory-optimize
 
