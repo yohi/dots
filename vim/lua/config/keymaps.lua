@@ -19,7 +19,7 @@ keymap("n", "<C-l>", "<C-w>l", { desc = "Move to right split" })
 keymap("n", "<ESC><ESC>", ":nohlsearch<CR>", { desc = "Clear search highlight" })
 
 -- 縦分割
-keymap("n", "<Leader>v", ":vsp<CR>:ls<CR>:buf", { desc = "Vertical split with buffer list" })
+keymap("n", "<LocalLeader>v", ":vsp<CR>", { desc = "Vertical split" })
 
 -- 横分割
 keymap("n", "<Leader>s", ":split<CR>:ls<CR>:buf", { desc = "Horizontal split with buffer list" })
