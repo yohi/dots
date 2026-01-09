@@ -173,7 +173,6 @@ _cursor_download:
 		if [ "$$file_size" -ge "$$min_size" ] && [ "$$file_size" -le "$$max_size" ]; then \
 			echo "✅ サイズ検証に成功しました ($$file_size bytes)"; \
 			echo "   (範囲: $$(($$min_size/1024/1024))MB - $$(($$max_size/1024/1024))MB)"; \
-			VALID_DOWNLOAD=1; \
 			return 0; \
 		else \
 			echo "❌ ダウンロードファイルのサイズが不正です ($$file_size bytes)"; \
@@ -212,7 +211,7 @@ _cursor_download:
 				echo "⚠️  【セキュリティ警告】SHA256チェックサム検証をスキップします (ユーザー要求)"; \
 				echo "ℹ️  TLS(HTTPS)による通信経路の保護と、ファイルサイズ検証による簡易チェックを実行します"; \
 				echo "   ダウンロード元: https://downloader.cursor.sh (TLS origin verified by curl)"; \
-				verify_download_size 100000000 500000000 || exit 1; \
+				if verify_download_size 100000000 500000000; then VALID_DOWNLOAD=1; else exit 1; fi; \
 			else \
 				echo "❌ エラー: CURSOR_SHA256 が設定されていません"; \
 				echo "   セキュリティポリシーにより、整合性検証のないインストールはブロックされました。"; \
@@ -549,25 +548,7 @@ install-packages-claude-code:
 	@echo "🤖 Claude Code のインストールを開始..."
 
 	# Node.jsの確認
-	@echo "🔍 Node.js の確認中..."
-	@if ! command -v node >/dev/null 2>&1; then \
-		echo "❌ Node.js がインストールされていません"; \
-		echo ""; \
-		echo "📥 Node.js のインストール手順:"; \
-		echo "1. Homebrewを使用: brew install node"; \
-		echo "2. NodeVersionManager(nvm)を使用: https://github.com/nvm-sh/nvm"; \
-		echo "3. 公式サイト: https://nodejs.org/"; \
-		echo ""; \
-		echo "ℹ️  Node.js 18+ が必要です"; \
-		exit 1; \
-	else \
-		NODE_VERSION=$$(node --version | cut -d'v' -f2 | cut -d'.' -f1); \
-		echo "✅ Node.js が見つかりました (バージョン: $$(node --version))"; \
-		if [ "$$NODE_VERSION" -lt 18 ]; then \
-			echo "⚠️  Node.js 18+ が推奨されています (現在: $$(node --version))"; \
-			echo "   古いバージョンでも動作する可能性がありますが、問題が発生する場合があります"; \
-		fi; \
-	fi
+	@$(MAKE) check-nodejs
 
 	# npmの確認
 	@echo "🔍 npm の確認中..."
@@ -1335,25 +1316,7 @@ install-playwright:
 	@echo "🎭 Playwright E2Eテストフレームワークのインストールを開始..."
 
 	# Node.jsの確認
-	@echo "🔍 Node.js の確認中..."
-	@if ! command -v node >/dev/null 2>&1; then \
-		echo "❌ Node.js がインストールされていません"; \
-		echo ""; \
-		echo "📥 Node.js のインストール手順:"; \
-		echo "1. Homebrewを使用: brew install node"; \
-		echo "2. NodeVersionManager(nvm)を使用: https://github.com/nvm-sh/nvm"; \
-		echo "3. 公式サイト: https://nodejs.org/"; \
-		echo ""; \
-		echo "ℹ️  Node.js 18+ が必要です"; \
-		exit 1; \
-	else \
-		NODE_VERSION=$$(node --version | cut -d'v' -f2 | cut -d'.' -f1); \
-		echo "✅ Node.js が見つかりました (バージョン: $$(node --version))"; \
-		if [ "$$NODE_VERSION" -lt 18 ]; then \
-			echo "⚠️  Node.js 18+ が推奨されています (現在: $$(node --version))"; \
-			echo "   古いバージョンでも動作する可能性がありますが、問題が発生する場合があります"; \
-		fi; \
-	fi
+	@$(MAKE) check-nodejs
 
 	# npmの確認
 	@echo "🔍 npm の確認中..."
@@ -1505,7 +1468,6 @@ install-packages-ccusage:
 		else \
 			echo "🔐 Bunをインストール中（公式インストーラー使用）..."; \
 			curl -fsSL https://bun.sh/install | bash; \
-			echo "⚠️  注意: インストール後、Bunのバージョンを確認してください"; \
 		fi; \
 		export PATH="$(HOME)/.bun/bin:$$PATH"; \
 		if ! command -v bun >/dev/null 2>&1; then \
@@ -1515,7 +1477,7 @@ install-packages-ccusage:
 	fi
 	@echo "🔧 ccusage をグローバル導入中..."
 	@export PATH="$(HOME)/.bun/bin:$$PATH"; \
-	CCUSAGE_VERSION="latest"; \
+	CCUSAGE_VERSION="15.0.1"; \
 	echo "📦 ccusage ($$CCUSAGE_VERSION) をインストール中..."; \
 	if ! bun add -g ccusage@$$CCUSAGE_VERSION; then \
 		echo "⚠️ bun add -g に失敗。bunx での実行にフォールバックします"; \
@@ -1651,25 +1613,7 @@ install-gemini-cli:
 	@echo "🤖 Gemini CLI のインストールを開始..."
 
 	# Node.jsの確認
-	@echo "🔍 Node.js の確認中..."
-	@if ! command -v node >/dev/null 2>&1; then \
-		echo "❌ Node.js がインストールされていません"; \
-		echo ""; \
-		echo "📥 Node.js のインストール手順:"; \
-		echo "1. Homebrewを使用: brew install node"; \
-		echo "2. NodeVersionManager(nvm)を使用: https://github.com/nvm-sh/nvm"; \
-		echo "3. 公式サイト: https://nodejs.org/"; \
-		echo ""; \
-		echo "ℹ️  Node.js 18+ が必要です"; \
-		exit 1; \
-	else \
-		NODE_VERSION=$$(node --version | cut -d'v' -f2 | cut -d'.' -f1); \
-		echo "✅ Node.js が見つかりました (バージョン: $$(node --version))"; \
-		if [ "$$NODE_VERSION" -lt 18 ]; then \
-			echo "⚠️  Node.js 18+ が推奨されています (現在: $$(node --version))"; \
-			echo "   古いバージョンでも動作する可能性がありますが、問題が発生する場合があります"; \
-		fi; \
-	fi
+	@$(MAKE) check-nodejs
 
 	# npmの確認
 	@echo "🔍 npm の確認中..."
