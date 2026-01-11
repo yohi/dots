@@ -438,4 +438,4 @@ export PATH="$BUN_INSTALL/bin:$PATH"
 alias claude="/home/y_ohi/.claude/local/claude"
 
 # opencode
-export PATH=/home/y_ohi/.opencode/bin:$PATH
+export PATH="$HOME/.opencode/bin:$PATH"

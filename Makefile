@@ -29,6 +29,7 @@ include mk/shortcuts.mk
 include mk/deprecated-targets.mk
 include mk/memory.mk
 include mk/codex.mk
+include mk/opencode.mk
 include mk/superclaude.mk
 include mk/cc-sdd.mk
 include mk/test.mk
