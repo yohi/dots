@@ -81,6 +81,7 @@ AI開発支援ツールとその設定。
 | ファイル | 責任範囲 |
 |---------|---------|
 | `codex.mk` | Codex CLI のインストール・設定 |
+| `opencode.mk` | OpenCode（opencode）のインストール・設定 |
 | `superclaude.mk` | SuperClaude Framework のインストール・管理 |
 | `cc-sdd.mk` | cc-sdd（Spec-Driven Development）のセットアップ |
 
@@ -145,6 +146,7 @@ include mk/memory.mk
 # AI & Tools: AI開発支援ツール
 # ============================================================
 include mk/codex.mk
+include mk/opencode.mk
 include mk/superclaude.mk
 include mk/cc-sdd.mk
 
