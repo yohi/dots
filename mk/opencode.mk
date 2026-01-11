@@ -33,7 +33,7 @@ opencode-install: ## OpenCode（opencode）をインストール
 		echo "❌ curl が見つかりません。先に curl をインストールしてください"; \
 		exit 1; \
 	fi
-	@curl -fsSL https://opencode.ai/install | bash
+	@bash -c 'set -euo pipefail; tmp="$$(mktemp)"; curl -fsSL https://opencode.ai/install -o "$$tmp"; bash "$$tmp"; rm -f "$$tmp"'
 	@if [ ! -x "$(OPENCODE_BIN)" ]; then \
 		echo "❌ opencode のインストールに失敗しました: $(OPENCODE_BIN) が見つかりません"; \
 		exit 1; \
@@ -48,7 +48,7 @@ opencode-update: ## OpenCode（opencode）をアップデート
 		echo "❌ curl が見つかりません。先に curl をインストールしてください"; \
 		exit 1; \
 	fi
-	@curl -fsSL https://opencode.ai/install | bash
+	@bash -c 'set -euo pipefail; tmp="$$(mktemp)"; curl -fsSL https://opencode.ai/install -o "$$tmp"; bash "$$tmp"; rm -f "$$tmp"'
 	@if [ -x "$(OPENCODE_BIN)" ]; then \
 		echo "✅ 更新後のバージョン: $$($(OPENCODE_BIN) --version 2>/dev/null || echo unknown)"; \
 	fi
