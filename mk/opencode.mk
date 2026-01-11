@@ -63,6 +63,11 @@ opencode-setup: ## OpenCode（opencode）の設定ファイルを適用
 		echo "    先に dotfiles に設定ファイルを用意してください"; \
 		exit 1; \
 	fi
+	@if [ -e "$(OPENCODE_CONFIG_PATH)" ] && [ ! -L "$(OPENCODE_CONFIG_PATH)" ]; then \
+		backup="$(OPENCODE_CONFIG_PATH).bak.$$(date +%Y%m%d%H%M%S)"; \
+		echo "⚠️  既存の設定ファイルを退避します: $$backup"; \
+		mv "$(OPENCODE_CONFIG_PATH)" "$$backup"; \
+	fi
 	@ln -sfn "$(OPENCODE_DOTFILES_CONFIG)" "$(OPENCODE_CONFIG_PATH)"
 	@echo "✅ 設定を適用しました: $(OPENCODE_CONFIG_PATH)"
 	@$(call create_marker,opencode-setup,1)
