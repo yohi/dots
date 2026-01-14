@@ -20,5 +20,6 @@ EMAIL := $(shell git config --global user.email 2>/dev/null || echo "")
         fonts-setup fonts-install fonts-install-nerd fonts-install-google fonts-install-japanese fonts-clean fonts-update fonts-list fonts-refresh fonts-debug fonts-backup fonts-configure \
         memory-status memory-clear-swap memory-clear-cache memory-optimize-chrome memory-optimize-swappiness memory-setup-monitoring memory-start-monitoring memory-stop-monitoring memory-optimize memory-optimize-auto memory-emergency-cleanup memory-help \
         install-gemini-cli install-supergemini install-gemini-ecosystem install-playwright install-packages-ccusage install-ccusage \
-        install-superclaude check-superclaude update-superclaude uninstall-superclaude info-superclaude fix-superclaude \
-        opencode opencode-install opencode-update setup-opencode check-opencode
+	install-superclaude check-superclaude update-superclaude uninstall-superclaude info-superclaude fix-superclaude \
+	opencode install-packages-opencode install-opencode opencode-update setup-opencode check-opencode \
+	codex install-packages-codex install-codex codex-update codex-setup

@@ -1,13 +1,13 @@
-.PHONY: codex codex-install codex-update codex-setup
+.PHONY: codex install-packages-codex install-codex codex-update codex-setup
 
 codex: ## Install and setup Codex CLI
 	@if command -v codex >/dev/null 2>&1 && [ -L "$(HOME_DIR)/.codex" ] && [ -f "$(DOTFILES_DIR)/codex/config.toml" ]; then \
 		echo "$(call IDEMPOTENCY_SKIP_MSG,codex)"; \
 		exit 0; \
 	fi
-	@$(MAKE) codex-install codex-setup
+	@$(MAKE) install-packages-codex codex-setup
 
-codex-install: ## Install Codex CLI using npm
+install-packages-codex: ## Install Codex CLI using npm
 	@echo "Uninstalling existing Codex CLI (if any)..."
 	@npm uninstall -g @openai/codex 2>/dev/null || true
 	@echo "Installing Codex CLI via npm..."
@@ -44,5 +44,8 @@ codex-setup: ## Setup Codex CLI configuration
 	fi
 	@ln -sfn $(DOTFILES_DIR)/codex $(HOME_DIR)/.codex
 	@echo "Codex CLI setup complete."
+
+# User-friendly alias
+install-codex: install-packages-codex
 
 
