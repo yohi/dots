@@ -28,6 +28,9 @@ include mk/menu.mk
 include mk/shortcuts.mk
 include mk/deprecated-targets.mk
 include mk/memory.mk
+include mk/cursor.mk
+include mk/claude.mk
+include mk/gemini.mk
 include mk/codex.mk
 include mk/opencode.mk
 include mk/superclaude.mk
