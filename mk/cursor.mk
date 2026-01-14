@@ -357,7 +357,7 @@ check-cursor-version:
 	fi
 
 # SuperCursor (Cursor Framework) のインストール
-install-supercursor:
+install-packages-supercursor:
 	@echo "🚀 SuperCursor (Cursor Framework) のインストールを開始..."
 
 	# Cursor の確認
@@ -440,3 +440,6 @@ install-supercursor:
 
 .PHONY: install-cursor
 install-cursor: install-packages-cursor  ## Cursor IDEをインストール(エイリアス)
+
+.PHONY: install-supercursor
+install-supercursor: install-packages-supercursor  ## SuperCursorをインストール(エイリアス)

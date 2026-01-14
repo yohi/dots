@@ -243,7 +243,7 @@ endif
 	@echo "   - WezTerm"
 
 # Playwright E2Eテストフレームワークのインストール
-install-playwright:
+install-packages-playwright:
 	@echo "🎭 Playwright E2Eテストフレームワークのインストールを開始..."
 
 	# Node.jsの確認
@@ -384,6 +384,13 @@ install-playwright:
 	@echo "   4. CI/CDパイプラインに組み込んで継続的テスト" \
 	@echo ""; \
 	@echo "✅ Playwright のインストールが完了しました"
+
+# ========================================
+# エイリアス
+# ========================================
+
+.PHONY: install-playwright
+install-playwright: install-packages-playwright  ## Playwrightをインストール(エイリアス)
 
 
 # ccusage のインストール

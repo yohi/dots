@@ -4,7 +4,7 @@
 # ============================================================
 
 # Gemini CLI のインストール
-install-gemini-cli:
+install-packages-gemini-cli:
 	@echo "🤖 Gemini CLI のインストールを開始..."
 
 	# Node.jsの確認
@@ -71,14 +71,14 @@ install-gemini-cli:
 	@echo "✅ Gemini CLI のインストールが完了しました"
 
 # SuperGemini (Gemini CLI Framework) のインストール
-install-supergemini:
+install-packages-supergemini:
 	@echo "🚀 SuperGemini (Gemini CLI Framework) のインストールを開始..."
 
 	# Gemini CLI の確認
 	@echo "🔍 Gemini CLI の確認中..."
 	@if ! command -v gemini >/dev/null 2>&1; then \
 		echo "❌ Gemini CLI がインストールされていません"; \
-		echo "ℹ️  先に 'make install-gemini-cli' を実行してください"; \
+		echo "ℹ️  先に 'make install-packages-gemini-cli' を実行してください"; \
 		exit 1; \
 	else \
 		echo "✅ Gemini CLI が見つかりました"; \
@@ -157,13 +157,13 @@ install-gemini-ecosystem:
 
 	# Step 1: Gemini CLI のインストール
 	@echo "📋 Step 1/2: Gemini CLI をインストール中..."
-	@$(MAKE) install-gemini-cli
+	@$(MAKE) install-packages-gemini-cli
 	@echo "✅ Gemini CLI のインストールが完了しました"
 	@echo "";
 
 	# Step 2: SuperGemini のインストール
 	@echo "📋 Step 2/2: SuperGemini をインストール中..."
-	@$(MAKE) install-supergemini
+	@$(MAKE) install-packages-supergemini
 	@echo "✅ SuperGemini のインストールが完了しました"
 	@echo "";
 
@@ -211,5 +211,12 @@ install-gemini-ecosystem:
 # エイリアス
 # ========================================
 
+.PHONY: install-gemini-cli
+install-gemini-cli: install-packages-gemini-cli  ## Gemini CLIをインストール(エイリアス)
+
+.PHONY: install-supergemini
+install-supergemini: install-packages-supergemini  ## SuperGeminiをインストール(エイリアス)
+
 .PHONY: gemini
 gemini: install-gemini-cli  ## Gemini CLIをインストール(エイリアス)
+
