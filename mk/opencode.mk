@@ -5,22 +5,34 @@
 OPENCODE_HOME ?= $(HOME_DIR)/.opencode
 OPENCODE_BIN ?= $(OPENCODE_HOME)/bin/opencode
 OPENCODE_CONFIG_DIR ?= $(CONFIG_DIR)/opencode
-OPENCODE_CONFIG_PATH ?= $(OPENCODE_CONFIG_DIR)/opencode.json
-OPENCODE_DOTFILES_CONFIG ?= $(DOTFILES_DIR)/opencode/opencode.json
+OPENCODE_CONFIG_PATH ?= $(OPENCODE_CONFIG_DIR)/opencode.jsonc
+OPENCODE_DOTFILES_CONFIG ?= $(DOTFILES_DIR)/opencode/opencode.jsonc
+OH_MY_OPENCODE_CONFIG_PATH ?= $(OPENCODE_CONFIG_DIR)/oh-my-opencode.jsonc
+OH_MY_OPENCODE_DOTFILES_CONFIG ?= $(DOTFILES_DIR)/opencode/oh-my-opencode.jsonc
 
-.PHONY: opencode opencode-install opencode-update opencode-setup check-opencode
+.PHONY: opencode opencode-install opencode-update setup-opencode check-opencode
 
 # OpenCode (opencode) をインストール & 設定
 opencode: ## OpenCode（opencode）のインストールとセットアップ
 	@if [ -x "$(OPENCODE_BIN)" ] && [ -f "$(OPENCODE_DOTFILES_CONFIG)" ] && [ -L "$(OPENCODE_CONFIG_PATH)" ]; then \
 		actual=$$(readlink -f "$(OPENCODE_CONFIG_PATH)" 2>/dev/null || true); \
 		expected=$$(readlink -f "$(OPENCODE_DOTFILES_CONFIG)" 2>/dev/null || true); \
-		if [ -n "$$actual" ] && [ "$$actual" = "$$expected" ]; then \
-			echo "$(call IDEMPOTENCY_SKIP_MSG,opencode)"; \
-			exit 0; \
+		if [ "$$actual" = "$$expected" ]; then \
+			skip=1; \
+			if [ -f "$(OH_MY_OPENCODE_DOTFILES_CONFIG)" ]; then \
+				if [ -L "$(OH_MY_OPENCODE_CONFIG_PATH)" ]; then \
+					actual_oh=$$(readlink -f "$(OH_MY_OPENCODE_CONFIG_PATH)" 2>/dev/null || true); \
+					expected_oh=$$(readlink -f "$(OH_MY_OPENCODE_DOTFILES_CONFIG)" 2>/dev/null || true); \
+					if [ "$$actual_oh" != "$$expected_oh" ]; then skip=0; fi; \
+				else skip=0; fi; \
+			fi; \
+			if [ "$$skip" = "1" ]; then \
+				echo "$(call IDEMPOTENCY_SKIP_MSG,opencode)"; \
+				exit 0; \
+			fi; \
 		fi; \
-	fi
-	@$(MAKE) opencode-install opencode-setup
+	fi; \
+	$(MAKE) opencode-install setup-opencode
 
 # OpenCode をインストール（公式インストーラ）
 opencode-install: ## OpenCode（opencode）をインストール
@@ -55,9 +67,10 @@ opencode-update: ## OpenCode（opencode）をアップデート
 	@$(call create_marker,opencode-update,$$($(OPENCODE_BIN) --version 2>/dev/null || echo unknown))
 
 # OpenCode の設定を適用（XDG config へシンボリックリンク）
-opencode-setup: ## OpenCode（opencode）の設定ファイルを適用
+setup-opencode: ## OpenCode（opencode）の設定ファイルを適用
 	@echo "🔧 OpenCode（opencode）の設定を適用中..."
 	@mkdir -p "$(OPENCODE_CONFIG_DIR)"
+	@# opencode.jsonc の設定
 	@if [ ! -f "$(OPENCODE_DOTFILES_CONFIG)" ]; then \
 		echo "⚠️  設定ファイルが見つかりません: $(OPENCODE_DOTFILES_CONFIG)"; \
 		echo "    先に dotfiles に設定ファイルを用意してください"; \
@@ -70,7 +83,19 @@ opencode-setup: ## OpenCode（opencode）の設定ファイルを適用
 	fi
 	@ln -sfn "$(OPENCODE_DOTFILES_CONFIG)" "$(OPENCODE_CONFIG_PATH)"
 	@echo "✅ 設定を適用しました: $(OPENCODE_CONFIG_PATH)"
-	@$(call create_marker,opencode-setup,1)
+	@# oh-my-opencode.jsonc の設定
+	@if [ -f "$(OH_MY_OPENCODE_DOTFILES_CONFIG)" ]; then \
+		if [ -e "$(OH_MY_OPENCODE_CONFIG_PATH)" ] && [ ! -L "$(OH_MY_OPENCODE_CONFIG_PATH)" ]; then \
+			backup="$(OH_MY_OPENCODE_CONFIG_PATH).bak.$$(date +%Y%m%d%H%M%S)"; \
+			echo "⚠️  既存の oh-my-opencode 設定ファイルを退避します: $$backup"; \
+			mv "$(OH_MY_OPENCODE_CONFIG_PATH)" "$$backup"; \
+		fi; \
+		ln -sfn "$(OH_MY_OPENCODE_DOTFILES_CONFIG)" "$(OH_MY_OPENCODE_CONFIG_PATH)"; \
+		echo "✅ 設定を適用しました: $(OH_MY_OPENCODE_CONFIG_PATH)"; \
+	else \
+		echo "ℹ️  oh-my-opencode 設定ファイルはスキップされました（見つかりません）"; \
+	fi
+	@$(call create_marker,setup-opencode,1)
 
 # OpenCode の状態確認
 check-opencode: ## OpenCode（opencode）の状態を確認
@@ -92,4 +117,19 @@ check-opencode: ## OpenCode（opencode）の状態を確認
 		echo "⚠️  config: $(OPENCODE_CONFIG_PATH) exists but is not a symlink"; \
 	else \
 		echo "⚠️  config: $(OPENCODE_CONFIG_PATH) is not configured"; \
+	fi
+	@if [ -f "$(OH_MY_OPENCODE_DOTFILES_CONFIG)" ]; then \
+		if [ -L "$(OH_MY_OPENCODE_CONFIG_PATH)" ]; then \
+			actual=$$(readlink -f "$(OH_MY_OPENCODE_CONFIG_PATH)" 2>/dev/null || readlink "$(OH_MY_OPENCODE_CONFIG_PATH)" 2>/dev/null || true); \
+			expected=$$(readlink -f "$(OH_MY_OPENCODE_DOTFILES_CONFIG)" 2>/dev/null || true); \
+			if [ -n "$$actual" ] && [ "$$actual" = "$$expected" ]; then \
+				echo "✅ oh-my-config: $(OH_MY_OPENCODE_CONFIG_PATH) -> $(OH_MY_OPENCODE_DOTFILES_CONFIG)"; \
+			else \
+				echo "⚠️  oh-my-config: $(OH_MY_OPENCODE_CONFIG_PATH) points to $$actual (expected $$expected)"; \
+			fi; \
+		elif [ -e "$(OH_MY_OPENCODE_CONFIG_PATH)" ]; then \
+			echo "⚠️  oh-my-config: $(OH_MY_OPENCODE_CONFIG_PATH) exists but is not a symlink"; \
+		else \
+			echo "⚠️  oh-my-config: $(OH_MY_OPENCODE_CONFIG_PATH) is not configured"; \
+		fi; \
 	fi

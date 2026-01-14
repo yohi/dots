@@ -40,7 +40,7 @@ help:
 	@echo "  make opencode                         - OpenCode（opencode）のインストールとセットアップ"
 	@echo "  make opencode-install                 - OpenCode（opencode）をインストール"
 	@echo "  make opencode-update                  - OpenCode（opencode）をアップデート"
-	@echo "  make opencode-setup                   - OpenCode（opencode）の設定ファイルを適用"
+	@echo "  make setup-opencode                   - OpenCode（opencode）の設定ファイルを適用"
 	@echo "  make check-opencode                   - OpenCode（opencode）の状態を確認"
 	@echo ""
 	@echo "⚙️  設定ファイル・コンフィグのセットアップ:"

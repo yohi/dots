@@ -1,4 +1,5 @@
 # 変数定義
+
 DOTFILES_DIR := $(shell pwd)
 HOME_DIR := $(HOME)
 CONFIG_DIR := $(HOME_DIR)/.config
@@ -19,4 +20,4 @@ EMAIL := $(shell git config --global user.email 2>/dev/null || echo "")
         fonts-setup fonts-install fonts-install-nerd fonts-install-google fonts-install-japanese fonts-clean fonts-update fonts-list fonts-refresh fonts-debug fonts-backup fonts-configure \
         memory-status memory-clear-swap memory-clear-cache memory-optimize-chrome memory-optimize-swappiness memory-setup-monitoring memory-start-monitoring memory-stop-monitoring memory-optimize memory-optimize-auto memory-emergency-cleanup memory-help \
         install-gemini-cli install-packages-gemini-cli install-packages-ccusage install-ccusage \
-        opencode opencode-install opencode-update opencode-setup check-opencode
+        opencode opencode-install opencode-update setup-opencode check-opencode
