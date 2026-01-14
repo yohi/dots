@@ -73,7 +73,7 @@
     // 推奨: Gemini 3 Pro (Antigravity)
     // 理由: マルチモーダル能力が高く、デザイン画や画面遷移の理解に優れる 
     "frontend-ui-ux-engineer": {
-      "model": "google/antigravity-gemini-3-pro-preview",
+      "model": "google/antigravity-gemini-3-pro",
       "temperature": 0.4,
       "description": "UIコンポーネントの実装、CSS調整、UX改善、レスポンシブ対応を担当。"
     },
@@ -86,7 +86,7 @@
     // 推奨: Gemini 3 Flash (Antigravity)
     // 理由: 100万トークン超のコンテキストで大量のドキュメントを安価に読み込める [4, 8]
     "librarian": {
-      "model": "google/antigravity-gemini-3-flash-preview",
+      "model": "google/antigravity-gemini-3-flash",
       "temperature": 0.1, // 事実に基づく正確な検索のため低温度に設定
       "description": "広範なドキュメント検索、ライブラリ仕様の確認、コードベースの歴史的経緯の調査。"
     },
@@ -95,7 +95,7 @@
     // 推奨: Gemini 3 Flash
     // 理由: 速度とコスト重視。grep検索結果などの大量のテキストストリームを高速処理する 
     "explore": {
-      "model": "google/antigravity-gemini-3-flash-preview",
+      "model": "google/antigravity-gemini-3-flash",
       "temperature": 0.1
     },
 
@@ -122,14 +122,14 @@
     // 推奨: Gemini 3 Flash
     // 理由: コストパフォーマンス最強。大量のテキスト生成に適している。
     "document-writer": {
-      "model": "google/antigravity-gemini-3-flash-preview",
+      "model": "google/antigravity-gemini-3-flash",
       "temperature": 0.3
     },
 
     // [Visual Analyzer] 画像・動画解析
     // 推奨: Gemini 3 Pro
     "multimodal-looker": {
-      "model": "google/antigravity-gemini-3-pro-preview",
+      "model": "google/antigravity-gemini-3-pro",
       "temperature": 0.2
     }
   },

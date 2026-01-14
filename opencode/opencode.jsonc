@@ -4,6 +4,8 @@
     "oh-my-opencode@v3.0.0-beta.5",
     "opencode-openai-codex-auth@latest",
     "opencode-antigravity-auth@beta",
+    "@yohi/opencode-antigravity-quota",
+    "@yohi/opencode-codex-quota",
     // "opencode-antigravity-quota@git+https://github.com/yohi/opencode-antigravity-quota",
     // "/home/y_ohi/.config/opencode/opencode-antigravity-quota"
   ],
@@ -13,10 +15,11 @@
     "bash": {
       "*": "ask",          // 基本は確認する
       "git *": "allow",    // gitコマンドは許可
+      "grep *": "allow",   // grepコマンドは許可
       "npm test": "allow", // テスト実行は許可
-      "rm *": "deny",       // 削除コマンドは禁止
-      "ls *": "allow",         // ファイル一覧は常に許可
-      "ssh *": "deny"          // 外部接続は拒否
+      "rm *": "deny",      // 削除コマンドは禁止
+      "ls *": "allow",     // ファイル一覧は常に許可
+      "ssh *": "deny"      // 外部接続は拒否
 
     },
     "edit": "ask"          // ファイル編集は確認する
