@@ -105,13 +105,13 @@ install-packages-supergemini:
 	\
 	echo "📝 カスタムツールファイルを作成中..."; \
 	cp -f $(DOTFILES_DIR)/gemini/supergemini/Commands/help.md $(HOME_DIR)/.gemini/user-tools/user-help.md 2>/dev/null || \
-	echo "import-help: # /user-help コマンド\n\nSuperGeminiフレームワークのコマンド一覧を表示します。" > $(HOME_DIR)/.gemini/user-tools/user-help.md; \
+	printf "import-help: # /user-help コマンド\n\nSuperGeminiフレームワークのコマンド一覧を表示します。\n" > $(HOME_DIR)/.gemini/user-tools/user-help.md; \
 	\
 	cp -f $(DOTFILES_DIR)/gemini/supergemini/Commands/analyze.md $(HOME_DIR)/.gemini/user-tools/user-analyze.md 2>/dev/null || \
-	echo "import-analyze: # /user-analyze コマンド\n\nコードや機能を分析します。" > $(HOME_DIR)/.gemini/user-tools/user-analyze.md; \
+	printf "import-analyze: # /user-analyze コマンド\n\nコードや機能を分析します。\n" > $(HOME_DIR)/.gemini/user-tools/user-analyze.md; \
 	\
 	cp -f $(DOTFILES_DIR)/gemini/supergemini/Commands/implement.md $(HOME_DIR)/.gemini/user-tools/user-implement.md 2>/dev/null || \
-	echo "import-implement: # /user-implement コマンド\n\n新機能を実装します。" > $(HOME_DIR)/.gemini/user-tools/user-implement.md; \
+	printf "import-implement: # /user-implement コマンド\n\n新機能を実装します。\n" > $(HOME_DIR)/.gemini/user-tools/user-implement.md; \
 	\
 	echo "🔧 Gemini CLI設定ファイルを更新中..."; \
 	echo '{"selectedAuthType":"oauth-personal","usageStatisticsEnabled":false,"customToolsDirectory":"~/.gemini/user-tools","enableCustomTools":true}' > $(HOME_DIR)/.gemini/settings.json || true; \
