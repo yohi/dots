@@ -336,53 +336,53 @@ install-packages-playwright:
 		exit 1; \
 	fi
 
-	@echo ""; \
-	@echo "🎉 Playwright のセットアップガイド:" \
-	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" \
-	@echo "" \
-	@echo "🚀 基本的な使用方法:" \
-	@echo "1. プロジェクトディレクトリに移動: cd your-project-directory" \
-	@echo "2. Playwright 設定ファイルを生成: npx playwright init" \
-	@echo "3. テストファイルを作成: npx playwright codegen" \
-	@echo "4. テストを実行: npx playwright test" \
-	@echo ""; \
-	@echo "📋 主要なコマンド:" \
-	@echo "   npx playwright test              - すべてのテストを実行" \
-	@echo "   npx playwright test --ui         - UIモードでテストを実行" \
-	@echo "   npx playwright test --headed     - ブラウザ表示モードで実行" \
-	@echo "   npx playwright test --debug      - デバッグモードで実行" \
-	@echo "   npx playwright codegen <URL>     - テストコードを生成" \
-	@echo "   npx playwright show-report       - テストレポートを表示" \
-	@echo "   npx playwright install           - ブラウザバイナリを再インストール" \
-	@echo ""; \
-	@echo "🌐 対応ブラウザ:" \
-	@echo "   ✓ Chromium (Chrome、Microsoft Edge)" \
-	@echo "   ✓ Firefox" \
-	@echo "   ✓ WebKit (Safari)" \
-	@echo ""; \
-	@echo "📱 対応プラットフォーム:" \
-	@echo "   ✓ デスクトップ (Windows、macOS、Linux)" \
-	@echo "   ✓ モバイル (Android、iOS シミュレータ)" \
-	@echo ""; \
-	@echo "🎯 主要機能:" \
-	@echo "   - クロスブラウザテスト自動化" \
-	@echo "   - モバイルデバイステスト" \
-	@echo "   - スクリーンショット・動画記録" \
-	@echo "   - パフォーマンステスト" \
-	@echo "   - APIテスト" \
-	@echo "   - 視覚的回帰テスト" \
-	@echo ""; \
-	@echo "📚 詳細なドキュメント:" \
-	@echo "   公式サイト: https://playwright.dev/" \
-	@echo "   ガイド: https://playwright.dev/docs/intro" \
-	@echo "   API リファレンス: https://playwright.dev/docs/api/class-playwright" \
-	@echo ""; \
-	@echo "💡 おすすめワークフロー:" \
-	@echo "   1. 'npx playwright init' でプロジェクトをセットアップ" \
-	@echo "   2. 'npx playwright codegen' でテストを録画生成" \
-	@echo "   3. 'npx playwright test --ui' でテストをデバッグ・実行" \
-	@echo "   4. CI/CDパイプラインに組み込んで継続的テスト" \
-	@echo ""; \
+	@echo ""
+	@echo "🎉 Playwright のセットアップガイド:"
+	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	@echo ""
+	@echo "🚀 基本的な使用方法:"
+	@echo "1. プロジェクトディレクトリに移動: cd your-project-directory"
+	@echo "2. Playwright 設定ファイルを生成: npx playwright init"
+	@echo "3. テストファイルを作成: npx playwright codegen"
+	@echo "4. テストを実行: npx playwright test"
+	@echo ""
+	@echo "📋 主要なコマンド:"
+	@echo "   npx playwright test              - すべてのテストを実行"
+	@echo "   npx playwright test --ui         - UIモードでテストを実行"
+	@echo "   npx playwright test --headed     - ブラウザ表示モードで実行"
+	@echo "   npx playwright test --debug      - デバッグモードで実行"
+	@echo "   npx playwright codegen <URL>     - テストコードを生成"
+	@echo "   npx playwright show-report       - テストレポートを表示"
+	@echo "   npx playwright install           - ブラウザバイナリを再インストール"
+	@echo ""
+	@echo "🌐 対応ブラウザ:"
+	@echo "   ✓ Chromium (Chrome、Microsoft Edge)"
+	@echo "   ✓ Firefox"
+	@echo "   ✓ WebKit (Safari)"
+	@echo ""
+	@echo "📱 対応プラットフォーム:"
+	@echo "   ✓ デスクトップ (Windows、macOS、Linux)"
+	@echo "   ✓ モバイル (Android、iOS シミュレータ)"
+	@echo ""
+	@echo "🎯 主要機能:"
+	@echo "   - クロスブラウザテスト自動化"
+	@echo "   - モバイルデバイステスト"
+	@echo "   - スクリーンショット・動画記録"
+	@echo "   - パフォーマンステスト"
+	@echo "   - APIテスト"
+	@echo "   - 視覚的回帰テスト"
+	@echo ""
+	@echo "📚 詳細なドキュメント:"
+	@echo "   公式サイト: https://playwright.dev/"
+	@echo "   ガイド: https://playwright.dev/docs/intro"
+	@echo "   API リファレンス: https://playwright.dev/docs/api/class-playwright"
+	@echo ""
+	@echo "💡 おすすめワークフロー:"
+	@echo "   1. 'npx playwright init' でプロジェクトをセットアップ"
+	@echo "   2. 'npx playwright codegen' でテストを録画生成"
+	@echo "   3. 'npx playwright test --ui' でテストをデバッグ・実行"
+	@echo "   4. CI/CDパイプラインに組み込んで継続的テスト"
+	@echo ""
 	@echo "✅ Playwright のインストールが完了しました"
 
 # ========================================

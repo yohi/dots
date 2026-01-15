@@ -170,7 +170,33 @@ _cursor_setup_desktop:
 	echo "[Desktop Entry]" | sudo tee /usr/share/applications/cursor.desktop > /dev/null; \
 	echo "Name=Cursor" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null; \
 	echo "Comment=The AI-first code editor" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null; \
-	echo "Exec=/opt/cursor/cursor.AppImage --no-sandbox %F" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null; \
+	\
+	# --no-sandbox フラグについて: \
+	# 【背景】AppImageのChromiumベースアプリは、デフォルトでユーザー名前空間サンドボックスを要求します。 \
+	# 古いカーネルやコンテナ環境など一部の環境では、unprivileged_userns_cloneが無効化されており、 \
+	# サンドボックス起動に失敗する場合があります。その場合に限り --no-sandbox フラグが必要です。 \
+	# \
+	# 【推奨対処法】 \
+	# 1. 可能であれば公式DEBパッケージまたはFlatpak版を使用してください \
+	# 2. AppImageを使う場合は、unprivileged user namespacesを有効化してください: \
+	#    sudo sysctl -w kernel.unprivileged_userns_clone=1 \
+	#    永続化: echo 'kernel.unprivileged_userns_clone=1' | sudo tee -a /etc/sysctl.conf \
+	# \
+	# 【セキュリティリスク】 \
+	# --no-sandbox はChromiumのセキュリティ機能を無効化するため、通常環境では使用すべきではありません。 \
+	# \
+	# 【条件付き適用】 \
+	# どうしても必要な場合に限り、環境変数 TRUSTED_NO_SANDBOX=true を設定してインストールしてください: \
+	#   make TRUSTED_NO_SANDBOX=true install-packages-cursor \
+	\
+	if [ "$$TRUSTED_NO_SANDBOX" = "true" ]; then \
+		echo "⚠️  警告: TRUSTED_NO_SANDBOX=true が設定されているため --no-sandbox フラグを適用します"; \
+		echo "⚠️  セキュリティリスク: サンドボックス保護が無効化されます"; \
+		echo "Exec=/opt/cursor/cursor.AppImage --no-sandbox %F" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null; \
+	else \
+		echo "Exec=/opt/cursor/cursor.AppImage %F" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null; \
+	fi; \
+	\
 	echo "Icon=$$ICON_PATH" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null; \
 	echo "Terminal=false" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null; \
 	echo "Type=Application" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null; \
@@ -186,7 +212,7 @@ update-cursor:
 	@echo "🔄 Cursor IDEのアップデートを開始します..."
 	@CURSOR_UPDATED=false && \
 	\
-	@echo "🔍 現在のCursor IDEを確認中..." && \
+	echo "🔍 現在のCursor IDEを確認中..." && \
 	if [ -f /opt/cursor/cursor.AppImage ]; then \
 		echo "🔄 Cursor IDEの実行状況を確認中..." && \
 		if pgrep -f "^/opt/cursor/cursor.AppImage" >/dev/null 2>&1; then \
@@ -244,7 +270,7 @@ update-cursor:
 			--max-time 120 --retry 3 --retry-delay 5 \
 			-o cursor-new.AppImage "$$DOWNLOAD_URL" 2>/dev/null; then \
 			FILE_SIZE=$$(stat -c%s cursor-new.AppImage 2>/dev/null || echo "0"); \
-			if [ "$$FILE_SIZE" -gt 10000000 ]; then \
+			if [ "$$FILE_SIZE" -ge 100000000 ] && [ "$$FILE_SIZE" -le 500000000 ]; then \
 				echo "✅ 新しいバージョンのダウンロードが完了しました (サイズ: $$FILE_SIZE bytes)"; \
 				echo "🔧 既存ファイルをバックアップ中..."; \
 				sudo cp /opt/cursor/cursor.AppImage /opt/cursor/cursor.AppImage.backup.$$(date +%Y%m%d_%H%M%S) && \
@@ -371,8 +397,8 @@ install-packages-supercursor:
 
 	# SuperCursorフレームワークのセットアップ
 	@echo "⚙️  SuperCursor フレームワークをセットアップ中..."
-	@echo "🔧 SuperCursor セットアップ準備中..."; \
-	@echo "ℹ️   フレームワークファイル、ペルソナ、コマンドをシンボリックリンクで構成します"; \
+	@echo "🔧 SuperCursor セットアップ準備中..."
+	@echo "ℹ️   フレームワークファイル、ペルソナ、コマンドをシンボリックリンクで構成します"
 	\
 	# 必要な変数の確認
 	if [ -z "$(DOTFILES_DIR)" ]; then \
@@ -404,34 +430,34 @@ install-packages-supercursor:
 	\
 	echo "✅ SuperCursor フレームワークのシンボリックリンク設定が完了しました"
 
-	@echo ""; \
-	@echo "🎉 SuperCursor のセットアップが完了しました！" \
-	@echo ""; \
-	@echo "🚀 使用方法:" \
-	@echo "1. Cursor IDEを起動" \
-	@echo "2. SuperCursor コマンドを使用:" \
-	@echo ""; \
-	@echo "📋 利用可能なコマンド例:" \
-	@echo "   /sc:implement <feature>    - 機能の実装" \
-	@echo "   /sc:build                  - ビルド・パッケージング" \
-	@echo "   /sc:design <ui>            - UI/UXデザイン" \
-	@echo "   /sc:analyze <code>         - コード分析" \
-	@echo "   /sc:troubleshoot <issue>   - 問題のデバッグ" \
-	@echo "   /sc:test <suite>           - テストスイート" \
-	@echo "   /sc:improve <code>         - コード改善" \
-	@echo "   /sc:cleanup                - コードクリーンアップ" \
-	@echo "   /sc:document <code>        - ドキュメント生成" \
-	@echo "   /sc:git <operation>        - Git操作" \
-	@echo "   /sc:estimate <task>        - 時間見積もり" \
-	@echo "   /sc:task <management>      - タスク管理" \
-	@echo ""; \
-	@echo "🎭 スマートペルソナ:" \
-	@echo "   🏗️  architect   - システム設計・アーキテクチャ" \
-	@echo "   🎨 developer   -実装開発" \
-	@echo "   📊 analyst     - コード分析・評価" \
-	@echo "   🧪 tester      - テスト設計・実装" \
-	@echo "   🚀 devops      - インフラ・デプロイ" \
-	@echo ""; \
+	@echo "";
+	@echo "🎉 SuperCursor のセットアップが完了しました！"
+	@echo "";
+	@echo "🚀 使用方法:"
+	@echo "1. Cursor IDEを起動"
+	@echo "2. SuperCursor コマンドを使用:"
+	@echo "";
+	@echo "📋 利用可能なコマンド例:"
+	@echo "   /sc:implement <feature>    - 機能の実装"
+	@echo "   /sc:build                  - ビルド・パッケージング"
+	@echo "   /sc:design <ui>            - UI/UXデザイン"
+	@echo "   /sc:analyze <code>         - コード分析"
+	@echo "   /sc:troubleshoot <issue>   - 問題のデバッグ"
+	@echo "   /sc:test <suite>           - テストスイート"
+	@echo "   /sc:improve <code>         - コード改善"
+	@echo "   /sc:cleanup                - コードクリーンアップ"
+	@echo "   /sc:document <code>        - ドキュメント生成"
+	@echo "   /sc:git <operation>        - Git操作"
+	@echo "   /sc:estimate <task>        - 時間見積もり"
+	@echo "   /sc:task <management>      - タスク管理"
+	@echo "";
+	@echo "🎭 スマートペルソナ:"
+	@echo "   🏗️  architect   - システム設計・アーキテクチャ"
+	@echo "   🎨 developer   -実装開発"
+	@echo "   📊 analyst     - コード分析・評価"
+	@echo "   🧪 tester      - テスト設計・実装"
+	@echo "   🚀 devops      - インフラ・デプロイ"
+	@echo "";
 	@echo "✅ SuperCursor のインストールが完了しました"
 
 # ========================================

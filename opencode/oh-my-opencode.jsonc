@@ -28,18 +28,22 @@
 
     // [Orchestrator] プロジェクト全体の指揮官
     // 推奨: Claude Opus 4.5
+    // 次点: Gemini 3 Pro
     // 理由: 複雑なコンテキストの保持と、長期的なタスク管理能力において最高性能を誇る 
     "orchestrator-sisyphus": {
-      "model": "google/antigravity-claude-opus-4-5",
+      // "model": "google/antigravity-claude-opus-4-5",
+      "model": "google/antigravity-gemini-3-pro",
       "temperature": 0.5,
       "description": "プロジェクト全体を統括するリーダー。タスク分解、委譲、進捗管理を担当。"
     },
 
     // [Planner] 戦略立案担当 (Prometheus)
     // 推奨: Claude Opus 4.5 (Thinking Mode)
+    // 次点: GPT-5.2 (High Reasoning)
     // 理由: Work-Planner方法論に基づき、詳細かつ実行可能な計画を策定する [2, 6]
     "Prometheus (Planner)": {
-      "model": "google/antigravity-claude-opus-4-5-thinking",
+      // "model": "google/antigravity-claude-opus-4-5-thinking",
+      "category": "ultrabrain",
       "variant": "high", // 推論強度を最大化し、深い思考を行わせる
       "temperature": 0.3,
       "description": "実装前の詳細な計画策定を担当。依存関係の解決とリスク予測を行う。"
@@ -47,9 +51,11 @@
 
     // [Consultant] 計画の事前監査 (Metis)
     // 推奨: GPT-5.2 (High Reasoning)
+    // 次点: Gemini 3 Pro -> Plannerを次点にした場合、監査役はGoogleの最高峰モデルでクロスチェックを行う
     // 理由: Planner (Claude) とは異なるアーキテクチャ (GPT) でダブルチェックを行い、死角をなくす 
     "Metis (Plan Consultant)": {
-      "category": "ultrabrain",
+      // "category": "ultrabrain",
+      "model": "google/antigravity-gemini-3-pro",
       "variant": "high",
       "temperature": 0.3,
       "description": "計画に対する批判的分析、隠れた要件の抽出、リスク評価を担当。"
@@ -61,17 +67,22 @@
 
     // [General Executor] 汎用実行エージェント (Sisyphus)
     // 推奨: Claude Sonnet 4.5
+    // 次点: GPT-5.2 Codex
     // 理由: コストと速度のバランスが良く、日常的なコード修正や実装に最適
     "Sisyphus": {
-      "model": "google/antigravity-claude-sonnet-4-5",
+      // "model": "google/antigravity-claude-sonnet-4-5",
+      "model": "openai/gpt-5.2-codex",
       "temperature": 0.5
     },
 
     // [Execution Sub-agent] 実装特化の実行部隊
+    // 推奨: Claude Sonnet 4.5
+    // 次点: Gemini 3 Pro -> 親エージェント（Sisyphus）を次点にした場合、サブエージェントはGoogleに分散させAPIレート制限のリスクを低減
     // Orchestratorが「実装タスク」を切り出して委譲する際の相手。
     // 自身では他のエージェントを呼び出さず、ひたすらコーディングを行う。
     "Sisyphus-Junior": {
-      "model": "google/antigravity-claude-sonnet-4-5", // コスト効率と速度の良いSonnetを推奨
+      // "model": "google/antigravity-claude-sonnet-4-5", // コスト効率と速度の良いSonnetを推奨
+      "model": "google/antigravity-gemini-3-pro",
       "temperature": 0.1, // 指示通りに正確に動くよう、温度は低めに設定
       "description": "Orchestratorから委譲されるタスクを実行する実務担当。実装のみに集中する。"
     },

@@ -234,5 +234,8 @@ info-superclaude: ## SuperClaudeフレームワークの情報を表示
 # エイリアス
 # ========================================
 
+.PHONY: install-superclaude
+install-superclaude: install-packages-superclaude  ## SuperClaudeフレームワークをインストール(メインターゲット)
+
 .PHONY: claudecode
 claudecode: install-packages-superclaude  ## Claude Code用のSuperClaudeフレームワークをインストール(エイリアス)
