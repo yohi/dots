@@ -65,7 +65,7 @@ _cursor_download:
 				VALID_DOWNLOAD=1; \
 			fi; \
 		else \
-			if [ "$${CURSOR_NO_VERIFY_HASH}" = "true" ]; then \
+			if [ "$(CURSOR_NO_VERIFY_HASH)" = "true" ]; then \
 				echo "⚠️  【セキュリティ警告】SHA256チェックサム検証をスキップします (ユーザー要求)"; \
 				echo "ℹ️  TLS(HTTPS)による通信経路の保護と、ファイルサイズ検証による簡易チェックを実行します"; \
 				echo "   ダウンロード元: https://downloader.cursor.sh (TLS origin verified by curl)"; \
@@ -148,18 +148,22 @@ _cursor_setup_desktop:
 	if [ "$$ICON_EXTRACTED" = "false" ]; then \
 		echo "🔍 AppImageからアイコンを抽出中..."; \
 		if command -v unzip >/dev/null 2>&1; then \
-			if timeout 30 unzip -j /opt/cursor/cursor.AppImage "*.png" 2>/dev/null || \
-			   timeout 30 unzip -j /opt/cursor/cursor.AppImage "usr/share/pixmaps/*.png" 2>/dev/null || \
-			   timeout 30 unzip -j /opt/cursor/cursor.AppImage "resources/*.png" 2>/dev/null; then \
-				ICON_FILE=$$(ls -1 *.png 2>/dev/null | grep -i "cursor\|icon\|app" | head -1); \
-				if [ -z "$$ICON_FILE" ]; then ICON_FILE=$$(ls -1 *.png 2>/dev/null | head -1); fi; \
-				if [ -n "$$ICON_FILE" ] && [ -f "$$ICON_FILE" ]; then \
-					sudo mkdir -p /usr/share/pixmaps; \
-					sudo cp "$$ICON_FILE" /usr/share/pixmaps/cursor.png; \
-					ICON_PATH="/usr/share/pixmaps/cursor.png"; \
-					echo "✅ AppImageからアイコンを抽出しました: $$ICON_FILE"; \
+			TMPDIR=$$(mktemp -d); \
+			if [ -n "$$TMPDIR" ] && cd "$$TMPDIR"; then \
+				if timeout 30 unzip -j /opt/cursor/cursor.AppImage "*.png" 2>/dev/null || \
+				   timeout 30 unzip -j /opt/cursor/cursor.AppImage "usr/share/pixmaps/*.png" 2>/dev/null || \
+				   timeout 30 unzip -j /opt/cursor/cursor.AppImage "resources/*.png" 2>/dev/null; then \
+					ICON_FILE=$$(ls -1 *.png 2>/dev/null | grep -i "cursor\|icon\|app" | head -1); \
+					if [ -z "$$ICON_FILE" ]; then ICON_FILE=$$(ls -1 *.png 2>/dev/null | head -1); fi; \
+					if [ -n "$$ICON_FILE" ] && [ -f "$$ICON_FILE" ]; then \
+						sudo mkdir -p /usr/share/pixmaps; \
+						sudo cp "$$ICON_FILE" /usr/share/pixmaps/cursor.png; \
+						ICON_PATH="/usr/share/pixmaps/cursor.png"; \
+						echo "✅ AppImageからアイコンを抽出しました: $$ICON_FILE"; \
+					fi; \
 				fi; \
-				rm -f *.png 2>/dev/null || true; \
+				cd /tmp; \
+				rm -rf "$$TMPDIR"; \
 			fi; \
 		fi; \
 	fi; \
@@ -189,7 +193,7 @@ _cursor_setup_desktop:
 	# どうしても必要な場合に限り、環境変数 TRUSTED_NO_SANDBOX=true を設定してインストールしてください: \
 	#   make TRUSTED_NO_SANDBOX=true install-packages-cursor \
 	\
-	if [ "$$TRUSTED_NO_SANDBOX" = "true" ]; then \
+	if [ "$(TRUSTED_NO_SANDBOX)" = "true" ]; then \
 		echo "⚠️  警告: TRUSTED_NO_SANDBOX=true が設定されているため --no-sandbox フラグを適用します"; \
 		echo "⚠️  セキュリティリスク: サンドボックス保護が無効化されます"; \
 		echo "Exec=/opt/cursor/cursor.AppImage --no-sandbox %F" | sudo tee -a /usr/share/applications/cursor.desktop > /dev/null; \

@@ -32,7 +32,7 @@
     // 理由: 複雑なコンテキストの保持と、長期的なタスク管理能力において最高性能を誇る 
     "orchestrator-sisyphus": {
       // "model": "google/antigravity-claude-opus-4-5",
-      "model": "google/antigravity-gemini-3-pro",
+      "model": "google/antigravity-gemini-3-pro-high",
       "temperature": 0.5,
       "description": "プロジェクト全体を統括するリーダー。タスク分解、委譲、進捗管理を担当。"
     },
@@ -55,7 +55,7 @@
     // 理由: Planner (Claude) とは異なるアーキテクチャ (GPT) でダブルチェックを行い、死角をなくす 
     "Metis (Plan Consultant)": {
       // "category": "ultrabrain",
-      "model": "google/antigravity-gemini-3-pro",
+      "model": "google/antigravity-gemini-3-pro-high",
       "variant": "high",
       "temperature": 0.3,
       "description": "計画に対する批判的分析、隠れた要件の抽出、リスク評価を担当。"
@@ -82,7 +82,7 @@
     // 自身では他のエージェントを呼び出さず、ひたすらコーディングを行う。
     "Sisyphus-Junior": {
       // "model": "google/antigravity-claude-sonnet-4-5", // コスト効率と速度の良いSonnetを推奨
-      "model": "google/antigravity-gemini-3-pro",
+      "model": "google/antigravity-gemini-3-pro-low",
       "temperature": 0.1, // 指示通りに正確に動くよう、温度は低めに設定
       "description": "Orchestratorから委譲されるタスクを実行する実務担当。実装のみに集中する。"
     },
@@ -91,7 +91,7 @@
     // 推奨: Gemini 3 Pro (Antigravity)
     // 理由: マルチモーダル能力が高く、デザイン画や画面遷移の理解に優れる 
     "frontend-ui-ux-engineer": {
-      "model": "google/antigravity-gemini-3-pro",
+      "model": "google/antigravity-gemini-3-pro-high",
       "temperature": 0.4,
       "description": "UIコンポーネントの実装、CSS調整、UX改善、レスポンシブ対応を担当。"
     },
@@ -147,7 +147,7 @@
     // [Visual Analyzer] 画像・動画解析
     // 推奨: Gemini 3 Pro
     "multimodal-looker": {
-      "model": "google/antigravity-gemini-3-pro",
+      "model": "google/antigravity-gemini-3-pro-high",
       "temperature": 0.2
     }
   },
