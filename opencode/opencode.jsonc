@@ -1,19 +1,19 @@
 {
   "$schema": "https://opencode.ai/config.json",
   "plugin": [
-    "oh-my-opencode@v3.0.0-beta.5",
+    "oh-my-opencode@v3.0.0-beta.7",
+   // "oh-my-opencode@v3.0.0-beta.7",
     "opencode-openai-codex-auth@latest",
     "opencode-antigravity-auth@beta",
     "@yohi/opencode-antigravity-quota",
-    "@yohi/opencode-codex-quota",
-    // "opencode-antigravity-quota@git+https://github.com/yohi/opencode-antigravity-quota",
-    // "/home/y_ohi/.config/opencode/opencode-antigravity-quota"
+    "@yohi/opencode-codex-quota"
   ],
 
   // [Permission]
   "permission": {
     "bash": {
       "*": "ask",          // 基本は確認する
+      "echo *": "allow",   // echoコマンドは許可
       "git *": "allow",    // gitコマンドは許可
       "grep *": "allow",   // grepコマンドは許可
       "npm test": "allow", // テスト実行は許可
@@ -24,6 +24,7 @@
     },
     "edit": "ask"          // ファイル編集は確認する
   },
+
 
   // [MCP]
   "mcp": {
@@ -87,7 +88,6 @@
         "chrome-devtools-mcp@latest"
       ]
     }
-
   },
   "provider": {
     "openai": {
@@ -344,7 +344,7 @@
           }
         },
         "antigravity-claude-sonnet-4-5": {
-          "name": "Claude Sonnet 4.5 (Antigravity)",
+          "name": "Claude Sonnet 4.5 (no thinking) (Antigravity)",
           "limit": { "context": 200000, "output": 64000 },
           "modalities": { "input": ["text", "image", "pdf"], "output": ["text"] }
         },
@@ -356,11 +356,6 @@
             "low": { "thinkingConfig": { "thinkingBudget": 8192 } },
             "max": { "thinkingConfig": { "thinkingBudget": 32768 } }
           }
-        },
-        "antigravity-claude-opus-4-5": {
-          "name": "Claude Opus 4.5 (Antigravity)",
-          "limit": { "context": 200000, "output": 64000 },
-          "modalities": { "input": ["text", "image", "pdf"], "output": ["text"] }
         },
         "antigravity-claude-opus-4-5-thinking": {
           "name": "Claude Opus 4.5 Thinking (Antigravity)",

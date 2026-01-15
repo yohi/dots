@@ -80,6 +80,9 @@ AI開発支援ツールとその設定。
 
 | ファイル | 責任範囲 |
 |---------|---------|
+| `cursor.mk` | Cursor IDE のインストール・アップデート・管理 |
+| `claude.mk` | Claude Code / Claudia のインストール・管理 |
+| `gemini.mk` | Gemini CLI / SuperGemini のインストール・管理 |
 | `codex.mk` | Codex CLI のインストール・設定 |
 | `opencode.mk` | OpenCode（opencode）のインストール・設定 |
 | `superclaude.mk` | SuperClaude Framework のインストール・管理 |
@@ -145,6 +148,9 @@ include mk/memory.mk
 # ============================================================
 # AI & Tools: AI開発支援ツール
 # ============================================================
+include mk/cursor.mk
+include mk/claude.mk
+include mk/gemini.mk
 include mk/codex.mk
 include mk/opencode.mk
 include mk/superclaude.mk

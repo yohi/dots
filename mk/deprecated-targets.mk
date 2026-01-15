@@ -12,15 +12,12 @@ DEPRECATED_TARGETS ?= \
 	install-wezterm:install-packages-wezterm:2026-02-01:2026-08-01:warning \
 	install-cursor:install-packages-cursor:2026-02-01:2026-08-01:warning \
 	install-claude-code:install-packages-claude-code:2026-02-01:2026-08-01:warning \
-	install-packages-superclaude:install-superclaude:2026-02-01:2026-08-01:warning \
 	install-claudia:install-packages-claudia:2026-02-01:2026-08-01:warning \
 	install-cica-fonts:install-packages-cica-fonts:2026-02-01:2026-08-01:warning \
 	install-ibm-plex-fonts:install-packages-ibm-plex-fonts:2026-02-01:2026-08-01:warning \
 	install-mysql-workbench:install-packages-mysql-workbench:2026-02-01:2026-08-01:warning \
 	install-chrome-beta:install-packages-chrome-beta:2026-02-01:2026-08-01:warning \
-	install-playwright:install-packages-playwright:2026-02-01:2026-08-01:warning \
 	install-clipboard:install-packages-clipboard:2026-02-01:2026-08-01:warning \
-	install-gemini-cli:install-packages-gemini-cli:2026-02-01:2026-08-01:warning \
 	setup-vim:setup-config-vim:2026-02-01:2026-08-01:warning \
 	setup-zsh:setup-config-zsh:2026-02-01:2026-08-01:warning \
 	setup-wezterm:setup-config-wezterm:2026-02-01:2026-08-01:warning \

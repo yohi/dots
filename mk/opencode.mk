@@ -10,10 +10,10 @@ OPENCODE_DOTFILES_CONFIG ?= $(DOTFILES_DIR)/opencode/opencode.jsonc
 OH_MY_OPENCODE_CONFIG_PATH ?= $(OPENCODE_CONFIG_DIR)/oh-my-opencode.jsonc
 OH_MY_OPENCODE_DOTFILES_CONFIG ?= $(DOTFILES_DIR)/opencode/oh-my-opencode.jsonc
 
-.PHONY: opencode opencode-install opencode-update setup-opencode check-opencode
+.PHONY: opencode install-packages-opencode install-opencode opencode-update setup-opencode check-opencode
 
 # OpenCode (opencode) をインストール & 設定
-opencode: ## OpenCode（opencode）のインストールとセットアップ
+opencode: ## OpenCode(opencode)のインストールとセットアップ
 	@if [ -x "$(OPENCODE_BIN)" ] && [ -f "$(OPENCODE_DOTFILES_CONFIG)" ] && [ -L "$(OPENCODE_CONFIG_PATH)" ]; then \
 		actual=$$(readlink -f "$(OPENCODE_CONFIG_PATH)" 2>/dev/null || true); \
 		expected=$$(readlink -f "$(OPENCODE_DOTFILES_CONFIG)" 2>/dev/null || true); \
@@ -32,10 +32,10 @@ opencode: ## OpenCode（opencode）のインストールとセットアップ
 			fi; \
 		fi; \
 	fi; \
-	$(MAKE) opencode-install setup-opencode
+	$(MAKE) install-packages-opencode setup-opencode
 
 # OpenCode をインストール（公式インストーラ）
-opencode-install: ## OpenCode（opencode）をインストール
+install-packages-opencode: ## OpenCode（opencode）をインストール
 	@echo "📦 OpenCode（opencode）をインストール中..."
 	@if [ -x "$(OPENCODE_BIN)" ]; then \
 		echo "[SKIP] opencode is already installed: $(OPENCODE_BIN)"; \
@@ -51,7 +51,7 @@ opencode-install: ## OpenCode（opencode）をインストール
 		exit 1; \
 	fi
 	@echo "✅ OpenCode（opencode）のインストールが完了しました"
-	@$(call create_marker,opencode-install,$$($(OPENCODE_BIN) --version 2>/dev/null || echo unknown))
+	@$(call create_marker,install-packages-opencode,$$($(OPENCODE_BIN) --version 2>/dev/null || echo unknown))
 
 # OpenCode を更新（公式インストーラ再実行）
 opencode-update: ## OpenCode（opencode）をアップデート
@@ -96,6 +96,9 @@ setup-opencode: ## OpenCode（opencode）の設定ファイルを適用
 		echo "ℹ️  oh-my-opencode 設定ファイルはスキップされました（見つかりません）"; \
 	fi
 	@$(call create_marker,setup-opencode,1)
+
+# User-friendly alias
+install-opencode: install-packages-opencode
 
 # OpenCode の状態確認
 check-opencode: ## OpenCode（opencode）の状態を確認
