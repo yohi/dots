@@ -59,15 +59,15 @@ install-packages-gemini-cli:
 		exit 1; \
 	fi
 
-	@echo ""; \
-	@echo "🎉 Gemini CLI のセットアップガイド:" \
-	@echo "1. プロジェクトディレクトリに移動: cd your-project-directory" \
-	@echo "2. Gemini CLI を開始: gemini" \
-	@echo "3. 認証方法を選択: Google Cloud認証" \
-	@echo "4. 初回セットアップコマンド:" \
-	@echo "   > summarize this project" \
-	@echo "   > /help" \
-	@echo ""; \
+	@echo "";
+	@echo "🎉 Gemini CLI のセットアップガイド:"
+	@echo "1. プロジェクトディレクトリに移動: cd your-project-directory"
+	@echo "2. Gemini CLI を開始: gemini"
+	@echo "3. 認証方法を選択: Google Cloud認証"
+	@echo "4. 初回セットアップコマンド:"
+	@echo "   > summarize this project"
+	@echo "   > /help"
+	@echo "";
 	@echo "✅ Gemini CLI のインストールが完了しました"
 
 # SuperGemini (Gemini CLI Framework) のインストール
@@ -116,38 +116,38 @@ install-packages-supergemini:
 	echo "🔧 Gemini CLI設定ファイルを更新中..."; \
 	echo '{"selectedAuthType":"oauth-personal","usageStatisticsEnabled":false,"customToolsDirectory":"~/.gemini/user-tools","enableCustomTools":true}' > $(HOME_DIR)/.gemini/settings.json || true; \
 	\
-	echo "✅ SuperGemini フレームワークのシンボリックリンク設定が完了しました"; \
-	@echo ""; \
-	@echo "🎉 SuperGemini のセットアップが完了しました！" \
-	@echo ""; \
-	@echo "🚀 使用方法:" \
-	@echo "1. Gemini CLI を起動: gemini" \
-	@echo "2. SuperGemini コマンドを使用:" \
-	@echo ""; \
-	@echo "📋 利用可能なコマンド例:" \
-	@echo "   /user-implement <feature>    - 機能の実装" \
-	@echo "   /user-build                  - ビルド・パッケージング" \
-	@echo "   /user-design <ui>            - UI/UXデザイン" \
-	@echo "   /user-analyze <code>         - コード分析" \
-	@echo "   /user-troubleshoot <issue>   - 問題のデバッグ" \
-	@echo "   /user-test <suite>           - テストスイート" \
-	@echo "   /user-improve <code>         - コード改善" \
-	@echo "   /user-cleanup                - コードクリーンアップ" \
-	@echo "   /user-document <code>        - ドキュメント生成" \
-	@echo "   /user-git <operation>        - Git操作" \
-	@echo "   /user-estimate <task>        - 時間見積もり" \
-	@echo "   /user-task <management>      - タスク管理" \
-	@echo ""; \
-	@echo "🎭 スマートペルソナ:" \
-	@echo "   🏗️  architect   - システム設計・アーキテクチャ" \
-	@echo "   🎨 frontend    - UI/UX・アクセシビリティ" \
-	@echo "   ⚙️  backend     - API・インフラストラクチャ" \
-	@echo "   🔍 analyzer    - デバッグ・問題解決" \
-	@echo "   🛡️  security    - セキュリティ・脆弱性評価" \
-	@echo "   ✍️  scribe      - ドキュメント・技術文書" \
-	@echo ""; \
-	@echo "📝 注意: カスタムツールを再読み込みするには /reload-user-tools コマンドを使用します" \
-	@echo ""; \
+	echo "✅ SuperGemini フレームワークのシンボリックリンク設定が完了しました";
+	@echo "";
+	@echo "🎉 SuperGemini のセットアップが完了しました！"
+	@echo "";
+	@echo "🚀 使用方法:"
+	@echo "1. Gemini CLI を起動: gemini"
+	@echo "2. SuperGemini コマンドを使用:"
+	@echo "";
+	@echo "📋 利用可能なコマンド例:"
+	@echo "   /user-implement <feature>    - 機能の実装"
+	@echo "   /user-build                  - ビルド・パッケージング"
+	@echo "   /user-design <ui>            - UI/UXデザイン"
+	@echo "   /user-analyze <code>         - コード分析"
+	@echo "   /user-troubleshoot <issue>   - 問題のデバッグ"
+	@echo "   /user-test <suite>           - テストスイート"
+	@echo "   /user-improve <code>         - コード改善"
+	@echo "   /user-cleanup                - コードクリーンアップ"
+	@echo "   /user-document <code>        - ドキュメント生成"
+	@echo "   /user-git <operation>        - Git操作"
+	@echo "   /user-estimate <task>        - 時間見積もり"
+	@echo "   /user-task <management>      - タスク管理"
+	@echo "";
+	@echo "🎭 スマートペルソナ:"
+	@echo "   🏗️  architect   - システム設計・アーキテクチャ"
+	@echo "   🎨 frontend    - UI/UX・アクセシビリティ"
+	@echo "   ⚙️  backend     - API・インフラストラクチャ"
+	@echo "   🔍 analyzer    - デバッグ・問題解決"
+	@echo "   🛡️  security    - セキュリティ・脆弱性評価"
+	@echo "   ✍️  scribe      - ドキュメント・技術文書"
+	@echo "";
+	@echo "📝 注意: カスタムツールを再読み込みするには /reload-user-tools コマンドを使用します"
+	@echo "";
 	@echo "✅ SuperGemini のインストールが完了しました"
 
 # Gemini エコシステム一括インストール
@@ -181,30 +181,30 @@ install-gemini-ecosystem:
 		echo "SuperGemini: ❌ 未確認"; \
 	fi
 
-	@echo ""; \
-	@echo "🎉 Gemini エコシステムのインストールが完了しました！" \
-	@echo ""; \
-	@echo "🚀 使用開始ガイド:" \
-	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━" \
-	@echo ""; \
-	@echo "💻 Gemini CLI:" \
-	@echo "  コマンド: gemini" \
-	@echo "  使用例: プロジェクトディレクトリで 'gemini' を実行" \
-	@echo ""; \
-	@echo "🚀 SuperGemini (フレームワーク):" \
-	@echo "  Gemini CLI内で以下のコマンドが利用可能:" \
-	@echo "    /user-implement <機能>     - 機能実装" \
-	@echo "    /user-build                  - ビルド・パッケージング" \
-	@echo "    /user-design <UI>            - UI/UXデザイン" \
-	@echo "    /user-analyze <コード>       - コード分析" \
-	@echo "    /user-troubleshoot <issue>   - 問題のデバッグ" \
-	@echo "    /user-test <テスト>          - テストスイート" \
-	@echo "    /user-improve <コード>       - コード改善" \
-	@echo ""; \
-	@echo "✨ おすすめワークフロー:" \
-	@echo "  1. 'gemini' でプロジェクトを開始" \
-	@echo "  2. '/user-implement' で機能を実装" \
-	@echo ""; \
+	@echo "";
+	@echo "🎉 Gemini エコシステムのインストールが完了しました！"
+	@echo "";
+	@echo "🚀 使用開始ガイド:"
+	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	@echo "";
+	@echo "💻 Gemini CLI:"
+	@echo "  コマンド: gemini"
+	@echo "  使用例: プロジェクトディレクトリで 'gemini' を実行"
+	@echo "";
+	@echo "🚀 SuperGemini (フレームワーク):"
+	@echo "  Gemini CLI内で以下のコマンドが利用可能:"
+	@echo "    /user-implement <機能>     - 機能実装"
+	@echo "    /user-build                  - ビルド・パッケージング"
+	@echo "    /user-design <UI>            - UI/UXデザイン"
+	@echo "    /user-analyze <コード>       - コード分析"
+	@echo "    /user-troubleshoot <issue>   - 問題のデバッグ"
+	@echo "    /user-test <テスト>          - テストスイート"
+	@echo "    /user-improve <コード>       - コード改善"
+	@echo "";
+	@echo "✨ おすすめワークフロー:"
+	@echo "  1. 'gemini' でプロジェクトを開始"
+	@echo "  2. '/user-implement' で機能を実装"
+	@echo "";
 	@echo "✅ Gemini エコシステムの一括インストールが完了しました"
 
 # ========================================
