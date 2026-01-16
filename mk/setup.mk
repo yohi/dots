@@ -597,8 +597,16 @@ setup-lazygit:
 	# シンボリックリンクを作成
 	@ln -sfn $(DOTFILES_DIR)/lazygit/config.yml $(CONFIG_DIR)/lazygit/config.yml
 
+	# scripts ディレクトリのシンボリックリンクを作成
+	@if [ -d "$(CONFIG_DIR)/lazygit/scripts" ] && [ ! -L "$(CONFIG_DIR)/lazygit/scripts" ]; then \
+		echo "⚠️  既存のlazygit scriptsディレクトリをバックアップ中..."; \
+		mv $(CONFIG_DIR)/lazygit/scripts $(CONFIG_DIR)/lazygit/scripts.backup.$$(date +%Y%m%d_%H%M%S); \
+	fi
+	@ln -sfn $(DOTFILES_DIR)/lazygit/scripts $(CONFIG_DIR)/lazygit/scripts
+
 	@echo "✅ Lazygitの設定が完了しました。"
 	@echo "   設定ファイル: ~/.config/lazygit/config.yml -> $(DOTFILES_DIR)/lazygit/config.yml"
+	@echo "   スクリプトディレクトリ: ~/.config/lazygit/scripts -> $(DOTFILES_DIR)/lazygit/scripts"
 
 
 
