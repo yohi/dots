@@ -1,8 +1,9 @@
 {
+
   "$schema": "https://opencode.ai/config.json",
   "plugin": [
-    "oh-my-opencode@v3.0.0-beta.7",
-   // "oh-my-opencode@v3.0.0-beta.7",
+    "oh-my-opencode@v3.0.0-beta.8",
+    // "oh-my-opencode@v3.0.0-beta.8",
     "opencode-openai-codex-auth@latest",
     "opencode-antigravity-auth@beta",
     "@yohi/opencode-antigravity-quota",
@@ -11,20 +12,42 @@
 
   // [Permission]
   "permission": {
+    // 【読み取り・検索系】: ステートを変更しないため常時許可推奨
+    "read": "allow",
+    "list": "allow",
+    "glob": "allow",
+    "grep": "allow",
+    "codesearch": "allow",
+    "websearch": "allow",
+    "todoread": "allow",
+
+    // 【ファイル編集】: 開発効率のため基本許可（ここが "ask" だと毎回止まります）
+    "edit": "allow",
+    "todowrite": "allow",
+
+    // 【外部アクセス・危険領域】: 誤動作防止のため確認を入れる
+    "webfetch": "ask",
+    "external_directory": "ask", // プロジェクト外のファイルアクセスは確認
+
+    // 【コマンド実行】: よく使う安全なコマンドのみ許可、破壊的なものは禁止、その他は確認
     "bash": {
-      "*": "ask",          // 基本は確認する
-      "echo *": "allow",   // echoコマンドは許可
-      "git *": "allow",    // gitコマンドは許可
-      "grep *": "allow",   // grepコマンドは許可
-      "npm test": "allow", // テスト実行は許可
-      "rm *": "deny",      // 削除コマンドは禁止
-      "ls *": "allow",     // ファイル一覧は常に許可
-      "ssh *": "deny"      // 外部接続は拒否
-
-    },
-    "edit": "ask"          // ファイル編集は確認する
+      "*": "ask",              // デフォルトは確認する
+      "ls": "allow",           // ディレクトリ確認は許可
+      "ls *": "allow",
+      "cat *": "allow",        // ファイル読み込みは許可
+      "grep *": "allow",       // 検索は許可
+      "find *": "allow",
+      "git status": "allow",   // gitの状態確認は許可
+      "git diff": "allow",
+      "git log": "allow",
+      "npm test": "allow",     // テスト実行は許可（状況に応じて）
+      "npm run lint": "allow",
+      "echo *": "allow",       // エコーは許可
+      "rm *": "deny",          // 削除コマンドは明示的に禁止（AIに提案させない）
+      "rm -rf *": "deny",
+      "ssh *": "deny"          // 外部接続は禁止
+    }
   },
-
 
   // [MCP]
   "mcp": {
