@@ -11,8 +11,9 @@
   "disabled_hooks": [
     "startup-toast"
   ],
-  "disabled_mcps": [
-  ],
+  "disabled_mcps": [],
+  "disabled_agents": [],
+  "disabled_skills": [],
 
   // ================================================================================
   // エージェント構成 (Agents Configuration)
@@ -36,7 +37,7 @@
     // 推奨: Claude Opus 4.5 (Thinking Mode)
     // 次点: GPT-5.2 (High Reasoning)
     // 理由: Work-Planner方法論に基づき、詳細かつ実行可能な計画を策定する [2, 6]
-    "prometheus": {
+    "Prometheus (Planner)": {
       "model": "google/antigravity-claude-opus-4-5-thinking",
       "variant": "high", // 推論強度を最大化し、深い思考を行わせる
       "temperature": 0.3,
@@ -46,7 +47,7 @@
     // [Consultant] 計画の事前監査 (Metis)
     // 推奨: GPT-5.2 (High Reasoning)
     // 理由: Planner (Claude) とは異なるアーキテクチャ (GPT) でダブルチェックを行い、死角をなくす 
-    "metis": {
+    "Metis (Plan Consultant)": {
       "category": "ultrabrain",
       "variant": "high",
       "temperature": 0.3,
@@ -60,7 +61,7 @@
     // [General Executor] 汎用実行エージェント (Sisyphus)
     // 推奨: Claude Sonnet 4.5
     // 理由: コストと速度のバランスが良く、日常的なコード修正や実装に最適
-    "sisyphus": {
+    "Sisyphus": {
       "model": "google/antigravity-claude-sonnet-4-5",
       "temperature": 0.5
     },
@@ -69,7 +70,7 @@
     // 推奨: Claude Sonnet 4.5
     // Orchestratorが「実装タスク」を切り出して委譲する際の相手。
     // 自身では他のエージェントを呼び出さず、ひたすらコーディングを行う。
-    "sisyphus-junior": {
+    "Sisyphus-Junior": {
       "model": "google/antigravity-claude-sonnet-4-5",
       "temperature": 0.1,
       "description": "Orchestratorから委譲されるタスクを実行する実務担当。実装のみに集中する。"
@@ -117,8 +118,7 @@
 
     // [Momus] 品質保証・監査
     // 推奨: GPT-5.2 (Codex)
-    // [変更点] キー名を "Momus" から "Momus (Plan Reviewer)" に更新
-    "momus": {
+    "Momus (Plan Reviewer)": {
       "model": "openai/gpt-5.2-codex",
       "temperature": 0.2,
       "description": "コードレビュー、セキュリティ監査、品質チェック、エッジケースの指摘。"
@@ -143,16 +143,7 @@
   // 機能・挙動設定
   // ================================================================================
 
-  "sisyphus_agent": {
-    "disabled": false,
-    "default_builder_enabled": false,
-    "planner_enabled": true,
-    "replace_plan": true
-  },
-
   "background_task": {
-    // defaultConcurrency ではなく concurrency が一般的ですが、
-    // oh-my-opencodeの実装によっては provider ごとの指定が必要な場合があります。
     // グローバルな並列数として機能しない場合は各プロバイダ設定を確認してください。
     "concurrency": 5 
   },
