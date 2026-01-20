@@ -1,0 +1,93 @@
+{
+  "$schema": "https://raw.githubusercontent.com/code-yeongyu/oh-my-opencode/master/assets/oh-my-opencode.schema.json",
+  "disabled_hooks": ["startup-toast"],
+
+  "agents": {
+    // --------------------------------------------------------------------------
+    // 1. 指揮・計画レイヤー (Claude & Google構成)
+    // --------------------------------------------------------------------------
+
+    // [Orchestrator]
+    // 本家の推奨構成通りClaude Opusを採用。
+    "orchestrator-sisyphus": {
+      "model": "google/antigravity-claude-opus-4-5-thinking", // または anthropic/claude-3-opus...
+      "temperature": 0.5,
+      "description": "プロジェクト全体を統括。"
+    },
+
+    // [Planner] Prometheus
+    // GPT-5.2の代役。ClaudeのThinkingモードを使用。
+    "prometheus": {
+      "model": "google/antigravity-claude-opus-4-5-thinking",
+      "variant": "high",
+      "temperature": 0.3,
+      "description": "Claudeの思考モードを使い、詳細な計画を策定。"
+    },
+
+    // [Consultant] Metis
+    // Planner(Claude)の死角を突くため、GoogleのGemini 3 Proを採用。
+    "metis": {
+      "model": "google/antigravity-gemini-3-pro",
+      "category": "ultrabrain",
+      "variant": "high",
+      "temperature": 0.3,
+      "description": "Claudeとは異なるロジックで計画を監査する。"
+    },
+
+    // --------------------------------------------------------------------------
+    // 2. 実行レイヤー (Claude Main)
+    // --------------------------------------------------------------------------
+
+    // [General Executor] Sisyphus
+    "sisyphus": {
+      "model": "google/antigravity-claude-sonnet-4-5",
+      "temperature": 0.5
+    },
+
+    // [Execution Sub-agent] Sisyphus Junior
+    // 「エンジニアの相棒」として定評のあるSonnet 4.5を採用。
+    "sisyphus-junior": {
+      "model": "google/antigravity-claude-sonnet-4-5",
+      "temperature": 0.1,
+      "description": "実装担当。Sonnetのキャッシュ機能とコーディング能力を活かす。"
+    },
+
+    // [Frontend]
+    // フロントエンドはGeminiの独壇場（画像の理解力など）。
+    "frontend-ui-ux-engineer": {
+      "model": "google/antigravity-gemini-3-pro",
+      "temperature": 0.4
+    },
+
+    // --------------------------------------------------------------------------
+    // 3. 支援・専門家レイヤー
+    // --------------------------------------------------------------------------
+
+    // [Oracle]
+    // GPT-5.2の代役。Claude Opus 4.5 Thinkingで深い推論を行う。
+    "oracle": {
+      "model": "google/antigravity-claude-opus-4-5-thinking",
+      "category": "ultrabrain",
+      "variant": "xhigh",
+      "temperature": 0.5
+    },
+
+    // [Reviewer] Momus
+    // 監査役。ここもGeminiを使って視点を分散させるのがベストプラクティス。
+    "momus": {
+      "model": "google/antigravity-gemini-3-pro",
+      "temperature": 0.2,
+      "description": "コードレビュー担当。Claudeが書いたコードをGoogleのモデルでチェックする。"
+    },
+
+    // [Librarian / Explorer]
+    "librarian": {
+      "model": "google/antigravity-gemini-3-flash",
+      "temperature": 0.1
+    },
+    "explore": {
+      "model": "google/antigravity-gemini-3-flash",
+      "temperature": 0.1
+    }
+  }
+}

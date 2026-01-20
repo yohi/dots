@@ -12,7 +12,7 @@
 
   // [Permission]
   "permission": {
-    // 【読み取り・検索系】: ステートを変更しないため常時許可推奨
+    // 【読み取り・検索系】
     "read": "allow",
     "list": "allow",
     "glob": "allow",
@@ -21,31 +21,56 @@
     "websearch": "allow",
     "todoread": "allow",
 
-    // 【ファイル編集】: 開発効率のため基本許可（ここが "ask" だと毎回止まります）
+    // 【ファイル編集】
     "edit": "allow",
     "todowrite": "allow",
 
-    // 【外部アクセス・危険領域】: 誤動作防止のため確認を入れる
+    // 【外部アクセス】
     "webfetch": "ask",
-    "external_directory": "ask", // プロジェクト外のファイルアクセスは確認
+    "external_directory": "ask",
 
-    // 【コマンド実行】: よく使う安全なコマンドのみ許可、破壊的なものは禁止、その他は確認
+    // 【コマンド実行】
     "bash": {
-      "*": "ask",              // デフォルトは確認する
-      "ls": "allow",           // ディレクトリ確認は許可
-      "ls *": "allow",
-      "cat *": "allow",        // ファイル読み込みは許可
-      "grep *": "allow",       // 検索は許可
+      "*": "ask",              // 基本は確認
+
+      // --- ファイル操作系 (ここが漏れると頻繁に止まります) ---
+      "ls": "allow",
+      "ls *": "allow",         // 引数ありも許可
+      "cat *": "allow",
+      "mkdir *": "allow",      // ディレクトリ作成
+      "touch *": "allow",      // 空ファイル作成
+      "mv *": "allow",         // 移動・リネーム
+      "cp *": "allow",         // コピー
+      "pwd": "allow",          // 現在位置確認
+      "cd *": "allow",         // ディレクトリ移動
+
+      // --- 検索・確認系 ---
+      "grep *": "allow",
       "find *": "allow",
-      "git status": "allow",   // gitの状態確認は許可
+      "echo *": "allow",
+
+      // --- Git系 (引数あり対応) ---
+      // ※ "git *" : "allow" と書いても良いですが、細かく制御するなら以下
+      "git status": "allow",
+      "git status *": "allow", // 引数あり対応
       "git diff": "allow",
+      "git diff *": "allow",   // 引数あり対応
       "git log": "allow",
-      "npm test": "allow",     // テスト実行は許可（状況に応じて）
+      "git log *": "allow",    // 引数あり対応
+      "git show *": "allow",
+      "git branch": "allow",
+      
+      // --- NPM / 開発系 ---
+      "npm test": "allow",
+      "npm test *": "allow",   // 特定ファイルのテスト実行などを許可
       "npm run lint": "allow",
-      "echo *": "allow",       // エコーは許可
-      "rm *": "deny",          // 削除コマンドは明示的に禁止（AIに提案させない）
+      "npm run lint *": "allow",
+      "node *": "allow",       // スクリプト実行を許可するかどうか
+
+      // --- 禁止リスト (安全のため維持) ---
+      "rm *": "deny",
       "rm -rf *": "deny",
-      "ssh *": "deny"          // 外部接続は禁止
+      "ssh *": "deny"
     }
   },
 
