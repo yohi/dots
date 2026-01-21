@@ -51,9 +51,10 @@
       "touch*": "allow",
       "mv*": "allow",
       "cp*": "allow",
-      
+
       // 以前ご要望のあった grep/tail もここで許可
       "grep*": "allow",
+      "wc*": "allow",
       "find*": "allow",
       "tail*": "allow",
       "head*": "allow",
