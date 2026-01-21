@@ -12,65 +12,87 @@
 
   // [Permission]
   "permission": {
-    // 【読み取り・検索系】
-    "read": "allow",
-    "list": "allow",
-    "glob": "allow",
-    "grep": "allow",
-    "codesearch": "allow",
-    "websearch": "allow",
-    "todoread": "allow",
-
-    // 【ファイル編集】
+    // ------------------------------------------------------------------
+    // 1. 基本ツールの権限（読み取り系は全開放）
+    // ------------------------------------------------------------------
+    "read": "allow",       // ファイル読み取り
+    "list": "allow",       // ディレクトリ一覧
+    "glob": "allow",       // ファイル検索
+    "grep": "allow",       // 文字列検索（ツール版）
+    "codesearch": "allow", // コード検索
+    "todoread": "allow",   // TODO確認
+    
+    // 編集系（AIの本分なので許可）
     "edit": "allow",
     "todowrite": "allow",
 
-    // 【外部アクセス】
-    "webfetch": "ask",
-    "external_directory": "ask",
+    // ------------------------------------------------------------------
+    // 2. 外部アクセス（ここは安全のため「確認」推奨）
+    // ------------------------------------------------------------------
+    "websearch": "allow",      // 検索はOK
+    "webfetch": "ask",         // URLの中身を見るのは確認（機密漏洩防止）
+    "external_directory": "ask", // プロジェクト外へのアクセスは確認
 
-    // 【コマンド実行】
+    // ------------------------------------------------------------------
+    // 3. コマンド実行（Bash）
+    // ------------------------------------------------------------------
     "bash": {
-      "*": "ask",              // 基本は確認
+      // ▼ 基本ポリシー：デフォルトは「確認」
+      // これが「ブラックリスト方式」の危険性を防ぐ命綱です
+      "*": "ask",
 
-      // --- ファイル操作系 (ここが漏れると頻繁に止まります) ---
-      "ls": "allow",
-      "ls *": "allow",         // 引数ありも許可
-      "cat *": "allow",
-      "mkdir *": "allow",      // ディレクトリ作成
-      "touch *": "allow",      // 空ファイル作成
-      "mv *": "allow",         // 移動・リネーム
-      "cp *": "allow",         // コピー
-      "pwd": "allow",          // 現在位置確認
-      "cd *": "allow",         // ディレクトリ移動
-
-      // --- 検索・確認系 ---
-      "grep *": "allow",
-      "find *": "allow",
-      "echo *": "allow",
-
-      // --- Git系 (引数あり対応) ---
-      // ※ "git *" : "allow" と書いても良いですが、細かく制御するなら以下
-      "git status": "allow",
-      "git status *": "allow", // 引数あり対応
-      "git diff": "allow",
-      "git diff *": "allow",   // 引数あり対応
-      "git log": "allow",
-      "git log *": "allow",    // 引数あり対応
-      "git show *": "allow",
-      "git branch": "allow",
+      // ▼ 参照・ログ確認系（すべて許可）
+      // "ls*" と書くことで "ls -la" 等の引数付きもカバー
+      "ls*": "allow",
+      "cat*": "allow",
+      "pwd": "allow",
+      "echo*": "allow",
+      "mkdir*": "allow",
+      "touch*": "allow",
+      "mv*": "allow",
+      "cp*": "allow",
       
-      // --- NPM / 開発系 ---
-      "npm test": "allow",
-      "npm test *": "allow",   // 特定ファイルのテスト実行などを許可
-      "npm run lint": "allow",
-      "npm run lint *": "allow",
-      "node *": "allow",       // スクリプト実行を許可するかどうか
+      // 以前ご要望のあった grep/tail もここで許可
+      "grep*": "allow",
+      "find*": "allow",
+      "tail*": "allow",
+      "head*": "allow",
+      "less*": "allow",
+      "xargs*": "allow",
 
-      // --- 禁止リスト (安全のため維持) ---
+      // ▼ 開発ツール系（広範囲許可 = 利便性重視）
+      // GitとNPM関連は、下手に制限すると開発にならないため原則許可します
+      "git *": "allow",
+      "npm *": "allow",
+      "yarn *": "allow",
+      "node *": "allow",     // スクリプト実行も許可
+      "python *": "allow",   // Python使いなら追加
+
+      "coderabbit *": "allow",
+
+      // -----------------------------------------------------------
+      // ▼ 制限・禁止リスト（下の行ほど優先＝上書きされます）
+      // -----------------------------------------------------------
+
+      // 【Gitの特例制限】
+      // "git *" で許可しましたが、Push/Commitだけは意図を確認したい
+      "git push*": "ask",
+      "git commit*": "ask",
+      // マージやリベースも怖いならここに追加
+      // "git merge*": "ask",
+
+      // 【NPMの特例禁止】
+      "npm publish*": "deny",
+
+      // 【システム破壊・危険操作の禁止（最優先）】
+      // rm はゴミ箱に入らないため、AIには使わせないのが鉄則
       "rm *": "deny",
       "rm -rf *": "deny",
-      "ssh *": "deny"
+      
+      // SSHなどは乗っ取りリスクがあるため禁止
+      "ssh *": "deny",
+      "sudo *": "deny",
+      "su *": "deny"
     }
   },
 
