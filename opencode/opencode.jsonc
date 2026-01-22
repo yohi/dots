@@ -1,8 +1,13 @@
 {
 
   "$schema": "https://opencode.ai/config.json",
+  "model": "google/antigravity-claude-sonnet-4-5",
+  
+  // ログレベル設定（デバッグ用）
+  "logLevel": "DEBUG",
+  
   "plugin": [
-    "oh-my-opencode@3.0.0-beta.11",
+    "oh-my-opencode@3.0.0-beta.12",
     // "oh-my-opencode@v3.0.0-beta.8",
     // "opencode-openai-codex-auth@latest",
     "opencode-antigravity-auth@beta",
@@ -392,6 +397,16 @@
         }
       }
     },
+    // "anthropic": {
+    //   "models": {
+    //     "claude-haiku-4-5": {
+    //       "name": "Claude Haiku 4.5 (redirected to Gemini Flash)",
+    //       "limit": { "context": 200000, "output": 8192 },
+    //       "modalities": { "input": ["text", "image"], "output": ["text"] },
+    //       "alias": "google/antigravity-gemini-3-flash"
+    //     }
+    //   }
+    // },
     "google": {
       "models": {
         "antigravity-gemini-3-pro": {
