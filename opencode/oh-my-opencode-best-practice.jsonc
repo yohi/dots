@@ -27,7 +27,7 @@
     // [Orchestrator] プロジェクト全体の指揮官
     // 推奨: Claude Opus 4.5 (Thinking Mode)
     // 理由: 複雑なコンテキストの保持と、長期的なタスク管理能力において最高性能を誇る 
-    "orchestrator-sisyphus": {
+    "Atlas": {
       "model": "google/antigravity-claude-opus-4-5-thinking",
       "temperature": 0.5,
       "description": "プロジェクト全体を統括するリーダー。タスク分解、委譲、進捗管理を担当。"

@@ -26,7 +26,7 @@
 
     // [Orchestrator] プロジェクト全体の指揮官
     // 本家の推奨構成通りClaude Opusを採用。
-    "orchestrator-sisyphus": {
+    "Atlas": {
       "model": "google/antigravity-claude-opus-4-5-thinking", // または anthropic/claude-3-opus...
       "temperature": 0.5,
       "description": "プロジェクト全体を統括するリーダー。タスク分解、委譲、進捗管理を担当。"

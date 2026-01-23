@@ -26,7 +26,7 @@
 
     // [Orchestrator] プロジェクト全体の指揮官
     // Claude Opusの代役。100万トークン超の窓を持つGemini 3 Proが最適。
-    "orchestrator-sisyphus": {
+    "Atlas": {
       "model": "google/antigravity-gemini-3-pro",
       "temperature": 0.5,
       "description": "プロジェクト全体を統括するリーダー。タスク分解、委譲、進捗管理を担当。"
