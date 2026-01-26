@@ -7,7 +7,7 @@
   "logLevel": "DEBUG",
   
   "plugin": [
-    "oh-my-opencode@3.0.0-beta.12",
+    "oh-my-opencode@3.1.0",
     // "oh-my-opencode@v3.0.0-beta.8",
     // "opencode-openai-codex-auth@latest",
     "opencode-antigravity-auth@beta",
