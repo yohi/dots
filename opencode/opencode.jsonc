@@ -1,13 +1,12 @@
 {
-
   "$schema": "https://opencode.ai/config.json",
-  "model": "google/antigravity-claude-sonnet-4-5",
-  
+  "model": "google/antigravity-gemini-3-pro",
+
   // ログレベル設定（デバッグ用）
-  "logLevel": "DEBUG",
-  
+  // "logLevel": "DEBUG",
+
   "plugin": [
-    "oh-my-opencode@3.1.0",
+    "oh-my-opencode@3.1.1",
     // "oh-my-opencode@v3.0.0-beta.8",
     // "opencode-openai-codex-auth@latest",
     "opencode-antigravity-auth@beta",
@@ -26,7 +25,7 @@
     "grep": "allow",       // 文字列検索（ツール版）
     "codesearch": "allow", // コード検索
     "todoread": "allow",   // TODO確認
-    
+
     // 編集系（AIの本分なので許可）
     "edit": "allow",
     "todowrite": "allow",
@@ -90,11 +89,14 @@
       // 【NPMの特例禁止】
       "npm publish*": "deny",
 
+      // 【Gitの全てaddは禁止】
+      "git add .": "deny",
+
       // 【システム破壊・危険操作の禁止（最優先）】
       // rm はゴミ箱に入らないため、AIには使わせないのが鉄則
       "rm *": "deny",
       "rm -rf *": "deny",
-      
+
       // SSHなどは乗っ取りリスクがあるため禁止
       "ssh *": "deny",
       "sudo *": "deny",
