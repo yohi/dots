@@ -11,9 +11,12 @@
     // "startup-toast",           // 起動時の通知が不要な場合は有効化
     // "tasks-todowrite-disabler" // AIにTODOリストを直接更新させたい場合は有効化（通常は安全のためブロック）
   ],
-  "disabled_mcps": [],
-  "disabled_agents": [],
-  "disabled_skills": [],
+  "disabled_mcps": [
+  ],
+  "disabled_agents": [
+  ],
+  "disabled_skills": [
+  ],
 
   // ================================================================================
   // 機能・挙動設定 (Features & Behaviors)
@@ -24,12 +27,12 @@
   "tmux": {
     "enabled": true,
     "layout": "main-vertical", // "main-vertical" (左メイン), "even-horizontal" (均等) など
-    "main_pane_size": 60
+    "main_pane_size": 60,
   },
 
   // [Browser Automation] ブラウザ操作エンジン
   "browser_automation_engine": {
-    "provider": "playwright" // 安定性の高いPlaywright MCPを使用
+    "provider": "playwright", // 安定性の高いPlaywright MCPを使用
   },
 
   // [Background Task] バックグラウンドタスク管理
@@ -39,51 +42,51 @@
     "staleTimeoutMs": 180000,
     "providerConcurrency": {
       "google": 5,
-      "openai": 3
+      "openai": 3,
     },
     "modelConcurrency": {
       // いちばん高いモデルは1並列に抑えるのが安全
-      "google/antigravity-claude-opus-4-5-thinking": 1
-    }
+      "google/antigravity-claude-opus-4-5-thinking": 1,
+    },
   },
 
   // [Git Master] コミット操作設定
   "git_master": {
     "commit_footer": false, // trueにすると "Ultraworked with Sisyphus" を付与
-    "include_co_authored_by": false // trueにするとCo-authored-byを付与
+    "include_co_authored_by": false, // trueにするとCo-authored-byを付与
   },
 
   // [Ralph Loop] 自律改善ループ (自律的な修正・改善の繰り返し)
   "ralph_loop": {
     "enabled": true,
-    "default_max_iterations": 20
+    "default_max_iterations": 20,
   },
 
   // [Boulder State] エージェント状態保存 (Sisyphusの作業状態)
   // タスク中断時に進捗を保存し、次回起動時に "resume" で再開できるようにします
   "boulder_state": {
     "enabled": true,
-    "storage_path": ".opencode/boulder_state.json"
+    "storage_path": ".opencode/boulder_state.json",
   },
 
   // [Session Recovery] セッション復旧 (チャット履歴の保全)
   // クラッシュや予期せぬ終了時に直前の会話状態を復元します
   "session_recovery": {
     "enabled": true,
-    "storage_path": ".opencode/session_recovery.json"
+    "storage_path": ".opencode/session_recovery.json",
   },
 
   // [Interactive Bash] 持続的シェルセッション
   // AIが状態を持つシェル（cdの結果を保持するなど）を利用する設定
   "interactive_bash": {
     "enabled": true,
-    "timeout_ms": 300000 // 5分間操作がないとセッションを閉じる
+    "timeout_ms": 300000, // 5分間操作がないとセッションを閉じる
   },
 
   // [Auto Slash Command] コマンド自動検出
   // "/help" ではなく単に "help" と入力してもコマンドとして解釈する機能
   "auto_slash_command": {
-    "enabled": true
+    "enabled": true,
   },
 
   // [Rules Injector] ルール注入
@@ -92,33 +95,9 @@
     "enabled": true,
     "search_paths": [
       ".claude/rules",
-      ".opencode/rules"
-    ]
+      ".opencode/rules",
+    ],
   },
-
-  // ================================================================================
-  // エージェント構成 (Agents Configuration)
-  // v3.2.2 の "Legitimate Craftsman" (Hephaestus) や Sisyphus に対応
-  // ================================================================================
-
-  // --------------------------------------------------------------------------
-  // 1. 指揮・計画レイヤー (Orchestration & Planning Layer)
-  // --------------------------------------------------------------------------
-  // [Sisyphus] 汎用実行エージェント・兼プロジェクトマネージャー
-  // [Oracle] 高度技術相談・論理的レビュー (Architect)
-
-  // --------------------------------------------------------------------------
-  // 2. 実行レイヤー (Execution Layer)
-  // --------------------------------------------------------------------------
-  // [Hephaestus] "Legitimate Craftsman" - 深い実装・自律調査を行う職人
-  // [Multimodal Looker] UI/UXエンジニア・画像認識担当
-
-  // --------------------------------------------------------------------------
-  // 3. 支援・専門家レイヤー (Support & Specialist Layer)
-  // --------------------------------------------------------------------------
-  // [Librarian] 情報検索・ドキュメント参照 (Gemini推奨)
-  // [Explorer] コードベース探索・マップ作成 (Gemini推奨)
-  // [Momus] 品質保証・監査・レビュアー
 
   // ================================================================================
   // パターン設定 (Pattern Configuration)
@@ -131,45 +110,62 @@
   // ----------------------------------------------------------------------------
   "agents": {
     "sisyphus": {
-      "model": "google/antigravity-claude-opus-4-5-thinking", // 指揮・推論には最強의Opus (Thinking)
+      "model": "google/antigravity-claude-opus-4-5-thinking", // 指揮・推論には最強のOpus (Thinking)
       "variant": "max",
-      "temperature": 0.2
+      "temperature": 0.2,
     },
     "hephaestus": {
-      "model": "openai/gpt-5.2-codex" // [必須] 深い実装を行う職人エージェント
+      "model": "openai/gpt-5.2-codex", // [必須] 深い実装を行う職人エージェント
     },
     "oracle": {
-      "model": "openai/gpt-5.2" // 相談役：論理的レビュー・デバッグ
+      "model": "openai/gpt-5.2", // 相談役：論理的レビュー・デバッグ
     },
     "momus": {
-      "model": "openai/gpt-5.2" // 品質保証：コードレビュー
+      "model": "openai/gpt-5.2", // 品質保証：コードレビュー
     },
     "librarian": {
-      "model": "google/antigravity-gemini-3-pro" // 書庫番：長文ドキュメント・検索
+      "model": "google/antigravity-gemini-3-pro", // 書庫番：長文ドキュメント・検索
     },
     "explore": {
-      "model": "google/antigravity-gemini-3-flash" // 探索：高速なコードベース把握
+      "model": "google/antigravity-gemini-3-flash", // 探索：高速なコードベース把握
     },
     "multimodal-looker": {
-      "model": "google/antigravity-gemini-3-flash" // 視覚：画像・PDF認識
-    }
+      "model": "google/antigravity-gemini-3-flash", // 視覚：画像・PDF認識
+    },
   },
+
+  // ★移行後カテゴリ：built-in のみ（visual/business-logic を廃止）
   "categories": {
-    // --- Built-in categories (recommended to define explicitly) ---
-    "quick": { "model": "google/antigravity-gemini-3-flash" },
-    "writing": { "model": "google/antigravity-gemini-3-flash" },
-    "visual-engineering": { "model": "google/antigravity-gemini-3-pro" },
-    "artistry": { "model": "google/antigravity-gemini-3-pro", "variant": "max" },
+    "quick": {
+      "model": "google/antigravity-gemini-3-flash",
+    },
+    "writing": {
+      "model": "google/antigravity-gemini-3-flash",
+    },
+    "visual-engineering": {
+      "model": "google/antigravity-gemini-3-pro",
+    },
+    "artistry": {
+      "model": "google/antigravity-gemini-3-pro",
+      "variant": "max",
+    },
 
-    "ultrabrain": { "model": "openai/gpt-5.2-codex", "variant": "xhigh" },
-    "deep": { "model": "openai/gpt-5.2-codex", "variant": "medium" },
+    "ultrabrain": {
+      "model": "openai/gpt-5.2-codex",
+      "variant": "xhigh",
+    },
+    "deep": {
+      "model": "openai/gpt-5.2-codex",
+      "variant": "medium",
+    },
 
-    "unspecified-low": { "model": "google/antigravity-claude-sonnet-4-5" },
-    "unspecified-high": { "model": "google/antigravity-claude-opus-4-5-thinking", "variant": "max" },
-
-    // --- Backward-compatible aliases (keep your current naming working) ---
-    "visual": { "model": "google/antigravity-gemini-3-pro" },
-    "business-logic": { "model": "google/antigravity-claude-sonnet-4-5" }
+    "unspecified-low": {
+      "model": "google/antigravity-claude-sonnet-4-5",
+    },
+    "unspecified-high": {
+      "model": "google/antigravity-claude-opus-4-5-thinking",
+      "variant": "max",
+    },
   },
 
   // ----------------------------------------------------------------------------
@@ -178,49 +174,64 @@
   // ----------------------------------------------------------------------------
   /*
   , "agents": {
-    "sisyphus": { 
+    "sisyphus": {
       "model": "google/antigravity-gemini-3-pro", // 指揮はGemini Proで節約
       "variant": "high",
       "temperature": 0.2,
     },
-    "hephaestus": { 
+    "hephaestus": {
       "model": "openai/gpt-5.2-codex", // 職人は妥協せずCodex
     },
-    "oracle": { 
+    "oracle": {
       "model": "google/antigravity-claude-opus-4-5-thinking", // ここぞという相談にのみClaude Opusを使用
     },
     "momus": {
       "model": "openai/gpt-5.2", // レビューはGPT
     },
-    "librarian": { 
+    "librarian": {
       "model": "google/antigravity-gemini-3-pro",
     },
-    "explore": { 
+    "explore": {
       "model": "google/antigravity-gemini-3-flash",
     },
-    "multimodal-looker": { 
+    "multimodal-looker": {
       "model": "google/antigravity-gemini-3-flash",
     },
   },
+
   "categories": {
-    // --- Built-in categories ---
-    "quick": { "model": "google/antigravity-gemini-3-flash" },
-    "writing": { "model": "google/antigravity-gemini-3-flash" },
-    "visual-engineering": { "model": "google/antigravity-gemini-3-pro" },
-    "artistry": { "model": "google/antigravity-gemini-3-pro", "variant": "max" },
+    "quick": {
+      "model": "google/antigravity-gemini-3-flash",
+    },
+    "writing": {
+      "model": "google/antigravity-gemini-3-flash",
+    },
+    "visual-engineering": {
+      "model": "google/antigravity-gemini-3-pro",
+    },
+    "artistry": {
+      "model": "google/antigravity-gemini-3-pro",
+      "variant": "max",
+    },
 
-    "ultrabrain": { "model": "openai/gpt-5.2-codex", "variant": "xhigh" },
-    "deep": { "model": "openai/gpt-5.2-codex", "variant": "medium" },
+    "ultrabrain": {
+      "model": "openai/gpt-5.2-codex",
+      "variant": "xhigh",
+    },
+    "deep": {
+      "model": "openai/gpt-5.2-codex",
+      "variant": "medium",
+    },
 
-    // Claude usage kept "small" here:
-    "unspecified-low": { "model": "openai/gpt-5.2" },
-    "unspecified-high": { "model": "google/antigravity-claude-opus-4-5-thinking", "variant": "max" },
-
-    // --- Aliases ---
-    "visual": { "model": "google/antigravity-gemini-3-pro" },
-    "business-logic": { "model": "google/antigravity-gemini-3-pro" }
-  }
-
+    // Claudeは最小限：high だけ Opus に寄せる
+    "unspecified-low": {
+      "model": "openai/gpt-5.2",
+    },
+    "unspecified-high": {
+      "model": "google/antigravity-claude-opus-4-5-thinking",
+      "variant": "max",
+    },
+  },
   */
 
   // ----------------------------------------------------------------------------
@@ -229,46 +240,62 @@
   // ----------------------------------------------------------------------------
   /*
   , "agents": {
-    "sisyphus": { 
+    "sisyphus": {
       "model": "openai/gpt-5.2", // 論理に強いGPT-5.2を指揮官に
       "variant": "high",
       "temperature": 0.2,
     },
-    "hephaestus": { 
+    "hephaestus": {
       "model": "openai/gpt-5.2-codex",
     },
-    "oracle": { 
+    "oracle": {
       "model": "openai/gpt-5.2",
     },
     "momus": {
       "model": "openai/gpt-5.2",
     },
-    "librarian": { 
+    "librarian": {
       "model": "google/antigravity-gemini-3-pro",
     },
-    "explore": { 
+    "explore": {
       "model": "google/antigravity-gemini-3-flash",
     },
-    "multimodal-looker": { 
+    "multimodal-looker": {
       "model": "google/antigravity-gemini-3-flash",
     },
   },
+
   "categories": {
-    // --- Built-in categories ---
-    "quick": { "model": "google/antigravity-gemini-3-flash" },
-    "writing": { "model": "google/antigravity-gemini-3-flash" },
-    "visual-engineering": { "model": "google/antigravity-gemini-3-pro" },
-    "artistry": { "model": "google/antigravity-gemini-3-pro", "variant": "max" },
+    "quick": {
+      "model": "google/antigravity-gemini-3-flash",
+    },
+    "writing": {
+      "model": "google/antigravity-gemini-3-flash",
+    },
+    "visual-engineering": {
+      "model": "google/antigravity-gemini-3-pro",
+    },
+    "artistry": {
+      "model": "google/antigravity-gemini-3-pro",
+      "variant": "max",
+    },
 
-    "ultrabrain": { "model": "openai/gpt-5.2-codex", "variant": "xhigh" },
-    "deep": { "model": "openai/gpt-5.2-codex", "variant": "medium" },
+    "ultrabrain": {
+      "model": "openai/gpt-5.2-codex",
+      "variant": "xhigh",
+    },
+    "deep": {
+      "model": "openai/gpt-5.2-codex",
+      "variant": "medium",
+    },
 
-    "unspecified-low": { "model": "openai/gpt-5.2" },
-    "unspecified-high": { "model": "openai/gpt-5.2", "variant": "high" },
-
-    // --- Aliases ---
-    "visual": { "model": "google/antigravity-gemini-3-pro" },
-    "business-logic": { "model": "openai/gpt-5.2" }
+    "unspecified-low": {
+      "model": "openai/gpt-5.2",
+    },
+    "unspecified-high": {
+      "model": "openai/gpt-5.2",
+      "variant": "xhigh",
+    },
   },
   */
 
@@ -278,45 +305,62 @@
   // ----------------------------------------------------------------------------
   /*
   , "agents": {
-    "sisyphus": { 
-      "model": "google/antigravity-claude-opus-4-5-thinking", 
+    "sisyphus": {
+      "model": "google/antigravity-claude-opus-4-5-thinking",
       "variant": "max",
       "temperature": 0.2,
     },
     // HephaestusはGPT必須のため定義を省略（デフォルトまたはSisyphusにフォールバックさせる意図）
-    "oracle": { 
+    "oracle": {
       "model": "google/antigravity-claude-sonnet-4-5",
     },
     "momus": {
       "model": "google/antigravity-claude-sonnet-4-5", // レビューもClaude
     },
-    "librarian": { 
+    "librarian": {
       "model": "google/antigravity-gemini-3-pro",
     },
-    "explore": { 
+    "explore": {
       "model": "google/antigravity-gemini-3-flash",
     },
-    "multimodal-looker": { 
+    "multimodal-looker": {
       "model": "google/antigravity-gemini-3-flash",
     },
   },
+
   "categories": {
-    // --- Built-in categories ---
-    "quick": { "model": "google/antigravity-gemini-3-flash" },
-    "writing": { "model": "google/antigravity-gemini-3-flash" },
-    "visual-engineering": { "model": "google/antigravity-gemini-3-pro" },
-    "artistry": { "model": "google/antigravity-gemini-3-pro", "variant": "max" },
+    "quick": {
+      "model": "google/antigravity-gemini-3-flash",
+    },
+    "writing": {
+      "model": "google/antigravity-gemini-3-flash",
+    },
+    "visual-engineering": {
+      "model": "google/antigravity-gemini-3-pro",
+    },
+    "artistry": {
+      "model": "google/antigravity-gemini-3-pro",
+      "variant": "max",
+    },
 
-    "ultrabrain": { "model": "google/antigravity-claude-opus-4-5-thinking", "variant": "max" },
-    "deep": { "model": "google/antigravity-claude-opus-4-5-thinking", "variant": "max" },
+    // GPT無しなので ultrabrain/deep は Opus Thinking に寄せる
+    "ultrabrain": {
+      "model": "google/antigravity-claude-opus-4-5-thinking",
+      "variant": "max",
+    },
+    "deep": {
+      "model": "google/antigravity-claude-opus-4-5-thinking",
+      "variant": "max",
+    },
 
-    "unspecified-low": { "model": "google/antigravity-claude-sonnet-4-5" },
-    "unspecified-high": { "model": "google/antigravity-claude-opus-4-5-thinking", "variant": "max" },
-
-    // --- Aliases ---
-    "visual": { "model": "google/antigravity-gemini-3-pro" },
-    "business-logic": { "model": "google/antigravity-claude-sonnet-4-5" }
-  }
+    "unspecified-low": {
+      "model": "google/antigravity-claude-sonnet-4-5",
+    },
+    "unspecified-high": {
+      "model": "google/antigravity-claude-opus-4-5-thinking",
+      "variant": "max",
+    },
+  },
   */
 
   // ----------------------------------------------------------------------------
@@ -325,44 +369,65 @@
   // ----------------------------------------------------------------------------
   /*
   , "agents": {
-    "sisyphus": { 
+    "sisyphus": {
       "model": "google/antigravity-gemini-3-pro", // メインはGemini
       "variant": "high",
       "temperature": 0.2,
     },
     // Hephaestusは使用不可
-    "oracle": { 
+    "oracle": {
       "model": "google/antigravity-claude-opus-4-5-thinking", // 相談役だけClaude Opus
     },
     "momus": {
       "model": "google/antigravity-gemini-3-pro", // レビューはGemini
     },
-    "librarian": { 
+    "librarian": {
       "model": "google/antigravity-gemini-3-pro",
     },
-    "explore": { 
+    "explore": {
       "model": "google/antigravity-gemini-3-flash",
     },
-    "multimodal-looker": { 
+    "multimodal-looker": {
       "model": "google/antigravity-gemini-3-flash",
     },
   },
+
   "categories": {
-    // --- Built-in categories ---
-    "quick": { "model": "google/antigravity-gemini-3-flash" },
-    "writing": { "model": "google/antigravity-gemini-3-flash" },
-    "visual-engineering": { "model": "google/antigravity-gemini-3-pro", "variant": "high" },
-    "artistry": { "model": "google/antigravity-gemini-3-pro", "variant": "max" },
+    "quick": {
+      "model": "google/antigravity-gemini-3-flash",
+    },
+    "writing": {
+      "model": "google/antigravity-gemini-3-flash",
+    },
+    "visual-engineering": {
+      "model": "google/antigravity-gemini-3-pro",
+      "variant": "high",
+    },
+    "artistry": {
+      "model": "google/antigravity-gemini-3-pro",
+      "variant": "max",
+    },
 
-    "ultrabrain": { "model": "google/antigravity-gemini-3-pro", "variant": "high" },
-    "deep": { "model": "google/antigravity-gemini-3-pro", "variant": "high" },
+    // ほぼGemini運用：ultrabrain/deepもGeminiへ
+    "ultrabrain": {
+      "model": "google/antigravity-gemini-3-pro",
+      "variant": "high",
+    },
+    "deep": {
+      "model": "google/antigravity-gemini-3-pro",
+      "variant": "high",
+    },
 
-    "unspecified-low": { "model": "google/antigravity-gemini-3-pro", "variant": "high" },
-    "unspecified-high": { "model": "google/antigravity-claude-opus-4-5-thinking", "variant": "max" },
+    "unspecified-low": {
+      "model": "google/antigravity-gemini-3-pro",
+      "variant": "high",
+    },
 
-    // --- Aliases ---
-    "visual": { "model": "google/antigravity-gemini-3-pro", "variant": "high" },
-    "business-logic": { "model": "google/antigravity-gemini-3-pro", "variant": "high" }
-  }
+    // Claudeは最終手段としてここだけ残す（“少”）
+    "unspecified-high": {
+      "model": "google/antigravity-claude-opus-4-5-thinking",
+      "variant": "max",
+    },
+  },
   */
 }
