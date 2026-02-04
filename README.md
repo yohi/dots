@@ -308,6 +308,7 @@ echo "source ~/dots/.env" >> ~/.zshrc
 ├── cursor/        # Cursor IDE設定
 ├── gnome-*        # GNOME関連設定
 ├── Brewfile       # Homebrewパッケージリスト
+├── AGENTS.md      # AIエージェント向けガイドライン
 └── Makefile       # セットアップスクリプト
 ```
 
@@ -535,6 +536,16 @@ zsh --version            # Zshバージョン確認
 docker --version         # Dockerバージョン確認
 ```
 
+### 開発者向けテスト
+
+dotfiles自体の開発を行う場合、以下のコマンドでテストを実行できます：
+
+```bash
+make test             # 全体テスト（単体・モック）
+make test-unit        # 単体テスト
+make test-bw-mock     # Bitwardenモックテスト
+```
+
 ### テスト結果の解釈
 
 スクリプト実行後の終了コード：
@@ -724,6 +735,19 @@ make setup-gnome-extensions
 make setup-all
 ```
 </details>
+
+---
+
+## 🤖 AIエージェントガイドライン
+
+本リポジトリでの開発作業を行うAIエージェント（Claude Code, Cursor, Gemini CLI等）のためのガイドラインを [`AGENTS.md`](AGENTS.md) に策定しています。
+
+**主な内容**:
+- **言語ポリシー**: 全ての外部向け出力（コメント、ドキュメント、コミットメッセージ）は**日本語**で行うこと
+- **ビルド・テスト**: `make test` や `./scripts/check-setup.sh` による検証手順
+- **コード規約**: `.cursor/rules/makefile-organization.mdc` に基づくMakefileの構成ルール
+
+AIエージェントとしてコードを変更する場合は、まずこのドキュメントを読み込み、指示に従ってください。
 
 ---
 
