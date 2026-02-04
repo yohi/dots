@@ -7,11 +7,8 @@ OPENCODE_BIN ?= $(OPENCODE_HOME)/bin/opencode
 OPENCODE_CONFIG_DIR ?= $(CONFIG_DIR)/opencode
 OPENCODE_CONFIG_PATH ?= $(OPENCODE_CONFIG_DIR)/opencode.jsonc
 OPENCODE_DOTFILES_CONFIG ?= $(DOTFILES_DIR)/opencode/opencode.jsonc
-# TODO 2026/01/26時点で.jsoncを読みに行かないので、.jsonに修正
-OH_MY_OPENCODE_CONFIG_PATH ?= $(OPENCODE_CONFIG_DIR)/oh-my-opencode.json
+OH_MY_OPENCODE_CONFIG_PATH ?= $(OPENCODE_CONFIG_DIR)/oh-my-opencode.jsonc
 OH_MY_OPENCODE_DOTFILES_CONFIG ?= $(DOTFILES_DIR)/opencode/oh-my-opencode.jsonc
-OPENCODE_AGENTS_PATH ?= $(OPENCODE_CONFIG_DIR)/AGENTS.md
-OPENCODE_DOTFILES_AGENTS ?= $(DOTFILES_DIR)/opencode/AGENTS.md
 
 .PHONY: opencode install-packages-opencode install-opencode opencode-update setup-opencode check-opencode
 
@@ -27,13 +24,6 @@ opencode: ## OpenCode(opencode)のインストールとセットアップ
 					actual_oh=$$(readlink -f "$(OH_MY_OPENCODE_CONFIG_PATH)" 2>/dev/null || true); \
 					expected_oh=$$(readlink -f "$(OH_MY_OPENCODE_DOTFILES_CONFIG)" 2>/dev/null || true); \
 					if [ "$$actual_oh" != "$$expected_oh" ]; then skip=0; fi; \
-				else skip=0; fi; \
-			fi; \
-			if [ -f "$(OPENCODE_DOTFILES_AGENTS)" ]; then \
-				if [ -L "$(OPENCODE_AGENTS_PATH)" ]; then \
-					actual_agents=$$(readlink -f "$(OPENCODE_AGENTS_PATH)" 2>/dev/null || true); \
-					expected_agents=$$(readlink -f "$(OPENCODE_DOTFILES_AGENTS)" 2>/dev/null || true); \
-					if [ "$$actual_agents" != "$$expected_agents" ]; then skip=0; fi; \
 				else skip=0; fi; \
 			fi; \
 			if [ "$$skip" = "1" ]; then \
@@ -105,18 +95,6 @@ setup-opencode: ## OpenCode（opencode）の設定ファイルを適用
 	else \
 		echo "ℹ️  oh-my-opencode 設定ファイルはスキップされました（見つかりません）"; \
 	fi
-	@# AGENTS.md の設定
-	@if [ -f "$(OPENCODE_DOTFILES_AGENTS)" ]; then \
-		if [ -e "$(OPENCODE_AGENTS_PATH)" ] && [ ! -L "$(OPENCODE_AGENTS_PATH)" ]; then \
-			backup="$(OPENCODE_AGENTS_PATH).bak.$$(date +%Y%m%d%H%M%S)"; \
-			echo "⚠️  既存の AGENTS.md ファイルを退避します: $$backup"; \
-			mv "$(OPENCODE_AGENTS_PATH)" "$$backup"; \
-		fi; \
-		ln -sfn "$(OPENCODE_DOTFILES_AGENTS)" "$(OPENCODE_AGENTS_PATH)"; \
-		echo "✅ 設定を適用しました: $(OPENCODE_AGENTS_PATH)"; \
-	else \
-		echo "ℹ️  AGENTS.md ファイルはスキップされました（見つかりません）"; \
-	fi
 	@$(call create_marker,setup-opencode,1)
 
 # User-friendly alias
@@ -156,20 +134,5 @@ check-opencode: ## OpenCode（opencode）の状態を確認
 			echo "⚠️  oh-my-config: $(OH_MY_OPENCODE_CONFIG_PATH) exists but is not a symlink"; \
 		else \
 			echo "⚠️  oh-my-config: $(OH_MY_OPENCODE_CONFIG_PATH) is not configured"; \
-		fi; \
-	fi
-	@if [ -f "$(OPENCODE_DOTFILES_AGENTS)" ]; then \
-		if [ -L "$(OPENCODE_AGENTS_PATH)" ]; then \
-			actual=$$(readlink -f "$(OPENCODE_AGENTS_PATH)" 2>/dev/null || readlink "$(OPENCODE_AGENTS_PATH)" 2>/dev/null || true); \
-			expected=$$(readlink -f "$(OPENCODE_DOTFILES_AGENTS)" 2>/dev/null || true); \
-			if [ -n "$$actual" ] && [ "$$actual" = "$$expected" ]; then \
-				echo "✅ agents: $(OPENCODE_AGENTS_PATH) -> $(OPENCODE_DOTFILES_AGENTS)"; \
-			else \
-				echo "⚠️  agents: $(OPENCODE_AGENTS_PATH) points to $$actual (expected $$expected)"; \
-			fi; \
-		elif [ -e "$(OPENCODE_AGENTS_PATH)" ]; then \
-			echo "⚠️  agents: $(OPENCODE_AGENTS_PATH) exists but is not a symlink"; \
-		else \
-			echo "⚠️  agents: $(OPENCODE_AGENTS_PATH) is not configured"; \
 		fi; \
 	fi
