@@ -1,188 +1,438 @@
 {
-  // スキーマ定義：エディタでの補完とバリデーションを有効化 
+  // スキーマ定義：エディタでの補完とバリデーションを有効化
   "$schema": "https://raw.githubusercontent.com/code-yeongyu/oh-my-opencode/master/assets/oh-my-opencode.schema.json",
 
   // ================================================================================
   // グローバル設定 (Global Configuration)
   // ================================================================================
 
-  // [変更点] google_auth はスキーマから削除されました。
-  // opencode-antigravity-auth プラグインを使用する場合は、プラグイン側の設定に従ってください。
+  "experimental": {
+    // OpenCodeのTodo UIと同期されず、TodoWriteが無効になりTUIに表示されなくなるため無効化（既知のUX低下）
+    "task_system": false
+  },
 
   // パフォーマンスと安定性のための最適化設定
-  // 起動時の不要な通知を抑制し、特定のMCPサーバーを無効化してリソースを節約
   "disabled_hooks": [
-    "startup-toast" 
+    // "startup-toast",           // 起動時の通知が不要な場合は有効化
+    // "tasks-todowrite-disabler" // AIにTODOリストを直接更新させたい場合は有効化（通常は安全のためブロック）
   ],
   "disabled_mcps": [
-  ], 
-
-  // ================================================================================
-  // エージェント構成 (Agents Configuration)
-  // 各エージェントの役割に最適なモデルを割り当てる "Best-of-Breed" 戦略
-  // ================================================================================
-  "agents": {
-    // --------------------------------------------------------------------------
-    // 1. 指揮・計画レイヤー (Orchestration & Planning Layer)
-    // --------------------------------------------------------------------------
-
-    // [Orchestrator] プロジェクト全体の指揮官
-    // 推奨: Claude Opus 4.5
-    // 次点: Gemini 3 Pro
-    // 理由: 複雑なコンテキストの保持と、長期的なタスク管理能力において最高性能を誇る 
-    "orchestrator-sisyphus": {
-      // "model": "google/antigravity-claude-opus-4-5",
-      "model": "google/antigravity-gemini-3-pro-high",
-      "temperature": 0.5,
-      "description": "プロジェクト全体を統括するリーダー。タスク分解、委譲、進捗管理を担当。"
-    },
-
-    // [Planner] 戦略立案担当 (Prometheus)
-    // 推奨: Claude Opus 4.5 (Thinking Mode)
-    // 次点: GPT-5.2 (High Reasoning)
-    // 理由: Work-Planner方法論に基づき、詳細かつ実行可能な計画を策定する [2, 6]
-    "Prometheus (Planner)": {
-      // "model": "google/antigravity-claude-opus-4-5-thinking",
-      "category": "ultrabrain",
-      "variant": "high", // 推論強度を最大化し、深い思考を行わせる
-      "temperature": 0.3,
-      "description": "実装前の詳細な計画策定を担当。依存関係の解決とリスク予測を行う。"
-    },
-
-    // [Consultant] 計画の事前監査 (Metis)
-    // 推奨: GPT-5.2 (High Reasoning)
-    // 次点: Gemini 3 Pro -> Plannerを次点にした場合、監査役はGoogleの最高峰モデルでクロスチェックを行う
-    // 理由: Planner (Claude) とは異なるアーキテクチャ (GPT) でダブルチェックを行い、死角をなくす 
-    "Metis (Plan Consultant)": {
-      // "category": "ultrabrain",
-      "model": "google/antigravity-gemini-3-pro-high",
-      "variant": "high",
-      "temperature": 0.3,
-      "description": "計画に対する批判的分析、隠れた要件の抽出、リスク評価を担当。"
-    },
-
-    // --------------------------------------------------------------------------
-    // 2. 実行レイヤー (Execution Layer)
-    // --------------------------------------------------------------------------
-
-    // [General Executor] 汎用実行エージェント (Sisyphus)
-    // 推奨: Claude Sonnet 4.5
-    // 次点: GPT-5.2 Codex
-    // 理由: コストと速度のバランスが良く、日常的なコード修正や実装に最適
-    "Sisyphus": {
-      // "model": "google/antigravity-claude-sonnet-4-5",
-      "model": "openai/gpt-5.2-codex",
-      "temperature": 0.5
-    },
-
-    // [Execution Sub-agent] 実装特化の実行部隊
-    // 推奨: Claude Sonnet 4.5
-    // 次点: Gemini 3 Pro -> 親エージェント（Sisyphus）を次点にした場合、サブエージェントはGoogleに分散させAPIレート制限のリスクを低減
-    // Orchestratorが「実装タスク」を切り出して委譲する際の相手。
-    // 自身では他のエージェントを呼び出さず、ひたすらコーディングを行う。
-    "Sisyphus-Junior": {
-      // "model": "google/antigravity-claude-sonnet-4-5", // コスト効率と速度の良いSonnetを推奨
-      "model": "google/antigravity-gemini-3-pro-low",
-      "temperature": 0.1, // 指示通りに正確に動くよう、温度は低めに設定
-      "description": "Orchestratorから委譲されるタスクを実行する実務担当。実装のみに集中する。"
-    },
-
-    // [Frontend Engineer] UI/UX特化
-    // 推奨: Gemini 3 Pro (Antigravity)
-    // 理由: マルチモーダル能力が高く、デザイン画や画面遷移の理解に優れる 
-    "frontend-ui-ux-engineer": {
-      "model": "google/antigravity-gemini-3-pro-high",
-      "temperature": 0.4,
-      "description": "UIコンポーネントの実装、CSS調整、UX改善、レスポンシブ対応を担当。"
-    },
-
-    // --------------------------------------------------------------------------
-    // 3. 支援・専門家レイヤー (Support & Specialist Layer)
-    // --------------------------------------------------------------------------
-
-    // [Librarian] 情報検索・ドキュメント参照
-    // 推奨: Gemini 3 Flash (Antigravity)
-    // 理由: 100万トークン超のコンテキストで大量のドキュメントを安価に読み込める [4, 8]
-    "librarian": {
-      "model": "google/antigravity-gemini-3-flash",
-      "temperature": 0.1, // 事実に基づく正確な検索のため低温度に設定
-      "description": "広範なドキュメント検索、ライブラリ仕様の確認、コードベースの歴史的経緯の調査。"
-    },
-
-    // [Explorer] コードベース探索
-    // 推奨: Gemini 3 Flash
-    // 理由: 速度とコスト重視。grep検索結果などの大量のテキストストリームを高速処理する 
-    "explore": {
-      "model": "google/antigravity-gemini-3-flash",
-      "temperature": 0.1
-    },
-
-    // [Oracle] 高度技術相談・アーキテクト
-    // 推奨: GPT-5.2 (Thinking/xhigh)
-    // 理由: 数学的・論理的知能が最高峰であり、難解なアルゴリズムやバグの原因特定に不可欠 
-    "oracle": {
-      "category": "ultrabrain",
-      "variant": "xhigh", // 最大限の思考力を発揮させる
-      "temperature": 0.5,
-      "description": "難解な問題に対する深い洞察、アーキテクチャ設計、解決策の提示。"
-    },
-
-    // 品質保証・監査 (Momus)
-    // 推奨: GPT-5.2 (Codex)
-    // [変更点] キー名を "Momus" から "Momus (Plan Reviewer)" に更新
-    "Momus (Plan Reviewer)": {
-      "model": "openai/gpt-5.2-codex",
-      "temperature": 0.2,
-      "description": "コードレビュー、セキュリティ監査、品質チェック、エッジケースの指摘。"
-    },
-
-    // ドキュメント生成
-    // 推奨: Gemini 3 Flash
-    // 理由: コストパフォーマンス最強。大量のテキスト生成に適している。
-    "document-writer": {
-      "model": "google/antigravity-gemini-3-flash",
-      "temperature": 0.3
-    },
-
-    // [Visual Analyzer] 画像・動画解析
-    // 推奨: Gemini 3 Pro
-    "multimodal-looker": {
-      "model": "google/antigravity-gemini-3-pro-high",
-      "temperature": 0.2
-    }
-  },
+  ],
+  "disabled_agents": [
+  ],
+  "disabled_skills": [
+  ],
 
   // ================================================================================
   // 機能・挙動設定 (Features & Behaviors)
   // ================================================================================
 
-  //
-  // オーケストレーションの詳細設定 [5]
-  "sisyphus_agent": {
-    "disabled": false,
-    "default_builder_enabled": false, // 標準ビルダーは無効化し、Sisyphusに一元化して混乱を防ぐ
-    "planner_enabled": true,          // Prometheusプランナーを有効化し、作業前の計画を必須とする
-    "replace_plan": true              // 標準のPlan機能をPrometheusで完全に置き換える
+  // [Tmux] ターミナル多重化連携
+  // エージェントの思考プロセスやバックグラウンドタスクを別ペインで可視化します
+  "tmux": {
+    "enabled": true,
+    "layout": "main-vertical", // "main-vertical" (左メイン), "even-horizontal" (均等) など
+    "main_pane_size": 60,
   },
 
-  //
-  // バックグラウンドタスクの並列実行設定 [3]
-  // Gemini Flashなどの軽量モデルを活用し、メインスレッドをブロックせずに調査を進める
+  // [Browser Automation] ブラウザ操作エンジン
+  "browser_automation_engine": {
+    "provider": "playwright", // 安定性の高いPlaywright MCPを使用
+  },
+
+  // [Background Task] バックグラウンドタスク管理
+  // 調査や重い処理を非同期で実行する際の並列数制御
   "background_task": {
-    "defaultConcurrency": 5 // 並列数を5に設定 (APIレート制限とマシンスペックに応じて調整)
+    "defaultConcurrency": 5,
+    "staleTimeoutMs": 180000,
+    "providerConcurrency": {
+      "google": 5,
+      "openai": 3,
+    },
+    "modelConcurrency": {
+      // いちばん高いモデルは1並列に抑えるのが安全
+      "google/antigravity-claude-opus-4-5-thinking": 1,
+    },
   },
 
-  //
-  // コミット操作の自動化設定 
+  // [Git Master] コミット操作設定
   "git_master": {
-    "commit_footer": false,            // コミットログに "Ultraworked with Sisyphus" フッターを追加しない
-    "include_co_authored_by": false    // 共同作成者としてAIエージェントを記録しない
+    "commit_footer": false, // trueにすると "Ultraworked with Sisyphus" を付与
+    "include_co_authored_by": false, // trueにするとCo-authored-byを付与
   },
 
-  //
-  // 自律的な開発ループの設定 [9]
+  // [Ralph Loop] 自律改善ループ (自律的な修正・改善の繰り返し)
   "ralph_loop": {
     "enabled": true,
-    "default_max_iterations": 50 // 無限ループを防ぐための安全装置
-  }
+    "default_max_iterations": 20,
+  },
+
+  // [Boulder State] エージェント状態保存 (Sisyphusの作業状態)
+  // タスク中断時に進捗を保存し、次回起動時に "resume" で再開できるようにします
+  "boulder_state": {
+    "enabled": true,
+    "storage_path": ".sisyphus/boulder_state.json",
+  },
+
+  // [Session Recovery] セッション復旧 (チャット履歴の保全)
+  // クラッシュや予期せぬ終了時に直前の会話状態を復元します
+  "session_recovery": {
+    "enabled": true,
+    "storage_path": ".sisyphus/session_recovery.json",
+  },
+
+  // [Interactive Bash] 持続的シェルセッション
+  // AIが状態を持つシェル（cdの結果を保持するなど）を利用する設定
+  "interactive_bash": {
+    "enabled": true,
+    "timeout_ms": 300000, // 5分間操作がないとセッションを閉じる
+  },
+
+  // [Auto Slash Command] コマンド自動検出
+  // "/help" ではなく単に "help" と入力してもコマンドとして解釈する機能
+  "auto_slash_command": {
+    "enabled": true,
+  },
+
+  // [Rules Injector] ルール注入
+  // .cursorrules や CONTEXT.md などをプロンプトに自動挿入する設定
+  "rules_injector": {
+    "enabled": true,
+    "search_paths": [
+      ".claude/rules",
+      ".opencode/rules",
+    ],
+  },
+
+  // ================================================================================
+  // パターン設定 (Pattern Configuration)
+  // 運用に合わせてパターンを切り替えてください（デフォルトはパターン1）
+  // ================================================================================
+
+  // ----------------------------------------------------------------------------
+  // 【パターン1】GPT + Claude + Gemini (最強構成: Best-of-Breed) [DEFAULT]
+  //  各社の最強モデルを適材適所で利用。SisyphusにOpus、職人にCodex、探索にGemini。
+  // ----------------------------------------------------------------------------
+  /*
+  "agents": {
+    "sisyphus": {
+      "model": "google/antigravity-claude-opus-4-5-thinking", // 指揮・推論には最強のOpus (Thinking)
+      "variant": "max",
+      "temperature": 0.2,
+    },
+    "hephaestus": {
+      "model": "openai/gpt-5.2-codex", // [必須] 深い実装を行う職人エージェント
+    },
+    "oracle": {
+      "model": "openai/gpt-5.2", // 相談役：論理的レビュー・デバッグ
+    },
+    "momus": {
+      "model": "openai/gpt-5.2", // 品質保証：コードレビュー
+    },
+    "librarian": {
+      "model": "google/antigravity-gemini-3-pro", // 書庫番：長文ドキュメント・検索
+    },
+    "explore": {
+      "model": "google/antigravity-gemini-3-flash", // 探索：高速なコードベース把握
+    },
+    "multimodal-looker": {
+      "model": "google/antigravity-gemini-3-flash", // 視覚：画像・PDF認識
+    },
+  },
+
+  // ★移行後カテゴリ：built-in のみ（visual/business-logic を廃止）
+  "categories": {
+    "quick": {
+      "model": "google/antigravity-gemini-3-flash",
+    },
+    "writing": {
+      "model": "google/antigravity-gemini-3-flash",
+    },
+    "visual-engineering": {
+      "model": "google/antigravity-gemini-3-pro",
+    },
+    "artistry": {
+      "model": "google/antigravity-gemini-3-pro",
+      "variant": "max",
+    },
+
+    "ultrabrain": {
+      "model": "openai/gpt-5.2-codex",
+      "variant": "xhigh",
+    },
+    "deep": {
+      "model": "openai/gpt-5.2-codex",
+      "variant": "medium",
+    },
+
+    "unspecified-low": {
+      "model": "google/antigravity-claude-sonnet-4-5",
+    },
+    "unspecified-high": {
+      "model": "google/antigravity-claude-opus-4-5-thinking",
+      "variant": "max",
+    },
+  },
+  */
+
+  // ----------------------------------------------------------------------------
+  // 【パターン2】GPT + Claude(少) + Gemini (Claude節約構成)
+  //  Sisyphus(指揮)をGeminiに任せて消費を抑え、Oracle(相談役)でClaudeを使う構成
+  // ----------------------------------------------------------------------------
+  "agents": {
+    "sisyphus": {
+      "model": "google/antigravity-gemini-3-pro", // 指揮はGemini Proで節約
+      "variant": "high",
+      "temperature": 0.2,
+    },
+    "hephaestus": {
+      "model": "openai/gpt-5.2-codex", // 職人は妥協せずCodex
+    },
+    "oracle": {
+      "model": "google/antigravity-claude-opus-4-5-thinking", // ここぞという相談にのみClaude Opusを使用
+    },
+    "momus": {
+      "model": "openai/gpt-5.2", // レビューはGPT
+    },
+    "librarian": {
+      "model": "google/antigravity-gemini-3-pro",
+    },
+    "explore": {
+      "model": "google/antigravity-gemini-3-flash",
+    },
+    "multimodal-looker": {
+      "model": "google/antigravity-gemini-3-flash",
+    },
+  },
+
+  "categories": {
+    "quick": {
+      "model": "google/antigravity-gemini-3-flash",
+    },
+    "writing": {
+      "model": "google/antigravity-gemini-3-flash",
+    },
+    "visual-engineering": {
+      "model": "google/antigravity-gemini-3-pro",
+    },
+    "artistry": {
+      "model": "google/antigravity-gemini-3-pro",
+      "variant": "max",
+    },
+
+    "ultrabrain": {
+      "model": "openai/gpt-5.2-codex",
+      "variant": "xhigh",
+    },
+    "deep": {
+      "model": "openai/gpt-5.2-codex",
+      "variant": "medium",
+    },
+
+    // Claudeは最小限：high だけ Opus に寄せる
+    "unspecified-low": {
+      "model": "openai/gpt-5.2",
+    },
+    "unspecified-high": {
+      "model": "google/antigravity-claude-opus-4-5-thinking",
+      "variant": "max",
+    },
+  },
+
+  // ----------------------------------------------------------------------------
+  // 【パターン3】GPT + Gemini (Claudeなし)
+  //  Claudeがダウンしている、または完全に温存したい場合。
+  // ----------------------------------------------------------------------------
+  /*
+  , "agents": {
+    "sisyphus": {
+      "model": "openai/gpt-5.2", // 論理に強いGPT-5.2を指揮官に
+      "variant": "high",
+      "temperature": 0.2,
+    },
+    "hephaestus": {
+      "model": "openai/gpt-5.2-codex",
+    },
+    "oracle": {
+      "model": "openai/gpt-5.2",
+    },
+    "momus": {
+      "model": "openai/gpt-5.2",
+    },
+    "librarian": {
+      "model": "google/antigravity-gemini-3-pro",
+    },
+    "explore": {
+      "model": "google/antigravity-gemini-3-flash",
+    },
+    "multimodal-looker": {
+      "model": "google/antigravity-gemini-3-flash",
+    },
+  },
+
+  "categories": {
+    "quick": {
+      "model": "google/antigravity-gemini-3-flash",
+    },
+    "writing": {
+      "model": "google/antigravity-gemini-3-flash",
+    },
+    "visual-engineering": {
+      "model": "google/antigravity-gemini-3-pro",
+    },
+    "artistry": {
+      "model": "google/antigravity-gemini-3-pro",
+      "variant": "max",
+    },
+
+    "ultrabrain": {
+      "model": "openai/gpt-5.2-codex",
+      "variant": "xhigh",
+    },
+    "deep": {
+      "model": "openai/gpt-5.2-codex",
+      "variant": "medium",
+    },
+
+    "unspecified-low": {
+      "model": "openai/gpt-5.2",
+    },
+    "unspecified-high": {
+      "model": "openai/gpt-5.2",
+      "variant": "xhigh",
+    },
+  },
+  */
+
+  // ----------------------------------------------------------------------------
+  // 【パターン4】Claude + Gemini (GPTなし)
+  //  OpenAIのコスト削減、またはAPI制限時。Hephaestus(Codex)は使用不可。
+  // ----------------------------------------------------------------------------
+  /*
+  , "agents": {
+    "sisyphus": {
+      "model": "google/antigravity-claude-opus-4-5-thinking",
+      "variant": "max",
+      "temperature": 0.2,
+    },
+    // HephaestusはGPT必須のため定義を省略（デフォルトまたはSisyphusにフォールバックさせる意図）
+    "oracle": {
+      "model": "google/antigravity-claude-sonnet-4-5",
+    },
+    "momus": {
+      "model": "google/antigravity-claude-sonnet-4-5", // レビューもClaude
+    },
+    "librarian": {
+      "model": "google/antigravity-gemini-3-pro",
+    },
+    "explore": {
+      "model": "google/antigravity-gemini-3-flash",
+    },
+    "multimodal-looker": {
+      "model": "google/antigravity-gemini-3-flash",
+    },
+  },
+
+  "categories": {
+    "quick": {
+      "model": "google/antigravity-gemini-3-flash",
+    },
+    "writing": {
+      "model": "google/antigravity-gemini-3-flash",
+    },
+    "visual-engineering": {
+      "model": "google/antigravity-gemini-3-pro",
+    },
+    "artistry": {
+      "model": "google/antigravity-gemini-3-pro",
+      "variant": "max",
+    },
+
+    // GPT無しなので ultrabrain/deep は Opus Thinking に寄せる
+    "ultrabrain": {
+      "model": "google/antigravity-claude-opus-4-5-thinking",
+      "variant": "max",
+    },
+    "deep": {
+      "model": "google/antigravity-claude-opus-4-5-thinking",
+      "variant": "max",
+    },
+
+    "unspecified-low": {
+      "model": "google/antigravity-claude-sonnet-4-5",
+    },
+    "unspecified-high": {
+      "model": "google/antigravity-claude-opus-4-5-thinking",
+      "variant": "max",
+    },
+  },
+  */
+
+  // ----------------------------------------------------------------------------
+  // 【パターン5】Claude(少) + Gemini (Gemini主体)
+  //  コスト最優先、またはGeminiの長大なコンテキストをフル活用する場合。
+  // ----------------------------------------------------------------------------
+  /*
+  , "agents": {
+    "sisyphus": {
+      "model": "google/antigravity-gemini-3-pro", // メインはGemini
+      "variant": "high",
+      "temperature": 0.2,
+    },
+    // Hephaestusは使用不可
+    "oracle": {
+      "model": "google/antigravity-claude-opus-4-5-thinking", // 相談役だけClaude Opus
+    },
+    "momus": {
+      "model": "google/antigravity-gemini-3-pro", // レビューはGemini
+    },
+    "librarian": {
+      "model": "google/antigravity-gemini-3-pro",
+    },
+    "explore": {
+      "model": "google/antigravity-gemini-3-flash",
+    },
+    "multimodal-looker": {
+      "model": "google/antigravity-gemini-3-flash",
+    },
+  },
+
+  "categories": {
+    "quick": {
+      "model": "google/antigravity-gemini-3-flash",
+    },
+    "writing": {
+      "model": "google/antigravity-gemini-3-flash",
+    },
+    "visual-engineering": {
+      "model": "google/antigravity-gemini-3-pro",
+      "variant": "high",
+    },
+    "artistry": {
+      "model": "google/antigravity-gemini-3-pro",
+      "variant": "max",
+    },
+
+    // ほぼGemini運用：ultrabrain/deepもGeminiへ
+    "ultrabrain": {
+      "model": "google/antigravity-gemini-3-pro",
+      "variant": "high",
+    },
+    "deep": {
+      "model": "google/antigravity-gemini-3-pro",
+      "variant": "high",
+    },
+
+    "unspecified-low": {
+      "model": "google/antigravity-gemini-3-pro",
+      "variant": "high",
+    },
+
+    // Claudeは最終手段としてここだけ残す（“少”）
+    "unspecified-high": {
+      "model": "google/antigravity-claude-opus-4-5-thinking",
+      "variant": "max",
+    },
+  },
+  */
 }
