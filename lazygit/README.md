@@ -1,6 +1,6 @@
 # LazyGit Gemini CLI Conventional Commit Generator
 
-LazyGit の Files コンテキストで Ctrl+a を押すと、Gemini CLI で Conventional Commits v1.0.0 準拠のコミットメッセージ案を生成し、確認のうえ `git commit -e -F` でエディタを開くためのスクリプトと設定例です。
+LazyGit の Files コンテキストで Ctrl+a を押すと、Gemini CLI で Conventional Commits v1.0.0 準拠のコミットメッセージ案を生成し、LazyGit 内のメニューで確認して `git commit -m` を実行するためのスクリプトと設定例です。
 
 ## 導入手順
 
@@ -30,25 +30,26 @@ PATH に通すか、LazyGit の設定で絶対パスを指定してください�
 customCommands:
   - key: "<c-a>"
     context: "files"
-    description: "Gemini: generate Conventional Commit (review + edit before commit)"
+    description: "Gemini: generate Conventional Commit (menu)"
     loadingText: "Generating commit message with Gemini..."
     prompts:
-      - type: "input"
-        title: "Context hint (optional)"
-        key: "Hint"
-        initialValue: ""
-    command: "COMMIT_HINT={{.Form.Hint | quote}} lg-gemini-commit"
-    output: "terminal"
+      - type: "menuFromCommand"
+        title: "Select commit message"
+        key: "SelectedMsg"
+        command: "sh -c 'COMMIT_MODE=menu lg-gemini-commit'"
+        filter: "^(?P<msg>.+\\S.*)$"
+        valueFormat: "{{ .msg }}"
+        labelFormat: "{{ .msg }}"
+    command: "git commit -m {{.Form.SelectedMsg | quote}}"
+    output: "none"
 ```
 
 ## 使い方
 
 1. LazyGit で変更をステージします。
 2. Files コンテキストで Ctrl+a を押します。
-3. 必要ならヒントを入力（任意）します。
-4. 生成されたメッセージが端末に表示されます。
-5. `Proceed? (y/N)` で `y` を選択するとエディタが開きます。
-6. エディタで最終確認・修正して保存 → commit。
+3. 生成されたメッセージのメニューが表示されます。
+4. 内容がOKなら選択して commit します。
 
 ## 動作確認（手動）
 
@@ -64,6 +65,11 @@ customCommands:
 | --- | --- | --- |
 | `MAX_DIFF_LINES` | `800` | Gemini に渡す staged diff の最大行数 |
 | `COMMIT_MSG_FILE` | `.git/.gemini_commitmsg` | 一時コミットメッセージの保存先 |
+| `GEMINI_MODEL` | `gemini-3-flash-preview` | Gemini CLI のモデル指定（存在しない場合はフォールバック） |
+| `SMALL_DIFF_MODEL` | `gemini-2.5-flash-lite` | diff が小さい場合に使うモデル |
+| `MODEL_SWITCH_LINES` | `200` | diff 行数がこの値以下なら `SMALL_DIFF_MODEL` を使用 |
+| `FALLBACK_MODEL` | `gemini-1.5-flash` | モデルが見つからない場合のフォールバック |
+| `TIMEOUT_SECONDS` | `30` | Gemini CLI のタイムアウト秒数（`timeout` がある場合のみ） |
 
 ## トラブルシュート
 

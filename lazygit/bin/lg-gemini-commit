@@ -1,0 +1,339 @@
+#!/bin/sh
+set -eu
+
+if ! command -v git >/dev/null 2>&1; then
+  echo "Error: git コマンドが見つかりません" >&2
+  exit 1
+fi
+
+if ! command -v gemini >/dev/null 2>&1; then
+  echo "Error: gemini コマンドが見つかりません" >&2
+  echo "Hint: Gemini CLI をインストールして PATH に追加してください" >&2
+  exit 1
+fi
+
+if ! command -v python3 >/dev/null 2>&1; then
+  echo "Error: python3 が見つかりません" >&2
+  echo "Hint: Gemini のJSON出力を解析するため python3 が必要です" >&2
+  exit 1
+fi
+
+if git diff --cached --quiet; then
+  echo "staged 変更がありません。Files でステージしてから再実行してください。"
+  exit 0
+fi
+
+GIT_DIR=$(git rev-parse --git-dir 2>/dev/null)
+if [ -z "$GIT_DIR" ]; then
+  echo "Error: git リポジトリではありません" >&2
+  exit 1
+fi
+
+MAX_DIFF_LINES=${MAX_DIFF_LINES:-800}
+COMMIT_MSG_FILE=${COMMIT_MSG_FILE:-"$GIT_DIR/.gemini_commitmsg"}
+COMMIT_HINT=${COMMIT_HINT:-}
+COMMIT_MODE=${COMMIT_MODE:-interactive}
+ENABLE_NOTIFY=${ENABLE_NOTIFY:-0}
+NOTIFY_SEND_BIN=${NOTIFY_SEND_BIN:-notify-send}
+GEMINI_MODEL=${GEMINI_MODEL:-gemini-3-flash-preview}
+SMALL_DIFF_MODEL=${SMALL_DIFF_MODEL:-gemini-2.5-flash-lite}
+MODEL_SWITCH_LINES=${MODEL_SWITCH_LINES:-200}
+FALLBACK_MODEL=${FALLBACK_MODEL:-gemini-1.5-flash}
+TIMEOUT_SECONDS=${TIMEOUT_SECONDS:-30}
+
+NOTIFY_ENABLED=0
+if [ "$ENABLE_NOTIFY" = "1" ]; then
+  if [ -z "${DBUS_SESSION_BUS_ADDRESS:-}" ]; then
+    USER_BUS="/run/user/$(id -u)/bus"
+    if [ -S "$USER_BUS" ]; then
+      export DBUS_SESSION_BUS_ADDRESS="unix:path=$USER_BUS"
+    fi
+  fi
+fi
+
+if [ "$ENABLE_NOTIFY" = "1" ] && command -v "$NOTIFY_SEND_BIN" >/dev/null 2>&1; then
+  NOTIFY_ENABLED=1
+  set +e
+  $NOTIFY_SEND_BIN -t 1500 "Gemini" "コミットメッセージ生成を開始しました"
+  set -e
+fi
+
+BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown")
+FILE_LIST=$(git diff --cached --name-only)
+DIFF=$(git diff --cached | awk -v max="$MAX_DIFF_LINES" 'NR<=max {print}')
+DIFF_LINES=$(printf '%s\n' "$DIFF" | wc -l | tr -d ' ')
+
+SELECTED_MODEL="$GEMINI_MODEL"
+if [ -n "$DIFF_LINES" ] && [ "$DIFF_LINES" -le "$MODEL_SWITCH_LINES" ]; then
+  SELECTED_MODEL="$SMALL_DIFF_MODEL"
+fi
+
+run_gemini() {
+  model="$1"
+  prompt="$2"
+  err_file="$3"
+
+  if command -v timeout >/dev/null 2>&1; then
+    timeout "$TIMEOUT_SECONDS" gemini --model "$model" --output-format text --allowed-tools "" --allowed-mcp-server-names "" --extensions "" -p "$prompt" 2>"$err_file"
+  else
+    gemini --model "$model" --output-format text --allowed-tools "" --allowed-mcp-server-names "" --extensions "" -p "$prompt" 2>"$err_file"
+  fi
+}
+
+PROMPT=$(cat <<'EOF'
+あなたはConventional Commits v1.0.0に準拠したコミットメッセージを生成します。
+
+必須ルール:
+- 出力はコミットメッセージ本文のみ
+- 出力は1行のみ（subject行のみ）
+- 余計な説明、箇条書き、Markdown、コードブロックは禁止
+- ツール実行や外部コマンド呼び出しは一切行わない（ツールは利用不可）
+- 1行目は必ず以下のいずれか:
+  - type: subject
+  - type(scope): subject
+  - 破壊的変更は type!: / type(scope)!: を使用
+- type は次の固定セットのみ:
+  feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert
+- 可能なら scope を推測
+- subject は簡潔で具体的（72文字目安）
+- 破壊的変更の場合は `!` を付け、可能なら本文に
+  BREAKING CHANGE: ... を含める
+- subject は日本語で書くこと
+
+stdin には branch / files / diff / hint が含まれます。
+EOF
+)
+
+RETRY_PROMPT=$(cat <<'EOF'
+前の出力は無効です。以下に厳密に従って1行だけ出力してください。
+
+必須フォーマット（この行のみ出力）:
+type(scope): subject
+または
+type: subject
+
+制約:
+- type は feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert のみ
+- subject は日本語
+- 余計な説明やコードブロックは禁止
+- 出力は1行のみ
+EOF
+)
+
+GEMINI_ERR_FILE=$(mktemp)
+set +e
+MESSAGE_RAW=$(
+  {
+    printf '[branch]\n%s\n' "$BRANCH_NAME"
+    printf '\n[files]\n%s\n' "$FILE_LIST"
+    printf '\n[diff] (max lines: %s)\n' "$MAX_DIFF_LINES"
+    printf '%s\n' "$DIFF"
+    if [ -n "$COMMIT_HINT" ]; then
+      printf '\n[hint]\n%s\n' "$COMMIT_HINT"
+    fi
+  } | run_gemini "$SELECTED_MODEL" "$PROMPT" "$GEMINI_ERR_FILE"
+)
+GEMINI_EXIT_CODE=$?
+set -e
+
+if [ $GEMINI_EXIT_CODE -ne 0 ]; then
+  if [ $GEMINI_EXIT_CODE -eq 124 ]; then
+    echo "Error: Gemini が ${TIMEOUT_SECONDS} 秒でタイムアウトしました" >&2
+    rm -f "$GEMINI_ERR_FILE"
+    exit 1
+  fi
+  if grep -q "ModelNotFoundError" "$GEMINI_ERR_FILE"; then
+    set +e
+    MESSAGE_RAW=$(
+      {
+        printf '[branch]\n%s\n' "$BRANCH_NAME"
+        printf '\n[files]\n%s\n' "$FILE_LIST"
+        printf '\n[diff] (max lines: %s)\n' "$MAX_DIFF_LINES"
+        printf '%s\n' "$DIFF"
+        if [ -n "$COMMIT_HINT" ]; then
+          printf '\n[hint]\n%s\n' "$COMMIT_HINT"
+        fi
+      } | run_gemini "$FALLBACK_MODEL" "$PROMPT" "$GEMINI_ERR_FILE"
+    )
+    GEMINI_EXIT_CODE=$?
+    set -e
+  fi
+fi
+
+if [ $GEMINI_EXIT_CODE -ne 0 ]; then
+  if [ $GEMINI_EXIT_CODE -eq 124 ]; then
+    echo "Error: Gemini が ${TIMEOUT_SECONDS} 秒でタイムアウトしました" >&2
+    rm -f "$GEMINI_ERR_FILE"
+    exit 1
+  fi
+  cat "$GEMINI_ERR_FILE" >&2
+  rm -f "$GEMINI_ERR_FILE"
+  exit 1
+fi
+rm -f "$GEMINI_ERR_FILE"
+
+if printf '%s\n' "$MESSAGE_RAW" | grep -Fq "Error executing tool"; then
+  echo "Error: Gemini がツール実行を試みました" >&2
+  exit 1
+fi
+
+MESSAGE_RAW=$(printf '%s\n' "$MESSAGE_RAW" | awk '
+  /^\(node:[0-9]+\) \[DEP0040\]/ { next }
+  /^Loaded cached credentials\./ { next }
+  /^Hook registry initialized/ { next }
+  /^Using project/ { next }
+  { print }
+')
+
+if [ -z "$MESSAGE_RAW" ]; then
+  echo "Error: Gemini の出力が空です" >&2
+  if [ "$NOTIFY_ENABLED" = "1" ]; then
+    set +e
+    $NOTIFY_SEND_BIN -t 1500 "Gemini" "生成に失敗しました"
+    set -e
+  fi
+  exit 1
+fi
+
+MESSAGE=$(printf '%s\n' "$MESSAGE_RAW" | awk '
+  BEGIN { started=0 }
+  {
+    if (!started) {
+      if ($0 ~ /^[[:space:]]*$/) next
+      started=1
+    }
+    sub(/\r$/, "")
+    print
+  }
+')
+
+MESSAGE=$(printf '%s\n' "$MESSAGE" | awk '
+  /^```/ { next }
+  /^```git/ { next }
+  /^git commit/ { next }
+  /^```/ { next }
+  /^\s*[#*-]/ { next }
+  /^\s*$/ { next }
+  { print }
+')
+
+VALID_REGEX='^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)([(][^)]*[)])?(!)?: .+'
+FIRST_VALID=$(printf '%s\n' "$MESSAGE" | awk -v re="$VALID_REGEX" '$0 ~ re {print; exit 0}')
+if [ -z "$FIRST_VALID" ]; then
+  GEMINI_ERR_FILE=$(mktemp)
+  set +e
+  MESSAGE_RAW=$(
+    {
+      printf '[branch]\n%s\n' "$BRANCH_NAME"
+      printf '\n[files]\n%s\n' "$FILE_LIST"
+      printf '\n[diff] (max lines: %s)\n' "$MAX_DIFF_LINES"
+      printf '%s\n' "$DIFF"
+      if [ -n "$COMMIT_HINT" ]; then
+        printf '\n[hint]\n%s\n' "$COMMIT_HINT"
+      fi
+    } | run_gemini "$SELECTED_MODEL" "$RETRY_PROMPT" "$GEMINI_ERR_FILE"
+  )
+  GEMINI_EXIT_CODE=$?
+  set -e
+  if [ $GEMINI_EXIT_CODE -ne 0 ]; then
+    if [ $GEMINI_EXIT_CODE -eq 124 ]; then
+      echo "Error: Gemini が ${TIMEOUT_SECONDS} 秒でタイムアウトしました" >&2
+      rm -f "$GEMINI_ERR_FILE"
+      exit 1
+    fi
+    cat "$GEMINI_ERR_FILE" >&2
+    rm -f "$GEMINI_ERR_FILE"
+    exit 1
+  fi
+  rm -f "$GEMINI_ERR_FILE"
+
+  MESSAGE_RAW=$(printf '%s\n' "$MESSAGE_RAW" | awk '
+    /^\(node:[0-9]+\) \[DEP0040\]/ { next }
+    /^Loaded cached credentials\./ { next }
+    /^Hook registry initialized/ { next }
+    /^Using project/ { next }
+    { print }
+  ')
+
+  MESSAGE=$(printf '%s\n' "$MESSAGE_RAW" | awk '
+    BEGIN { started=0 }
+    {
+      if (!started) {
+        if ($0 ~ /^[[:space:]]*$/) next
+        started=1
+      }
+      sub(/\r$/, "")
+      print
+    }
+  ')
+
+  MESSAGE=$(printf '%s\n' "$MESSAGE" | awk '
+    /^```/ { next }
+    /^```git/ { next }
+    /^git commit/ { next }
+    /^```/ { next }
+    /^\s*[#*-]/ { next }
+    /^\s*$/ { next }
+    { print }
+  ')
+
+  FIRST_VALID=$(printf '%s\n' "$MESSAGE" | awk -v re="$VALID_REGEX" '$0 ~ re {print; exit 0}')
+  if [ -z "$FIRST_VALID" ]; then
+    echo "Error: Conventional Commits 形式に一致しません" >&2
+    echo "Header: $(printf '%s\n' "$MESSAGE" | head -n 1)" >&2
+    if [ "$NOTIFY_ENABLED" = "1" ]; then
+      set +e
+      $NOTIFY_SEND_BIN -t 1500 "Gemini" "形式チェックに失敗しました"
+      set -e
+    fi
+    exit 1
+  fi
+fi
+
+MESSAGE=$(printf '%s\n' "$MESSAGE" | awk -v re="$VALID_REGEX" '
+  $0 ~ re { started=1 }
+  started { print }
+')
+HEADER=$(printf '%s\n' "$MESSAGE" | head -n 1)
+
+if [ "$COMMIT_MODE" = "menu" ]; then
+  if [ "$NOTIFY_ENABLED" = "1" ]; then
+    set +e
+    $NOTIFY_SEND_BIN -t 1500 "Gemini" "生成が完了しました"
+    set -e
+  fi
+  printf '%s\n' "$HEADER"
+  exit 0
+fi
+
+printf '%s\n' ""
+printf '%s\n' "--- Gemini 提案コミットメッセージ ---"
+printf '%s\n' "$MESSAGE"
+printf '%s\n' "------------------------------------"
+printf '%s\n' ""
+
+printf 'Proceed? (y/N) '
+read -r ANSWER
+case "$ANSWER" in
+  y|Y)
+    ;;
+  *)
+    echo "キャンセルしました。"
+    if [ "$NOTIFY_ENABLED" = "1" ]; then
+      set +e
+      $NOTIFY_SEND_BIN -t 1500 "Gemini" "キャンセルしました"
+      set -e
+    fi
+    exit 0
+    ;;
+esac
+
+printf '%s\n' "$MESSAGE" > "$COMMIT_MSG_FILE"
+
+if [ "$NOTIFY_ENABLED" = "1" ]; then
+  set +e
+  $NOTIFY_SEND_BIN -t 1500 "Gemini" "エディタを開きます"
+  set -e
+fi
+
+git commit -e -F "$COMMIT_MSG_FILE"

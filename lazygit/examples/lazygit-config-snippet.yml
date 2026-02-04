@@ -1,0 +1,15 @@
+customCommands:
+  - key: "<c-a>"
+    context: "files"
+    description: "Gemini: generate Conventional Commit (menu)"
+    loadingText: "Generating commit message with Gemini..."
+    prompts:
+      - type: "menuFromCommand"
+        title: "Select commit message"
+        key: "SelectedMsg"
+        command: "sh -c 'COMMIT_MODE=menu lg-gemini-commit'"
+        filter: "^(?P<msg>.+\\S.*)$"
+        valueFormat: "{{ .msg }}"
+        labelFormat: "{{ .msg }}"
+    command: "git commit -m {{.Form.SelectedMsg | quote}}"
+    output: "none"
