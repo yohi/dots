@@ -1,74 +1,21 @@
 customCommands:
-  # AI-powered commit message generator with interactive menu
-  # Requirements: 1.1, 1.2, 2.1, 2.2, 2.3, 2.4, 3.1, 3.2, 5.1, 5.2, 5.3, 5.4, 7.1, 7.2, 7.3, 8.2, 8.4
   - key: "<c-a>"
-    description: "AI Commit: Generate commit messages with AI"
     context: "files"
+    description: "Gemini: generate Conventional Commit (menu)"
     loadingText: "Generating commit messages with AI..."
     prompts:
       - type: "menuFromCommand"
-        title: "Select a commit message"
-        command: |
-          set -o pipefail  # Requirement 8.2: Catch pipeline failures
-          
-          # Requirement 7.1, 7.3: Configure AI backend via environment variable
-          # Set AI_BACKEND to one of: gemini, claude, ollama, mock
-          # Default: mock (for testing without API keys)
-          export AI_BACKEND="${AI_BACKEND:-mock}"
-          
-          # Requirement 7.1: API key management via environment variables
-          # For Gemini: export GEMINI_API_KEY="your-key"
-          # For Claude: export ANTHROPIC_API_KEY="your-key"
-          # For Ollama: No API key needed (local)
-          
-          # Optional configuration
-          export TIMEOUT_SECONDS="${TIMEOUT_SECONDS:-30}"
-          export GEMINI_MODEL="${GEMINI_MODEL:-gemini-1.5-flash}"
-          export CLAUDE_MODEL="${CLAUDE_MODEL:-claude-3-5-haiku-20241022}"
-          export OLLAMA_MODEL="${OLLAMA_MODEL:-mistral}"
-          
-          if git diff --cached --quiet; then
-            echo "Error: No staged changes. Please stage files first."
-            exit 1
-          fi
-          # Complete pipeline: Get staged diff → Limit size → AI generation → Parse output
-          # Requirement 7.2: Execute configured command with diff as input
-          # Requirement 8.2, 8.4: Enhanced error handling with pipefail and timeout
-          git diff --cached | head -c 12000 | scripts/lazygit-ai-commit/ai-commit-generator.sh | scripts/lazygit-ai-commit/parse-ai-output.sh
+        title: "Select commit message"
+        key: "SelectedMsg"
+        command: "sh -c 'set -o pipefail; ENABLE_NOTIFY=1 MAX_DIFF_LINES=120 MODEL_SWITCH_LINES=800 GEMINI_MODEL=gemini-2.5-flash-lite SMALL_DIFF_MODEL=gemini-2.5-flash-lite COMMIT_MODE=menu /home/y_ohi/dots/lazygit/bin/lg-gemini-commit'"
         filter: "^(?P<msg>.+\\S.*)$"
         valueFormat: "{{ .msg }}"
         labelFormat: "{{ .msg | green }}"
-    command: 'git commit -m {{.Form.SelectedMsg | quote}}'
-  
-  # Legacy commands (kept for reference)
-  - command: |
-      if git diff --staged --quiet; then
-        echo "ステージングされた変更がありません"
-        echo "終了する場合はq"
-      else
-        MSG=$(git diff --staged | "/home/y_ohi/program/lazygit-llm-commit-generator/lazygit-llm-generate" --config "/home/y_ohi/program/lazygit-llm-commit-generator/lazygit-llm/config/config.yml")
-        echo "$MSG" > /tmp/lazygit-commit-msg
-        git commit --template=/tmp/lazygit-commit-msg
-      fi
-    context: files
-    description: Generate commit message with LLM
-    key: <c-g>
-    output: terminal
-  - command: |
-      if git diff --staged --quiet; then
-        echo "ステージングされた変更がありません"
-        echo "終了する場合はq"
-      elif [ -f /tmp/lazygit-commit-msg ]; then
-        git commit --template=/tmp/lazygit-commit-msg
-      else
-        git commit
-      fi
-    context: files
-    description: Open commit editor
-    key: <c-c>
-    output: terminal
-  - command: 'MSG=$(git diff --staged | lazygit-llm-generate) && echo "$MSG" > /tmp/lazygit-commit-msg && git commit --template=/tmp/lazygit-commit-msg'
-    context: files
-    description: Generate commit message with Gemini and open editor
-    key: <c-x>
-    output: terminal
+    command: "git commit -m {{.Form.SelectedMsg | quote}}"
+    output: "none"
+  - key: "<c-b>"
+    context: "files"
+    description: "Gemini: generate Conventional Commit (terminal)"
+    loadingText: "Generating commit message with Gemini..."
+    command: "/home/y_ohi/dots/lazygit/bin/lg-gemini-commit"
+    output: "terminal"
