@@ -108,6 +108,7 @@
   // 【パターン1】GPT + Claude + Gemini (最強構成: Best-of-Breed) [DEFAULT]
   //  各社の最強モデルを適材適所で利用。SisyphusにOpus、職人にCodex、探索にGemini。
   // ----------------------------------------------------------------------------
+  /*
   "agents": {
     "sisyphus": {
       "model": "google/antigravity-claude-opus-4-5-thinking", // 指揮・推論には最強のOpus (Thinking)
@@ -167,13 +168,13 @@
       "variant": "max",
     },
   },
+  */
 
   // ----------------------------------------------------------------------------
   // 【パターン2】GPT + Claude(少) + Gemini (Claude節約構成)
   //  Sisyphus(指揮)をGeminiに任せて消費を抑え、Oracle(相談役)でClaudeを使う構成
   // ----------------------------------------------------------------------------
-  /*
-  , "agents": {
+  "agents": {
     "sisyphus": {
       "model": "google/antigravity-gemini-3-pro", // 指揮はGemini Proで節約
       "variant": "high",
@@ -232,7 +233,6 @@
       "variant": "max",
     },
   },
-  */
 
   // ----------------------------------------------------------------------------
   // 【パターン3】GPT + Gemini (Claudeなし)

@@ -1,4 +1,5 @@
 {
+
   "$schema": "https://opencode.ai/config.json",
   "model": "google/antigravity-gemini-3-pro",
 
@@ -72,6 +73,7 @@
       "yarn *": "allow",
       "node *": "allow",     // スクリプト実行も許可
       "python *": "allow",   // Python使いなら追加
+      "bun *": "allow",
 
       "coderabbit *": "allow",
 
