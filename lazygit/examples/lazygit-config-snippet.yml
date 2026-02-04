@@ -7,7 +7,7 @@ customCommands:
       - type: "menuFromCommand"
         title: "Select commit message"
         key: "SelectedMsg"
-        command: "sh -c 'COMMIT_MODE=menu lg-gemini-commit'"
+        command: "sh -c 'set -o pipefail; COMMIT_MODE=menu lg-gemini-commit'"
         filter: "^(?P<msg>.+\\S.*)$"
         valueFormat: "{{ .msg }}"
         labelFormat: "{{ .msg }}"

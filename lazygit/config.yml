@@ -6,7 +6,7 @@ customCommands:
       - type: "menuFromCommand"
         title: "Select commit message"
         key: "SelectedMsg"
-        command: "sh -c 'ENABLE_NOTIFY=1 MAX_DIFF_LINES=120 MODEL_SWITCH_LINES=800 GEMINI_MODEL=gemini-2.5-flash-lite SMALL_DIFF_MODEL=gemini-2.5-flash-lite COMMIT_MODE=menu /home/y_ohi/dots/lazygit/bin/lg-gemini-commit'"
+        command: "sh -c 'set -o pipefail; ENABLE_NOTIFY=1 MAX_DIFF_LINES=120 MODEL_SWITCH_LINES=800 GEMINI_MODEL=gemini-2.5-flash-lite SMALL_DIFF_MODEL=gemini-2.5-flash-lite COMMIT_MODE=menu /home/y_ohi/dots/lazygit/bin/lg-gemini-commit'"
         filter: "^(?P<msg>.+\\S.*)$"
         valueFormat: "{{ .msg }}"
         labelFormat: "{{ .msg }}"

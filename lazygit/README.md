@@ -36,7 +36,7 @@ customCommands:
       - type: "menuFromCommand"
         title: "Select commit message"
         key: "SelectedMsg"
-        command: "sh -c 'COMMIT_MODE=menu lg-gemini-commit'"
+        command: "sh -c 'set -o pipefail; COMMIT_MODE=menu lg-gemini-commit'"
         filter: "^(?P<msg>.+\\S.*)$"
         valueFormat: "{{ .msg }}"
         labelFormat: "{{ .msg }}"
@@ -93,7 +93,7 @@ MAX_DIFF_LINES=400 lazygit
 
 Gemini の出力が以下の正規表現に一致しない場合は commit を起動しません。
 
-```
+```text
 ^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\([^)]+\))?(!)?: .+
 ```
 
