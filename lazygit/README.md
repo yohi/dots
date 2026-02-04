@@ -39,7 +39,6 @@ customCommands:
         initialValue: ""
     command: "COMMIT_HINT={{.Form.Hint | quote}} lg-gemini-commit"
     output: "terminal"
-    subprocess: true
 ```
 
 ## 使い方
