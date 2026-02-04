@@ -6,6 +6,11 @@
   // グローバル設定 (Global Configuration)
   // ================================================================================
 
+  "experimental": {
+    // OpenCodeのTodo UIと同期されず、TodoWriteが無効になりTUIに表示されなくなるため無効化（既知のUX低下）
+    "task_system": false
+  },
+
   // パフォーマンスと安定性のための最適化設定
   "disabled_hooks": [
     // "startup-toast",           // 起動時の通知が不要な場合は有効化
@@ -66,14 +71,14 @@
   // タスク中断時に進捗を保存し、次回起動時に "resume" で再開できるようにします
   "boulder_state": {
     "enabled": true,
-    "storage_path": ".opencode/boulder_state.json",
+    "storage_path": ".sisyphus/boulder_state.json",
   },
 
   // [Session Recovery] セッション復旧 (チャット履歴の保全)
   // クラッシュや予期せぬ終了時に直前の会話状態を復元します
   "session_recovery": {
     "enabled": true,
-    "storage_path": ".opencode/session_recovery.json",
+    "storage_path": ".sisyphus/session_recovery.json",
   },
 
   // [Interactive Bash] 持続的シェルセッション
