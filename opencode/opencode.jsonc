@@ -54,8 +54,8 @@
       "echo*": "allow",
       "mkdir*": "allow",
       "touch*": "allow",
-      "mv*": "allow",
-      "cp*": "allow",
+      "mv*": "ask",
+      "cp*": "ask",
 
       // 以前ご要望のあった grep/tail もここで許可
       "grep*": "allow",
@@ -64,7 +64,7 @@
       "tail*": "allow",
       "head*": "allow",
       "less*": "allow",
-      "xargs*": "allow",
+      "xargs*": "deny",
 
       // ▼ 開発ツール系（広範囲許可 = 利便性重視）
       // GitとNPM関連は、下手に制限すると開発にならないため原則許可します
