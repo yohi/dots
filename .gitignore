@@ -59,7 +59,7 @@ __pycache__/
 *$py.class
 
 # MCP関連
-/.serena/
+.serena/
 
 # Gemini
 GEMINI.md
