@@ -30,18 +30,26 @@ PATH に通すか、LazyGit の設定で絶対パスを指定してください�
 customCommands:
   - key: "<c-a>"
     context: "files"
-    command: "lg-gemini-commit"
     description: "Gemini: generate Conventional Commit (review + edit before commit)"
+    loadingText: "Generating commit message with Gemini..."
+    prompts:
+      - type: "input"
+        title: "Context hint (optional)"
+        key: "Hint"
+        initialValue: ""
+    command: "COMMIT_HINT={{.Form.Hint | quote}} lg-gemini-commit"
     output: "terminal"
+    subprocess: true
 ```
 
 ## 使い方
 
 1. LazyGit で変更をステージします。
 2. Files コンテキストで Ctrl+a を押します。
-3. 生成されたメッセージが端末に表示されます。
-4. `Proceed? (y/N)` で `y` を選択するとエディタが開きます。
-5. エディタで最終確認・修正して保存 → commit。
+3. 必要ならヒントを入力（任意）します。
+4. 生成されたメッセージが端末に表示されます。
+5. `Proceed? (y/N)` で `y` を選択するとエディタが開きます。
+6. エディタで最終確認・修正して保存 → commit。
 
 ## 動作確認（手動）
 
@@ -85,3 +93,7 @@ Gemini の出力が以下の正規表現に一致しない場合は commit を�
 ```
 
 ステージング内容を整理するか、もう一度 Ctrl+a を実行してください。
+
+### LazyGit の customCommands で set を使うと失敗する
+
+`command` はシェルコマンドとして実行されるため、`set -eu` を書くと `set` を実行ファイルとして解釈して失敗します。`set` はスクリプト内に書いてください。
