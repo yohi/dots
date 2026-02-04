@@ -1,9 +1,15 @@
 {
+
   "$schema": "https://opencode.ai/config.json",
+  "model": "google/antigravity-gemini-3-pro",
+
+  // ログレベル設定（デバッグ用）
+  // "logLevel": "DEBUG",
+
   "plugin": [
     "oh-my-opencode@3.2.2",
-   // "oh-my-opencode@v3.0.0-beta.7",
-    "opencode-openai-codex-auth@latest",
+    // "oh-my-opencode@v3.0.0-beta.8",
+    // "opencode-openai-codex-auth@latest",
     "opencode-antigravity-auth@beta",
     "@yohi/opencode-antigravity-quota",
     "@yohi/opencode-codex-quota"
@@ -11,20 +17,94 @@
 
   // [Permission]
   "permission": {
+    // ------------------------------------------------------------------
+    // 1. 基本ツールの権限（読み取り系は全開放）
+    // ------------------------------------------------------------------
+    "read": "allow",       // ファイル読み取り
+    "list": "allow",       // ディレクトリ一覧
+    "glob": "allow",       // ファイル検索
+    "grep": "allow",       // 文字列検索（ツール版）
+    "codesearch": "allow", // コード検索
+    "todoread": "allow",   // TODO確認
+
+    // 編集系（AIの本分なので許可）
+    "edit": "allow",
+    "todowrite": "allow",
+
+    // ------------------------------------------------------------------
+    // 2. 外部アクセス（ここは安全のため「確認」推奨）
+    // ------------------------------------------------------------------
+    "websearch": "allow",      // 検索はOK
+    "webfetch": "ask",         // URLの中身を見るのは確認（機密漏洩防止）
+    "external_directory": "ask", // プロジェクト外へのアクセスは確認
+
+    // ------------------------------------------------------------------
+    // 3. コマンド実行（Bash）
+    // ------------------------------------------------------------------
     "bash": {
-      "*": "ask",          // 基本は確認する
-      "echo *": "allow",   // echoコマンドは許可
-      "git *": "allow",    // gitコマンドは許可
-      "grep *": "allow",   // grepコマンドは許可
-      "npm test": "allow", // テスト実行は許可
-      "rm *": "deny",      // 削除コマンドは禁止
-      "ls *": "allow",     // ファイル一覧は常に許可
-      "ssh *": "deny"      // 外部接続は拒否
+      // ▼ 基本ポリシー：デフォルトは「確認」
+      // これが「ブラックリスト方式」の危険性を防ぐ命綱です
+      "*": "ask",
 
-    },
-    "edit": "ask"          // ファイル編集は確認する
+      // ▼ 参照・ログ確認系（すべて許可）
+      // "ls*" と書くことで "ls -la" 等の引数付きもカバー
+      "ls*": "allow",
+      "cat*": "allow",
+      "pwd": "allow",
+      "echo*": "allow",
+      "mkdir*": "allow",
+      "touch*": "allow",
+      "mv*": "allow",
+      "cp*": "allow",
+
+      // 以前ご要望のあった grep/tail もここで許可
+      "grep*": "allow",
+      "wc*": "allow",
+      "find*": "allow",
+      "tail*": "allow",
+      "head*": "allow",
+      "less*": "allow",
+      "xargs*": "allow",
+
+      // ▼ 開発ツール系（広範囲許可 = 利便性重視）
+      // GitとNPM関連は、下手に制限すると開発にならないため原則許可します
+      "git *": "allow",
+      "npm *": "allow",
+      "yarn *": "allow",
+      "node *": "allow",     // スクリプト実行も許可
+      "python *": "allow",   // Python使いなら追加
+      "bun *": "allow",
+
+      "coderabbit *": "allow",
+
+      // -----------------------------------------------------------
+      // ▼ 制限・禁止リスト（下の行ほど優先＝上書きされます）
+      // -----------------------------------------------------------
+
+      // 【Gitの特例制限】
+      // "git *" で許可しましたが、Push/Commitだけは意図を確認したい
+      "git push*": "ask",
+      "git commit*": "ask",
+      // マージやリベースも怖いならここに追加
+      // "git merge*": "ask",
+
+      // 【NPMの特例禁止】
+      "npm publish*": "deny",
+
+      // 【Gitの全てaddは禁止】
+      "git add .": "deny",
+
+      // 【システム破壊・危険操作の禁止（最優先）】
+      // rm はゴミ箱に入らないため、AIには使わせないのが鉄則
+      "rm *": "deny",
+      "rm -rf *": "deny",
+
+      // SSHなどは乗っ取りリスクがあるため禁止
+      "ssh *": "deny",
+      "sudo *": "deny",
+      "su *": "deny"
+    }
   },
-
 
   // [MCP]
   "mcp": {
@@ -321,6 +401,16 @@
         }
       }
     },
+    // "anthropic": {
+    //   "models": {
+    //     "claude-haiku-4-5": {
+    //       "name": "Claude Haiku 4.5 (redirected to Gemini Flash)",
+    //       "limit": { "context": 200000, "output": 8192 },
+    //       "modalities": { "input": ["text", "image"], "output": ["text"] },
+    //       "alias": "google/antigravity-gemini-3-flash"
+    //     }
+    //   }
+    // },
     "google": {
       "models": {
         "antigravity-gemini-3-pro": {
