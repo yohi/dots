@@ -12,10 +12,10 @@ This repository contains dotfiles and setup scripts for building a comprehensive
 - **Output Language**: **ALWAYS** use **Japanese (日本語)** for all external communication, including:
   - Code comments
   - Git commit messages
-  - Documentation (Markdown files)
+  - Documentation (Markdown files) - **EXCEPTION**: `AGENTS.md` and agent-facing instructions must be written in English to ensure better understanding by LLMs.
   - Interactive responses to the user
   - `echo` messages in scripts/Makefiles
-- **Thinking Process**: You may think/reason in English for precision, but the final result must be Japanese.
+- **Thinking Process**: You may think/reason in English for precision, but the final result must be Japanese (except for `AGENTS.md`).
 
 ## 3. Build & Test Commands
 
