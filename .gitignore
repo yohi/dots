@@ -75,6 +75,9 @@ supergemini/
 # Session
 .sessions
 
+# Sisyphus
+.sisyphus/
+
 # Claude
 CLAUDE.md
 .claude
