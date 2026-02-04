@@ -73,9 +73,9 @@ run_gemini() {
   err_file="$3"
 
   if command -v timeout >/dev/null 2>&1; then
-    timeout "$TIMEOUT_SECONDS" gemini --model "$model" --output-format text --allowed-tools "" --allowed-mcp-server-names "" --extensions "" -p "$prompt" 2>"$err_file"
+    timeout "$TIMEOUT_SECONDS" gemini --model "$model" --output-format text -e none -p "$prompt" 2>"$err_file"
   else
-    gemini --model "$model" --output-format text --allowed-tools "" --allowed-mcp-server-names "" --extensions "" -p "$prompt" 2>"$err_file"
+    gemini --model "$model" --output-format text -e none -p "$prompt" 2>"$err_file"
   fi
 }
 
@@ -312,7 +312,7 @@ printf '%s\n' "------------------------------------"
 printf '%s\n' ""
 
 printf 'Proceed? (y/N) '
-read -r ANSWER
+IFS= read -r ANSWER || ANSWER=""
 case "$ANSWER" in
   y|Y)
     ;;
