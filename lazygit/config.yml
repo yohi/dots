@@ -2,6 +2,7 @@ customCommands:
   - key: "<c-a>"
     context: "files"
     description: "Gemini: generate Conventional Commit (menu)"
+    loadingText: "Generating commit messages with AI..."
     prompts:
       - type: "menuFromCommand"
         title: "Select commit message"
@@ -9,7 +10,7 @@ customCommands:
         command: "sh -c 'set -o pipefail; ENABLE_NOTIFY=1 MAX_DIFF_LINES=120 MODEL_SWITCH_LINES=800 GEMINI_MODEL=gemini-2.5-flash-lite SMALL_DIFF_MODEL=gemini-2.5-flash-lite COMMIT_MODE=menu /home/y_ohi/dots/lazygit/bin/lg-gemini-commit'"
         filter: "^(?P<msg>.+\\S.*)$"
         valueFormat: "{{ .msg }}"
-        labelFormat: "{{ .msg }}"
+        labelFormat: "{{ .msg | green }}"
     command: "git commit -m {{.Form.SelectedMsg | quote}}"
     output: "none"
   - key: "<c-b>"
