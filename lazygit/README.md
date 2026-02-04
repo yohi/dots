@@ -1,6 +1,6 @@
 # LazyGit Gemini CLI Conventional Commit Generator
 
-LazyGit の Files コンテキストで Ctrl+a を押すと、Gemini CLI で Conventional Commits v1.0.0 準拠のコミットメッセージ案を生成し、確認のうえ `git commit -e -F` を起動するためのスクリプトと設定例です。
+LazyGit の Files コンテキストで Ctrl+a を押すと、Gemini CLI で Conventional Commits v1.0.0 準拠のコミットメッセージ案を生成し、確認のうえ `git commit -m` でコミットするためのスクリプトと設定例です。
 
 ## 導入手順
 
@@ -48,8 +48,7 @@ customCommands:
 2. Files コンテキストで Ctrl+a を押します。
 3. 必要ならヒントを入力（任意）します。
 4. 生成されたメッセージが端末に表示されます。
-5. `Proceed? (y/N)` で `y` を選択するとエディタが開きます。
-6. エディタで最終確認・修正して保存 → commit。
+5. `Proceed? (y/N)` で `y` を選択するとそのまま commit します。
 
 ## 動作確認（手動）
 
@@ -64,7 +63,7 @@ customCommands:
 | 変数名 | 既定値 | 内容 |
 | --- | --- | --- |
 | `MAX_DIFF_LINES` | `800` | Gemini に渡す staged diff の最大行数 |
-| `COMMIT_MSG_FILE` | `.git/.gemini_commitmsg` | 一時コミットメッセージの保存先 |
+| `COMMIT_MSG_FILE` | `.git/.gemini_commitmsg` | （未使用）旧仕様の一時コミットメッセージ保存先 |
 
 ## トラブルシュート
 
