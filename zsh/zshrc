@@ -330,13 +330,8 @@ fi
 if [[ "${goto_load_functions:-false}" != "true" ]]; then
 
     # Method 2: 環境変数による設定（優先度2番目、未決定時のみ）
-    if [[ -z "$DOTFILES_ROOT" ]]; then
-      if [[ -n "${DOTS_ROOT_OVERRIDE:-}" ]]; then
-          DOTFILES_ROOT="$DOTS_ROOT_OVERRIDE"
-      elif [[ -n "${DOTFILES_ROOT:-}" ]]; then
-          # Already set, just keeping structure for clarity
-          :
-      fi
+    if [[ -z "$DOTFILES_ROOT" ]] && [[ -n "${DOTS_ROOT_OVERRIDE:-}" ]]; then
+        DOTFILES_ROOT="$DOTS_ROOT_OVERRIDE"
     fi
 
     # Method 3: 現在の.zshrcファイルの位置から相対パス計算（優先度3番目、未決定時のみ）
