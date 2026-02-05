@@ -1,0 +1,127 @@
+#!/bin/bash
+set -euo pipefail
+
+# Dependencies check
+for cmd in git gemini gh jq; do
+  if ! command -v "$cmd" >/dev/null 2>&1; then
+    echo "Error: $cmd command not found." >&2
+    exit 1
+  fi
+done
+
+if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+  echo "Error: Not a git repository." >&2
+  exit 1
+fi
+
+# Configuration
+MAX_DIFF_LINES=${MAX_DIFF_LINES:-2000}
+GEMINI_MODEL=${GEMINI_MODEL:-gemini-2.0-flash-lite}
+TIMEOUT_SECONDS=${TIMEOUT_SECONDS:-60}
+
+# Get context
+CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+BASE_BRANCH=$(gh repo view --json defaultBranchRef -q .defaultBranchRef.name 2>/dev/null || echo "master")
+
+echo "Analying changes between $BASE_BRANCH and $CURRENT_BRANCH..."
+
+# Get diff
+# Try origin/Base first, then local Base
+if git rev-parse --verify "origin/$BASE_BRANCH" >/dev/null 2>&1; then
+  TARGET_REF="origin/$BASE_BRANCH"
+elif git rev-parse --verify "$BASE_BRANCH" >/dev/null 2>&1; then
+  TARGET_REF="$BASE_BRANCH"
+else
+  echo "Error: Could not find base branch $BASE_BRANCH" >&2
+  exit 1
+fi
+
+DIFF=$(git diff "$TARGET_REF...HEAD" | head -n "$MAX_DIFF_LINES")
+DIFF_STAT=$(git diff --stat "$TARGET_REF...HEAD")
+LOGS=$(git log --oneline "$TARGET_REF...HEAD" | head -n 20)
+
+if [ -z "$DIFF" ]; then
+  echo "No changes detected between $BASE_BRANCH and HEAD."
+  exit 0
+fi
+
+# Prepare Prompt
+PROMPT=$(cat <<EOF
+You are an expert developer creating a GitHub Pull Request.
+Analyze the provided git diff and commit logs to generate a PR title and body in Japanese.
+
+Output MUST be a valid JSON object with 'title' and 'body' keys.
+
+Rules:
+1. title: Follow Conventional Commits (feat: ..., fix: ...). Concise, Japanese.
+2. body: Markdown format. Explain "Why" and "What". Use bullet points. Japanese.
+3. No markdown code blocks around the JSON. Just raw JSON.
+
+Input Context:
+Branch: $CURRENT_BRANCH
+Base: $BASE_BRANCH
+
+Commits:
+$LOGS
+
+Diff Stat:
+$DIFF_STAT
+
+Diff (truncated):
+$DIFF
+EOF
+)
+
+# Run Gemini
+echo "Generating PR content with Gemini ($GEMINI_MODEL)..."
+
+GEMINI_OUTPUT=$(gemini --model "$GEMINI_MODEL" --output-format text -e none -p "$PROMPT")
+
+# Clean output (remove markdown code blocks if any)
+JSON_CONTENT=$(echo "$GEMINI_OUTPUT" | sed 's/^```json//g' | sed 's/^```//g' | sed 's/```$//g')
+
+# Validate JSON
+if ! echo "$JSON_CONTENT" | jq empty 2>/dev/null; then
+  echo "Error: Gemini produced invalid JSON." >&2
+  echo "Output: $GEMINI_OUTPUT" >&2
+  exit 1
+fi
+
+TITLE=$(echo "$JSON_CONTENT" | jq -r .title)
+BODY=$(echo "$JSON_CONTENT" | jq -r .body)
+
+echo ""
+echo "=========================================="
+echo "Title: $TITLE"
+echo "------------------------------------------"
+echo "$BODY"
+echo "=========================================="
+echo ""
+
+# Confirm
+read -p "Create PR with this content? (y/n/e[dit]): " choice
+case "$choice" in 
+  y|Y )
+    gh pr create --title "$TITLE" --body "$BODY" --base "$BASE_BRANCH"
+    ;;
+  e|E )
+    # Create a temp file for the body
+    BODY_FILE=$(mktemp)
+    echo "$BODY" > "$BODY_FILE"
+    
+    # Let user edit title
+    read -e -p "Title: " -i "$TITLE" NEW_TITLE
+    
+    # Let user edit body using their editor
+    ${EDITOR:-vim} "$BODY_FILE"
+    
+    NEW_BODY=$(cat "$BODY_FILE")
+    rm "$BODY_FILE"
+    
+    gh pr create --title "$NEW_TITLE" --body "$NEW_BODY" --base "$BASE_BRANCH"
+    ;;
+  * )
+    echo "Aborted."
+    exit 0
+    ;;
+esac
