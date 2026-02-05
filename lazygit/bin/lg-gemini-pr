@@ -2,9 +2,16 @@
 set -euo pipefail
 
 # Dependencies check
-for cmd in git gemini gh jq; do
-  if ! command -v "$cmd" >/dev/null 2>&1; then
-    echo "Error: $cmd command not found." >&2
+TIMEOUT_CMD=""
+if command -v timeout >/dev/null 2>&1; then
+  TIMEOUT_CMD="timeout"
+elif command -v gtimeout >/dev/null 2>&1; then
+  TIMEOUT_CMD="gtimeout"
+fi
+
+for cmd in git gemini gh jq "$TIMEOUT_CMD"; do
+  if [ -z "$cmd" ] || ! command -v "$cmd" >/dev/null 2>&1; then
+    echo "Error: Required command not found (git, gemini, gh, jq, timeout/gtimeout)." >&2
     exit 1
   fi
 done
@@ -21,7 +28,11 @@ TIMEOUT_SECONDS=${TIMEOUT_SECONDS:-60}
 
 # Get context
 CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
-BASE_BRANCH=$(gh repo view --json defaultBranchRef -q .defaultBranchRef.name 2>/dev/null || echo "master")
+BASE_BRANCH=$(gh repo view --json defaultBranchRef -q .defaultBranchRef.name 2>/dev/null)
+if [ -z "$BASE_BRANCH" ]; then
+  BASE_BRANCH=$(git symbolic-ref refs/remotes/origin/HEAD 2>/dev/null | sed 's@^refs/remotes/origin/@@')
+fi
+BASE_BRANCH=${BASE_BRANCH:-master}
 
 echo "Analyzing changes between $BASE_BRANCH and $CURRENT_BRANCH..."
 
@@ -36,9 +47,9 @@ else
   exit 1
 fi
 
-DIFF=$(git diff "$TARGET_REF...HEAD" | head -n "$MAX_DIFF_LINES")
+DIFF=$(head -n "$MAX_DIFF_LINES" < <(git diff "$TARGET_REF...HEAD"))
 DIFF_STAT=$(git diff --stat "$TARGET_REF...HEAD")
-LOGS=$(git log --oneline "$TARGET_REF...HEAD" | head -n 20)
+LOGS=$(head -n 20 < <(git log --oneline "$TARGET_REF...HEAD"))
 
 if [ -z "$DIFF" ]; then
   echo "No changes detected between $BASE_BRANCH and HEAD."
@@ -75,7 +86,7 @@ EOF
 # Run Gemini
 echo "Generating PR content with Gemini ($GEMINI_MODEL)..."
 
-GEMINI_OUTPUT=$(timeout "${TIMEOUT_SECONDS}s" gemini --model "$GEMINI_MODEL" --output-format text -e none -p "$PROMPT")
+GEMINI_OUTPUT=$("$TIMEOUT_CMD" "${TIMEOUT_SECONDS}s" gemini --model "$GEMINI_MODEL" --output-format text -e none -p "$PROMPT")
 
 # Clean output (remove markdown code blocks if any)
 JSON_CONTENT=$(echo "$GEMINI_OUTPUT" | sed 's/^```json//g' | sed 's/^```//g' | sed 's/```$//g')
