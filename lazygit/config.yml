@@ -19,3 +19,8 @@ customCommands:
     loadingText: "Generating commit message with Gemini..."
     command: "/home/y_ohi/dots/lazygit/bin/lg-gemini-commit"
     output: "terminal"
+  - key: "<c-g>"
+    context: "global"
+    description: "Gemini: Create Pull Request"
+    command: "/home/y_ohi/dots/lazygit/bin/lg-gemini-pr"
+    output: "terminal"
