@@ -23,7 +23,7 @@ TIMEOUT_SECONDS=${TIMEOUT_SECONDS:-60}
 CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
 BASE_BRANCH=$(gh repo view --json defaultBranchRef -q .defaultBranchRef.name 2>/dev/null || echo "master")
 
-echo "Analying changes between $BASE_BRANCH and $CURRENT_BRANCH..."
+echo "Analyzing changes between $BASE_BRANCH and $CURRENT_BRANCH..."
 
 # Get diff
 # Try origin/Base first, then local Base
@@ -75,7 +75,7 @@ EOF
 # Run Gemini
 echo "Generating PR content with Gemini ($GEMINI_MODEL)..."
 
-GEMINI_OUTPUT=$(gemini --model "$GEMINI_MODEL" --output-format text -e none -p "$PROMPT")
+GEMINI_OUTPUT=$(timeout "${TIMEOUT_SECONDS}s" gemini --model "$GEMINI_MODEL" --output-format text -e none -p "$PROMPT")
 
 # Clean output (remove markdown code blocks if any)
 JSON_CONTENT=$(echo "$GEMINI_OUTPUT" | sed 's/^```json//g' | sed 's/^```//g' | sed 's/```$//g')
@@ -87,8 +87,8 @@ if ! echo "$JSON_CONTENT" | jq empty 2>/dev/null; then
   exit 1
 fi
 
-TITLE=$(echo "$JSON_CONTENT" | jq -r .title)
-BODY=$(echo "$JSON_CONTENT" | jq -r .body)
+TITLE=$(echo "$JSON_CONTENT" | jq -r '.title // ""')
+BODY=$(echo "$JSON_CONTENT" | jq -r '.body // ""')
 
 echo ""
 echo "=========================================="
