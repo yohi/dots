@@ -435,13 +435,13 @@ fi
 [[ -f "$HOME/.fig/shell/zshrc.post.zsh" ]] && builtin source "$HOME/.fig/shell/zshrc.post.zsh"
 
 # bun completions
-[ -s "/home/y_ohi/.bun/_bun" ] && source "/home/y_ohi/.bun/_bun"
+[ -s "$HOME/.bun/_bun" ] && source "$HOME/.bun/_bun"
 
 # bun
 export BUN_INSTALL="$HOME/.bun"
 export PATH="$BUN_INSTALL/bin:$PATH"
 
-alias claude="/home/y_ohi/.claude/local/claude"
+alias claude="$HOME/.claude/local/claude"
 
 # opencode
 export PATH="$HOME/.opencode/bin:$PATH"
