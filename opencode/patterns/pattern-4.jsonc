@@ -1,0 +1,62 @@
+{
+  // 【パターン4】Claude + Gemini (GPTなし)
+  //  OpenAIのコスト削減、またはAPI制限時。Hephaestus(Codex)は使用不可。
+  "description": "GPTなし（Claude+Gemini）",
+  "agents": {
+    "sisyphus": {
+      "model": "google/antigravity-claude-opus-4-5-thinking",
+      "variant": "max",
+      "temperature": 0.2,
+    },
+    // HephaestusはGPT必須のため定義を省略（デフォルトまたはSisyphusにフォールバックさせる意図）
+    "oracle": {
+      "model": "google/antigravity-claude-sonnet-4-5",
+    },
+    "momus": {
+      "model": "google/antigravity-claude-sonnet-4-5", // レビューもClaude
+    },
+    "librarian": {
+      "model": "google/antigravity-gemini-3-pro",
+    },
+    "explore": {
+      "model": "google/antigravity-gemini-3-flash",
+    },
+    "multimodal-looker": {
+      "model": "google/antigravity-gemini-3-flash",
+    },
+  },
+
+  "categories": {
+    "quick": {
+      "model": "google/antigravity-gemini-3-flash",
+    },
+    "writing": {
+      "model": "google/antigravity-gemini-3-flash",
+    },
+    "visual-engineering": {
+      "model": "google/antigravity-gemini-3-pro",
+    },
+    "artistry": {
+      "model": "google/antigravity-gemini-3-pro",
+      "variant": "max",
+    },
+
+    // GPT無しなので ultrabrain/deep は Opus Thinking に寄せる
+    "ultrabrain": {
+      "model": "google/antigravity-claude-opus-4-5-thinking",
+      "variant": "max",
+    },
+    "deep": {
+      "model": "google/antigravity-claude-opus-4-5-thinking",
+      "variant": "max",
+    },
+
+    "unspecified-low": {
+      "model": "google/antigravity-claude-sonnet-4-5",
+    },
+    "unspecified-high": {
+      "model": "google/antigravity-claude-opus-4-5-thinking",
+      "variant": "max",
+    },
+  }
+}

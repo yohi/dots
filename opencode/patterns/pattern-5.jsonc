@@ -1,0 +1,66 @@
+{
+  // 【パターン5】Claude(少) + Gemini (Gemini主体)
+  //  コスト最優先、またはGeminiの長大なコンテキストをフル活用する場合。
+  "description": "Gemini主体（Claude最小）",
+  "agents": {
+    "sisyphus": {
+      "model": "google/antigravity-gemini-3-pro", // メインはGemini
+      "variant": "high",
+      "temperature": 0.2,
+    },
+    // Hephaestusは使用不可
+    "oracle": {
+      "model": "google/antigravity-claude-opus-4-5-thinking", // 相談役だけClaude Opus
+    },
+    "momus": {
+      "model": "google/antigravity-gemini-3-pro", // レビューはGemini
+    },
+    "librarian": {
+      "model": "google/antigravity-gemini-3-pro",
+    },
+    "explore": {
+      "model": "google/antigravity-gemini-3-flash",
+    },
+    "multimodal-looker": {
+      "model": "google/antigravity-gemini-3-flash",
+    },
+  },
+
+  "categories": {
+    "quick": {
+      "model": "google/antigravity-gemini-3-flash",
+    },
+    "writing": {
+      "model": "google/antigravity-gemini-3-flash",
+    },
+    "visual-engineering": {
+      "model": "google/antigravity-gemini-3-pro",
+      "variant": "high",
+    },
+    "artistry": {
+      "model": "google/antigravity-gemini-3-pro",
+      "variant": "max",
+    },
+
+    // ほぼGemini運用：ultrabrain/deepもGeminiへ
+    "ultrabrain": {
+      "model": "google/antigravity-gemini-3-pro",
+      "variant": "high",
+    },
+    "deep": {
+      "model": "google/antigravity-gemini-3-pro",
+      "variant": "high",
+    },
+
+    "unspecified-low": {
+      "model": "google/antigravity-gemini-3-pro",
+      "variant": "high",
+    },
+
+    // Claudeは最終手段としてここだけ残す（“少”）
+    "unspecified-high": {
+      "model": "google/antigravity-claude-opus-4-5-thinking",
+      "variant": "max",
+    },
+  }
+}

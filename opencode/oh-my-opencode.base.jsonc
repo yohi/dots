@@ -1,0 +1,115 @@
+{
+  // スキーマ定義：エディタでの補完とバリデーションを有効化
+  "$schema": "https://raw.githubusercontent.com/code-yeongyu/oh-my-opencode/master/assets/oh-my-opencode.schema.json",
+
+  // ================================================================================
+  // グローバル設定 (Global Configuration)
+  // ================================================================================
+
+  "experimental": {
+    // OpenCodeのTodo UIと同期されず、TodoWriteが無効になりTUIに表示されなくなるため無効化（既知のUX低下）
+    "task_system": false
+  },
+
+  // パフォーマンスと安定性のための最適化設定
+  "disabled_hooks": [
+    // "startup-toast",           // 起動時の通知が不要な場合は有効化
+    // "tasks-todowrite-disabler" // AIにTODOリストを直接更新させたい場合は有効化（通常は安全のためブロック）
+  ],
+  "disabled_mcps": [
+  ],
+  "disabled_agents": [
+  ],
+  "disabled_skills": [
+  ],
+
+  // ================================================================================
+  // 機能・挙動設定 (Features & Behaviors)
+  // ================================================================================
+
+  // [Tmux] ターミナル多重化連携
+  // エージェントの思考プロセスやバックグラウンドタスクを別ペインで可視化します
+  "tmux": {
+    "enabled": true,
+    "layout": "main-vertical", // "main-vertical" (左メイン), "even-horizontal" (均等) など
+    "main_pane_size": 60,
+  },
+
+  // [Browser Automation] ブラウザ操作エンジン
+  "browser_automation_engine": {
+    "provider": "playwright", // 安定性の高いPlaywright MCPを使用
+  },
+
+  // [Background Task] バックグラウンドタスク管理
+  // 調査や重い処理を非同期で実行する際の並列数制御
+  "background_task": {
+    "defaultConcurrency": 5,
+    "staleTimeoutMs": 180000,
+    "providerConcurrency": {
+      "google": 5,
+      "openai": 3,
+    },
+    "modelConcurrency": {
+      // いちばん高いモデルは1並列に抑えるのが安全
+      "google/antigravity-claude-opus-4-5-thinking": 1,
+    },
+  },
+
+  // [Git Master] コミット操作設定
+  "git_master": {
+    "commit_footer": false, // trueにすると "Ultraworked with Sisyphus" を付与
+    "include_co_authored_by": false, // trueにするとCo-authored-byを付与
+  },
+
+  // [Ralph Loop] 自律改善ループ (自律的な修正・改善の繰り返し)
+  "ralph_loop": {
+    "enabled": true,
+    "default_max_iterations": 20,
+  },
+
+  // [Boulder State] エージェント状態保存 (Sisyphusの作業状態)
+  // タスク中断時に進捗を保存し、次回起動時に "resume" で再開できるようにします
+  "boulder_state": {
+    "enabled": true,
+    "storage_path": ".sisyphus/boulder_state.json",
+  },
+
+  // [Session Recovery] セッション復旧 (チャット履歴の保全)
+  // クラッシュや予期せぬ終了時に直前の会話状態を復元します
+  "session_recovery": {
+    "enabled": true,
+    "storage_path": ".sisyphus/session_recovery.json",
+  },
+
+  // [Interactive Bash] 持続的シェルセッション
+  // AIが状態を持つシェル（cdの結果を保持するなど）を利用する設定
+  "interactive_bash": {
+    "enabled": true,
+    "timeout_ms": 300000, // 5分間操作がないとセッションを閉じる
+  },
+
+  // [Auto Slash Command] コマンド自動検出
+  // "/help" ではなく単に "help" と入力してもコマンドとして解釈する機能
+  "auto_slash_command": {
+    "enabled": true,
+  },
+
+  // [Rules Injector] ルール注入
+  // .cursorrules や CONTEXT.md などをプロンプトに自動挿入する設定
+  "rules_injector": {
+    "enabled": true,
+    "search_paths": [
+      ".claude/rules",
+      ".opencode/rules",
+    ],
+  },
+
+  // ================================================================================
+  // パターン設定 (Pattern Configuration)
+  // このファイルには共通設定のみを記載し、
+  // agents/categories は opencode/patterns/*.jsonc の断片を注入する
+  // ================================================================================
+
+  // @pattern:start
+  // @pattern:end
+}
