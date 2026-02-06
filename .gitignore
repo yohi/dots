@@ -53,6 +53,9 @@ cursor/mcp.local.json
 cursor/mcp.json
 cursor/mcp*.json
 
+# OpenCode 生成ファイル
+opencode/oh-my-opencode.jsonc
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
