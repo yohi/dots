@@ -27,7 +27,7 @@ log_error() {
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
 BASE_CONFIG_PATH="${ROOT_DIR}/opencode/oh-my-opencode.base.jsonc"
-CONFIG_PATH="${ROOT_DIR}/opencode/oh-my-opencode.jsonc"
+CONFIG_PATH="${ROOT_DIR}/opencode/opencode.jsonc"
 PATTERNS_DIR="${ROOT_DIR}/opencode/patterns"
 PATTERN_START="// @pattern:start"
 PATTERN_END="// @pattern:end"
