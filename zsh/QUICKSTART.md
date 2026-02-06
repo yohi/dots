@@ -182,13 +182,13 @@ export AWS_DEFAULT_REGION=us-east-1
 export DISABLE_CLAUDE_CODE_HISTORY=1
 ```
 
-### Custom DOTS_ROOT
+### Custom DOTFILES_DIR
 
 If your dotfiles are in a non-standard location:
 
 ```bash
 # In config.zsh
-CUSTOM_DOTS_ROOT="/path/to/your/dotfiles"
+DOTFILES_DIR="/path/to/your/dotfiles"
 ```
 
 ---
@@ -202,11 +202,11 @@ CUSTOM_DOTS_ROOT="/path/to/your/dotfiles"
 export ZSH_FUNCTIONS_DEBUG=true
 source ~/.zshrc
 
-# Check DOTS_ROOT detection
-echo $DOTS_ROOT
+# Check DOTFILES_DIR detection
+echo $DOTFILES_DIR
 
-# Manually set DOTS_ROOT
-export DOTFILES_ROOT=/path/to/dots
+# Manually set DOTFILES_DIR
+export DOTFILES_DIR=/path/to/dots
 source ~/.zshrc
 ```
 
@@ -374,7 +374,7 @@ source ~/.zshrc
 ### Common Issues
 
 1. **"command not found: ec2-ssm"**
-   - Check DOTS_ROOT detection
+   - Check DOTFILES_DIR detection
    - Verify functions directory exists
    - Enable debug mode
 

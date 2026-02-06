@@ -5,7 +5,7 @@
 set -uo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+DOTFILES_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 echo "=================================="
 echo "Task 5.2: Devcontainer Credentials & Bootstrap Tests"
@@ -38,70 +38,70 @@ run_test() {
 # Test 1: devcontainer.json に remoteEnv が定義されている
 # ============================================================
 run_test "devcontainer.json has remoteEnv with BW_SESSION" \
-    'grep -q "\"BW_SESSION\": \"\${localEnv:BW_SESSION}\"" "$PROJECT_ROOT/.devcontainer/devcontainer.json"'
+    'grep -q "\"BW_SESSION\": \"\${localEnv:BW_SESSION}\"" "$DOTFILES_DIR/.devcontainer/devcontainer.json"'
 
 run_test "devcontainer.json has remoteEnv with WITH_BW" \
-    'grep -q "\"WITH_BW\": \"\${localEnv:WITH_BW}\"" "$PROJECT_ROOT/.devcontainer/devcontainer.json"'
+    'grep -q "\"WITH_BW\": \"\${localEnv:WITH_BW}\"" "$DOTFILES_DIR/.devcontainer/devcontainer.json"'
 
 # ============================================================
 # Test 2: postCreateCommand が定義されている
 # ============================================================
 run_test "devcontainer.json has postCreateCommand" \
-    'grep -q "\"postCreateCommand\":" "$PROJECT_ROOT/.devcontainer/devcontainer.json"'
+    'grep -q "\"postCreateCommand\":" "$DOTFILES_DIR/.devcontainer/devcontainer.json"'
 
 # ============================================================
 # Test 3: post-create スクリプトが存在し実行可能
 # ============================================================
 run_test ".devcontainer/scripts/post-create.sh exists and is executable" \
-    'test -x "$PROJECT_ROOT/.devcontainer/scripts/post-create.sh"'
+    'test -x "$DOTFILES_DIR/.devcontainer/scripts/post-create.sh"'
 
 # ============================================================
 # Test 4: post-create スクリプトが依存関係チェックを含む
 # ============================================================
 run_test "post-create.sh contains dependency verification" \
-    'grep -q "Verifying dependencies" "$PROJECT_ROOT/.devcontainer/scripts/post-create.sh"'
+    'grep -q "Verifying dependencies" "$DOTFILES_DIR/.devcontainer/scripts/post-create.sh"'
 
 run_test "post-create.sh verifies GNU Make" \
-    'grep -q "make" "$PROJECT_ROOT/.devcontainer/scripts/post-create.sh"'
+    'grep -q "make" "$DOTFILES_DIR/.devcontainer/scripts/post-create.sh"'
 
 run_test "post-create.sh verifies Bitwarden CLI" \
-    'grep -q "bw" "$PROJECT_ROOT/.devcontainer/scripts/post-create.sh"'
+    'grep -q "bw" "$DOTFILES_DIR/.devcontainer/scripts/post-create.sh"'
 
 run_test "post-create.sh verifies jq" \
-    'grep -q "jq" "$PROJECT_ROOT/.devcontainer/scripts/post-create.sh"'
+    'grep -q "jq" "$DOTFILES_DIR/.devcontainer/scripts/post-create.sh"'
 
 # ============================================================
 # Test 5: post-create スクリプトが Bitwarden 疎通確認を含む
 # ============================================================
 run_test "post-create.sh contains Bitwarden integration check" \
-    'grep -q "Checking Bitwarden integration" "$PROJECT_ROOT/.devcontainer/scripts/post-create.sh"'
+    'grep -q "Checking Bitwarden integration" "$DOTFILES_DIR/.devcontainer/scripts/post-create.sh"'
 
 run_test "post-create.sh checks WITH_BW flag" \
-    'grep -q "WITH_BW" "$PROJECT_ROOT/.devcontainer/scripts/post-create.sh"'
+    'grep -q "WITH_BW" "$DOTFILES_DIR/.devcontainer/scripts/post-create.sh"'
 
 run_test "post-create.sh checks BW_SESSION when WITH_BW=1" \
-    'grep -q "BW_SESSION" "$PROJECT_ROOT/.devcontainer/scripts/post-create.sh"'
+    'grep -q "BW_SESSION" "$DOTFILES_DIR/.devcontainer/scripts/post-create.sh"'
 
 # ============================================================
 # Test 6: post-create スクリプトがマーカーディレクトリを初期化
 # ============================================================
 run_test "post-create.sh initializes marker directory" \
-    'grep -q "Initializing marker directory" "$PROJECT_ROOT/.devcontainer/scripts/post-create.sh"'
+    'grep -q "Initializing marker directory" "$DOTFILES_DIR/.devcontainer/scripts/post-create.sh"'
 
 run_test "post-create.sh creates MARKER_DIR" \
-    'grep -q "mkdir -p.*MARKER_DIR" "$PROJECT_ROOT/.devcontainer/scripts/post-create.sh"'
+    'grep -q "mkdir -p.*MARKER_DIR" "$DOTFILES_DIR/.devcontainer/scripts/post-create.sh"'
 
 # ============================================================
 # Test 7: postCreateCommand が post-create.sh を参照
 # ============================================================
 run_test "postCreateCommand references post-create.sh" \
-    'grep -q "post-create.sh" "$PROJECT_ROOT/.devcontainer/devcontainer.json"'
+    'grep -q "post-create.sh" "$DOTFILES_DIR/.devcontainer/devcontainer.json"'
 
 # ============================================================
 # Test 8: WITH_BW=0 または未設定時に Bitwarden チェックをスキップ
 # ============================================================
 run_test "post-create.sh skips Bitwarden check when WITH_BW is not set" \
-    'grep -q "SKIP.*Bitwarden integration disabled" "$PROJECT_ROOT/.devcontainer/scripts/post-create.sh"'
+    'grep -q "SKIP.*Bitwarden integration disabled" "$DOTFILES_DIR/.devcontainer/scripts/post-create.sh"'
 
 # ============================================================
 # Summary

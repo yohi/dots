@@ -5,14 +5,14 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+DOTFILES_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 echo "=== Task 5.1: Devcontainer Setup Test ==="
 echo ""
 
 # Test 1: .devcontainer directory exists
 echo "[TEST] 1. .devcontainer directory exists"
-if [ -d "$PROJECT_ROOT/.devcontainer" ]; then
+if [ -d "$DOTFILES_DIR/.devcontainer" ]; then
     echo "[PASS] .devcontainer directory found"
 else
     echo "[FAIL] .devcontainer directory not found"
@@ -22,7 +22,7 @@ echo ""
 
 # Test 2: devcontainer.json exists and is valid JSON
 echo "[TEST] 2. devcontainer.json exists and is valid JSON"
-DEVCONTAINER_JSON="$PROJECT_ROOT/.devcontainer/devcontainer.json"
+DEVCONTAINER_JSON="$DOTFILES_DIR/.devcontainer/devcontainer.json"
 if [ ! -f "$DEVCONTAINER_JSON" ]; then
     echo "[FAIL] devcontainer.json not found"
     exit 1
@@ -40,9 +40,9 @@ echo "[TEST] 3. devcontainer.json specifies Ubuntu 22.04 base image"
 IMAGE=$(jq -r '.image // .build.dockerfile // empty' "$DEVCONTAINER_JSON")
 if echo "$IMAGE" | grep -qE 'ubuntu.*22\.04|base.*ubuntu'; then
     echo "[PASS] Base image includes Ubuntu 22.04"
-elif [ -f "$PROJECT_ROOT/.devcontainer/Dockerfile" ]; then
+elif [ -f "$DOTFILES_DIR/.devcontainer/Dockerfile" ]; then
     # Check Dockerfile for base image
-    if grep -qE 'FROM.*ubuntu.*22\.04|FROM.*devcontainers/base.*ubuntu' "$PROJECT_ROOT/.devcontainer/Dockerfile"; then
+    if grep -qE 'FROM.*ubuntu.*22\.04|FROM.*devcontainers/base.*ubuntu' "$DOTFILES_DIR/.devcontainer/Dockerfile"; then
         echo "[PASS] Dockerfile uses Ubuntu 22.04 base image"
     else
         echo "[FAIL] Neither devcontainer.json nor Dockerfile specifies Ubuntu 22.04"
@@ -84,8 +84,8 @@ if jq -e '.postCreateCommand' "$DEVCONTAINER_JSON" >/dev/null 2>&1; then
 fi
 
 # Check Dockerfile
-if [ -f "$PROJECT_ROOT/.devcontainer/Dockerfile" ]; then
-    DOCKERFILE_CONTENT=$(cat "$PROJECT_ROOT/.devcontainer/Dockerfile")
+if [ -f "$DOTFILES_DIR/.devcontainer/Dockerfile" ]; then
+    DOCKERFILE_CONTENT=$(cat "$DOTFILES_DIR/.devcontainer/Dockerfile")
     if echo "$DOCKERFILE_CONTENT" | grep -qE 'RUN.*apt.*install.*make|make'; then
         HAS_MAKE=true
     fi
@@ -121,10 +121,10 @@ echo ""
 
 # Test 5: Bitwarden CLI version specification
 echo "[TEST] 5. Bitwarden CLI version >= 2024.9.0 specified"
-if [ -f "$PROJECT_ROOT/.devcontainer/Dockerfile" ]; then
-    if grep -qE 'BW_CLI_VERSION.*2024\.(9|1[0-9])' "$PROJECT_ROOT/.devcontainer/Dockerfile"; then
+if [ -f "$DOTFILES_DIR/.devcontainer/Dockerfile" ]; then
+    if grep -qE 'BW_CLI_VERSION.*2024\.(9|1[0-9])' "$DOTFILES_DIR/.devcontainer/Dockerfile"; then
         echo "[PASS] Bitwarden CLI version 2024.9.0+ specified"
-    elif grep -qE 'bw-linux-2024\.(9|1[0-9])' "$PROJECT_ROOT/.devcontainer/Dockerfile"; then
+    elif grep -qE 'bw-linux-2024\.(9|1[0-9])' "$DOTFILES_DIR/.devcontainer/Dockerfile"; then
         echo "[PASS] Bitwarden CLI version 2024.9.0+ found in download URL"
     else
         echo "[WARN] Could not verify Bitwarden CLI version specification"

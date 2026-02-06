@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+DOTFILES_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 MAKE_ENV=(MAKEFLAGS=--no-print-directory)
-MAKE_CMD=(make -s -C "$ROOT")
+MAKE_CMD=(make -s -C "$DOTFILES_DIR")
 
 if ! command -v timeout >/dev/null 2>&1; then
   echo "timeout command is required for this test." >&2
