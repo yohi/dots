@@ -4,7 +4,7 @@ set -euo pipefail
 # Task 4.3: マーカーのクリーンアップと強制再実行の導線を提供する
 # Requirements: 4.6, 4.7
 
-REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+DOTFILES_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 MARKER_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/dots"
 
 echo "=== Task 4.3: Marker Cleanup and Force Re-execution Tests ==="
@@ -48,7 +48,7 @@ echo ""
 # =============================================================================
 echo "[TEST 1] clean-markers: Remove all marker files"
 
-cd "$REPO_ROOT"
+cd "$DOTFILES_DIR"
 output=$(make clean-markers 2>&1)
 
 # 期待される出力メッセージを確認
@@ -84,7 +84,7 @@ create_test_marker "test-target-1"
 create_test_marker "test-target-2"
 create_test_marker "setup-system"
 
-cd "$REPO_ROOT"
+cd "$DOTFILES_DIR"
 output=$(make clean-marker-setup-system 2>&1)
 
 # 期待される出力メッセージを確認
@@ -124,7 +124,7 @@ echo ""
 # =============================================================================
 echo "[TEST 3] check-idempotency: Display idempotency status"
 
-cd "$REPO_ROOT"
+cd "$DOTFILES_DIR"
 output=$(make check-idempotency 2>&1)
 
 # 期待されるセクションが含まれることを確認
@@ -168,7 +168,7 @@ echo ""
 echo "[TEST 4] FORCE=1: Force re-execution skipping idempotency check"
 
 # テスト用の単純なターゲットを持つ一時Makefileを作成
-cd "$REPO_ROOT"
+cd "$DOTFILES_DIR"
 
 # setup-systemターゲットが存在するか確認し、FORCEフラグの動作をテスト
 # 注: 実際のターゲット実装がある場合のみテスト可能

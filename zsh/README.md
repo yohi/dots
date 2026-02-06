@@ -141,7 +141,7 @@ zsh/
 **Purpose:** User-specific settings (not tracked in git)
 
 **Settings:**
-- `CUSTOM_DOTS_ROOT`: Override dotfiles location
+- `DOTFILES_DIR`: Override dotfiles location
 - `FUNCTIONS_DEBUG`: Enable debug output
 - `FUNCTIONS_SKIP_PATTERNS`: Files to ignore
 
@@ -405,13 +405,13 @@ FUNCTIONS_SKIP_PATTERNS+=(
 
 **Problem:** Functions not loading
 ```bash
-# Solution 1: Check DOTS_ROOT
+# Solution 1: Check DOTFILES_DIR
 export ZSH_FUNCTIONS_DEBUG=true
 source ~/.zshrc
 # Shows detection path
 
 # Solution 2: Manual override
-export CUSTOM_DOTS_ROOT=/path/to/dots
+export DOTFILES_DIR=/path/to/dots
 source ~/.zshrc
 ```
 
@@ -434,8 +434,8 @@ time zsh -i -c exit
 # Check function loading
 type ec2-ssm
 
-# Check DOTS_ROOT
-echo $DOTS_ROOT
+# Check DOTFILES_DIR
+echo $DOTFILES_DIR
 
 # Enable debug
 export ZSH_FUNCTIONS_DEBUG=true
