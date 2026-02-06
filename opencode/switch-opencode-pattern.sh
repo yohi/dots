@@ -59,13 +59,25 @@ init_patterns() {
   shopt -u nullglob
 
   if [[ ${#existing[@]} -eq 0 ]]; then
-    extract_current_pattern "default" > "${PATTERNS_DIR}/default.jsonc"
+    if [[ -f "${CONFIG_PATH}" ]]; then
+      extract_current_pattern "default" > "${PATTERNS_DIR}/default.jsonc"
+    else
+      cat > "${PATTERNS_DIR}/default.jsonc" <<'EOF'
+{
+  "description": "default",
+  "agents": {},
+  "categories": {}
+}
+EOF
+      log_warn "CONFIG_PATH が存在しないため、空の default パターンを作成しました: ${PATTERNS_DIR}/default.jsonc"
+    fi
     log_info "初期パターンを作成しました: ${PATTERNS_DIR}/default.jsonc"
   fi
 }
 
 ensure_generated_config() {
   if [[ ! -f "${CONFIG_PATH}" ]]; then
+    init_patterns
     apply_pattern "default"
   fi
 }
@@ -136,16 +148,36 @@ save_current_pattern() {
 
 extract_current_pattern() {
   local description="$1"
-  local safe_description
-  safe_description="${description//"/\\"}"
-  echo "{"
-  echo "  \"description\": \"${safe_description}\","
-  awk -v start="${PATTERN_START}" -v end="${PATTERN_END}" '
+
+  if [[ ! -f "${CONFIG_PATH}" ]]; then
+    log_error "設定ファイルが見つかりません: ${CONFIG_PATH}"
+    exit 1
+  fi
+
+  local desc_json
+  if command -v jq >/dev/null 2>&1; then
+    desc_json="$(jq -Rn --arg d "${description}" '$d')"
+  else
+    local s="${description//\\/\\\\}"
+    s="${s//\"/\\\"}"
+    s="${s//$'\n'/\\n}"
+    s="${s//$'\r'/\\r}"
+    s="${s//$'\t'/\\t}"
+    desc_json="\"${s}\""
+  fi
+
+  local block
+  block="$(awk -v start="${PATTERN_START}" -v end="${PATTERN_END}" '
     $0 ~ start {in_block=1; next}
     $0 ~ end {exit}
     in_block {print}
-  ' "${CONFIG_PATH}"
-  echo "}"
+  ' "${CONFIG_PATH}")"
+
+  if [[ -z "${block}" ]]; then
+    printf '{\n  "description": %s,\n  "agents": {},\n  "categories": {}\n}\n' "${desc_json}"
+  else
+    printf '{\n  "description": %s,\n%s\n}\n' "${desc_json}" "${block}"
+  fi
 }
 
 apply_pattern() {
