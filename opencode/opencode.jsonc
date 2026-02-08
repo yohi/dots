@@ -1,20 +1,17 @@
 {
-
-
-
   "$schema": "https://opencode.ai/config.json",
   "model": "google/antigravity-gemini-3-pro",
-
   // ログレベル設定（デバッグ用）
   // "logLevel": "DEBUG",
-
+ 
+  // [Plugin]
   "plugin": [
-    "oh-my-opencode@3.2.3",
-    "opencode-openai-codex-auth@latest",
-    "opencode-antigravity-auth@1.4.5",
-    "@yohi/opencode-antigravity-quota",
-    "@yohi/opencode-codex-quota",
-    "@yohi/omo-sdd-hybrid",
+     "oh-my-opencode@latest",
+     "opencode-openai-codex-auth@latest",
+     "opencode-antigravity-auth@latest",
+     "@yohi/opencode-antigravity-quota@latest",
+     "@yohi/opencode-codex-quota@latest",
+     "@yohi/omo-sdd-hybrid",
   ],
 
   // [Permission]
@@ -546,6 +543,35 @@
             },
           },
         },
+        "antigravity-claude-opus-4-6-thinking": {
+          "name": "Claude Opus 4.6 Thinking (Antigravity)",
+          "limit": {
+            "context": 200000,
+            "output": 64000,
+          },
+          "modalities": {
+            "input": [
+              "text",
+              "image",
+              "pdf",
+            ],
+            "output": [
+              "text",
+            ],
+          },
+          "variants": {
+            "low": {
+              "thinkingConfig": {
+                "thinkingBudget": 8192,
+              },
+            },
+            "max": {
+              "thinkingConfig": {
+                "thinkingBudget": 32768,
+              },
+            },
+          },
+        },
         "gemini-2.5-flash": {
           "name": "Gemini 2.5 Flash (Gemini CLI)",
           "limit": {
@@ -615,6 +641,6 @@
           },
         },
       },
-    }
-  }
+    },
+  },
 }
