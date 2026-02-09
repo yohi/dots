@@ -41,14 +41,10 @@ Step 0の判断に基づき、必要であればブランチを作成・切り�
 
 （注意: 自分で `git commit` コマンドを実行せず、git-master の自律機能に任せてください）
 
-### Step 3: コミット
-Conventional Commitsに従った日本語メッセージでコミットしてください。
-- コマンド: `git commit -m "<type>(<scope>): <subject>"`
-
-### Step 4: プッシュ
+### Step 3: プッシュ
 - コマンド: `git push origin HEAD`
 
-### Step 5: PRの作成（必要な場合のみ）
+### Step 4: PRの作成（必要な場合のみ）
 Step 0で「PR作成が必要」と判断した場合のみ実行してください。既存PRがある場合は、更新された旨をユーザーに伝えて終了してください。
 
 **PRテンプレート:**
@@ -78,3 +74,4 @@ Step 0で「PR作成が必要」と判断した場合のみ実行してくださ
 - [ ] タイトルを [Conventional Commits](https://www.conventionalcommits.org/ja/v1.0.0/) に従ったものにした
 - [ ] ローカルでテストが通ることを確認した
 - [ ] ドキュメントを更新した（必要な場合）
+```
