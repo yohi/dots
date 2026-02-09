@@ -284,13 +284,15 @@ alias kgnome='killall -3 gnome-shell'
 [[ -f "$ZSH_CONFIG_DIR/config.zsh" ]] && source "$ZSH_CONFIG_DIR/config.zsh"
 
 # 互換性と環境変数のための最終調整
-if [[ -z "$DOTFILES_DIR" && (( ${+CANDIDATE_DIRS} )) ]]; then
-    for candidate in "${CANDIDATE_DIRS[@]}"; do
-        if [[ -d "$candidate" ]]; then
-            export DOTFILES_DIR="$candidate"
-            break
-        fi
-    done
+if [[ -z "$DOTFILES_DIR" || ! -d "$DOTFILES_DIR/zsh" ]]; then
+    if (( ${+CANDIDATE_DIRS} )); then
+        for candidate in "${CANDIDATE_DIRS[@]}"; do
+            if [[ -d "$candidate/zsh" ]]; then
+                export DOTFILES_DIR="$candidate"
+                break
+            fi
+        done
+    fi
 fi
 DOTFILES_DIR="${DOTFILES_OVERRIDE:-${DOTFILES_ROOT:-${DOTFILES_DIR}}}"
 
