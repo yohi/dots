@@ -2,7 +2,6 @@
 #   return
 # fi
 
-
 # Fig pre block. Keep at the top of this file.
 [[ -f "$HOME/.fig/shell/zshrc.pre.zsh" ]] && builtin source "$HOME/.fig/shell/zshrc.pre.zsh"
 # Enable Powerlevel10k instant prompt. Should stay close to the top of ~/.zshrc.
@@ -11,17 +10,13 @@ if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]
   source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
 fi
 
-export LANG=ja_JP.UTF-8
+# Determine dotfiles directory (resolves symlinks)
+export ZSH_CONFIG_DIR="${${(%):-%N}:A:h}"
+export DOTFILES_DIR="${DOTFILES_DIR:-${ZSH_CONFIG_DIR:h}}"
 
-# 日本語入力関連の環境変数設定（IBus）
-export GTK_IM_MODULE=ibus
-export QT_IM_MODULE=ibus
-export XMODIFIERS=@im=ibus
-export INPUT_METHOD=ibus
-
-# Waylandでの日本語入力改善
-export IBUS_USE_PORTAL=1
-export IBUS_ENABLE_SYNC_MODE=1
+# Load environment variables and secrets
+[[ -f "$ZSH_CONFIG_DIR/.zsh_env" ]] && source "$ZSH_CONFIG_DIR/.zsh_env"
+[[ -f "$ZSH_CONFIG_DIR/.zsh_secrets" ]] && source "$ZSH_CONFIG_DIR/.zsh_secrets"
 
 # Claude Code オプトアウト環境変数
 export DISABLE_TELEMETRY=1
@@ -48,8 +43,6 @@ compinit -u
 bindkey "^[[3~" delete-char
 #
 # HOMEBREW
-export PATH=/home/${USER}/bin:${PATH}
-export PATH=${PATH}:/sbin
 eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
 
 #     echo '# Set PATH, MANPATH, etc., for Homebrew.' >> /home/y_ohi/.zprofile
@@ -61,15 +54,6 @@ eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
 
 # SSH AGENT - Disabled by default, uncomment if needed
 # eval $(ssh-agent)
-
-# # ROOTLESS DOCKER
-export DOCKER_HOST=unix://$XDG_RUNTIME_DIR/docker.sock
-
-# # DOCKER BUILDKIT
-export DOCKER_BUILDKIT=1
-export COMPOSE_DOCKER_CLI_BUILD=1
-
-
 
 # dockerコンテナに入る。deで実行できる - DISABLED (peco dependency)
 # alias de='docker exec -it $(docker ps | peco | cut -d " " -f 1) /bin/bash'
@@ -83,7 +67,7 @@ setopt interactivecomments
 # コマンド履歴系
 #
 # 履歴ファイルの保存先
-export HISTFILE=${HOME}/.zsh_history
+export HISTFILE="${HOME}/.zsh_history"
 
 # メモリに保存される履歴の件数
 export HISTSIZE=10000
@@ -213,12 +197,7 @@ fi
 
 
 
-export GOPATH=$HOME/.go
-export PATH=$PATH:$GOPATH/bin
-
 # Editor configuration (consolidated from multiple locations)
-export VISUAL=nvim
-export EDITOR=nvim
 unset LESSEDIT
 
 # nodenv initialization (ensure shims are prioritized in PATH)
@@ -233,12 +212,6 @@ eval "$(direnv hook zsh)"
 
 
 
-# export PATH="/home/linuxbrew/.linuxbrew/opt/openssl@3/bin:$PATH"
-#
-# export PATH="/home/linuxbrew/.linuxbrew/opt/python@3.10/bin:$PATH"
-# export LDFLAGS="-L/home/linuxbrew/.linuxbrew/opt/python@3.10/lib"
-# export CPPFLAGS="-I/home/linuxbrew/.linuxbrew/opt/python@3.10/include"
-# export PKG_CONFIG_PATH="/home/linuxbrew/.linuxbrew/opt/python@3.10/lib/pkgconfig"
 alias pip='pip3'
 alias python='python3'
 export PATH="/home/linuxbrew/.linuxbrew/opt/python@3.11/libexec/bin:$PATH"
@@ -306,101 +279,57 @@ zinit light romkatv/powerlevel10k
 alias kgnome='killall -3 gnome-shell'
 
 # カスタム関数の読み込み（サイレント版 - Powerlevel10k instant prompt対応）
-# 動的にdotsディレクトリを検出（複数の方法でフォールバック - READMEの優先順位準拠）
-typeset DOTFILES_DIR="${DOTFILES_DIR:-}"
 
-# Method 1: 設定ファイル読み込み（優先度最高）
-if [[ -r "$HOME/dots/zsh/config.zsh" ]]; then
-    source "$HOME/dots/zsh/config.zsh"
-    # DOTFILES_DIR またはレガシーな CUSTOM_DOTS_ROOT をチェック
-    DOTFILES_DIR="${DOTFILES_DIR:-${CUSTOM_DOTS_ROOT:-}}"
-    if [[ -n "$DOTFILES_DIR" ]]; then
-        # 設定ファイルで明示的に指定された場合は、以降の検出をスキップ
-        [[ -d "$DOTFILES_DIR/zsh/functions" ]] && goto_load_functions=true
-    fi
-elif [[ -r "$HOME/.config/zsh/config.zsh" ]]; then
-    source "$HOME/.config/zsh/config.zsh"
-    DOTFILES_DIR="${DOTFILES_DIR:-${CUSTOM_DOTS_ROOT:-}}"
-    if [[ -n "$DOTFILES_DIR" ]]; then
-        # 設定ファイルで明示的に指定された場合は、以降の検出をスキップ
-        [[ -d "$DOTFILES_DIR/zsh/functions" ]] && goto_load_functions=true
-    fi
-fi
+# Load config.zsh for customization
+[[ -f "$ZSH_CONFIG_DIR/config.zsh" ]] && source "$ZSH_CONFIG_DIR/config.zsh"
 
-# 設定ファイルで有効なパスが見つかった場合は以降をスキップ
-if [[ "${goto_load_functions:-false}" != "true" ]]; then
-
-    # Method 2: 環境変数による設定（優先度2番目、未決定時のみ）
-    if [[ -z "$DOTFILES_DIR" ]]; then
-        if [[ -n "${DOTS_ROOT_OVERRIDE:-}" ]]; then
-            DOTFILES_DIR="$DOTS_ROOT_OVERRIDE"
-        elif [[ -n "${DOTFILES_ROOT:-}" ]]; then
-            DOTFILES_DIR="$DOTFILES_ROOT"
-        fi
-    fi
-
-    # Method 3: 現在の.zshrcファイルの位置から相対パス計算（優先度3番目、未決定時のみ）
-    if [[ -z "$DOTFILES_DIR" ]]; then
-      if [[ -n "${(%):-%N}" ]]; then
-        # zshのパス修飾子で解決（外部realpath非依存）
-        typeset -r __zshrc_path="${(%):-%N:A}"
-        DOTFILES_DIR="${__zshrc_path:h:h}"
-      elif [[ -n "${BASH_SOURCE[0]}" ]]; then
-        # bash互換モード（readlink -fが無い環境も考慮してフォールバック）
-        DOTFILES_DIR="$(dirname "$(dirname "$(readlink -f "${BASH_SOURCE[0]}" 2>/dev/null || echo "${BASH_SOURCE[0]}")")")"
-      fi
-    fi
-
-    # Method 4: 一般的な場所を順次確認
-    if [[ -z "$DOTFILES_DIR" ]] || [[ ! -d "$DOTFILES_DIR/zsh/functions" ]]; then
-        for candidate in \
-            "$HOME/dots" \
-            "$HOME/.dots" \
-            "$HOME/dotfiles" \
-            "$HOME/.dotfiles" \
-            "$HOME/.config/dots" \
-            "/home/$USER/dots"; do
-            if [[ -d "$candidate/zsh/functions" ]]; then
-                DOTFILES_DIR="$candidate"
+# 互換性と環境変数のための最終調整
+if [[ -z "$DOTFILES_DIR" || ! -d "$DOTFILES_DIR/zsh" ]]; then
+    if (( ${+CANDIDATE_DIRS} )); then
+        for candidate in "${CANDIDATE_DIRS[@]}"; do
+            if [[ -d "$candidate/zsh" ]]; then
+                export DOTFILES_DIR="$candidate"
                 break
             fi
         done
     fi
-
-    # Method 5: symlinkの追跡
-    if [[ -L "$HOME/.zshrc" ]] && [[ -z "${DOTFILES_DIR:-}" ]]; then
-        # .zshrcがsymlinkの場合、リンク先から推測
-        real_zshrc="$(readlink -f "$HOME/.zshrc" 2>/dev/null || echo "")"
-        if [[ -n "$real_zshrc" ]]; then
-            DOTFILES_DIR="$(dirname "$(dirname "$real_zshrc")")"
-        fi
-    fi
-
 fi
+DOTFILES_DIR="${DOTFILES_OVERRIDE:-${DOTFILES_ROOT:-${DOTFILES_DIR}}}"
 
-# 検証とデバッグ情報
-typeset debug_functions=${ZSH_FUNCTIONS_DEBUG:-false}
+# config.zsh の設定を反映（未定義時のデフォルト値設定）
+typeset functions_subdir="${FUNCTIONS_SUBDIR:-"zsh/functions"}"
+typeset functions_pattern="${FUNCTIONS_PATTERN:-"**/*.zsh"}"
+typeset debug_functions="${FUNCTIONS_DEBUG:-${ZSH_FUNCTIONS_DEBUG:-false}}"
+
 if [[ "$debug_functions" == "true" ]]; then
     echo "🔍 DOTFILES_DIR検出: $DOTFILES_DIR"
-    echo "🔍 関数ディレクトリ存在確認: $DOTFILES_DIR/zsh/functions"
+    echo "🔍 関数ディレクトリ存在確認: $DOTFILES_DIR/$functions_subdir"
 fi
 
-if [[ -d "$DOTFILES_DIR/zsh/functions" ]]; then
+if [[ -d "$DOTFILES_DIR/$functions_subdir" ]]; then
     # パフォーマンス最適化: glob結果を配列に格納してから処理
     typeset -a func_files
-    func_files=("$DOTFILES_DIR/zsh/functions"/**/*.zsh(N))
+    func_files=("$DOTFILES_DIR/$functions_subdir"/${~functions_pattern}(N))
 
     # サブディレクトリを含む全てのzshファイルを再帰的に読み込み
     for func_file in "${func_files[@]}"; do
         [[ ! -r "$func_file" ]] && continue
 
-        # .broken, .disabled, .tmp ファイルをスキップ（高速化）
-        case "${func_file:t}" in
-            *.broken|*.disabled|*.tmp)
-                [[ "$debug_functions" == "true" ]] && echo "⚠️  スキップ: ${func_file:t} (無効化)"
-                continue
-                ;;
-        esac
+        # config.zsh の FUNCTIONS_SKIP_PATTERNS にマッチするファイルをスキップ
+        typeset skip=false
+        if (( ${+FUNCTIONS_SKIP_PATTERNS} )); then
+            for pattern in "${FUNCTIONS_SKIP_PATTERNS[@]}"; do
+                if [[ "${func_file:t}" == ${~pattern} ]]; then
+                    skip=true
+                    break
+                fi
+            done
+        fi
+        
+        if [[ "$skip" == "true" ]]; then
+            [[ "$debug_functions" == "true" ]] && echo "⚠️  スキップ: ${func_file:t} (パターン一致)"
+            continue
+        fi
 
         # 関数ファイルを安全に読み込み（サイレント）
         if source "$func_file" 2>/dev/null; then
@@ -410,18 +339,18 @@ if [[ -d "$DOTFILES_DIR/zsh/functions" ]]; then
             {
                 echo "❌ zsh関数読み込み失敗: $func_file"
                 echo "   構文エラーまたは依存関係の問題があります"
-                echo "   デバッグ: ZSH_FUNCTIONS_DEBUG=true で詳細確認可能"
+                echo "   デバッグ: FUNCTIONS_DEBUG=true で詳細確認可能"
             } >&2
         fi
     done
-    [[ "$debug_functions" == "true" ]] && echo "✅ 関数読み込み完了: $DOTFILES_DIR/zsh/functions (${#func_files[@]} files)"
+    [[ "$debug_functions" == "true" ]] && echo "✅ 関数読み込み完了: $DOTFILES_DIR/$functions_subdir (${#func_files[@]} files)"
 else
     # 関数ディレクトリが見つからない場合の警告
     {
         echo "⚠️  zsh関数ディレクトリが見つかりません"
         echo "   検出したDOTFILES_DIR: ${DOTFILES_DIR:-'(未検出)'}"
-        echo "   期待ディレクトリ: \$DOTFILES_DIR/zsh/functions"
-        echo "   設定方法: export DOTFILES_DIR=/path/to/your/dots"
+        echo "   期待ディレクトリ: \$DOTFILES_DIR/$functions_subdir"
+        echo "   設定方法: zsh/config.zsh で修正するか export DOTFILES_DIR を設定"
     } >&2
 fi
 
@@ -439,8 +368,6 @@ fi
 # bun
 export BUN_INSTALL="$HOME/.bun"
 export PATH="$BUN_INSTALL/bin:$PATH"
-
-alias claude="$HOME/.claude/local/claude"
 
 # opencode
 export PATH="$HOME/.opencode/bin:$PATH"

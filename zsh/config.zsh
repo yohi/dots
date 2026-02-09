@@ -5,7 +5,7 @@
 
 # DOTFILES_DIR のカスタム設定
 # 環境変数で指定されていない場合、この値が使用されます
-#DOTFILES_DIR="$HOME/dots"
+#DOTFILES_DIR="$HOME/dotfiles"
 
 # 関数読み込みの設定
 FUNCTIONS_SUBDIR="zsh/functions"           # 関数ディレクトリのサブパス
@@ -25,10 +25,9 @@ FUNCTIONS_SKIP_PATTERNS=(
 
 # 代替検索ディレクトリ（優先度順）
 CANDIDATE_DIRS=(
+    "$HOME/.dotfiles"
+    "$HOME/dotfiles"
+    "$HOME/.config/dotfiles"
     "$HOME/dots"
     "$HOME/.dots"
-    "$HOME/dotfiles"
-    "$HOME/.dotfiles"
-    "$HOME/.config/dots"
-    "/home/$USER/dots"
 )
