@@ -12,6 +12,8 @@ OH_MY_OPENCODE_CONFIG_PATH ?= $(OPENCODE_CONFIG_DIR)/oh-my-opencode.json
 OH_MY_OPENCODE_DOTFILES_CONFIG ?= $(DOTFILES_DIR)/opencode/oh-my-opencode.jsonc
 OPENCODE_AGENTS_PATH ?= $(OPENCODE_CONFIG_DIR)/AGENTS.md
 OPENCODE_DOTFILES_AGENTS ?= $(DOTFILES_DIR)/opencode/AGENTS.md
+OPENCODE_COMMANDS_PATH ?= $(OPENCODE_HOME)/commands
+OPENCODE_DOTFILES_COMMANDS ?= $(DOTFILES_DIR)/opencode/commands
 
 .PHONY: opencode install-packages-opencode install-opencode opencode-update setup-opencode check-opencode
 
@@ -34,6 +36,13 @@ opencode: ## OpenCode(opencode)のインストールとセットアップ
 					actual_agents=$$(readlink -f "$(OPENCODE_AGENTS_PATH)" 2>/dev/null || true); \
 					expected_agents=$$(readlink -f "$(OPENCODE_DOTFILES_AGENTS)" 2>/dev/null || true); \
 					if [ "$$actual_agents" != "$$expected_agents" ]; then skip=0; fi; \
+				else skip=0; fi; \
+			fi; \
+			if [ -d "$(OPENCODE_DOTFILES_COMMANDS)" ]; then \
+				if [ -L "$(OPENCODE_COMMANDS_PATH)" ]; then \
+					actual_cmds=$$(readlink -f "$(OPENCODE_COMMANDS_PATH)" 2>/dev/null || true); \
+					expected_cmds=$$(readlink -f "$(OPENCODE_DOTFILES_COMMANDS)" 2>/dev/null || true); \
+					if [ "$$actual_cmds" != "$$expected_cmds" ]; then skip=0; fi; \
 				else skip=0; fi; \
 			fi; \
 			if [ "$$skip" = "1" ]; then \
@@ -117,6 +126,19 @@ setup-opencode: ## OpenCode（opencode）の設定ファイルを適用
 	else \
 		echo "ℹ️  AGENTS.md ファイルはスキップされました（見つかりません）"; \
 	fi
+	@# commands/ の設定
+	@if [ -d "$(OPENCODE_DOTFILES_COMMANDS)" ]; then \
+		mkdir -p "$(OPENCODE_HOME)"; \
+		if [ -e "$(OPENCODE_COMMANDS_PATH)" ] && [ ! -L "$(OPENCODE_COMMANDS_PATH)" ]; then \
+			backup="$(OPENCODE_COMMANDS_PATH).bak.$$(date +%Y%m%d%H%M%S)"; \
+			echo "⚠️  既存の commands ディレクトリを退避します: $$backup"; \
+			mv "$(OPENCODE_COMMANDS_PATH)" "$$backup"; \
+		fi; \
+		ln -sfn "$(OPENCODE_DOTFILES_COMMANDS)" "$(OPENCODE_COMMANDS_PATH)"; \
+		echo "✅ 設定を適用しました: $(OPENCODE_COMMANDS_PATH)"; \
+	else \
+		echo "ℹ️  commands ディレクトリはスキップされました（見つかりません）"; \
+	fi
 	@$(call create_marker,setup-opencode,1)
 
 # User-friendly alias
@@ -171,5 +193,20 @@ check-opencode: ## OpenCode（opencode）の状態を確認
 			echo "⚠️  agents: $(OPENCODE_AGENTS_PATH) exists but is not a symlink"; \
 		else \
 			echo "⚠️  agents: $(OPENCODE_AGENTS_PATH) is not configured"; \
+		fi; \
+	fi
+	@if [ -d "$(OPENCODE_DOTFILES_COMMANDS)" ]; then \
+		if [ -L "$(OPENCODE_COMMANDS_PATH)" ]; then \
+			actual=$$(readlink -f "$(OPENCODE_COMMANDS_PATH)" 2>/dev/null || readlink "$(OPENCODE_COMMANDS_PATH)" 2>/dev/null || true); \
+			expected=$$(readlink -f "$(OPENCODE_DOTFILES_COMMANDS)" 2>/dev/null || true); \
+			if [ -n "$$actual" ] && [ "$$actual" = "$$expected" ]; then \
+				echo "✅ commands: $(OPENCODE_COMMANDS_PATH) -> $(OPENCODE_DOTFILES_COMMANDS)"; \
+			else \
+				echo "⚠️  commands: $(OPENCODE_COMMANDS_PATH) points to $$actual (expected $$expected)"; \
+			fi; \
+		elif [ -e "$(OPENCODE_COMMANDS_PATH)" ]; then \
+			echo "⚠️  commands: $(OPENCODE_COMMANDS_PATH) exists but is not a symlink"; \
+		else \
+			echo "⚠️  commands: $(OPENCODE_COMMANDS_PATH) is not configured"; \
 		fi; \
 	fi
