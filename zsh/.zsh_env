@@ -17,7 +17,9 @@ export PATH="/home/${USER}/bin:${PATH}"
 export PATH="${PATH}:/sbin"
 
 # ROOTLESS DOCKER
-export DOCKER_HOST="unix://${XDG_RUNTIME_DIR}/docker.sock"
+if [[ -z "${DOCKER_HOST:-}" && -n "${XDG_RUNTIME_DIR:-}" && -S "${XDG_RUNTIME_DIR}/docker.sock" ]]; then
+    export DOCKER_HOST="unix://${XDG_RUNTIME_DIR}/docker.sock"
+fi
 
 # DOCKER BUILDKIT
 export DOCKER_BUILDKIT=1

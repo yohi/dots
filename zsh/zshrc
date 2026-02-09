@@ -279,7 +279,19 @@ zinit light romkatv/powerlevel10k
 alias kgnome='killall -3 gnome-shell'
 
 # カスタム関数の読み込み（サイレント版 - Powerlevel10k instant prompt対応）
+
+# Load config.zsh for customization
+[[ -f "$ZSH_CONFIG_DIR/config.zsh" ]] && source "$ZSH_CONFIG_DIR/config.zsh"
+
 # 互換性と環境変数のための最終調整
+if [[ -z "$DOTFILES_DIR" && (( ${+CANDIDATE_DIRS} )) ]]; then
+    for candidate in "${CANDIDATE_DIRS[@]}"; do
+        if [[ -d "$candidate" ]]; then
+            export DOTFILES_DIR="$candidate"
+            break
+        fi
+    done
+fi
 DOTFILES_DIR="${DOTFILES_OVERRIDE:-${DOTFILES_ROOT:-${DOTFILES_DIR}}}"
 
 # config.zsh の設定を反映（未定義時のデフォルト値設定）
