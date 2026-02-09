@@ -1,7 +1,7 @@
 ---
 description: 状況に応じてfeatureブランチ作成/選択、関連ファイルのコミット、PR作成（未存在時のみ）を行うスマートフロー
-agent: coder
-model: antigravity-gemini-3-flash
+agent: sisyphus
+model: google/antigravity-gemini-3-flash
 ---
 
 あなたは熟練したソフトウェアエンジニアです。現在のリポジトリの状態（ブランチ、PRの有無）と変更内容を解析し、最適なGitワークフローを実行してください。
