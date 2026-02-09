@@ -10,7 +10,7 @@
 # dotfilesリポジトリのルートディレクトリを指定
 # 未設定の場合、自動検出が試みられます
 #
-# DOTFILES_DIR="$HOME/dots"
+# DOTFILES_DIR="$HOME/dotfiles"
 
 # ===================================================================
 # 関数読み込みの設定
@@ -44,12 +44,9 @@ FUNCTIONS_SKIP_PATTERNS=(
 # DOTFILES_DIRが設定されていない場合、
 # これらのディレクトリが順に検索されます
 CANDIDATE_DIRS=(
-    "$HOME/dots"
-    "$HOME/.dots"
-    "$HOME/dotfiles"
     "$HOME/.dotfiles"
-    "$HOME/.config/dots"
-    "/home/$USER/dots"
+    "$HOME/dotfiles"
+    "$HOME/.config/dotfiles"
 )
 
 # ===================================================================
