@@ -91,7 +91,20 @@
   // [Auto Slash Command] コマンド自動検出
   // "/help" ではなく単に "help" と入力してもコマンドとして解釈する機能
   "auto_slash_command": {
-    "enabled": true,
+    "enabled": true
+  },
+
+  "commands": {
+    "git-pr-flow": {
+      "description": "Git PR Flow",
+      "prompt": "./commands/git-pr-flow.md",
+      "skills": {
+        "git-master": {
+          "enable": true,
+          "allow": "*"
+        }
+      }
+    }
   },
 
   // [Rules Injector] ルール注入
