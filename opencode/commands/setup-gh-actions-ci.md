@@ -1,22 +1,33 @@
----
-description: PR作成時にGitHub ActionsでCI/CDを実行するワークフローを作成（ubuntu-slim使用）
-agent: sisyphus
-model: google/antigravity-gemini-3-flash
----
+# GitHub Actions CI 設定 (テスト用)
 
-PR作成時にGitHub Actionsでテスト（CI/CD）を回す処理を作成してください。
-具体的には、以下の要件を満たす `.github/workflows/ci.yml` ファイルを生成してください。
+このドキュメントでは、PR作成時に自動でテスト（Lintチェック）を実行するための GitHub Actions の設定について説明します。
 
-## 要件
-1. **トリガー**: Pull Request 作成時 (`on: pull_request`)
-2. **ジョブ内容**: 
-   - コードのチェックアウト
-   - リポジトリ内のスクリプトやコードに対する Lint チェック（例: ShellCheck 等、プロジェクトに適したもの）
-3. **ランナー環境**: `ubuntu-slim` を使用すること。
-   - **理由**: コスト効率のため。
-   - **注意**: よく `ubuntu-latest` と間違えられるので、必ず `ubuntu-slim` を指定してください。
-   - 参照: https://github.blog/changelog/2025-10-28-1-vcpu-linux-runner-now-available-in-github-actions-in-public-preview/
+## 概要
+リポジトリの品質維持のため、`master` ブランチへの Pull Request が作成された際に、自動的にスクリプトのチェック（ShellCheck）を実行します。
 
-## 出力
-作成したYAMLファイルの内容を提示し、ファイルを `.github/workflows/ci.yml` に保存してください。
-保存後、ユーザーに確認を求めてください。
+## 設定詳細
+- **トリガー**: `master` ブランチをターゲットとする Pull Request の作成・更新時。
+- **実行内容**: `ShellCheck` による `switch-opencode-pattern.sh` の構文・静的解析チェック。
+- **実行環境**: `ubuntu-slim` (1 vCPU)
+  - **理由**: 軽量な静的解析タスクに最適であり、コスト効率を最大化するため。
+
+## ワークフローファイル
+設定は `.github/workflows/ci.yml` に記述されています。
+
+```yaml
+name: CI
+
+on:
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  lint:
+    runs-on: ubuntu-slim
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install ShellCheck
+        run: sudo apt-get update && sudo apt-get install -y shellcheck
+      - name: Run ShellCheck
+        run: shellcheck switch-opencode-pattern.sh
+```
