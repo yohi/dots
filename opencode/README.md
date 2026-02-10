@@ -27,7 +27,6 @@ opencode/
 ├── oh-my-opencode.base.jsonc  # 設定ファイルのベーステンプレート
 ├── oh-my-opencode.jsonc       # [自動生成] 実行用設定ファイル（git管理外）
 ├── opencode.jsonc             # OpenCode本体の設定（プラグイン・権限・MCP等）
-├── opencode.log               # [自動生成] 実行ログ（git管理外）
 └── switch-opencode-pattern.sh # パターン切り替え用スクリプト
 ```
 
