@@ -14,6 +14,8 @@ OPENCODE_AGENTS_PATH ?= $(OPENCODE_CONFIG_DIR)/AGENTS.md
 OPENCODE_DOTFILES_AGENTS ?= $(DOTFILES_DIR)/opencode/AGENTS.md
 OPENCODE_COMMANDS_PATH ?= $(OPENCODE_HOME)/commands
 OPENCODE_DOTFILES_COMMANDS ?= $(DOTFILES_DIR)/opencode/commands
+OPENCODE_DOCS_PATH ?= $(OPENCODE_CONFIG_DIR)/docs
+OPENCODE_DOTFILES_DOCS ?= $(DOTFILES_DIR)/opencode/docs
 
 .PHONY: opencode install-packages-opencode install-opencode opencode-update setup-opencode check-opencode
 
@@ -43,6 +45,13 @@ opencode: ## OpenCode(opencode)のインストールとセットアップ
 					actual_cmds=$$(readlink -f "$(OPENCODE_COMMANDS_PATH)" 2>/dev/null || true); \
 					expected_cmds=$$(readlink -f "$(OPENCODE_DOTFILES_COMMANDS)" 2>/dev/null || true); \
 					if [ "$$actual_cmds" != "$$expected_cmds" ]; then skip=0; fi; \
+				else skip=0; fi; \
+			fi; \
+			if [ -d "$(OPENCODE_DOTFILES_DOCS)" ]; then \
+				if [ -L "$(OPENCODE_DOCS_PATH)" ]; then \
+					actual_docs=$$(readlink -f "$(OPENCODE_DOCS_PATH)" 2>/dev/null || true); \
+					expected_docs=$$(readlink -f "$(OPENCODE_DOTFILES_DOCS)" 2>/dev/null || true); \
+					if [ "$$actual_docs" != "$$expected_docs" ]; then skip=0; fi; \
 				else skip=0; fi; \
 			fi; \
 			if [ "$$skip" = "1" ]; then \
@@ -139,6 +148,19 @@ setup-opencode: ## OpenCode（opencode）の設定ファイルを適用
 	else \
 		echo "ℹ️  commands ディレクトリはスキップされました（見つかりません）"; \
 	fi
+	@# docs/ の設定
+	@if [ -d "$(OPENCODE_DOTFILES_DOCS)" ]; then \
+		mkdir -p "$(OPENCODE_CONFIG_DIR)"; \
+		if [ -e "$(OPENCODE_DOCS_PATH)" ] && [ ! -L "$(OPENCODE_DOCS_PATH)" ]; then \
+			backup="$(OPENCODE_DOCS_PATH).bak.$$(date +%Y%m%d%H%M%S)"; \
+			echo "⚠️  既存の docs ディレクトリを退避します: $$backup"; \
+			mv "$(OPENCODE_DOCS_PATH)" "$$backup"; \
+		fi; \
+		ln -sfn "$(OPENCODE_DOTFILES_DOCS)" "$(OPENCODE_DOCS_PATH)"; \
+		echo "✅ 設定を適用しました: $(OPENCODE_DOCS_PATH)"; \
+	else \
+		echo "ℹ️  docs ディレクトリはスキップされました（見つかりません）"; \
+	fi
 	@$(call create_marker,setup-opencode,1)
 
 # User-friendly alias
@@ -208,5 +230,20 @@ check-opencode: ## OpenCode（opencode）の状態を確認
 			echo "⚠️  commands: $(OPENCODE_COMMANDS_PATH) exists but is not a symlink"; \
 		else \
 			echo "⚠️  commands: $(OPENCODE_COMMANDS_PATH) is not configured"; \
+		fi; \
+	fi
+	@if [ -d "$(OPENCODE_DOTFILES_DOCS)" ]; then \
+		if [ -L "$(OPENCODE_DOCS_PATH)" ]; then \
+			actual=$$(readlink -f "$(OPENCODE_DOCS_PATH)" 2>/dev/null || readlink "$(OPENCODE_DOCS_PATH)" 2>/dev/null || true); \
+			expected=$$(readlink -f "$(OPENCODE_DOTFILES_DOCS)" 2>/dev/null || true); \
+			if [ -n "$$actual" ] && [ "$$actual" = "$$expected" ]; then \
+				echo "✅ docs: $(OPENCODE_DOCS_PATH) -> $(OPENCODE_DOTFILES_DOCS)"; \
+			else \
+				echo "⚠️  docs: $(OPENCODE_DOCS_PATH) points to $$actual (expected $$expected)"; \
+			fi; \
+		elif [ -e "$(OPENCODE_DOCS_PATH)" ]; then \
+			echo "⚠️  docs: $(OPENCODE_DOCS_PATH) exists but is not a symlink"; \
+		else \
+			echo "⚠️  docs: $(OPENCODE_DOCS_PATH) is not configured"; \
 		fi; \
 	fi
