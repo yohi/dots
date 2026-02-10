@@ -25,9 +25,9 @@ opencode/
 │   └── pattern-5.jsonc        # Gemini主体（Claude最小）
 ├── AGENTS.md                  # エージェント向けグローバル指示（英語）
 ├── oh-my-opencode.base.jsonc  # 設定ファイルのベーステンプレート
-├── oh-my-opencode.jsonc       # 生成された実際の設定ファイル（このファイルが読み込まれます）
+├── oh-my-opencode.jsonc       # [自動生成] 実行用設定ファイル（git管理外）
 ├── opencode.jsonc             # OpenCode本体の設定（プラグイン・権限・MCP等）
-├── opencode.log               # OpenCode実行ログ
+├── opencode.log               # [自動生成] 実行ログ（git管理外）
 └── switch-opencode-pattern.sh # パターン切り替え用スクリプト
 ```
 
