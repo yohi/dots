@@ -4,7 +4,7 @@
   "description": "GPT+Claude+Gemini 最強構成（Sisyphus=Opus, Hephaestus=Codex）",
   "agents": {
     "sisyphus": {
-      "model": "google/antigravity-claude-opus-4-5-thinking", // 指揮・推論には最強のOpus (Thinking)
+      "model": "google/antigravity-claude-opus-4-6-thinking", // 指揮・推論には最強のOpus (Thinking)
       "variant": "max",
       "temperature": 0.2,
     },
@@ -57,7 +57,7 @@
       "model": "google/antigravity-claude-sonnet-4-5",
     },
     "unspecified-high": {
-      "model": "google/antigravity-claude-opus-4-5-thinking",
+      "model": "google/antigravity-claude-opus-4-6-thinking",
       "variant": "max",
     },
   }
