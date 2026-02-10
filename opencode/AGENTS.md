@@ -1,21 +1,33 @@
-# Global Agent Configuration
+# AI Agent Guidelines for `dots` Repository
 
-This configuration applies to ALL projects and overrides default agent behaviors.
+## 1. Project Overview
+This repository contains dotfiles and setup scripts for building a comprehensive Ubuntu development environment (Zsh, Neovim, VS Code, etc.).
+**Key Principles:** Modularity, Idempotency, and Japanese Localization.
 
-## 🗣️ Core Language & Interaction
-* **Language**: You MUST think, communicate, and output in **Japanese** (日本語), unless the user explicitly requests English.
-* **Code Comments**: Write all inline code comments and documentation in **Japanese**.
-* **Tone**: Technical, concise, and professional. Avoid excessive politeness; focus on engineering value.
+## 2. Language Policy (CRITICAL)
+- **Output Language**: **ALWAYS** use **Japanese (日本語)** for all external communication (Commits, Docs, Comments, Chat).
+- **EXCEPTION**: `AGENTS.md` and `docs/rules/*.md` must be written in English for LLM precision.
+- **Thinking**: You may think in English, but output must be Japanese.
 
-## 🎨 Universal Coding Standards
-* **Style Guide**: Strictly follow the [Google Style Guide](https://google.github.io/styleguide/) for the target language.
-* **Linting**: If the project has a linter config (eslint, flake8, etc.), fixing linter errors takes precedence over general style guides.
-* **Naming**: Use English for variable/function names. Use Japanese for descriptions/comments.
+## 3. Operations & Commands
+- **Install**: `./install.sh` or `make setup-all`
+- **Test**: `make test` (Unit + Mock), `./scripts/check-setup.sh` (Health Check)
+- **Lint**:
+  - Shell: `shellcheck`
+  - Markdown: `markdownlint-cli2` (See `docs/rules/MARKDOWN.md`)
 
-## 🗺️ Progressive Disclosure
-For detailed operational standards, refer to the following global documents:
+## 4. Documentation & Rules Map
+The agent **MUST** read the specific rule file before editing corresponding file types.
 
-- **Git & PRs**: `~/.config/opencode/docs/global/GIT_STANDARDS.md` (Commit formats, PR templates)
-- **Documentation**: `~/.config/opencode/docs/global/DOCS_STYLE.md` (README, Specs writing style)
+| Context | Rule File |
+| :--- | :--- |
+| **Markdown / Docs** | [`docs/rules/MARKDOWN.md`](docs/rules/MARKDOWN.md) |
+| **Shell Scripts** | [`docs/rules/SHELL.md`](docs/rules/SHELL.md) |
+| **Makefiles** | [`.cursor/rules/makefile-organization.mdc`](.cursor/rules/makefile-organization.mdc) |
+| **SDD Workflow** | `.kiro/steering/*.md` |
 
-> **Note**: If the current repository has its own `AGENTS.md`, rules defined there take precedence over these global settings.
+## 5. Agent Behavior Checklist
+- [ ] Validated with `markdownlint-cli2` when editing docs?
+- [ ] Used Japanese for user-facing text?
+- [ ] Verified `Makefile` target with `make -n`?
+- [ ] Checked `check_marker` for heavy tasks?
