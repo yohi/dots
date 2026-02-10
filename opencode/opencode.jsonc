@@ -8,7 +8,7 @@
   "plugin": [
      "oh-my-opencode@latest",
      "opencode-openai-codex-auth@latest",
-     "opencode-antigravity-auth@latest",
+     "opencode-antigravity-auth@beta",
      "@yohi/opencode-antigravity-quota@latest",
      "@yohi/opencode-codex-quota@latest",
      "@yohi/omo-sdd-hybrid",
