@@ -140,7 +140,11 @@ setup-opencode: ## OpenCode（opencode）の設定ファイルを適用
 		mkdir -p "$(OPENCODE_HOME)"; \
 		if [ -e "$(OPENCODE_COMMANDS_PATH)" ] && [ ! -L "$(OPENCODE_COMMANDS_PATH)" ]; then \
 			backup="$(OPENCODE_COMMANDS_PATH).bak.$$(date +%Y%m%d%H%M%S)"; \
-			echo "⚠️  既存の commands ディレクトリを退避します: $$backup"; \
+			if [ -d "$(OPENCODE_COMMANDS_PATH)" ]; then \
+				echo "⚠️  既存の commands ディレクトリを退避します: $$backup"; \
+			else \
+				echo "⚠️  既存の commands ファイルを退避します: $$backup"; \
+			fi; \
 			mv "$(OPENCODE_COMMANDS_PATH)" "$$backup"; \
 		fi; \
 		ln -sfn "$(OPENCODE_DOTFILES_COMMANDS)" "$(OPENCODE_COMMANDS_PATH)"; \
@@ -153,7 +157,11 @@ setup-opencode: ## OpenCode（opencode）の設定ファイルを適用
 		mkdir -p "$(OPENCODE_CONFIG_DIR)"; \
 		if [ -e "$(OPENCODE_DOCS_PATH)" ] && [ ! -L "$(OPENCODE_DOCS_PATH)" ]; then \
 			backup="$(OPENCODE_DOCS_PATH).bak.$$(date +%Y%m%d%H%M%S)"; \
-			echo "⚠️  既存の docs ディレクトリを退避します: $$backup"; \
+			if [ -d "$(OPENCODE_DOCS_PATH)" ]; then \
+				echo "⚠️  既存の docs ディレクトリを退避します: $$backup"; \
+			else \
+				echo "⚠️  既存の docs ファイルを退避します: $$backup"; \
+			fi; \
 			mv "$(OPENCODE_DOCS_PATH)" "$$backup"; \
 		fi; \
 		ln -sfn "$(OPENCODE_DOTFILES_DOCS)" "$(OPENCODE_DOCS_PATH)"; \
