@@ -100,8 +100,17 @@
       "prompt": "./commands/git-pr-flow.md",
       "skills": {
         "git-master": {
-          "enable": true,
-          "allow": "*"
+          "enabled": true,
+          "allow": [
+            "git_add",
+            "git_commit",
+            "git_push",
+            "git_status",
+            "git_diff",
+            "git_log",
+            "git_checkout",
+            "git_branch"
+          ]
         }
       }
     }
