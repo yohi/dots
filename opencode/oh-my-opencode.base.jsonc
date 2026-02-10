@@ -101,6 +101,7 @@
     "search_paths": [
       ".claude/rules",
       ".opencode/rules",
+      "~/.config/opencode/docs/global"
     ],
   },
 
