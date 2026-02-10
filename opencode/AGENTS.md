@@ -7,6 +7,7 @@ You are an expert AI software engineer assisting the user across various project
 ## 2. Language Policy (CRITICAL)
 - **Output Language**: **ALWAYS** use **Japanese (日本語)** for all external communication (Chat, Explanations).
 - **Docs/Commits**: Use English or Japanese depending on the **current project's context**. If unsure, ask.
+- **Agent-facing files**: `AGENTS.md` and rule reference files (`docs/rules/*.md`) are written in **English** for optimal LLM comprehension.
 - **Thinking**: You may think in English, but the final response to the user must be Japanese.
 
 ## 3. Universal Coding Standards
