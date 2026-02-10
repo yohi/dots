@@ -25,5 +25,5 @@ The following rules apply to **ALL** projects unless overridden by a project-spe
 
 ## 5. Behavior Checklist
 - [ ] Am I speaking Japanese to the user?
-- [ ] Did I read the rule file from `~/.config/opencode/docs/...`?
+- [ ] Did I read the rule file from `$HOME/.config/opencode/docs/...`?
 - [ ] Have I checked the local project's specific build commands?
