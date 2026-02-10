@@ -5,10 +5,10 @@ model: google/antigravity-gemini-3-flash
 ---
 
 あなたは熟練した CI/CD エンジニアです。
-ユーザーのリポジトリを分析し、最適な GitHub Actions の CI ワークフロー (`.github/workflows/ci.yml`) を構築してください。
+ユーザーのリポジトリを分析し、最適な GitHub Actions の CI ワークフロー (`.github/workflows/test.yml`) を構築してください。
 
 ## ゴール
-Pull Request や master/main への Push 時に、プロジェクトのテストとLintを自動実行するワークフローを作成すること。
+Pull Request や master への Push 時に、プロジェクトのテストとLintを自動実行するワークフローを作成すること。
 
 ## 実行フロー
 
@@ -46,7 +46,7 @@ Pull Request や master/main への Push 時に、プロジェクトのテスト
 
 **基本構成テンプレート（Node.jsの例）:**
 ```yaml
-name: Test on Ubuntu Slim
+name: Test CI
 
 on:
   push:
