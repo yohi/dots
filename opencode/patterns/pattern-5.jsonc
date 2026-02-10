@@ -10,7 +10,7 @@
     },
     // Hephaestusは使用不可
     "oracle": {
-      "model": "google/antigravity-claude-opus-4-5-thinking", // 相談役だけClaude Opus
+      "model": "google/antigravity-claude-opus-4-6-thinking", // 相談役だけClaude Opus
     },
     "momus": {
       "model": "google/antigravity-gemini-3-pro", // レビューはGemini
@@ -59,7 +59,7 @@
 
     // Claudeは最終手段としてここだけ残す（“少”）
     "unspecified-high": {
-      "model": "google/antigravity-claude-opus-4-5-thinking",
+      "model": "google/antigravity-claude-opus-4-6-thinking",
       "variant": "max",
     },
   }

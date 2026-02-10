@@ -4,7 +4,7 @@
   "description": "GPTなし（Claude+Gemini）",
   "agents": {
     "sisyphus": {
-      "model": "google/antigravity-claude-opus-4-5-thinking",
+      "model": "google/antigravity-claude-opus-4-6-thinking",
       "variant": "max",
       "temperature": 0.2,
     },
@@ -43,11 +43,11 @@
 
     // GPT無しなので ultrabrain/deep は Opus Thinking に寄せる
     "ultrabrain": {
-      "model": "google/antigravity-claude-opus-4-5-thinking",
+      "model": "google/antigravity-claude-opus-4-6-thinking",
       "variant": "max",
     },
     "deep": {
-      "model": "google/antigravity-claude-opus-4-5-thinking",
+      "model": "google/antigravity-claude-opus-4-6-thinking",
       "variant": "max",
     },
 
@@ -55,7 +55,7 @@
       "model": "google/antigravity-claude-sonnet-4-5",
     },
     "unspecified-high": {
-      "model": "google/antigravity-claude-opus-4-5-thinking",
+      "model": "google/antigravity-claude-opus-4-6-thinking",
       "variant": "max",
     },
   }
