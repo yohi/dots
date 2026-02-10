@@ -20,7 +20,7 @@ The following rules apply to **ALL** projects unless overridden by a project-spe
 
 ## 4. Workflow & Context Awareness
 1. **Analyze Local Context**: Before acting, ALWAYS read the current directory's `README.md` or local `AGENTS.md` to understand the specific project constraints.
-2. **Resolve Paths**: When reading the rule files listed in Section 3, strictly use the provided **absolute paths (starting with `~/.config/...`)**. Do not look for `docs/` in the current project directory.
+2. **Resolve Paths**: When reading the rule files listed in Section 3, strictly use the provided **absolute paths (starting with `$HOME/.config/...`)**. Note: If a path begins with `~`, expand it to the user's home directory (e.g., `~/.config/` → `$HOME/.config/`) before treating it as an absolute path. Do not look for `docs/` in the current project directory.
 3. **Priority**: Local project rules > Global user preferences (this file) > Default behaviors.
 
 ## 5. Behavior Checklist
