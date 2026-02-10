@@ -96,12 +96,13 @@
 
   // [Rules Injector] ルール注入
   // .cursorrules や CONTEXT.md などをプロンプトに自動挿入する設定
+  // NOTE: oh-my-opencode の rules-injector はハードコードされたパスのみ参照する
+  //       (.claude/rules, .cursor/rules, .sisyphus/rules, ~/.claude/rules)
+  //       カスタム search_paths は未実装のため、グローバルルールを追加したい場合は
+  //       シンボリックリンクで対応すること:
+  //       ln -sfn ~/.config/opencode/docs/global ~/.claude/rules
   "rules_injector": {
-    "enabled": true,
-    "search_paths": [
-      ".claude/rules",
-      ".opencode/rules",
-    ],
+    "enabled": true
   },
 
   // ================================================================================
