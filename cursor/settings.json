@@ -160,6 +160,5 @@
     "window.restoreWindows": "none",
     "diffEditor.ignoreTrimWhitespace": false,
     "window.confirmSaveUntitledWorkspace": false,
-    "cursor.composer.usageSummaryDisplay": "always",
-    "cursor.general.disableHttp2": true
+    "cursor.composer.usageSummaryDisplay": "always"
 }
