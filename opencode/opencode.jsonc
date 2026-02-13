@@ -212,14 +212,17 @@
   "lsp": {
     "bash-language-server": {
       "command": ["bash-language-server", "start"],
+      "extensions": ["bash"],
       "disabled": false
     },
     "typescript-language-server": {
       "command": ["typescript-language-server", "--stdio"],
+      "extensions": ["typescript"],
       "disabled": false
     },
     "pyright": {
       "command": ["pyright-langserver", "--stdio"],
+      "extensions": ["python"],
       "disabled": false
     }
   },
