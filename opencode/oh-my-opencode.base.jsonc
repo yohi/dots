@@ -1,6 +1,17 @@
 {
+  // Config Modernized: 2026-02-13
+  // Based on oh-my-opencode v3.5.3
   // スキーマ定義：エディタでの補完とバリデーションを有効化
   "$schema": "https://raw.githubusercontent.com/code-yeongyu/oh-my-opencode/master/assets/oh-my-opencode.schema.json",
+
+  // [Sisyphus Agent] エージェント自律設定
+  // Prometheus (Planner) を有効化し、複雑なタスクの計画立案能力を強化
+  "sisyphus_agent": {
+    "disabled": false,
+    "planner_enabled": true,
+    "replace_plan": true,
+    "default_builder_enabled": false
+  },
 
   // ================================================================================
   // グローバル設定 (Global Configuration)
@@ -8,13 +19,23 @@
 
   "experimental": {
     // OpenCodeのTodo UIと同期されず、TodoWriteが無効になりTUIに表示されなくなるため無効化（既知のUX低下）
-    "task_system": false
+    "task_system": false,
+    // [Performance] 大規模タスク最適化
+    "aggressive_truncation": true,      // コンテキスト溢れ防止
+    "auto_resume": true,                // エラー時の自動リトライ
+    "preemptive_compaction_threshold": 0.85 // 85%で圧縮開始
   },
+
+  // [Security] グローバルセキュリティ設定
+  "google_auth": false,   // 不要な認証ポップアップ抑制
+  "share": "disabled",    // 誤操作による共有防止
 
   // パフォーマンスと安定性のための最適化設定
   "disabled_hooks": [
     // "startup-toast",           // 起動時の通知が不要な場合は有効化
     // "tasks-todowrite-disabler" // AIにTODOリストを直接更新させたい場合は有効化（通常は安全のためブロック）
+    "auto-update-checker",        // 起動ごとのアップデート通知を停止
+    "comment-checker"             // AIによるコメント指摘を停止（Linterに任せる）
   ],
   "disabled_mcps": [
   ],
@@ -46,8 +67,9 @@
     "defaultConcurrency": 5,
     "staleTimeoutMs": 180000,
     "providerConcurrency": {
-      "google": 5,
-      "openai": 3,
+      "google": 20,
+      "openai": 10,
+      "anthropic": 5
     },
     "modelConcurrency": {
       // いちばん高いモデルは1並列に抑えるのが安全
