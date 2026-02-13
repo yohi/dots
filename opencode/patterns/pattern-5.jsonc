@@ -1,22 +1,28 @@
 {
-  // 【パターン5】Claude(少) + Gemini (Gemini主体)
-  //  コスト最優先、またはGeminiの長大なコンテキストをフル活用する場合。
-  "description": "Gemini主体（Claude最小）",
+  // 【パターン5】Ultra Low Cost (激安構成)
+  //  ほぼ全てをGemini系で固めた構成。大量のログ解析や試行錯誤向け。
+  "description": "激安構成 (All Gemini)",
   "agents": {
     "sisyphus": {
-      "model": "google/antigravity-gemini-3-pro", // メインはGemini
+      "model": "google/antigravity-gemini-3-pro",
       "variant": "high",
       "temperature": 0.2,
     },
-    // Hephaestusは使用不可
+    "metis": {
+      "model": "google/antigravity-gemini-3-pro", // 参謀もGemini Pro
+      "variant": "high",
+      "temperature": 0.5
+    },
+    // Hephaestus (GPT) は使用不可 -> Sisyphusにフォールバック
     "oracle": {
-      "model": "google/antigravity-claude-opus-4-6-thinking", // 相談役だけClaude Opus
+      "model": "google/antigravity-gemini-3-pro", // 相談もGemini
+      "variant": "high"
     },
     "momus": {
-      "model": "google/antigravity-gemini-3-pro", // レビューはGemini
+      "model": "google/antigravity-gemini-3-flash",
     },
     "librarian": {
-      "model": "google/antigravity-gemini-3-pro",
+      "model": "google/antigravity-gemini-3-flash",
     },
     "explore": {
       "model": "google/antigravity-gemini-3-flash",
@@ -24,43 +30,32 @@
     "multimodal-looker": {
       "model": "google/antigravity-gemini-3-flash",
     },
+    "git-specialist": {
+      "description": "Git operations specialist",
+      "model": "google/antigravity-gemini-3-flash",
+      "permission": {
+        "bash": {
+          "git push --force": "deny",
+          "git push -f": "deny",
+          "git clean *": "ask",
+          "git add .": "ask",
+          "git *": "allow",
+          "*": "deny",
+        },
+        "edit": "deny",
+        "webfetch": "deny",
+      },
+    },
   },
 
   "categories": {
-    "quick": {
-      "model": "google/antigravity-gemini-3-flash",
-    },
-    "writing": {
-      "model": "google/antigravity-gemini-3-flash",
-    },
-    "visual-engineering": {
-      "model": "google/antigravity-gemini-3-pro",
-      "variant": "high",
-    },
-    "artistry": {
-      "model": "google/antigravity-gemini-3-pro",
-      "variant": "max",
-    },
-
-    // ほぼGemini運用：ultrabrain/deepもGeminiへ
-    "ultrabrain": {
-      "model": "google/antigravity-gemini-3-pro",
-      "variant": "high",
-    },
-    "deep": {
-      "model": "google/antigravity-gemini-3-pro",
-      "variant": "high",
-    },
-
-    "unspecified-low": {
-      "model": "google/antigravity-gemini-3-pro",
-      "variant": "high",
-    },
-
-    // Claudeは最終手段としてここだけ残す（“少”）
-    "unspecified-high": {
-      "model": "google/antigravity-claude-opus-4-6-thinking",
-      "variant": "max",
-    },
+    "quick": { "model": "google/antigravity-gemini-3-flash" },
+    "writing": { "model": "google/antigravity-gemini-3-flash" },
+    "visual-engineering": { "model": "google/antigravity-gemini-3-pro" },
+    "artistry": { "model": "google/antigravity-gemini-3-pro" },
+    "ultrabrain": { "model": "google/antigravity-gemini-3-pro" },
+    "deep": { "model": "google/antigravity-gemini-3-pro" },
+    "unspecified-low": { "model": "google/antigravity-gemini-3-flash" },
+    "unspecified-high": { "model": "google/antigravity-gemini-3-pro" },
   }
 }

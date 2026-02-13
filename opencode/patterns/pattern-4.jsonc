@@ -1,22 +1,29 @@
 {
-  // 【パターン4】Claude + Gemini (GPTなし)
-  //  OpenAIのコスト削減、またはAPI制限時。Hephaestus(Codex)は使用不可。
-  "description": "GPTなし（Claude+Gemini）",
+  // 【パターン4】No GPT (Claude + Gemini)
+  //  OpenAIを使用しない構成。GPT-5.3が使えない分、Opus 4.6の推論力でカバーする。
+  "description": "GPTなし (Opus 4.6 + Gemini)",
   "agents": {
     "sisyphus": {
-      "model": "google/antigravity-claude-opus-4-6-thinking",
+      "model": "google/antigravity-claude-opus-4-6-thinking", // 指揮はOpus
       "variant": "max",
-      "temperature": 0.2,
+      "temperature": 0.1,
+      "thinking": { "budget": 32768 }
     },
-    // HephaestusはGPT必須のため定義を省略（デフォルトまたはSisyphusにフォールバックさせる意図）
+    "metis": {
+      "model": "google/antigravity-claude-opus-4-6-thinking", // 参謀もOpus
+      "variant": "max",
+      "temperature": 0.5
+    },
+    // Hephaestus (GPT) は使用不可 -> Sisyphus (Opus) が兼任
     "oracle": {
-      "model": "google/antigravity-claude-sonnet-4-5",
+      "model": "google/antigravity-claude-opus-4-6-thinking",
+      "variant": "max"
     },
     "momus": {
-      "model": "google/antigravity-claude-sonnet-4-5", // レビューもClaude
+      "model": "google/antigravity-claude-sonnet-4-5",
     },
     "librarian": {
-      "model": "google/antigravity-gemini-3-pro",
+      "model": "google/antigravity-gemini-3-flash",
     },
     "explore": {
       "model": "google/antigravity-gemini-3-flash",
@@ -24,39 +31,32 @@
     "multimodal-looker": {
       "model": "google/antigravity-gemini-3-flash",
     },
+    "git-specialist": {
+      "description": "Git operations specialist",
+      "model": "google/antigravity-gemini-3-pro", // GPTなしならGemini Proが無難
+      "permission": {
+        "bash": {
+          "git push --force": "deny",
+          "git push -f": "deny",
+          "git clean *": "ask",
+          "git add .": "ask",
+          "git *": "allow",
+          "*": "deny",
+        },
+        "edit": "deny",
+        "webfetch": "deny",
+      },
+    },
   },
 
   "categories": {
-    "quick": {
-      "model": "google/antigravity-gemini-3-flash",
-    },
-    "writing": {
-      "model": "google/antigravity-gemini-3-flash",
-    },
-    "visual-engineering": {
-      "model": "google/antigravity-gemini-3-pro",
-    },
-    "artistry": {
-      "model": "google/antigravity-gemini-3-pro",
-      "variant": "max",
-    },
-
-    // GPT無しなので ultrabrain/deep は Opus Thinking に寄せる
-    "ultrabrain": {
-      "model": "google/antigravity-claude-opus-4-6-thinking",
-      "variant": "max",
-    },
-    "deep": {
-      "model": "google/antigravity-claude-opus-4-6-thinking",
-      "variant": "max",
-    },
-
-    "unspecified-low": {
-      "model": "google/antigravity-claude-sonnet-4-5",
-    },
-    "unspecified-high": {
-      "model": "google/antigravity-claude-opus-4-6-thinking",
-      "variant": "max",
-    },
+    "quick": { "model": "google/antigravity-gemini-3-flash" },
+    "writing": { "model": "google/antigravity-gemini-3-flash" },
+    "visual-engineering": { "model": "google/antigravity-claude-sonnet-4-5" },
+    "artistry": { "model": "google/antigravity-claude-opus-4-6-thinking", "variant": "max" },
+    "ultrabrain": { "model": "google/antigravity-claude-opus-4-6-thinking", "variant": "max" },
+    "deep": { "model": "google/antigravity-claude-opus-4-6-thinking", "variant": "max" },
+    "unspecified-low": { "model": "google/antigravity-claude-sonnet-4-5" },
+    "unspecified-high": { "model": "google/antigravity-claude-opus-4-6-thinking", "variant": "max" },
   }
 }

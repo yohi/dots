@@ -10,6 +10,8 @@ OPENCODE_DOTFILES_CONFIG ?= $(DOTFILES_DIR)/opencode/opencode.jsonc
 # TODO 2026/01/26時点で.jsoncを読みに行かないので、.jsonに修正
 OH_MY_OPENCODE_CONFIG_PATH ?= $(OPENCODE_CONFIG_DIR)/oh-my-opencode.json
 OH_MY_OPENCODE_DOTFILES_CONFIG ?= $(DOTFILES_DIR)/opencode/oh-my-opencode.jsonc
+OPENCODE_ANTIGRAVITY_PATH ?= $(OPENCODE_CONFIG_DIR)/antigravity.json
+OPENCODE_DOTFILES_ANTIGRAVITY ?= $(DOTFILES_DIR)/opencode/antigravity.json
 OPENCODE_AGENTS_PATH ?= $(OPENCODE_CONFIG_DIR)/AGENTS.md
 OPENCODE_DOTFILES_AGENTS ?= $(DOTFILES_DIR)/opencode/AGENTS.md
 OPENCODE_COMMANDS_PATH ?= $(OPENCODE_HOME)/commands
@@ -31,6 +33,13 @@ opencode: ## OpenCode(opencode)のインストールとセットアップ
 					actual_oh=$$(readlink -f "$(OH_MY_OPENCODE_CONFIG_PATH)" 2>/dev/null || true); \
 					expected_oh=$$(readlink -f "$(OH_MY_OPENCODE_DOTFILES_CONFIG)" 2>/dev/null || true); \
 					if [ "$$actual_oh" != "$$expected_oh" ]; then skip=0; fi; \
+				else skip=0; fi; \
+			fi; \
+			if [ -f "$(OPENCODE_DOTFILES_ANTIGRAVITY)" ]; then \
+				if [ -L "$(OPENCODE_ANTIGRAVITY_PATH)" ]; then \
+					actual_anti=$$(readlink -f "$(OPENCODE_ANTIGRAVITY_PATH)" 2>/dev/null || true); \
+					expected_anti=$$(readlink -f "$(OPENCODE_DOTFILES_ANTIGRAVITY)" 2>/dev/null || true); \
+					if [ "$$actual_anti" != "$$expected_anti" ]; then skip=0; fi; \
 				else skip=0; fi; \
 			fi; \
 			if [ -f "$(OPENCODE_DOTFILES_AGENTS)" ]; then \
@@ -123,6 +132,18 @@ setup-opencode: ## OpenCode（opencode）の設定ファイルを適用
 	else \
 		echo "ℹ️  oh-my-opencode 設定ファイルはスキップされました（見つかりません）"; \
 	fi
+	@# antigravity.json の設定
+	@if [ -f "$(OPENCODE_DOTFILES_ANTIGRAVITY)" ]; then \
+		if [ -e "$(OPENCODE_ANTIGRAVITY_PATH)" ] && [ ! -L "$(OPENCODE_ANTIGRAVITY_PATH)" ]; then \
+			backup="$(OPENCODE_ANTIGRAVITY_PATH).bak.$$(date +%Y%m%d%H%M%S)"; \
+			echo "⚠️  既存の antigravity 設定ファイルを退避します: $$backup"; \
+			mv "$(OPENCODE_ANTIGRAVITY_PATH)" "$$backup"; \
+		fi; \
+		ln -sfn "$(OPENCODE_DOTFILES_ANTIGRAVITY)" "$(OPENCODE_ANTIGRAVITY_PATH)"; \
+		echo "✅ 設定を適用しました: $(OPENCODE_ANTIGRAVITY_PATH)"; \
+	else \
+		echo "ℹ️  antigravity 設定ファイルはスキップされました（見つかりません）"; \
+	fi
 	@# AGENTS.md の設定
 	@if [ -f "$(OPENCODE_DOTFILES_AGENTS)" ]; then \
 		if [ -e "$(OPENCODE_AGENTS_PATH)" ] && [ ! -L "$(OPENCODE_AGENTS_PATH)" ]; then \
@@ -208,6 +229,21 @@ check-opencode: ## OpenCode（opencode）の状態を確認
 			echo "⚠️  oh-my-config: $(OH_MY_OPENCODE_CONFIG_PATH) exists but is not a symlink"; \
 		else \
 			echo "⚠️  oh-my-config: $(OH_MY_OPENCODE_CONFIG_PATH) is not configured"; \
+		fi; \
+	fi
+	@if [ -f "$(OPENCODE_DOTFILES_ANTIGRAVITY)" ]; then \
+		if [ -L "$(OPENCODE_ANTIGRAVITY_PATH)" ]; then \
+			actual=$$(readlink -f "$(OPENCODE_ANTIGRAVITY_PATH)" 2>/dev/null || readlink "$(OPENCODE_ANTIGRAVITY_PATH)" 2>/dev/null || true); \
+			expected=$$(readlink -f "$(OPENCODE_DOTFILES_ANTIGRAVITY)" 2>/dev/null || true); \
+			if [ -n "$$actual" ] && [ "$$actual" = "$$expected" ]; then \
+				echo "✅ antigravity: $(OPENCODE_ANTIGRAVITY_PATH) -> $(OPENCODE_DOTFILES_ANTIGRAVITY)"; \
+			else \
+				echo "⚠️  antigravity: $(OPENCODE_ANTIGRAVITY_PATH) points to $$actual (expected $$expected)"; \
+			fi; \
+		elif [ -e "$(OPENCODE_ANTIGRAVITY_PATH)" ]; then \
+			echo "⚠️  antigravity: $(OPENCODE_ANTIGRAVITY_PATH) exists but is not a symlink"; \
+		else \
+			echo "⚠️  antigravity: $(OPENCODE_ANTIGRAVITY_PATH) is not configured"; \
 		fi; \
 	fi
 	@if [ -f "$(OPENCODE_DOTFILES_AGENTS)" ]; then \
