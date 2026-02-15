@@ -55,6 +55,7 @@ cursor/mcp*.json
 
 # OpenCode 生成ファイル
 opencode/oh-my-opencode.jsonc
+.opencode/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
