@@ -59,7 +59,7 @@
 
   "categories": {
     "quick": {
-      "model": "google/antigravity-gemini-3-flash",
+      "model": "git-specialist",
     },
     "writing": {
       "model": "google/antigravity-gemini-3-flash",

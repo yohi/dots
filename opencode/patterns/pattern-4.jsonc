@@ -50,7 +50,7 @@
   },
 
   "categories": {
-    "quick": { "model": "google/antigravity-gemini-3-flash" },
+    "quick": { "model": "git-specialist" },
     "writing": { "model": "google/antigravity-gemini-3-flash" },
     "visual-engineering": { "model": "google/antigravity-claude-sonnet-4-5" },
     "artistry": { "model": "google/antigravity-claude-opus-4-6-thinking", "variant": "max" },
