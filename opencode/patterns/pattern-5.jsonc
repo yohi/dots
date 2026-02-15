@@ -49,7 +49,7 @@
   },
 
   "categories": {
-    "quick": { "model": "git-specialist" },
+    "quick": { "model": "google/antigravity-gemini-3-flash" },
     "writing": { "model": "google/antigravity-gemini-3-flash" },
     "visual-engineering": { "model": "google/antigravity-gemini-3-pro" },
     "artistry": { "model": "google/antigravity-gemini-3-pro" },
