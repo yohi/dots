@@ -135,6 +135,15 @@
           ]
         }
       }
+    },
+    "build-skill": {
+      "description": "Agent Skill Builder",
+      "prompt": "./commands/build-skill.md",
+      "skills": {
+        "agent-skill-architect": {
+          "enabled": true
+        }
+      }
     }
   },
 

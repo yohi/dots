@@ -16,6 +16,8 @@ OPENCODE_AGENTS_PATH ?= $(OPENCODE_CONFIG_DIR)/AGENTS.md
 OPENCODE_DOTFILES_AGENTS ?= $(DOTFILES_DIR)/opencode/AGENTS.md
 OPENCODE_COMMANDS_PATH ?= $(OPENCODE_HOME)/commands
 OPENCODE_DOTFILES_COMMANDS ?= $(DOTFILES_DIR)/opencode/commands
+OPENCODE_SKILLS_PATH ?= $(OPENCODE_HOME)/skills
+OPENCODE_DOTFILES_SKILLS ?= $(DOTFILES_DIR)/opencode/skills
 OPENCODE_DOCS_PATH ?= $(OPENCODE_CONFIG_DIR)/docs
 OPENCODE_DOTFILES_DOCS ?= $(DOTFILES_DIR)/opencode/docs
 
@@ -54,6 +56,13 @@ opencode: ## OpenCode(opencode)のインストールとセットアップ
 					actual_cmds=$$(readlink -f "$(OPENCODE_COMMANDS_PATH)" 2>/dev/null || true); \
 					expected_cmds=$$(readlink -f "$(OPENCODE_DOTFILES_COMMANDS)" 2>/dev/null || true); \
 					if [ "$$actual_cmds" != "$$expected_cmds" ]; then skip=0; fi; \
+				else skip=0; fi; \
+			fi; \
+			if [ -d "$(OPENCODE_DOTFILES_SKILLS)" ]; then \
+				if [ -L "$(OPENCODE_SKILLS_PATH)" ]; then \
+					actual_skills=$$(readlink -f "$(OPENCODE_SKILLS_PATH)" 2>/dev/null || true); \
+					expected_skills=$$(readlink -f "$(OPENCODE_DOTFILES_SKILLS)" 2>/dev/null || true); \
+					if [ "$$actual_skills" != "$$expected_skills" ]; then skip=0; fi; \
 				else skip=0; fi; \
 			fi; \
 			if [ -d "$(OPENCODE_DOTFILES_DOCS)" ]; then \
@@ -173,7 +182,39 @@ setup-opencode: ## OpenCode（opencode）の設定ファイルを適用
 	else \
 		echo "ℹ️  commands ディレクトリはスキップされました（見つかりません）"; \
 	fi
+	@# skills/ の設定
+	@if [ -d "$(OPENCODE_DOTFILES_SKILLS)" ]; then \
+		mkdir -p "$(OPENCODE_HOME)"; \
+		if [ -e "$(OPENCODE_SKILLS_PATH)" ] && [ ! -L "$(OPENCODE_SKILLS_PATH)" ]; then \
+			backup="$(OPENCODE_SKILLS_PATH).bak.$$(date +%Y%m%d%H%M%S)"; \
+			if [ -d "$(OPENCODE_SKILLS_PATH)" ]; then \
+				echo "⚠️  既存の skills ディレクトリを退避します: $$backup"; \
+			else \
+				echo "⚠️  既存の skills ファイルを退避します: $$backup"; \
+			fi; \
+			mv "$(OPENCODE_SKILLS_PATH)" "$$backup"; \
+		fi; \
+		ln -sfn "$(OPENCODE_DOTFILES_SKILLS)" "$(OPENCODE_SKILLS_PATH)"; \
+		echo "✅ 設定を適用しました: $(OPENCODE_SKILLS_PATH)"; \
+	else \
+		echo "ℹ️  skills ディレクトリはスキップされました（見つかりません）"; \
+	fi
 	@# docs/ の設定
+	@if [ -d "$(OPENCODE_DOTFILES_SKILLS)" ]; then \
+		if [ -L "$(OPENCODE_SKILLS_PATH)" ]; then \
+			actual=$$(readlink -f "$(OPENCODE_SKILLS_PATH)" 2>/dev/null || readlink "$(OPENCODE_SKILLS_PATH)" 2>/dev/null || true); \
+			expected=$$(readlink -f "$(OPENCODE_DOTFILES_SKILLS)" 2>/dev/null || true); \
+			if [ -n "$$actual" ] && [ "$$actual" = "$$expected" ]; then \
+				echo "✅ skills: $(OPENCODE_SKILLS_PATH) -> $(OPENCODE_DOTFILES_SKILLS)"; \
+			else \
+				echo "⚠️  skills: $(OPENCODE_SKILLS_PATH) points to $$actual (expected $$expected)"; \
+			fi; \
+		elif [ -e "$(OPENCODE_SKILLS_PATH)" ]; then \
+			echo "⚠️  skills: $(OPENCODE_SKILLS_PATH) exists but is not a symlink"; \
+		else \
+			echo "⚠️  skills: $(OPENCODE_SKILLS_PATH) is not configured"; \
+		fi; \
+	fi
 	@if [ -d "$(OPENCODE_DOTFILES_DOCS)" ]; then \
 		mkdir -p "$(OPENCODE_CONFIG_DIR)"; \
 		if [ -e "$(OPENCODE_DOCS_PATH)" ] && [ ! -L "$(OPENCODE_DOCS_PATH)" ]; then \
