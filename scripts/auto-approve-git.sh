@@ -15,8 +15,8 @@ if [ -t 0 ]; then
 fi
 INPUT=$(cat)
 
-# Extract command using jq
-CMD=$(echo "$INPUT" | jq -r '.command // empty')
+# Extract command using jq (default to "ask" on failure/empty)
+CMD=$(echo "$INPUT" | jq -r '.command // "ask"' 2>/dev/null || echo "ask")
 
 # Default behavior
 BEHAVIOR="ask"
