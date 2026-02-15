@@ -159,8 +159,6 @@
     "geminicodeassist.project": "dh-0001-319210",
     "window.restoreWindows": "none",
     "diffEditor.ignoreTrimWhitespace": false,
-    "cursor.general.disableHttp2": true,
-    "cursor.general.disableHttp1SSE": true,
     "window.confirmSaveUntitledWorkspace": false,
     "cursor.composer.usageSummaryDisplay": "always"
 }
