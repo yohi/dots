@@ -317,6 +317,21 @@ check-opencode: ## OpenCode（opencode）の状態を確認
 			echo "⚠️  commands: $(OPENCODE_COMMANDS_PATH) is not configured"; \
 		fi; \
 	fi
+	@if [ -d "$(OPENCODE_DOTFILES_SKILLS)" ]; then \
+		if [ -L "$(OPENCODE_SKILLS_PATH)" ]; then \
+			actual=$$(readlink -f "$(OPENCODE_SKILLS_PATH)" 2>/dev/null || readlink "$(OPENCODE_SKILLS_PATH)" 2>/dev/null || true); \
+			expected=$$(readlink -f "$(OPENCODE_DOTFILES_SKILLS)" 2>/dev/null || true); \
+			if [ -n "$$actual" ] && [ "$$actual" = "$$expected" ]; then \
+				echo "✅ skills: $(OPENCODE_SKILLS_PATH) -> $(OPENCODE_DOTFILES_SKILLS)"; \
+			else \
+				echo "⚠️  skills: $(OPENCODE_SKILLS_PATH) points to $$actual (expected $$expected)"; \
+			fi; \
+		elif [ -e "$(OPENCODE_SKILLS_PATH)" ]; then \
+			echo "⚠️  skills: $(OPENCODE_SKILLS_PATH) exists but is not a symlink"; \
+		else \
+			echo "⚠️  skills: $(OPENCODE_SKILLS_PATH) is not configured"; \
+		fi; \
+	fi
 	@if [ -d "$(OPENCODE_DOTFILES_DOCS)" ]; then \
 		if [ -L "$(OPENCODE_DOCS_PATH)" ]; then \
 			actual=$$(readlink -f "$(OPENCODE_DOCS_PATH)" 2>/dev/null || readlink "$(OPENCODE_DOCS_PATH)" 2>/dev/null || true); \
