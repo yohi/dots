@@ -8,6 +8,7 @@ OpenCode エージェントの動作設定と、モデル割り当てパター�
 ```text
 opencode/
 ├── commands/                  # カスタムスラッシュコマンド
+│   ├── build-skill.md         # エージェントスキルの対話的設計・生成
 │   ├── git-pr-flow.md         # ブランチ作成→コミット→PR作成の統合フロー
 │   └── setup-gh-actions-test-ci.md  # GitHub Actions CI自動生成
 ├── docs/                      # エージェント向けドキュメント
@@ -23,6 +24,9 @@ opencode/
 │   ├── pattern-3.jsonc        # Claudeなし（GPT+Gemini）
 │   ├── pattern-4.jsonc        # GPTなし（Claude+Gemini）
 │   └── pattern-5.jsonc        # Gemini主体（Claude最小）
+├── skills/                    # エージェントスキル定義
+│   ├── agent-skill-architect/ # スキル設計官
+│   └── config-modernizer.md   # 設定ファイル現代化スキル
 ├── AGENTS.md                  # エージェント向けグローバル指示（英語）
 ├── oh-my-opencode.base.jsonc  # 設定ファイルのベーステンプレート
 ├── oh-my-opencode.jsonc       # [自動生成] 実行用設定ファイル（git管理外）
@@ -50,11 +54,11 @@ opencode/
 
 | パターン | ファイル | 説明 | Sisyphus(指揮) | Hephaestus(職人) | Oracle(相談) |
 |---------|---------|------|:---:|:---:|:---:|
-| **1: 最強構成** | `pattern-1.jsonc` | GPT+Claude+Gemini Best-of-Breed | Opus Thinking | Codex | GPT-5.2 |
+| **1: 最強構成** | `pattern-1.jsonc` | GPT+Claude+Gemini Best-of-Breed | Opus Thinking | Codex | Opus Thinking |
 | **2: Claude節約** | `pattern-2.jsonc` | Sisyphus=Gemini, Oracle=Opus | Gemini Pro | Codex | Opus Thinking |
-| **3: Claudeなし** | `pattern-3.jsonc` | GPT+Geminiのみ | GPT-5.2 | Codex | GPT-5.2 |
-| **4: GPTなし** | `pattern-4.jsonc` | Claude+Geminiのみ | Opus Thinking | ─ | Sonnet 4.5 |
-| **5: Gemini主体** | `pattern-5.jsonc` | コスト最優先、Claude最小 | Gemini Pro | ─ | Opus Thinking |
+| **3: Claudeなし** | `pattern-3.jsonc` | GPT+Geminiのみ | GPT-5.3 | Codex | GPT-5.2 |
+| **4: GPTなし** | `pattern-4.jsonc` | Claude+Geminiのみ | Opus Thinking | ─ | Opus Thinking |
+| **5: Gemini主体** | `pattern-5.jsonc` | コスト最優先、Claude最小 | Gemini Pro | ─ | Gemini Pro |
 | **default** | `default.jsonc` | デフォルト（パターン2と同一） | Gemini Pro | Codex | Opus Thinking |
 
 > **注意**: パターン4・5では Hephaestus（GPT Codex）が使用不可のため、深い実装タスクの性能が低下する場合があります。
@@ -139,9 +143,11 @@ OpenCode 自体の基本設定ファイルです。以下を管理していま�
 | **Hephaestus** | 職人 — 深い実装・コーディング | GPT-5.3 Codex |
 | **Oracle** | 相談役 — アーキテクチャ・デバッグ助言（読み取り専用） | Opus Thinking / GPT-5.2 |
 | **Momus** | 品質保証 — コードレビュー・計画レビュー | GPT-5.2 / Sonnet 4.5 |
+| **Metis** | 参謀 — 計画立案・要件定義・AI失敗回避 | Opus Thinking / GPT-5.2 |
 | **Librarian** | 書庫番 — 外部ドキュメント・OSS検索 | Gemini Pro |
 | **Explore** | 探索 — コードベースの高速把握 | Gemini Flash |
 | **Multimodal Looker** | 視覚 — 画像・PDF認識 | Gemini Flash |
+| **Git Specialist** | Git職人 — 安全なGit操作 | GPT-5.3 / Gemini Pro |
 
 ## 📋 カスタムコマンド
 
@@ -149,6 +155,7 @@ OpenCode 自体の基本設定ファイルです。以下を管理していま�
 
 | コマンド | ファイル | 説明 |
 |---------|---------|------|
+| `build-skill` | `build-skill.md` | エージェントスキル（SKILL.md）を対話的に設計・生成 |
 | `git-pr-flow` | `git-pr-flow.md` | ブランチ作成/選択→関連ファイルコミット→PR作成の統合フロー |
 | `setup-gh-actions-test-ci` | `setup-gh-actions-test-ci.md` | リポジトリの言語・フレームワークを自動検出し GitHub Actions CI を生成 |
 
