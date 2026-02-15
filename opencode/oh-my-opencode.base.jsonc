@@ -160,7 +160,7 @@
 
   "hooks": {
     "PermissionRequest": [
-      "~/.config/opencode/scripts/auto-approve-git.sh"
+      "scripts/auto-approve-git.sh"
     ]
   },
 
