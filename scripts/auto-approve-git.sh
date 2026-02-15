@@ -1,6 +1,12 @@
 #!/bin/bash
 set -euo pipefail
 
+# 必要なコマンドのチェック
+if ! command -v jq &> /dev/null; then
+    echo >&2 "エラー: jq コマンドが見つかりません。インストールしてください。"
+    exit 1
+fi
+
 # Read input from stdin
 # If stdin is empty, exit with error or default behavior
 if [ -t 0 ]; then
@@ -20,7 +26,11 @@ if [[ "$CMD" =~ ^git[[:space:]]+ ]]; then
     # Split command into array to extract subcommand
     read -r -a PARTS <<< "$CMD"
     # Subcommand is typically the second element
-    SUBCOMMAND="${PARTS[1]}"
+    if [[ ${#PARTS[@]} -gt 1 ]]; then
+        SUBCOMMAND="${PARTS[1]}"
+    else
+        SUBCOMMAND=""
+    fi
 
     case "$SUBCOMMAND" in
         push)
