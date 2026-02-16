@@ -27,7 +27,7 @@ opencode/
 ├── skills/                    # エージェントスキル定義
 │   ├── agent-skill-architect/ # スキル設計官
 │   └── config-modernizer.md   # 設定ファイル現代化スキル
-├── AGENTS.md                  # エージェント向けグローバル指示（英語）
+├── AGENTS.global.md           # エージェント向けグローバル指示（英語）
 ├── oh-my-opencode.base.jsonc  # 設定ファイルのベーステンプレート
 ├── oh-my-opencode.jsonc       # [自動生成] 実行用設定ファイル（git管理外）
 ├── opencode.jsonc             # OpenCode本体の設定（プラグイン・権限・MCP等）
@@ -167,4 +167,4 @@ OpenCode 自体の基本設定ファイルです。以下を管理していま�
 - **`docs/global/DOCS_STYLE.md`** — ドキュメントスタイルガイド
 - **`docs/global/GIT_STANDARDS.md`** — Git操作の標準ルール
 
-> `AGENTS.md` は LLM の理解精度を最大化するため英語で記述されています。
+> `AGENTS.global.md` は LLM の理解精度を最大化するため英語で記述されています。
