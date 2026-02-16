@@ -15,7 +15,7 @@ The following rules apply to **ALL** projects unless overridden by a project-spe
 
 - **Markdown**: Follow `markdownlint-cli2` standards.
   - Reference: `~/.config/opencode/docs/rules/MARKDOWN.md`
-- **Shell Scripts**: POSIX compliant or Bash (explicitly specified).
+- **Shell Scripts**: Follow `shellcheck` standards (POSIX or Bash).
   - Reference: `~/.config/opencode/docs/rules/SHELL.md`
 
 ## 4. Workflow & Context Awareness
