@@ -1,29 +1,51 @@
-# User Global Instructions (System Wide)
+# PROJECT KNOWLEDGE BASE
 
-## 1. Identity & Core Philosophy
-You are an expert AI software engineer assisting the user across various projects.
-**Mission**: Deliver high-quality, maintainable code while strictly adhering to the user's language and style preferences.
+**Generated:** 2026-02-16
+**Commit:** 116ca4f
+**Branch:** master
 
-## 2. Language Policy (CRITICAL)
-- **Output Language**: **ALWAYS** use **Japanese (日本語)** for all external communication (Chat, Explanations).
-- **Docs/Commits**: Use English or Japanese depending on the **current project's context**. If unsure, ask.
-- **Agent-facing files**: `AGENTS.md` and rule reference files (`docs/rules/*.md`) are written in **English** for optimal LLM comprehension.
-- **Thinking**: You may think in English, but the final response to the user must be Japanese.
+## OVERVIEW
+OpenCode configuration repository for managing AI agent behaviors, model patterns, and skills.
+Core mechanism involves dynamic injection of JSONC configurations based on selected "patterns".
 
-## 3. Universal Coding Standards
-The following rules apply to **ALL** projects unless overridden by a project-specific config.
+## STRUCTURE
+```
+.
+├── commands/                  # Custom slash command definitions (.md)
+├── docs/                      # Rule files (symlinked to global config)
+├── patterns/                  # Model configuration presets (*.jsonc)
+├── skills/                    # Agent skill definitions
+├── oh-my-opencode.base.jsonc  # TEMPLATE: Edit this file
+├── oh-my-opencode.jsonc       # GENERATED: Do not edit
+├── opencode.jsonc             # Core plugin/permission config
+└── switch-opencode-pattern.sh # Entry point: Pattern switcher
+```
 
-- **Markdown**: Follow `markdownlint-cli2` standards.
-  - Reference: `~/.config/opencode/docs/rules/MARKDOWN.md`
-- **Shell Scripts**: POSIX compliant or Bash (explicitly specified).
-  - Reference: `~/.config/opencode/docs/rules/SHELL.md`
+## WHERE TO LOOK
+| Task | Location | Notes |
+|------|----------|-------|
+| Change model | `./switch-opencode-pattern.sh` | Interactive menu |
+| Edit config | `oh-my-opencode.base.jsonc` | Edit template, then switch pattern |
+| New pattern | `patterns/` | Add new .jsonc file |
+| Add command | `commands/` | Create .md file |
+| Add skill | `skills/` | Create definition |
 
-## 4. Workflow & Context Awareness
-1. **Analyze Local Context**: Before acting, ALWAYS read the current directory's `README.md` or local `AGENTS.md` to understand the specific project constraints.
-2. **Resolve Paths**: When reading the rule files listed in Section 3, strictly use the provided **absolute paths (starting with `$HOME/.config/...`)**. Note: If a path begins with `~`, expand it to the user's home directory (e.g., `~/.config/` → `$HOME/.config/`) before treating it as an absolute path. Do not look for `docs/` in the current project directory.
-3. **Priority**: Local project rules > Global user preferences (this file) > Default behaviors.
+## CONVENTIONS
+- **Language**: Japanese (日本語) for all output/commits. English for `AGENTS.md`.
+- **Commits**: Conventional Commits in Japanese (e.g., `feat: 新パターン追加`).
+- **Config**: Edit `base.jsonc`, NOT the generated `.jsonc`.
+- **Markdown**: Follow `docs/rules/MARKDOWN.md`.
 
-## 5. Behavior Checklist
-- [ ] Am I speaking Japanese to the user?
-- [ ] Did I read the rule file from `$HOME/.config/opencode/docs/...`?
-- [ ] Have I checked the local project's specific build commands?
+## ANTI-PATTERNS (THIS PROJECT)
+- **Direct Edit**: Editing `oh-my-opencode.jsonc` (will be overwritten).
+- **English Commits**: Commits must be in Japanese.
+- **Forbidden Ops**: `rm`, `ssh`, `sudo` (blocked by `opencode.jsonc`).
+
+## UNIQUE STYLES
+- **Dynamic Injection**: Uses `// @pattern:start` markers in `base.jsonc` to inject `patterns/*.jsonc`.
+- **Agent Roles**: Sisyphus (Manager), Hephaestus (Coder), Oracle (Advisor).
+
+## COMMANDS
+```bash
+./switch-opencode-pattern.sh  # Switch model configuration
+```
