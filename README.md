@@ -284,14 +284,22 @@ echo "source ~/dots/.env" >> ~/.zshrc
 #### 3. 機密情報の確認
 
 以下のファイルには機密情報が含まれていないことを確認してください：
-- `cursor/mcp.json` - 環境変数を参照するように設定済み
-- `.env` - .gitignoreに追加済み
+- `cursor/mcp.json.template` - 環境変数を参照するように設定済み（機密情報を含まないテンプレート）
+- `.env` - .gitignoreに追加済み（実際の認証情報を記述）
+
+#### 4. Cursor MCP サーバーのセットアップ
+
+実際の `~/.cursor/mcp.json` をセットアップする手順は以下の通りです：
+
+1. **実設定ファイルの作成**: `cursor/mcp.json.template` を `cursor/mcp.json` にコピーし、必要に応じて編集します。
+   - `cp cursor/mcp.json.template cursor/mcp.json`
+   - **注意**: `cursor/mcp.json` には機密情報が含まれる可能性がありますが、`.gitignore` で除外されているためコミットされません。
+2. **シンボリックリンクの作成**: `make setup-config-mcp-tools` を実行すると、`~/dots/cursor/mcp.json` から `~/.cursor/mcp.json` へのシンボリックリンクが作成されます。
+3. **反映**: Cursor を再起動するか、MCP 設定画面で再読み込みしてください。
 
 **⚠️ セキュリティ重要事項**:
-- `.env`ファイルは絶対に公開リポジトリにコミットしないでください
-- `chmod 600 .env` で権限を制限し、所有者のみ読み書き可能にしてください
-- 代替案：Bitwarden/OSキーリング/Pass等の秘匿ストレージ併用を推奨
-- 定期的なアプリパスワードのローテーション・破棄を実施してください
+- `cursor/mcp.json` および `.env` は絶対にコミットしないでください（既に `.gitignore` で除外設定済みです ）。
+- 詳細は `mk/setup.mk` および `cursor/mcp.json.template` を参照してください。環境変数の自動展開（`envsubst` 等）は行われないため、実設定ファイルには具体的な値を記述する必要があります。
 
 ---
 
@@ -793,12 +801,26 @@ make setup-cursor
 
 ### Cursor MCP Tools設定
 
-- **設定ファイル**: `cursor/mcp.json`
-- **場所**: `~/.cursor/mcp.json`
+Cursor で MCP サーバーを利用するための設定ファイルです。
+
+- **テンプレート**: `cursor/mcp.json.template`
+- **リンク元**: `cursor/mcp.json` (テンプレートをコピーして作成)
+- **リンク先**: `~/.cursor/mcp.json`
+
+`make setup-config-mcp-tools` を実行すると、`~/dots/cursor/mcp.json` から `~/.cursor/mcp.json` へのシンボリックリンクが作成されます。
 
 ```bash
-make setup-mcp-tools
+# 1. テンプレートから実設定ファイルを作成 (初回のみ)
+cp cursor/mcp.json.template cursor/mcp.json
+
+# 2. cursor/mcp.json を編集して認証情報を直接記述
+# (注: envsubst 等による環境変数展開は行われません)
+
+# 3. シンボリックリンクをセットアップ
+make setup-config-mcp-tools
 ```
+
+**⚠️ 注意**: 実設定ファイル `cursor/mcp.json` およびリンク先の `~/.cursor/mcp.json` には機密情報が含まれるため、絶対にリポジトリにコミットしないでください（`.gitignore` で除外済みです）。設定の雛形を更新する場合は、テンプレート側（`cursor/mcp.json.template`）を編集してください。
 
 **前提条件**:
 - **uvx (uv runtime)**: Python ベースの MCP サーバー（SkillPort 等）の実行に必要です。
@@ -806,7 +828,7 @@ make setup-mcp-tools
 - **skillport-mcp**: エージェントスキルの検索・参照用 MCP サーバー。
   - インストール: `make install-skillport` を実行し、推奨バージョン (`@1.1.0`) をセットアップしてください。
 
-**設定済みMCPサーバー**:
+**設定済みMCPサーバー (テンプレート `cursor/mcp.json.template` に定義済み)**:
 - **SkillPort MCP Server**: Agent Skills（Markdown + YAML）の検索とツール実行
 - **Bitbucket MCP Server**: BitbucketのPR管理・コメント機能
 - **Playwright MCP Server**: ウェブブラウザの自動化
