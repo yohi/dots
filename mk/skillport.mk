@@ -16,6 +16,10 @@ skillport: ## SkillPortのインストールとセットアップ
 
 # SkillPort および SkillPort MCP サーバーのインストール
 install-skillport: ## SkillPort と SkillPort MCP をインストール
+	@if $(call check_marker,install-skillport); then \
+		echo "$(call IDEMPOTENCY_SKIP_MSG,install-skillport)"; \
+		exit 0; \
+	fi
 	@echo "📦 SkillPort をインストール中..."
 	@if command -v uv >/dev/null 2>&1; then \
 		uv tool install skillport --force; \
@@ -29,7 +33,11 @@ install-skillport: ## SkillPort と SkillPort MCP をインストール
 
 # SkillPort の設定（ディレクトリ作成とリンク）
 setup-skillport: ## SkillPort のディレクトリ構成をセットアップ
-	@echo "🔧 SkillPort の設定を適用中..."
+	@if $(call check_marker,setup-skillport); then \
+		echo "$(call IDEMPOTENCY_SKIP_MSG,setup-skillport)"; \
+		exit 0; \
+	fi
+	@echo "🚀 SkillPort のセットアップを開始中..."
 	@mkdir -p "$(AGENT_SKILLS_DOTFILES_DIR)"
 	@mkdir -p "$(HOME)/.skillport"
 	@if [ -e "$(SKILLPORT_SKILLS_DIR)" ] && [ ! -L "$(SKILLPORT_SKILLS_DIR)" ]; then \
@@ -38,7 +46,7 @@ setup-skillport: ## SkillPort のディレクトリ構成をセットアップ
 		mv "$(SKILLPORT_SKILLS_DIR)" "$$backup"; \
 	fi
 	@ln -sfn "$(AGENT_SKILLS_DOTFILES_DIR)" "$(SKILLPORT_SKILLS_DIR)"
-	@echo "✅ 設定を適用しました: $(SKILLPORT_SKILLS_DIR) -> $(AGENT_SKILLS_DOTFILES_DIR)"
+	@echo "✅ セットアップが完了しました: $(SKILLPORT_SKILLS_DIR) -> $(AGENT_SKILLS_DOTFILES_DIR)"
 	@$(call create_marker,setup-skillport,1)
 
 # SkillPort の状態確認
