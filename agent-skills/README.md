@@ -56,8 +56,8 @@ uvx skillport add https://github.com/user/repo/path/to/skill
 ## AI クライアントへの統合 (MCP)
 
 ### Cursor
-`cursor/mcp.json.template` に SkillPort MCP サーバーが定義されています。
-- **Command**: `uvx skillport-mcp`
+実際の設定ファイル `cursor/mcp.json` は機密情報保護のため Git 管理外です。設定例は `cursor/mcp.json.template` に定義されており、`make setup-mcp-tools` 等で反映できます。
+- **Command**: `uvx skillport-mcp` (テンプレートに `@1.1.0` 等のバージョン指定を含めることを推奨)
 
 ### Claude Code
 Claude Code は標準で MCP をサポートしています。
