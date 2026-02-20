@@ -5,5 +5,14 @@
   },
   "alwaysThinkingEnabled": false,
   "output_language": "ja",
-  "opt_out": true
+  "opt_out": true,
+  "mcpServers": {
+    "docker": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@docker/mcp-server"
+      ]
+    }
+  }
 }

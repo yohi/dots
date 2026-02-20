@@ -3,5 +3,14 @@
   "soft_quota_threshold_percent": 95,
   "cli_first": true,
   "scheduling_mode": "balance",
-  "proactive_token_refresh": true
+  "proactive_token_refresh": true,
+  "mcpServers": {
+    "docker": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@docker/mcp-server"
+      ]
+    }
+  }
 }
