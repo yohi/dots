@@ -2,8 +2,6 @@
 # SkillPort (skillport): インストール・設定
 # ============================================================
 
-SKILLPORT_BIN ?= $(HOME)/.local/bin/skillport
-SKILLPORT_MCP_BIN ?= $(HOME)/.local/bin/skillport-mcp
 SKILLPORT_SKILLS_DIR ?= $(HOME)/.skillport/skills
 AGENT_SKILLS_DOTFILES_DIR ?= $(DOTFILES_DIR)/agent-skills
 
@@ -22,8 +20,8 @@ install-skillport: ## SkillPort と SkillPort MCP をインストール
 	fi
 	@echo "📦 SkillPort をインストール中..."
 	@if command -v uv >/dev/null 2>&1; then \
-		uv tool install skillport --force; \
-		uv tool install skillport-mcp --force; \
+		uv tool install skillport@1.1.1 --force; \
+		uv tool install skillport-mcp@1.1.0 --force; \
 	else \
 		echo "❌ uv が見つかりません。先に uv をインストールしてください"; \
 		exit 1; \
@@ -63,8 +61,17 @@ check-skillport: ## SkillPort の状態を確認
 		echo "⚠️  skillport-mcp が見つかりません"; \
 	fi
 	@if [ -L "$(SKILLPORT_SKILLS_DIR)" ]; then \
-		actual=$$(readlink -f "$(SKILLPORT_SKILLS_DIR)" 2>/dev/null || readlink "$(SKILLPORT_SKILLS_DIR)" 2>/dev/null || true); \
-		expected=$$(readlink -f "$(AGENT_SKILLS_DOTFILES_DIR)" 2>/dev/null || true); \
+		get_realpath() { \
+			if command -v realpath >/dev/null 2>&1; then \
+				realpath "$$1"; \
+			elif command -v python3 >/dev/null 2>&1; then \
+				python3 -c "import os, sys; print(os.path.realpath(sys.argv[1]))" "$$1"; \
+			else \
+				readlink -f "$$1" 2>/dev/null || readlink "$$1" 2>/dev/null || echo "$$1"; \
+			fi; \
+		}; \
+		actual=$$(get_realpath "$(SKILLPORT_SKILLS_DIR)"); \
+		expected=$$(get_realpath "$(AGENT_SKILLS_DOTFILES_DIR)"); \
 		if [ -n "$$actual" ] && [ "$$actual" = "$$expected" ]; then \
 			echo "✅ skills: $(SKILLPORT_SKILLS_DIR) -> $(AGENT_SKILLS_DOTFILES_DIR)"; \
 		else \

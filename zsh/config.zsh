@@ -33,7 +33,20 @@ CANDIDATE_DIRS=(
 )
 
 # SkillPort 設定
-export SKILLPORT_SKILLS_PATH="$HOME/dots/agent-skills"
+# ドットファイルのベースディレクトリを特定
+_resolved_dotfiles_base="$DOTFILES_DIR"
+if [[ -z "$_resolved_dotfiles_base" ]]; then
+    for dir in "${CANDIDATE_DIRS[@]}"; do
+        if [[ -d "$dir" ]]; then
+            _resolved_dotfiles_base="$dir"
+            break
+        fi
+    done
+fi
+# デフォルト値として $HOME/dots を使用（いずれも見つからない場合）
+_resolved_dotfiles_base="${_resolved_dotfiles_base:-$HOME/dots}"
+
+export SKILLPORT_SKILLS_PATH="$_resolved_dotfiles_base/agent-skills"
 alias sp="skillport"
 alias spm="skillport-mcp"
 alias spv="skillport validate"

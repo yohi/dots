@@ -63,7 +63,7 @@
     },
     "skillport": {
       "command": "uvx",
-      "args": ["skillport-mcp"]
+      "args": ["skillport-mcp@1.1.0"]
     }
   }
 }

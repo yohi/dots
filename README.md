@@ -800,7 +800,14 @@ make setup-cursor
 make setup-mcp-tools
 ```
 
+**前提条件**:
+- **uvx (uv runtime)**: Python ベースの MCP サーバー（SkillPort 等）の実行に必要です。
+  - インストール: `curl -LsSf https://astral.sh/uv/install.sh | sh`
+- **skillport-mcp**: エージェントスキルの検索・参照用 MCP サーバー。
+  - インストール: `make install-skillport` を実行し、推奨バージョン (`@1.1.0`) をセットアップしてください。
+
 **設定済みMCPサーバー**:
+- **SkillPort MCP Server**: Agent Skills（Markdown + YAML）の検索とツール実行
 - **Bitbucket MCP Server**: BitbucketのPR管理・コメント機能
 - **Playwright MCP Server**: ウェブブラウザの自動化
 - **AWS Documentation MCP Server**: AWS文書の検索・参照
