@@ -50,7 +50,7 @@ GitHub 等で公開されている有用なスキルを導入します。
 
 ```bash
 # skillport add コマンドを使用して GitHub から取得
-skillport add https://github.com/user/repo/path/to/skill
+uvx skillport add https://github.com/user/repo/path/to/skill
 ```
 
 ## AI クライアントへの統合 (MCP)
