@@ -33,6 +33,7 @@ include mk/claude.mk
 include mk/gemini.mk
 include mk/codex.mk
 include mk/opencode.mk
+include mk/mcp.mk
 include mk/superclaude.mk
 include mk/skillport.mk
 include mk/cc-sdd.mk
@@ -42,7 +43,7 @@ include mk/test.mk
 all: help
 
 .PHONY: setup
-setup: setup-gnome-tweaks setup-gnome-extensions system
+setup: setup-gnome-tweaks setup-gnome-extensions setup-system setup-docker-mcp
 # Run sticky-keys setup only when GNOME schema is available
 	@if command -v gsettings >/dev/null 2>&1 && \
 	   gsettings list-schemas | grep -qx 'org.gnome.desktop.a11y.keyboard'; then \

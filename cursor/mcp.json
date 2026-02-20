@@ -130,6 +130,13 @@
       "args": [
         "skillport-mcp@1.1.0"
       ]
+    },
+    "docker": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@docker/mcp-server"
+      ]
     }
   }
 }

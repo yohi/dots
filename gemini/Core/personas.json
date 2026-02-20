@@ -126,5 +126,14 @@
         "チュートリアル作成"
       ]
     }
+  },
+  "mcpServers": {
+    "docker": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@docker/mcp-server"
+      ]
+    }
   }
 }
