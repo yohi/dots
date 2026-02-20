@@ -1,0 +1,67 @@
+# ============================================================
+# SkillPort (skillport): インストール・設定
+# ============================================================
+
+SKILLPORT_BIN ?= $(HOME)/.local/bin/skillport
+SKILLPORT_MCP_BIN ?= $(HOME)/.local/bin/skillport-mcp
+SKILLPORT_SKILLS_DIR ?= $(HOME)/.skillport/skills
+AGENT_SKILLS_DOTFILES_DIR ?= $(DOTFILES_DIR)/agent-skills
+
+.PHONY: skillport install-skillport setup-skillport check-skillport
+
+# SkillPort のインストールとセットアップ
+skillport: ## SkillPortのインストールとセットアップ
+	@$(MAKE) install-skillport
+	@$(MAKE) setup-skillport
+
+# SkillPort および SkillPort MCP サーバーのインストール
+install-skillport: ## SkillPort と SkillPort MCP をインストール
+	@echo "📦 SkillPort をインストール中..."
+	@if command -v uv >/dev/null 2>&1; then \
+		uv tool install skillport --force; \
+		uv tool install skillport-mcp --force; \
+	else \
+		echo "❌ uv が見つかりません。先に uv をインストールしてください"; \
+		exit 1; \
+	fi
+	@echo "✅ SkillPort のインストールが完了しました"
+	@$(call create_marker,install-skillport,1)
+
+# SkillPort の設定（ディレクトリ作成とリンク）
+setup-skillport: ## SkillPort のディレクトリ構成をセットアップ
+	@echo "🔧 SkillPort の設定を適用中..."
+	@mkdir -p "$(AGENT_SKILLS_DOTFILES_DIR)"
+	@mkdir -p "$(HOME)/.skillport"
+	@if [ -e "$(SKILLPORT_SKILLS_DIR)" ] && [ ! -L "$(SKILLPORT_SKILLS_DIR)" ]; then \
+		backup="$(SKILLPORT_SKILLS_DIR).bak.$$(date +%Y%m%d%H%M%S)"; \
+		echo "⚠️  既存の skills ディレクトリを退避します: $$backup"; \
+		mv "$(SKILLPORT_SKILLS_DIR)" "$$backup"; \
+	fi
+	@ln -sfn "$(AGENT_SKILLS_DOTFILES_DIR)" "$(SKILLPORT_SKILLS_DIR)"
+	@echo "✅ 設定を適用しました: $(SKILLPORT_SKILLS_DIR) -> $(AGENT_SKILLS_DOTFILES_DIR)"
+	@$(call create_marker,setup-skillport,1)
+
+# SkillPort の状態確認
+check-skillport: ## SkillPort の状態を確認
+	@echo "🔍 SkillPort の状態確認..."
+	@if command -v skillport >/dev/null 2>&1; then \
+		echo "✅ skillport: $$(skillport --version 2>/dev/null || echo installed)"; \
+	else \
+		echo "⚠️  skillport が見つかりません"; \
+	fi
+	@if command -v skillport-mcp >/dev/null 2>&1; then \
+		echo "✅ skillport-mcp: installed"; \
+	else \
+		echo "⚠️  skillport-mcp が見つかりません"; \
+	fi
+	@if [ -L "$(SKILLPORT_SKILLS_DIR)" ]; then \
+		actual=$$(readlink -f "$(SKILLPORT_SKILLS_DIR)" 2>/dev/null || readlink "$(SKILLPORT_SKILLS_DIR)" 2>/dev/null || true); \
+		expected=$$(readlink -f "$(AGENT_SKILLS_DOTFILES_DIR)" 2>/dev/null || true); \
+		if [ -n "$$actual" ] && [ "$$actual" = "$$expected" ]; then \
+			echo "✅ skills: $(SKILLPORT_SKILLS_DIR) -> $(AGENT_SKILLS_DOTFILES_DIR)"; \
+		else \
+			echo "⚠️  skills: $(SKILLPORT_SKILLS_DIR) points to $$actual (expected $$expected)"; \
+		fi; \
+	else \
+		echo "⚠️  skills: $(SKILLPORT_SKILLS_DIR) is not a symlink"; \
+	fi
