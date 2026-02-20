@@ -58,5 +58,7 @@ fi
 </instructions>
 
 ## Guidelines
+<instructions>
 - 新規ファイル追加時は `variables.mk` の PHONY リストを必ず更新すること。
 - 1ファイルが200行を超えたら、更なる分割を検討すること。
+</instructions>
