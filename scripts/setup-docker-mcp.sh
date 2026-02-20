@@ -19,9 +19,9 @@ if ! command -v jq >/dev/null 2>&1; then
   exit 1
 fi
 
-# Check if node is installed
-if ! command -v node >/dev/null 2>&1; then
-  echo "❌ エラー: Node.js がインストールされていません。インストールしてください。"
+# Check if node/npx is installed
+if ! command -v npx >/dev/null 2>&1; then
+  echo "❌ エラー: npx (Node.js) がインストールされていません。インストールしてください。"
   exit 1
 fi
 
@@ -44,34 +44,23 @@ for FILE in "${TARGETS[@]}"; do
     echo "📋 $FILE を処理中..."
     TMP=$(mktemp)
 
-    # If file ends with .jsonc, parse with Node (new Function) to handle comments
+    # If file ends with .jsonc, strip comments with strip-json-comments-cli
     if [[ "$FILE" == *.jsonc ]]; then
-      # Use Node to parse JSONC (new Function) and output standard JSON
-      # Note: This strips comments but preserves structure
-      node -e '
-        const fs = require("fs");
-        const file = process.argv[1];
-        try {
-          const content = fs.readFileSync(file, "utf8");
-          // Use Function constructor to parse object literal with comments
-          const func = new Function("return " + content);
-          const json = func();
-          console.log(JSON.stringify(json));
-        } catch (e) {
-          console.error("Error parsing " + file, e);
-          process.exit(1);
-        }
-      ' "$FILE" > "$TMP"
+      # Use strip-json-comments-cli to remove comments safely (no eval)
+      if ! npx -y strip-json-comments-cli "$FILE" > "$TMP"; then
+        echo "❌ エラー: JSONCファイル $FILE のパースに失敗しました (strip-json-comments-cli)"
+        rm "$TMP"
+        exit 1
+      fi
 
-      # Check if node succeeded (TMP not empty)
+      # Check if output is not empty
       if [ ! -s "$TMP" ]; then
-        echo "❌ エラー: JSONCファイル $FILE のパースに失敗しました"
+        echo "❌ エラー: JSONC変換後のファイルが空です"
         rm "$TMP"
         exit 1
       fi
 
       # Merge with jq
-      # Use * for recursive merge (requires jq 1.6+)
       jq --argjson p "$PAYLOAD" '. * $p' "$TMP" > "$FILE.tmp" && mv "$FILE.tmp" "$FILE"
 
       rm "$TMP"
