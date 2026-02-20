@@ -148,9 +148,17 @@
         "/home/y_ohi/program/private/antigravity-mcp-bridge/packages/bridge-cli/dist/index.js"
       ],
       "environment": {
-        "ANTIGRAVITY_TOKEN": "448fd53f30252a8736827dcf58e1aee23f5f91de4751a81833ab7909daa58767",
+        "ANTIGRAVITY_TOKEN": "${ANTIGRAVITY_TOKEN}",
         "ANTIGRAVITY_PORT": "8888"
       }
+    },
+    "docker": {
+      "type": "local",
+      "command": [
+        "npx",
+        "-y",
+        "@docker/mcp-server"
+      ]
     }
   },
   "lsp": {
@@ -331,15 +339,6 @@
           }
         }
       }
-    }
-  },
-  "mcpServers": {
-    "docker": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "@docker/mcp-server"
-      ]
     }
   }
 }
