@@ -20,8 +20,8 @@ install-skillport: ## SkillPort と SkillPort MCP をインストール
 	fi
 	@echo "📦 SkillPort をインストール中..."
 	@if command -v uv >/dev/null 2>&1; then \
-		uv tool install skillport --force; \
-		uv tool install skillport-mcp --force; \
+		uv tool install skillport@1.1.1 --force; \
+		uv tool install skillport-mcp@1.1.0 --force; \
 	else \
 		echo "❌ uv が見つかりません。先に uv をインストールしてください"; \
 		exit 1; \

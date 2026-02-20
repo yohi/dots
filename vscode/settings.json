@@ -184,5 +184,13 @@
     "chat.agent.maxRequests": 200,
     "diffEditor.maxComputationTime": 0,
     "chat.tools.autoApprove": true,
-    "docker.extension.enableComposeLanguageServer": false
+    "docker.extension.enableComposeLanguageServer": false,
+    "mcpServers": {
+        "skillport": {
+            "command": "uvx",
+            "args": [
+                "skillport-mcp"
+            ]
+        }
+    }
 }
