@@ -1,7 +1,7 @@
 {
-  // Config Modernized: 2026-02-13
-  // Target OpenCode Version: v1.1.64
-  // Based on oh-my-opencode v3.5.3
+  // Config Modernized: 2026-02-20
+  // Target OpenCode Version: v1.2.x
+  // Based on oh-my-opencode v3.7.4
   "$schema": "https://opencode.ai/config.json",
   // モデル
   //"model": "google/antigravity-gemini-3-pro",

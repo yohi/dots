@@ -1,6 +1,6 @@
 {
-  // Config Modernized: 2026-02-13
-  // Based on oh-my-opencode v3.5.3
+  // Config Modernized: 2026-02-20
+  // Based on oh-my-opencode v3.7.4
   // スキーマ定義：エディタでの補完とバリデーションを有効化
   "$schema": "https://raw.githubusercontent.com/code-yeongyu/oh-my-opencode/master/assets/oh-my-opencode.schema.json",
 
@@ -20,6 +20,8 @@
   "experimental": {
     // OpenCodeのTodo UIと同期されず、TodoWriteが無効になりTUIに表示されなくなるため無効化（既知のUX低下）
     "task_system": false,
+    // [Hashline Edit] ハッシュ検証付きの安全なファイル編集機能 (v3.7.0追加)
+    "hashline_edit": true,
     // [Performance] 大規模タスク最適化
     "aggressive_truncation": true,      // コンテキスト溢れ防止
     "auto_resume": true,                // エラー時の自動リトライ
@@ -58,7 +60,7 @@
 
   // [Browser Automation] ブラウザ操作エンジン
   "browser_automation_engine": {
-    "provider": "playwright", // 安定性の高いPlaywright MCPを使用
+    "provider": "playwright-cli", // v3.7.0追加の軽量CLIプロバイダ (MCP版より軽量)
   },
 
   // [Background Task] バックグラウンドタスク管理
