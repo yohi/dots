@@ -81,14 +81,6 @@
     }
   },
   "mcp": {
-    "docker": {
-      "type": "local",
-      "command": [
-        "npx",
-        "-y",
-        "@docker/mcp-server"
-      ]
-    },
     "sequential-thinking": {
       "type": "local",
       "command": [
@@ -341,4 +333,13 @@
       }
     }
   },
+  "mcpServers": {
+    "docker": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@docker/mcp-server"
+      ]
+    }
+  }
 }

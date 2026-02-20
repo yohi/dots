@@ -44,29 +44,18 @@ for FILE in "${TARGETS[@]}"; do
     echo "📋 $FILE を処理中..."
     TMP=$(mktemp)
 
-    # If file ends with .jsonc, parse safely with jsonc-parser
+    # If file ends with .jsonc, parse with Node (new Function) to handle comments
     if [[ "$FILE" == *.jsonc ]]; then
-      # Use Node + jsonc-parser to parse JSONC and output standard JSON
+      # Use Node to parse JSONC (new Function) and output standard JSON
+      # Note: This strips comments but preserves structure
       node -e '
         const fs = require("fs");
-        const { parse, printParseErrorCode } = require("jsonc-parser");
         const file = process.argv[1];
         try {
           const content = fs.readFileSync(file, "utf8");
-          const errors = [];
-          const json = parse(content, errors, {
-            allowTrailingComma: true,
-            disallowComments: false,
-          });
-
-          if (errors.length > 0 || typeof json === "undefined") {
-            const first = errors[0];
-            const message = first
-              ? `Invalid JSONC (${printParseErrorCode(first.error)} at offset ${first.offset})`
-              : "Invalid JSONC";
-            throw new Error(message);
-          }
-
+          // Use Function constructor to parse object literal with comments
+          const func = new Function("return " + content);
+          const json = func();
           console.log(JSON.stringify(json));
         } catch (e) {
           console.error("Error parsing " + file, e);
