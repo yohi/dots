@@ -9,8 +9,8 @@
     },
     // Planner (計画立案)
     "prometheus": {
-      "model": "google-vertex-anthropic/claude-opus-4-6@default", // 計画立案にはOpusを使用
-      "variant": "max"
+      "model": "google-vertex/gemini-3.1-pro-preview", // 計画立案もGemini Proで節約
+      "variant": "high"
     },
     // Context Manager / Architect
     "atlas": {

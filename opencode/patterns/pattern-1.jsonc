@@ -77,7 +77,7 @@
       "model": "google-vertex/gemini-3-flash-preview",
     },
     "visual-engineering": {
-      "model": "google-vertex-anthropic/claude-sonnet-4-6@default", // UI実装はSonnet 4.5が優秀
+      "model": "google-vertex-anthropic/claude-sonnet-4-6@default", // UI実装はSonnet 4.6が優秀
     },
     "artistry": {
       "model": "google-vertex-anthropic/claude-opus-4-6@default",

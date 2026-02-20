@@ -28,12 +28,18 @@
     "metis": {
       "model": "google-vertex-anthropic/claude-opus-4-6@default", // 参謀もOpus
       "variant": "max",
-      "temperature": 0.5
+      "temperature": 0.5,
+      "thinking": {
+        "budget": 32768
+      }
     },
     // Hephaestus (GPT) は使用不可 -> Sisyphus (Opus) が兼任
     "oracle": {
       "model": "google-vertex-anthropic/claude-opus-4-6@default",
-      "variant": "max"
+      "variant": "max",
+      "thinking": {
+        "budget": 32768
+      }
     },
     "momus": {
       "model": "google-vertex-anthropic/claude-sonnet-4-6@default",
