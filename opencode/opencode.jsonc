@@ -1,31 +1,24 @@
 {
-  // Config Modernized: 2026-02-13
-  // Target OpenCode Version: v1.1.64
-  // Based on oh-my-opencode v3.5.3
+  // Config Modernized: 2026-02-20
+  // Target OpenCode Version: v1.2.x
+  // Based on oh-my-opencode v3.7.4
   "$schema": "https://opencode.ai/config.json",
-
   // モデル
-  "model": "google/antigravity-gemini-3-pro",
-  "small_model": "google/antigravity-gemini-3-flash",
-
+  //"model": "google/antigravity-gemini-3-pro",
+  //"small_model": "google/antigravity-gemini-3-flash",
   // ログレベル設定（デバッグ用）
   // "logLevel": "DEBUG",
- 
   // [Plugin]
   "plugin": [
-     "oh-my-opencode@latest",
-     "opencode-openai-codex-auth@latest",
-     "opencode-antigravity-auth@beta",
-     "@yohi/opencode-antigravity-quota@latest",
-     "@yohi/opencode-codex-quota@latest",
-     "@yohi/omo-sdd-hybrid",
+    "oh-my-opencode@latest",
+    "opencode-openai-codex-auth@latest",
+    // "opencode-antigravity-auth@beta",
+    // "@yohi/opencode-antigravity-quota@latest",
+    "@yohi/opencode-codex-quota@latest",
+    // "@yohi/omo-sdd-hybrid",
   ],
-
   // [Instruction]
-  "instructions": [
-
-  ],
-
+  "instructions": [],
   // [Watcher]
   "watcher": {
     "ignore": [
@@ -33,39 +26,35 @@
       "**/dist/**",
       "**/.next/**",
       "**/coverage/**",
-      "**/*.lock"
+      "**/*.lock",
+      "**/.cursorrules"
     ]
   },
-
   "compaction": {
     "auto": true,
-    // "reserved": 10000,
-    // "prune": true,
+    "reserved": 10000,
+    "prune": true,
   },
-
   // [Permission]
   "permission": {
     // ------------------------------------------------------------------
     // 1. 基本ツールの権限（読み取り系は全開放）
     // ------------------------------------------------------------------
-    "read": "allow",       // ファイル読み取り
-    "list": "allow",       // ディレクトリ一覧
-    "glob": "allow",       // ファイル検索
-    "grep": "allow",       // 文字列検索（ツール版）
+    "read": "allow", // ファイル読み取り
+    "list": "allow", // ディレクトリ一覧
+    "glob": "allow", // ファイル検索
+    "grep": "allow", // 文字列検索（ツール版）
     "codesearch": "allow", // コード検索
-    "todoread": "allow",   // TODO確認
-
+    "todoread": "allow", // TODO確認
     // 編集系（AIの本分なので許可）
     "edit": "allow",
     "todowrite": "allow",
-
     // ------------------------------------------------------------------
     // 2. 外部アクセス（ここは安全のため「確認」推奨）
     // ------------------------------------------------------------------
-    "websearch": "allow",      // 検索はOK
-    "webfetch": "ask",         // URLの中身を見るのは確認（機密漏洩防止）
+    "websearch": "allow", // 検索はOK
+    "webfetch": "ask", // URLの中身を見るのは確認（機密漏洩防止）
     "external_directory": "ask", // プロジェクト外へのアクセスは確認
-
     // ------------------------------------------------------------------
     // 3. コマンド実行（Bash）
     // ------------------------------------------------------------------
@@ -73,7 +62,6 @@
       // ▼ 基本ポリシー：デフォルトは「確認」
       // これが「ブラックリスト方式」の危険性を防ぐ命綱です
       "*": "ask",
-
       // ▼ 参照・ログ確認系（すべて許可）
       // "ls*" と書くことで "ls -la" 等の引数付きもカバー
       "ls*": "allow",
@@ -84,7 +72,6 @@
       "touch*": "allow",
       "mv*": "ask",
       "cp*": "ask",
-
       // 以前ご要望のあった grep/tail もここで許可
       "grep*": "allow",
       "wc*": "allow",
@@ -93,22 +80,18 @@
       "head*": "allow",
       "less*": "allow",
       "xargs*": "deny",
-
       // ▼ 開発ツール系（広範囲許可 = 利便性重視）
       // GitとNPM関連は、下手に制限すると開発にならないため原則許可します
       "git *": "allow",
       "npm *": "allow",
       "yarn *": "allow",
-      "node *": "allow",     // スクリプト実行も許可
-      "python *": "allow",   // Python使いなら追加
+      "node *": "allow", // スクリプト実行も許可
+      "python *": "allow", // Python使いなら追加
       "bun *": "allow",
-
       "coderabbit *": "allow",
-
       // -----------------------------------------------------------
       // ▼ 制限・禁止リスト（下の行ほど優先＝上書きされます）
       // -----------------------------------------------------------
-
       // 【Gitの特例制限】
       // "git *" で許可しましたが、Push/Commitだけは意図を確認したい
       "git push*": "ask",
@@ -125,25 +108,20 @@
       "git reset*": "ask",
       "git switch*": "allow",
       "git stash*": "allow",
-
       // 【NPMの特例禁止】
       "npm publish*": "deny",
-
       // 【Gitの全てaddは禁止】
       "git add .": "deny",
-
       // 【システム破壊・危険操作の禁止（最優先）】
       // rm はゴミ箱に入らないため、AIには使わせないのが鉄則
       "rm *": "deny",
       "rm -rf *": "deny",
-
       // SSHなどは乗っ取りリスクがあるため禁止
       "ssh *": "deny",
       "sudo *": "deny",
       "su *": "deny"
     }
   },
-
   // [MCP]
   "mcp": {
     "sequential-thinking": {
@@ -205,29 +183,76 @@
         "-y",
         "chrome-devtools-mcp@latest"
       ]
+    },
+    "antigravity-bridge": {
+      "type": "local",
+      "command": [
+        "node",
+        "/home/y_ohi/program/private/antigravity-mcp-bridge/packages/bridge-cli/dist/index.js"
+      ],
+      "environment": {
+        "ANTIGRAVITY_TOKEN": "448fd53f30252a8736827dcf58e1aee23f5f91de4751a81833ab7909daa58767",
+        "ANTIGRAVITY_PORT": "8888"
+      }
     }
   },
-
   // [LSP] 言語サーバー連携 (コードの構造的理解)
   "lsp": {
     "bash-language-server": {
-      "command": ["bash-language-server", "start"],
-      "extensions": [".sh"],
+      "command": [
+        "bash-language-server",
+        "start"
+      ],
+      "extensions": [
+        ".sh"
+      ],
       "disabled": false
     },
     "typescript-language-server": {
-      "command": ["typescript-language-server", "--stdio"],
-      "extensions": [".ts"],
+      "command": [
+        "typescript-language-server",
+        "--stdio"
+      ],
+      "extensions": [
+        ".ts"
+      ],
       "disabled": false
     },
     "pyright": {
-      "command": ["pyright-langserver", "--stdio"],
-      "extensions": [".py"],
+      "command": [
+        "pyright-langserver",
+        "--stdio"
+      ],
+      "extensions": [
+        ".py"
+      ],
       "disabled": false
     }
   },
-
+  // プロバイダ設定
+  // [For LLM Context]
+  // oh-my-opencodeのエージェントに設定するモデルは下記から選択すること
   "provider": {
+    // Vertex AI(Google)
+    // [For LLM Context]
+    // - Documantatin:
+    //     - http://ai.google.dev/gemini-api/docs/models/gemini-3.1-pro-preview.md.txt
+    "google-vertex": {
+      "models": {
+        "gemini-3-flash-preview": {},
+        "gemini-3.1-pro-preview": {},
+        "gemini-3.1-pro-preview-customtools": {},
+      },
+    },
+    // Vertex AI Anthopic(Google)
+    "google-vertex-anthropic": {
+      "models": {
+        "claude-haiku-4-5@20251001": {},
+        "claude-sonnet-4-6@default": {},
+        "claude-opus-4-6@default": {},
+      },
+    },
+    // OpenAI
     "openai": {
       "options": {
         "reasoningEffort": "medium",
@@ -239,6 +264,44 @@
         "store": false
       },
       "models": {
+        "gpt-5.3-codex": {
+          "name": "GPT 5.3 Codex (OAuth)",
+          "limit": {
+            "context": 272000,
+            "output": 128000
+          },
+          "modalities": {
+            "input": [
+              "text",
+              "image"
+            ],
+            "output": [
+              "text"
+            ]
+          },
+          "variants": {
+            "low": {
+              "reasoningEffort": "low",
+              "reasoningSummary": "auto",
+              "textVerbosity": "medium"
+            },
+            "medium": {
+              "reasoningEffort": "medium",
+              "reasoningSummary": "auto",
+              "textVerbosity": "medium"
+            },
+            "high": {
+              "reasoningEffort": "high",
+              "reasoningSummary": "detailed",
+              "textVerbosity": "medium"
+            },
+            "xhigh": {
+              "reasoningEffort": "xhigh",
+              "reasoningSummary": "detailed",
+              "textVerbosity": "medium"
+            }
+          }
+        },
         "gpt-5.2": {
           "name": "GPT 5.2 (OAuth)",
           "limit": {
@@ -260,77 +323,6 @@
               "reasoningSummary": "auto",
               "textVerbosity": "medium"
             },
-            "low": {
-              "reasoningEffort": "low",
-              "reasoningSummary": "auto",
-              "textVerbosity": "medium"
-            },
-            "medium": {
-              "reasoningEffort": "medium",
-              "reasoningSummary": "auto",
-              "textVerbosity": "medium"
-            },
-            "high": {
-              "reasoningEffort": "high",
-              "reasoningSummary": "detailed",
-              "textVerbosity": "medium"
-            },
-            "xhigh": {
-              "reasoningEffort": "xhigh",
-              "reasoningSummary": "detailed",
-              "textVerbosity": "medium"
-            }
-          }
-        },
-        "gpt-5.2-codex": {
-          "name": "GPT 5.2 Codex (OAuth)",
-          "limit": {
-            "context": 272000,
-            "output": 128000
-          },
-          "modalities": {
-            "input": [
-              "text",
-              "image"
-            ],
-            "output": [
-              "text"
-            ]
-          },
-          "variants": {
-            "low": {
-              "reasoningEffort": "low",
-              "reasoningSummary": "auto",
-              "textVerbosity": "medium"
-            },
-            "medium": {
-              "reasoningEffort": "medium",
-              "reasoningSummary": "auto",
-              "textVerbosity": "medium"
-            },
-            "high": {
-              "reasoningEffort": "high",
-              "reasoningSummary": "detailed",
-              "textVerbosity": "medium"
-            },
-            "xhigh": {
-              "reasoningEffort": "xhigh",
-              "reasoningSummary": "detailed",
-              "textVerbosity": "medium"
-            }
-          }
-        },
-        "gpt-5.3-codex": {
-          "name": "GPT 5.3 Codex (OAuth)",
-          "limit": {
-            "context": 272000,
-            "output": 128000
-          },
-          "modalities": {
-            "input": ["text", "image"],
-            "output": ["text"]
-          },
-          "variants": {
             "low": {
               "reasoningEffort": "low",
               "reasoningSummary": "auto",
@@ -391,348 +383,7 @@
             }
           }
         },
-        "gpt-5.1-codex": {
-          "name": "GPT 5.1 Codex (OAuth)",
-          "limit": {
-            "context": 272000,
-            "output": 128000
-          },
-          "modalities": {
-            "input": [
-              "text",
-              "image"
-            ],
-            "output": [
-              "text"
-            ]
-          },
-          "variants": {
-            "low": {
-              "reasoningEffort": "low",
-              "reasoningSummary": "auto",
-              "textVerbosity": "medium"
-            },
-            "medium": {
-              "reasoningEffort": "medium",
-              "reasoningSummary": "auto",
-              "textVerbosity": "medium"
-            },
-            "high": {
-              "reasoningEffort": "high",
-              "reasoningSummary": "detailed",
-              "textVerbosity": "medium"
-            }
-          }
-        },
-        "gpt-5.1-codex-mini": {
-          "name": "GPT 5.1 Codex Mini (OAuth)",
-          "limit": {
-            "context": 272000,
-            "output": 128000
-          },
-          "modalities": {
-            "input": [
-              "text",
-              "image"
-            ],
-            "output": [
-              "text"
-            ]
-          },
-          "variants": {
-            "medium": {
-              "reasoningEffort": "medium",
-              "reasoningSummary": "auto",
-              "textVerbosity": "medium"
-            },
-            "high": {
-              "reasoningEffort": "high",
-              "reasoningSummary": "detailed",
-              "textVerbosity": "medium"
-            }
-          }
-        },
-        "gpt-5.1": {
-          "name": "GPT 5.1 (OAuth)",
-          "limit": {
-            "context": 272000,
-            "output": 128000
-          },
-          "modalities": {
-            "input": [
-              "text",
-              "image"
-            ],
-            "output": [
-              "text"
-            ]
-          },
-          "variants": {
-            "none": {
-              "reasoningEffort": "none",
-              "reasoningSummary": "auto",
-              "textVerbosity": "medium"
-            },
-            "low": {
-              "reasoningEffort": "low",
-              "reasoningSummary": "auto",
-              "textVerbosity": "low"
-            },
-            "medium": {
-              "reasoningEffort": "medium",
-              "reasoningSummary": "auto",
-              "textVerbosity": "medium"
-            },
-            "high": {
-              "reasoningEffort": "high",
-              "reasoningSummary": "detailed",
-              "textVerbosity": "high"
-            }
-          }
-        }
-      }
-    },
-    // "anthropic": {
-    //   "models": {
-    //     "claude-haiku-4-5": {
-    //       "name": "Claude Haiku 4.5 (redirected to Gemini Flash)",
-    //       "limit": { "context": 200000, "output": 8192 },
-    //       "modalities": { "input": ["text", "image"], "output": ["text"] },
-    //       "alias": "google/antigravity-gemini-3-flash"
-    //     }
-    //   }
-    // },
-    "google": {
-      "models": {
-        "antigravity-gemini-3-pro": {
-          "name": "Gemini 3 Pro (Antigravity)",
-          "limit": {
-            "context": 1048576,
-            "output": 65535,
-          },
-          "modalities": {
-            "input": [
-              "text",
-              "image",
-              "pdf",
-            ],
-            "output": [
-              "text",
-            ],
-          },
-          "variants": {
-            "low": {
-              "thinkingLevel": "low",
-            },
-            "high": {
-              "thinkingLevel": "high",
-            },
-          },
-        },
-        "antigravity-gemini-3-flash": {
-          "name": "Gemini 3 Flash (Antigravity)",
-          "limit": {
-            "context": 1048576,
-            "output": 65536,
-          },
-          "modalities": {
-            "input": [
-              "text",
-              "image",
-              "pdf",
-            ],
-            "output": [
-              "text",
-            ],
-          },
-          "variants": {
-            "minimal": {
-              "thinkingLevel": "minimal",
-            },
-            "low": {
-              "thinkingLevel": "low",
-            },
-            "medium": {
-              "thinkingLevel": "medium",
-            },
-            "high": {
-              "thinkingLevel": "high",
-            },
-          },
-        },
-        "antigravity-claude-sonnet-4-5": {
-          "name": "Claude Sonnet 4.5 (Antigravity)",
-          "limit": {
-            "context": 200000,
-            "output": 64000,
-          },
-          "modalities": {
-            "input": [
-              "text",
-              "image",
-              "pdf",
-            ],
-            "output": [
-              "text",
-            ],
-          },
-        },
-        "antigravity-claude-sonnet-4-5-thinking": {
-          "name": "Claude Sonnet 4.5 Thinking (Antigravity)",
-          "limit": {
-            "context": 200000,
-            "output": 64000,
-          },
-          "modalities": {
-            "input": [
-              "text",
-              "image",
-              "pdf",
-            ],
-            "output": [
-              "text",
-            ],
-          },
-          "variants": {
-            "low": {
-              "thinkingConfig": {
-                "thinkingBudget": 8192,
-              },
-            },
-            "max": {
-              "thinkingConfig": {
-                "thinkingBudget": 32768,
-              },
-            },
-          },
-        },
-        "antigravity-claude-opus-4-5-thinking": {
-          "name": "Claude Opus 4.5 Thinking (Antigravity)",
-          "limit": {
-            "context": 200000,
-            "output": 64000,
-          },
-          "modalities": {
-            "input": [
-              "text",
-              "image",
-              "pdf",
-            ],
-            "output": [
-              "text",
-            ],
-          },
-          "variants": {
-            "low": {
-              "thinkingConfig": {
-                "thinkingBudget": 8192,
-              },
-            },
-            "max": {
-              "thinkingConfig": {
-                "thinkingBudget": 32768,
-              },
-            },
-          },
-        },
-        "antigravity-claude-opus-4-6-thinking": {
-          "name": "Claude Opus 4.6 Thinking (Antigravity)",
-          "limit": {
-            "context": 200000,
-            "output": 64000,
-          },
-          "modalities": {
-            "input": [
-              "text",
-              "image",
-              "pdf",
-            ],
-            "output": [
-              "text",
-            ],
-          },
-          "variants": {
-            "low": {
-              "thinkingConfig": {
-                "thinkingBudget": 8192,
-              },
-            },
-            "max": {
-              "thinkingConfig": {
-                "thinkingBudget": 32768,
-              },
-            },
-          },
-        },
-        "gemini-2.5-flash": {
-          "name": "Gemini 2.5 Flash (Gemini CLI)",
-          "limit": {
-            "context": 1048576,
-            "output": 65536,
-          },
-          "modalities": {
-            "input": [
-              "text",
-              "image",
-              "pdf",
-            ],
-            "output": [
-              "text",
-            ],
-          },
-        },
-        "gemini-2.5-pro": {
-          "name": "Gemini 2.5 Pro (Gemini CLI)",
-          "limit": {
-            "context": 1048576,
-            "output": 65536,
-          },
-          "modalities": {
-            "input": [
-              "text",
-              "image",
-              "pdf",
-            ],
-            "output": [
-              "text",
-            ],
-          },
-        },
-        "gemini-3-flash-preview": {
-          "name": "Gemini 3 Flash Preview (Gemini CLI)",
-          "limit": {
-            "context": 1048576,
-            "output": 65536,
-          },
-          "modalities": {
-            "input": [
-              "text",
-              "image",
-              "pdf",
-            ],
-            "output": [
-              "text",
-            ],
-          },
-        },
-        "gemini-3-pro-preview": {
-          "name": "Gemini 3 Pro Preview (Gemini CLI)",
-          "limit": {
-            "context": 1048576,
-            "output": 65535,
-          },
-          "modalities": {
-            "input": [
-              "text",
-              "image",
-              "pdf",
-            ],
-            "output": [
-              "text",
-            ],
-          },
-        },
       },
-    },
+    }, // End Provider
   },
 }

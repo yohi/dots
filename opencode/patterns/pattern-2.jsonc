@@ -4,9 +4,17 @@
   "description": "節約構成 (Gemini Pro + GPT-5.3 + Flash)",
   "agents": {
     "sisyphus": {
-      "model": "google/antigravity-gemini-3-pro", // 指揮はGemini Pro
+      "model": "google-vertex/gemini-3.1-pro-preview", // 指揮はGemini Pro
       "variant": "high",
       "temperature": 0.2,
+    },
+    "prometheus": {
+      "model": "google-vertex/gemini-3.1-pro-preview", // 計画立案もGemini Proで節約
+      "variant": "high"
+    },
+    "atlas": {
+      "model": "google-vertex/gemini-3.1-pro-preview", // ContextもGemini Pro
+      "variant": "high"
     },
     "metis": {
       "model": "openai/gpt-5.2", // 参謀：バランス型のGPT-5.2
@@ -17,24 +25,24 @@
       "variant": "medium"
     },
     "oracle": {
-      "model": "google/antigravity-claude-opus-4-6-thinking", // 相談役だけはOpus（ここぞという時用）
+      "model": "google-vertex-anthropic/claude-opus-4-6@default", // 相談役だけはOpus（ここぞという時用）
       "variant": "max"
     },
     "momus": {
-      "model": "google/antigravity-gemini-3-pro",
+      "model": "google-vertex/gemini-3.1-pro-preview",
     },
     "librarian": {
-      "model": "google/antigravity-gemini-3-flash",
+      "model": "google-vertex/gemini-3-flash-preview",
     },
     "explore": {
-      "model": "google/antigravity-gemini-3-flash",
+      "model": "google-vertex/gemini-3-flash-preview",
     },
     "multimodal-looker": {
-      "model": "google/antigravity-gemini-3-flash",
+      "model": "google-vertex/gemini-3-flash-preview",
     },
     "git-specialist": {
       "description": "Git operations specialist",
-      "model": "google/antigravity-gemini-3-pro",
+      "model": "google-vertex/gemini-3.1-pro-preview",
       "permission": {
         "bash": {
           "git push --force": "deny",
@@ -49,15 +57,33 @@
       },
     },
   },
-
   "categories": {
-    "quick": { "model": "google/antigravity-gemini-3-flash" },
-    "writing": { "model": "google/antigravity-gemini-3-flash" },
-    "visual-engineering": { "model": "google/antigravity-gemini-3-pro" },
-    "artistry": { "model": "google/antigravity-gemini-3-pro", "variant": "high" },
-    "ultrabrain": { "model": "google/antigravity-gemini-3-pro", "variant": "high" },
-    "deep": { "model": "openai/gpt-5.3-codex", "variant": "medium" }, // deepだけはGPT
-    "unspecified-low": { "model": "google/antigravity-gemini-3-flash" },
-    "unspecified-high": { "model": "google/antigravity-gemini-3-pro" },
+    "quick": {
+      "model": "google-vertex/gemini-3-flash-preview"
+    },
+    "writing": {
+      "model": "google-vertex/gemini-3-flash-preview"
+    },
+    "visual-engineering": {
+      "model": "google-vertex/gemini-3.1-pro-preview"
+    },
+    "artistry": {
+      "model": "google-vertex/gemini-3.1-pro-preview",
+      "variant": "high"
+    },
+    "ultrabrain": {
+      "model": "google-vertex/gemini-3.1-pro-preview",
+      "variant": "high"
+    },
+    "deep": {
+      "model": "openai/gpt-5.3-codex",
+      "variant": "medium"
+    }, // deepだけはGPT
+    "unspecified-low": {
+      "model": "google-vertex/gemini-3-flash-preview"
+    },
+    "unspecified-high": {
+      "model": "google-vertex/gemini-3.1-pro-preview"
+    },
   }
 }
