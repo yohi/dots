@@ -284,14 +284,21 @@ echo "source ~/dots/.env" >> ~/.zshrc
 #### 3. 機密情報の確認
 
 以下のファイルには機密情報が含まれていないことを確認してください：
-- `cursor/mcp.json.template` - 環境変数を参照するように設定済み
-- `.env` - .gitignoreに追加済み
+- `cursor/mcp.json.template` - 環境変数を参照するように設定済み（機密情報を含まないテンプレート）
+- `.env` - .gitignoreに追加済み（実際の認証情報を記述）
+
+#### 4. Cursor MCP サーバーのセットアップ
+
+テンプレートから実際の `~/.cursor/mcp.json` を作成・同期する手順は以下の通りです：
+
+1. **環境変数の設定**: `.env` ファイルに必要な認証情報（例: `BITBUCKET_APP_PASSWORD`）を記述します。
+2. **テンプレートの同期**: `make setup-mcp-tools` を実行すると、`cursor/mcp.json.template` が `~/.cursor/mcp.json` にコピーされます。
+   - 手動で行う場合: `cp cursor/mcp.json.template ~/.cursor/mcp.json`
+3. **反映**: Cursor を再起動するか、MCP 設定画面で再読み込みしてください。
 
 **⚠️ セキュリティ重要事項**:
-- `.env`ファイルは絶対に公開リポジトリにコミットしないでください
-- `chmod 600 .env` で権限を制限し、所有者のみ読み書き可能にしてください
-- 代替案：Bitwarden/OSキーリング/Pass等の秘匿ストレージ併用を推奨
-- 定期的なアプリパスワードのローテーション・破棄を実施してください
+- `.env` ファイルおよび `cursor/mcp.json` は絶対にコミットしないでください（既に `.gitignore` で除外設定済みです）。
+- テンプレート `cursor/mcp.json.template` には機密情報を記述せず、必ず `${VARIABLE}` 形式でプレースホルダーを維持してください。
 
 ---
 
@@ -793,12 +800,25 @@ make setup-cursor
 
 ### Cursor MCP Tools設定
 
-- **設定ファイル**: `cursor/mcp.json.template`
-- **場所**: `~/.cursor/mcp.json`
+Cursor で MCP サーバーを利用するための設定ファイルです。
+
+- **テンプレート**: `cursor/mcp.json.template`
+- **生成先**: `~/.cursor/mcp.json`
+
+`make setup-mcp-tools` を実行すると、テンプレートがターゲットの場所にコピーされます。
 
 ```bash
+# 1. 環境変数をロード
+source .env
+
+# 2. 設定ファイルを同期（コピー）
 make setup-mcp-tools
+
+# (代替案) 手動でコピーする場合
+# cp cursor/mcp.json.template ~/.cursor/mcp.json
 ```
+
+**⚠️ 注意**: 生成された `~/.cursor/mcp.json` には、環境変数が展開された後の機密情報が含まれる可能性があるため、絶対にリポジトリにコミットしないでください（`.gitignore` で除外済みです）。設定を変更する場合は、テンプレート側（`cursor/mcp.json.template`）を編集することを推奨します。
 
 **前提条件**:
 - **uvx (uv runtime)**: Python ベースの MCP サーバー（SkillPort 等）の実行に必要です。
