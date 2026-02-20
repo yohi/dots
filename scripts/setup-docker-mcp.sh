@@ -10,8 +10,18 @@ TARGETS=(
   "gemini/Core/personas.json"
 )
 
-# Payload to merge
-PAYLOAD='{"mcpServers":{"docker":{"command":"npx","args":["-y","@docker/mcp-server"]}}}'
+ALLOW_JSONC_OVERWRITE="${ALLOW_JSONC_OVERWRITE:-0}"
+
+if [[ "${1:-}" == "--allow-jsonc-overwrite" ]]; then
+  ALLOW_JSONC_OVERWRITE=1
+  shift
+fi
+
+if [[ "$#" -gt 0 ]]; then
+  echo "❌ エラー: 不明な引数です: $*"
+  echo "使用方法: bash scripts/setup-docker-mcp.sh [--allow-jsonc-overwrite]"
+  exit 1
+fi
 
 # Check if jq is installed
 if ! command -v jq >/dev/null 2>&1; then
@@ -25,7 +35,84 @@ if ! command -v npx >/dev/null 2>&1; then
   exit 1
 fi
 
+TMP=""
+FILE_TMP=""
+
+cleanup() {
+  if [[ -n "${TMP:-}" ]]; then
+    rm -f "$TMP"
+  fi
+  if [[ -n "${FILE_TMP:-}" ]]; then
+    rm -f "$FILE_TMP"
+  fi
+}
+
+trap cleanup EXIT
+
+set_payload_for_target() {
+  local file="$1"
+
+  if [[ "$file" == "opencode/opencode.jsonc" ]]; then
+    TARGET_KEY="mcp"
+    DOCKER_PAYLOAD='{"type":"local","command":["npx","-y","@docker/mcp-server"]}'
+  else
+    TARGET_KEY="mcpServers"
+    DOCKER_PAYLOAD='{"command":"npx","args":["-y","@docker/mcp-server"]}'
+  fi
+
+  PAYLOAD=$(jq -cn --arg key "$TARGET_KEY" --argjson docker "$DOCKER_PAYLOAD" '{($key): {docker: $docker}}')
+}
+
+merge_jsonc_preserving_comments() {
+  local file="$1"
+  local target_key="$2"
+  local docker_payload="$3"
+
+  JSONC_FILE="$file" \
+  JSONC_TARGET_KEY="$target_key" \
+  JSONC_DOCKER_PAYLOAD="$docker_payload" \
+  npx -y -p jsonc-parser node -e '
+    const fs = require("fs");
+    const { parse, modify, applyEdits } = require("jsonc-parser");
+
+    const file = process.env.JSONC_FILE;
+    const targetKey = process.env.JSONC_TARGET_KEY;
+    const dockerPayload = JSON.parse(process.env.JSONC_DOCKER_PAYLOAD);
+
+    const content = fs.readFileSync(file, "utf8");
+    const source = content.trim() === "" ? "{}" : content;
+
+    const errors = [];
+    parse(source, errors, {
+      allowTrailingComma: true,
+      disallowComments: false,
+      allowEmptyContent: true
+    });
+
+    if (errors.length > 0) {
+      console.error("❌ エラー: JSONCパースに失敗しました:", file);
+      for (const err of errors) {
+        console.error(`  - offset=${err.offset}, length=${err.length}, error=${err.error}`);
+      }
+      process.exit(1);
+    }
+
+    const edits = modify(source, [targetKey, "docker"], dockerPayload, {
+      formattingOptions: {
+        insertSpaces: true,
+        tabSize: 2,
+        eol: "\n"
+      }
+    });
+
+    const updated = applyEdits(source, edits);
+    fs.writeFileSync(file, updated);
+  '
+}
+
 for FILE in "${TARGETS[@]}"; do
+  set_payload_for_target "$FILE"
+
   # Ensure directory exists
   DIR=$(dirname "$FILE")
   if [ ! -d "$DIR" ]; then
@@ -42,37 +129,59 @@ for FILE in "${TARGETS[@]}"; do
     fi
 
     echo "📋 $FILE を処理中..."
-    TMP=$(mktemp)
+    TMP=""
+    FILE_TMP=""
 
-    # If file ends with .jsonc, strip comments with strip-json-comments-cli
+    # If file ends with .jsonc, use JSONC-aware merge first
     if [[ "$FILE" == *.jsonc ]]; then
-      # Use strip-json-comments-cli to remove comments safely (no eval)
+      if merge_jsonc_preserving_comments "$FILE" "$TARGET_KEY" "$DOCKER_PAYLOAD"; then
+        echo "✅ 更新しました: $FILE (JSONCコメントを保持)"
+        continue
+      fi
+
+      echo "⚠️  警告: JSONCコメント保持マージに失敗しました。"
+      echo "⚠️  Warning: converting .jsonc will remove comments; use --allow-jsonc-overwrite to proceed"
+
+      if [[ "$ALLOW_JSONC_OVERWRITE" != "1" ]]; then
+        echo "❌ エラー: $FILE は未変更です。"
+        exit 1
+      fi
+
+      echo "⚠️  --allow-jsonc-overwrite が指定されたため、コメントを削除して上書きします。"
+      TMP=$(mktemp)
+      FILE_TMP="$FILE.tmp"
+
       if ! npx -y strip-json-comments-cli "$FILE" > "$TMP"; then
         echo "❌ エラー: JSONCファイル $FILE のパースに失敗しました (strip-json-comments-cli)"
-        rm "$TMP"
         exit 1
       fi
 
-      # Check if output is not empty
       if [ ! -s "$TMP" ]; then
         echo "❌ エラー: JSONC変換後のファイルが空です"
-        rm "$TMP"
         exit 1
       fi
 
-      # Merge with jq
-      jq --argjson p "$PAYLOAD" '. * $p' "$TMP" > "$FILE.tmp" && mv "$FILE.tmp" "$FILE"
-
-      rm "$TMP"
+      if jq --argjson p "$PAYLOAD" '. * $p' "$TMP" > "$FILE_TMP"; then
+        mv "$FILE_TMP" "$FILE"
+        FILE_TMP=""
+      else
+        echo "❌ エラー: jq マージに失敗しました: $FILE"
+        exit 1
+      fi
     else
       # Standard JSON
       # Validate JSON first
+      FILE_TMP="$FILE.tmp"
       if jq . "$FILE" >/dev/null 2>&1; then
-        jq --argjson p "$PAYLOAD" '. * $p' "$FILE" > "$TMP" && mv "$TMP" "$FILE"
-        # TMP is moved, so no need to rm
+        if jq --argjson p "$PAYLOAD" '. * $p' "$FILE" > "$FILE_TMP"; then
+          mv "$FILE_TMP" "$FILE"
+          FILE_TMP=""
+        else
+          echo "❌ エラー: jq マージに失敗しました: $FILE"
+          exit 1
+        fi
       else
         echo "⚠️  警告: $FILE は有効なJSONではありません。スキップします。"
-        rm "$TMP"
         continue
       fi
     fi
