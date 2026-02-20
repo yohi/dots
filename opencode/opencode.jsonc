@@ -131,6 +131,14 @@
         "@modelcontextprotocol/server-sequential-thinking"
       ]
     },
+    "docker": {
+      "type": "local",
+      "command": [
+        "npx",
+        "-y",
+        "@hypnosis/docker-mcp-server@1.4.1"
+      ]
+    },
     "magic": {
       "type": "local",
       "command": [

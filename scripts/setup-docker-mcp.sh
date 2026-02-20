@@ -11,7 +11,31 @@ TARGETS=(
 )
 
 # Payload to merge
-PAYLOAD='{"mcpServers":{"docker":{"command":"npx","args":["-y","@docker/mcp-server"]}}}'
+DOCKER_MCP_PACKAGE="@hypnosis/docker-mcp-server@1.4.1"
+PAYLOAD_MCP="{\"mcp\":{\"docker\":{\"type\":\"local\",\"command\":[\"npx\",\"-y\",\"${DOCKER_MCP_PACKAGE}\"]}}}"
+PAYLOAD_MCPSERVERS="{\"mcpServers\":{\"docker\":{\"command\":\"npx\",\"args\":[\"-y\",\"${DOCKER_MCP_PACKAGE}\"]}}}"
+
+select_payload() {
+  local json_file="$1"
+  local target_file="$2"
+
+  if jq -e '.mcp? | type == "object"' "$json_file" >/dev/null 2>&1; then
+    printf '%s' "$PAYLOAD_MCP"
+    return
+  fi
+
+  if jq -e '.mcpServers? | type == "object"' "$json_file" >/dev/null 2>&1; then
+    printf '%s' "$PAYLOAD_MCPSERVERS"
+    return
+  fi
+
+  if [ "$target_file" = "opencode/opencode.jsonc" ]; then
+    printf '%s' "$PAYLOAD_MCP"
+    return
+  fi
+
+  printf '%s' "$PAYLOAD_MCPSERVERS"
+}
 
 # Check if jq is installed
 if ! command -v jq >/dev/null 2>&1; then
@@ -25,6 +49,21 @@ if ! command -v npx >/dev/null 2>&1; then
   exit 1
 fi
 
+# JSONCへの上書きはコメント消失を伴うため、明示フラグを必須にする
+ALLOW_JSONC_OVERWRITE=0
+for ARG in "$@"; do
+  case "$ARG" in
+    --allow-jsonc-overwrite)
+      ALLOW_JSONC_OVERWRITE=1
+      ;;
+    *)
+      echo "❌ エラー: 不明なオプションです: $ARG"
+      echo "使い方: $0 [--allow-jsonc-overwrite]"
+      exit 1
+      ;;
+  esac
+done
+
 for FILE in "${TARGETS[@]}"; do
   # Ensure directory exists
   DIR=$(dirname "$FILE")
@@ -37,7 +76,12 @@ for FILE in "${TARGETS[@]}"; do
     # Check if file is empty
     if [ ! -s "$FILE" ]; then
       echo "⚠️  ファイル $FILE は空です。初期設定で上書きします。"
-      echo "$PAYLOAD" | jq . > "$FILE"
+      if [ "$FILE" = "opencode/opencode.jsonc" ]; then
+        SELECTED_PAYLOAD="$PAYLOAD_MCP"
+      else
+        SELECTED_PAYLOAD="$PAYLOAD_MCPSERVERS"
+      fi
+      echo "$SELECTED_PAYLOAD" | jq . > "$FILE"
       continue
     fi
 
@@ -46,6 +90,15 @@ for FILE in "${TARGETS[@]}"; do
 
     # If file ends with .jsonc, strip comments with strip-json-comments-cli
     if [[ "$FILE" == *.jsonc ]]; then
+      if [ "$ALLOW_JSONC_OVERWRITE" -ne 1 ]; then
+        echo "⚠️  警告: $FILE は JSONC です。この処理を実行するとコメントを削除して上書きします。"
+        echo "ℹ️  続行するには --allow-jsonc-overwrite を指定して再実行してください。"
+        rm "$TMP"
+        continue
+      fi
+
+      echo "⚠️  注意: $FILE は --allow-jsonc-overwrite 指定によりコメントを削除して更新します。"
+
       # Use strip-json-comments-cli to remove comments safely (no eval)
       if ! npx -y strip-json-comments-cli "$FILE" > "$TMP"; then
         echo "❌ エラー: JSONCファイル $FILE のパースに失敗しました (strip-json-comments-cli)"
@@ -61,14 +114,16 @@ for FILE in "${TARGETS[@]}"; do
       fi
 
       # Merge with jq
-      jq --argjson p "$PAYLOAD" '. * $p' "$TMP" > "$FILE.tmp" && mv "$FILE.tmp" "$FILE"
+      SELECTED_PAYLOAD=$(select_payload "$TMP" "$FILE")
+      jq --argjson p "$SELECTED_PAYLOAD" '. * $p' "$TMP" > "$FILE.tmp" && mv "$FILE.tmp" "$FILE"
 
       rm "$TMP"
     else
       # Standard JSON
       # Validate JSON first
       if jq . "$FILE" >/dev/null 2>&1; then
-        jq --argjson p "$PAYLOAD" '. * $p' "$FILE" > "$TMP" && mv "$TMP" "$FILE"
+        SELECTED_PAYLOAD=$(select_payload "$FILE" "$FILE")
+        jq --argjson p "$SELECTED_PAYLOAD" '. * $p' "$FILE" > "$TMP" && mv "$TMP" "$FILE"
         # TMP is moved, so no need to rm
       else
         echo "⚠️  警告: $FILE は有効なJSONではありません。スキップします。"
@@ -80,7 +135,12 @@ for FILE in "${TARGETS[@]}"; do
     echo "✅ 更新しました: $FILE"
   else
     echo "✅ 作成しました: $FILE"
-    echo "$PAYLOAD" | jq . > "$FILE"
+    if [ "$FILE" = "opencode/opencode.jsonc" ]; then
+      SELECTED_PAYLOAD="$PAYLOAD_MCP"
+    else
+      SELECTED_PAYLOAD="$PAYLOAD_MCPSERVERS"
+    fi
+    echo "$SELECTED_PAYLOAD" | jq . > "$FILE"
   fi
 done
 
