@@ -5,9 +5,18 @@
   "description": "Claudeなし (GPT-5.3 + Gemini)",
   "agents": {
     "sisyphus": {
-      "model": "openai/gpt-5.3-codex", // 指揮もGPT-5.3 (Terminal操作が強いため)
+      "model": "google-vertex/gemini-3.1-pro-preview", // `no-sisyphus-gpt`ルールに準拠するため、指揮層(Sisyphus)にはGPTではなく最高性能のGemini Proを採用
       "variant": "high",
-      "temperature": 0.1,
+      "temperature": 0.2,
+    },
+    "prometheus": {
+      "model": "openai/gpt-5.2", // 計画立案には特化型より幅広い文脈理解を持つ汎用推論モデルを採用
+      "variant": "xhigh"
+    },
+    // Context Manager / Architect
+    "atlas": {
+      "model": "google-vertex/gemini-3.1-pro-preview", // 1Mの大規模コンテキストを活かすためGemini Proを採用
+      "variant": "high"
     },
     "metis": {
       "model": "openai/gpt-5.2", // 参謀：GPT-5.2
@@ -21,16 +30,16 @@
       "model": "openai/gpt-5.2", // 相談役はバランスの良いGPT-5.2
     },
     "momus": {
-      "model": "openai/gpt-5.2",
+      "model": "google-vertex/gemini-3.1-pro-preview", // 異種モデルによる多角的かつ客観的なレビューのためGeminiを採用
     },
     "librarian": {
-      "model": "google/antigravity-gemini-3-flash",
+      "model": "google-vertex/gemini-3-flash-preview",
     },
     "explore": {
-      "model": "google/antigravity-gemini-3-flash",
+      "model": "google-vertex/gemini-3-flash-preview",
     },
     "multimodal-looker": {
-      "model": "google/antigravity-gemini-3-flash",
+      "model": "google-vertex/gemini-3-flash-preview",
     },
     "git-specialist": {
       "description": "Git operations specialist",
@@ -49,15 +58,34 @@
       },
     },
   },
-
   "categories": {
-    "quick": { "model": "google/antigravity-gemini-3-flash" },
-    "writing": { "model": "google/antigravity-gemini-3-flash" },
-    "visual-engineering": { "model": "google/antigravity-gemini-3-pro" },
-    "artistry": { "model": "google/antigravity-gemini-3-pro", "variant": "high" },
-    "ultrabrain": { "model": "openai/gpt-5.3-codex", "variant": "xhigh" },
-    "deep": { "model": "openai/gpt-5.3-codex", "variant": "high" },
-    "unspecified-low": { "model": "openai/gpt-5.2" },
-    "unspecified-high": { "model": "openai/gpt-5.3-codex", "variant": "high" },
+    "quick": {
+      "model": "google-vertex/gemini-3-flash-preview"
+    },
+    "writing": {
+      "model": "google-vertex/gemini-3-flash-preview"
+    },
+    "visual-engineering": {
+      "model": "google-vertex/gemini-3.1-pro-preview"
+    },
+    "artistry": {
+      "model": "google-vertex/gemini-3.1-pro-preview",
+      "variant": "high"
+    },
+    "ultrabrain": {
+      "model": "openai/gpt-5.3-codex",
+      "variant": "xhigh"
+    },
+    "deep": {
+      "model": "openai/gpt-5.3-codex",
+      "variant": "high"
+    },
+    "unspecified-low": {
+      "model": "openai/gpt-5.2"
+    },
+    "unspecified-high": {
+      "model": "openai/gpt-5.3-codex",
+      "variant": "high"
+    },
   }
 }
