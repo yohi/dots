@@ -31,3 +31,9 @@ CANDIDATE_DIRS=(
     "$HOME/dots"
     "$HOME/.dots"
 )
+
+# SkillPort 設定
+export SKILLPORT_SKILLS_PATH="$HOME/dots/agent-skills"
+alias sp="skillport"
+alias spm="skillport-mcp"
+alias spv="skillport validate"
