@@ -124,6 +124,12 @@
       "args": [
         "chrome-devtools-mcp@latest"
       ]
+    },
+    "skillport": {
+      "command": "uvx",
+      "args": [
+        "skillport-mcp@1.1.0"
+      ]
     }
   }
 }

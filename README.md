@@ -284,7 +284,7 @@ echo "source ~/dots/.env" >> ~/.zshrc
 #### 3. 機密情報の確認
 
 以下のファイルには機密情報が含まれていないことを確認してください：
-- `cursor/mcp.json` - 環境変数を参照するように設定済み
+- `cursor/mcp.json.template` - 環境変数を参照するように設定済み
 - `.env` - .gitignoreに追加済み
 
 **⚠️ セキュリティ重要事項**:
@@ -793,7 +793,7 @@ make setup-cursor
 
 ### Cursor MCP Tools設定
 
-- **設定ファイル**: `cursor/mcp.json`
+- **設定ファイル**: `cursor/mcp.json.template`
 - **場所**: `~/.cursor/mcp.json`
 
 ```bash
