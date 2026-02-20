@@ -30,7 +30,7 @@
     "todoread": "allow",
     "edit": "allow",
     "todowrite": "allow",
-    "websearch": "ask",
+    "websearch": "allow",
     "webfetch": "ask",
     "external_directory": "ask",
     "bash": {
@@ -51,12 +51,12 @@
       "less*": "allow",
       "xargs*": "deny",
       "git *": "allow",
-      "npm *": "ask",
-      "yarn *": "ask",
-      "node *": "ask",
-      "python *": "ask",
-      "bun *": "ask",
-      "coderabbit *": "ask",
+      "npm *": "allow",
+      "yarn *": "allow",
+      "node *": "allow",
+      "python *": "allow",
+      "bun *": "allow",
+      "coderabbit *": "allow",
       "git push*": "ask",
       "git commit*": "ask",
       "git rebase*": "ask",
@@ -148,17 +148,9 @@
         "/home/y_ohi/program/private/antigravity-mcp-bridge/packages/bridge-cli/dist/index.js"
       ],
       "environment": {
-        "ANTIGRAVITY_TOKEN": "${ANTIGRAVITY_TOKEN}",
+        "ANTIGRAVITY_TOKEN": "448fd53f30252a8736827dcf58e1aee23f5f91de4751a81833ab7909daa58767",
         "ANTIGRAVITY_PORT": "8888"
       }
-    },
-    "docker": {
-      "type": "local",
-      "command": [
-        "npx",
-        "-y",
-        "@docker/mcp-server"
-      ]
     }
   },
   "lsp": {
@@ -339,6 +331,15 @@
           }
         }
       }
+    }
+  },
+  "mcpServers": {
+    "docker": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@docker/mcp-server"
+      ]
     }
   }
 }
