@@ -60,6 +60,10 @@
     "awslabs/aws-pricing-mcp-server": {
       "command": "npx",
       "args": ["-y", "@awslabs/aws-pricing-mcp-server@0.1.0"]
+    },
+    "skillport": {
+      "command": "uvx",
+      "args": ["skillport-mcp"]
     }
   }
 }
