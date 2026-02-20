@@ -1,11 +1,25 @@
 {
+  // Config Modernized: 2026-02-20
+  // Target OpenCode Version: v1.2.x
+  // Based on oh-my-opencode v3.7.4
   "$schema": "https://opencode.ai/config.json",
+  // モデル
+  //"model": "google/antigravity-gemini-3-pro",
+  //"small_model": "google/antigravity-gemini-3-flash",
+  // ログレベル設定（デバッグ用）
+  // "logLevel": "DEBUG",
+  // [Plugin]
   "plugin": [
     "oh-my-opencode@latest",
     "opencode-openai-codex-auth@latest",
-    "@yohi/opencode-codex-quota@latest"
+    // "opencode-antigravity-auth@beta",
+    // "@yohi/opencode-antigravity-quota@latest",
+    "@yohi/opencode-codex-quota@latest",
+    // "@yohi/omo-sdd-hybrid",
   ],
+  // [Instruction]
   "instructions": [],
+  // [Watcher]
   "watcher": {
     "ignore": [
       "**/node_modules/**",
@@ -19,22 +33,37 @@
   "compaction": {
     "auto": true,
     "reserved": 10000,
-    "prune": true
+    "prune": true,
   },
+  // [Permission]
   "permission": {
-    "read": "allow",
-    "list": "allow",
-    "glob": "allow",
-    "grep": "allow",
-    "codesearch": "allow",
-    "todoread": "allow",
+    // ------------------------------------------------------------------
+    // 1. 基本ツールの権限（読み取り系は全開放）
+    // ------------------------------------------------------------------
+    "read": "allow", // ファイル読み取り
+    "list": "allow", // ディレクトリ一覧
+    "glob": "allow", // ファイル検索
+    "grep": "allow", // 文字列検索（ツール版）
+    "codesearch": "allow", // コード検索
+    "todoread": "allow", // TODO確認
+    // 編集系（AIの本分なので許可）
     "edit": "allow",
     "todowrite": "allow",
-    "websearch": "allow",
-    "webfetch": "ask",
-    "external_directory": "ask",
+    // ------------------------------------------------------------------
+    // 2. 外部アクセス（ここは安全のため「確認」推奨）
+    // ------------------------------------------------------------------
+    "websearch": "allow", // 検索はOK
+    "webfetch": "ask", // URLの中身を見るのは確認（機密漏洩防止）
+    "external_directory": "ask", // プロジェクト外へのアクセスは確認
+    // ------------------------------------------------------------------
+    // 3. コマンド実行（Bash）
+    // ------------------------------------------------------------------
     "bash": {
+      // ▼ 基本ポリシー：デフォルトは「確認」
+      // これが「ブラックリスト方式」の危険性を防ぐ命綱です
       "*": "ask",
+      // ▼ 参照・ログ確認系（すべて許可）
+      // "ls*" と書くことで "ls -la" 等の引数付きもカバー
       "ls*": "allow",
       "cat*": "allow",
       "pwd": "allow",
@@ -43,6 +72,7 @@
       "touch*": "allow",
       "mv*": "ask",
       "cp*": "ask",
+      // 以前ご要望のあった grep/tail もここで許可
       "grep*": "allow",
       "wc*": "allow",
       "find*": "allow",
@@ -50,13 +80,20 @@
       "head*": "allow",
       "less*": "allow",
       "xargs*": "deny",
+      // ▼ 開発ツール系（広範囲許可 = 利便性重視）
+      // GitとNPM関連は、下手に制限すると開発にならないため原則許可します
       "git *": "allow",
       "npm *": "allow",
       "yarn *": "allow",
-      "node *": "allow",
-      "python *": "allow",
+      "node *": "allow", // スクリプト実行も許可
+      "python *": "allow", // Python使いなら追加
       "bun *": "allow",
       "coderabbit *": "allow",
+      // -----------------------------------------------------------
+      // ▼ 制限・禁止リスト（下の行ほど優先＝上書きされます）
+      // -----------------------------------------------------------
+      // 【Gitの特例制限】
+      // "git *" で許可しましたが、Push/Commitだけは意図を確認したい
       "git push*": "ask",
       "git commit*": "ask",
       "git rebase*": "ask",
@@ -71,15 +108,21 @@
       "git reset*": "ask",
       "git switch*": "allow",
       "git stash*": "allow",
+      // 【NPMの特例禁止】
       "npm publish*": "deny",
+      // 【Gitの全てaddは禁止】
       "git add .": "deny",
+      // 【システム破壊・危険操作の禁止（最優先）】
+      // rm はゴミ箱に入らないため、AIには使わせないのが鉄則
       "rm *": "deny",
       "rm -rf *": "deny",
+      // SSHなどは乗っ取りリスクがあるため禁止
       "ssh *": "deny",
       "sudo *": "deny",
       "su *": "deny"
     }
   },
+  // [MCP]
   "mcp": {
     "sequential-thinking": {
       "type": "local",
@@ -153,6 +196,7 @@
       }
     }
   },
+  // [LSP] 言語サーバー連携 (コードの構造的理解)
   "lsp": {
     "bash-language-server": {
       "command": [
@@ -185,21 +229,30 @@
       "disabled": false
     }
   },
+  // プロバイダ設定
+  // [For LLM Context]
+  // oh-my-opencodeのエージェントに設定するモデルは下記から選択すること
   "provider": {
+    // Vertex AI(Google)
+    // [For LLM Context]
+    // - Documantatin:
+    //     - http://ai.google.dev/gemini-api/docs/models/gemini-3.1-pro-preview.md.txt
     "google-vertex": {
       "models": {
         "gemini-3-flash-preview": {},
         "gemini-3.1-pro-preview": {},
-        "gemini-3.1-pro-preview-customtools": {}
-      }
+        "gemini-3.1-pro-preview-customtools": {},
+      },
     },
+    // Vertex AI Anthopic(Google)
     "google-vertex-anthropic": {
       "models": {
         "claude-haiku-4-5@20251001": {},
         "claude-sonnet-4-6@default": {},
-        "claude-opus-4-6@default": {}
-      }
+        "claude-opus-4-6@default": {},
+      },
     },
+    // OpenAI
     "openai": {
       "options": {
         "reasoningEffort": "medium",
@@ -329,17 +382,8 @@
               "textVerbosity": "medium"
             }
           }
-        }
-      }
-    }
+        },
+      },
+    }, // End Provider
   },
-  "mcpServers": {
-    "docker": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "@docker/mcp-server"
-      ]
-    }
-  }
 }
