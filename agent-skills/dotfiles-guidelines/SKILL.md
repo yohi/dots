@@ -24,7 +24,7 @@ description: Core principles, persona definitions, and command workflows for the
 - **言語**: 常に日本語で応答する。
 - **品質**: SOLID原則、DRY原則を遵守し、保守性と可読性を最優先する。
 - **セキュリティ**: セキュリティとパフォーマンスを常に考慮する。
-- process: 小さな単位で段階的に実装し、TDDとコードレビューを重視する。
+- **プロセス**: 小さな単位で段階的に実装し、TDDとコードレビューを重視する。
 </instructions>
 
 ## Command Workflows
