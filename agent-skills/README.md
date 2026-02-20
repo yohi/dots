@@ -8,6 +8,21 @@ SkillPort を利用することで、Cursor、VS Code、Claude Code などの異
 - **保存場所**: `~/dots/agent-skills` (dotfiles 管理)
 - **同期先**: `~/.skillport/skills` (SkillPort デフォルトディレクトリへのシンボリックリンク)
 
+## 前提条件
+
+このシステムを利用するには以下のツールが必要です。
+
+- **uvx**: [uv](https://github.com/astral-sh/uv) パッケージマネージャーに含まれるツール実行ツール。
+- **skillport CLI**: `uvx skillport` で実行、または `pip install skillport` でインストール。
+- **skillport-mcp** (任意): MCP 経由でスキルを利用する場合に必要。
+
+**インストール・検証コマンド:**
+```bash
+uvx --version
+uvx skillport --version
+```
+※ SkillPort の MCP エントリは `cursor/mcp.json.template` に定義されており、`uvx skillport-mcp` を介して呼び出されます。
+
 ## 基本的な使い方
 
 ### 1. 新しいスキルを作成する
@@ -41,7 +56,7 @@ skillport add https://github.com/user/repo/path/to/skill
 ## AI クライアントへの統合 (MCP)
 
 ### Cursor
-`cursor/mcp.json` に SkillPort MCP サーバーが追加されています。
+`cursor/mcp.json.template` に SkillPort MCP サーバーが定義されています。
 - **Command**: `uvx skillport-mcp`
 
 ### Claude Code
