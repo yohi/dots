@@ -289,16 +289,17 @@ echo "source ~/dots/.env" >> ~/.zshrc
 
 #### 4. Cursor MCP サーバーのセットアップ
 
-テンプレートから実際の `~/.cursor/mcp.json` を作成・同期する手順は以下の通りです：
+実際の `~/.cursor/mcp.json` をセットアップする手順は以下の通りです：
 
-1. **環境変数の設定**: `.env` ファイルに必要な認証情報（例: `BITBUCKET_APP_PASSWORD`）を記述します。
-2. **テンプレートの同期**: `make setup-mcp-tools` を実行すると、`cursor/mcp.json.template` が `~/.cursor/mcp.json` にコピーされます。
-   - 手動で行う場合: `cp cursor/mcp.json.template ~/.cursor/mcp.json`
+1. **実設定ファイルの作成**: `cursor/mcp.json.template` を `cursor/mcp.json` にコピーし、必要に応じて編集します。
+   - `cp cursor/mcp.json.template cursor/mcp.json`
+   - **注意**: `cursor/mcp.json` には機密情報が含まれる可能性がありますが、`.gitignore` で除外されているためコミットされません。
+2. **シンボリックリンクの作成**: `make setup-config-mcp-tools` を実行すると、`~/dots/cursor/mcp.json` から `~/.cursor/mcp.json` へのシンボリックリンクが作成されます。
 3. **反映**: Cursor を再起動するか、MCP 設定画面で再読み込みしてください。
 
 **⚠️ セキュリティ重要事項**:
-- `.env` ファイルおよび `cursor/mcp.json` は絶対にコミットしないでください（既に `.gitignore` で除外設定済みです）。
-- テンプレート `cursor/mcp.json.template` には機密情報を記述せず、必ず `${VARIABLE}` 形式でプレースホルダーを維持してください。
+- `cursor/mcp.json` および `.env` は絶対にコミットしないでください（既に `.gitignore` で除外設定済みです ）。
+- 詳細は `mk/setup.mk` および `cursor/mcp.json.template` を参照してください。環境変数の自動展開（`envsubst` 等）は行われないため、実設定ファイルには具体的な値を記述する必要があります。
 
 ---
 
@@ -803,22 +804,23 @@ make setup-cursor
 Cursor で MCP サーバーを利用するための設定ファイルです。
 
 - **テンプレート**: `cursor/mcp.json.template`
-- **生成先**: `~/.cursor/mcp.json`
+- **リンク元**: `cursor/mcp.json` (テンプレートをコピーして作成)
+- **リンク先**: `~/.cursor/mcp.json`
 
-`make setup-mcp-tools` を実行すると、テンプレートがターゲットの場所にコピーされます。
+`make setup-config-mcp-tools` を実行すると、`~/dots/cursor/mcp.json` から `~/.cursor/mcp.json` へのシンボリックリンクが作成されます。
 
 ```bash
-# 1. 環境変数をロード
-source .env
+# 1. テンプレートから実設定ファイルを作成 (初回のみ)
+cp cursor/mcp.json.template cursor/mcp.json
 
-# 2. 設定ファイルを同期（コピー）
-make setup-mcp-tools
+# 2. cursor/mcp.json を編集して認証情報を直接記述
+# (注: envsubst 等による環境変数展開は行われません)
 
-# (代替案) 手動でコピーする場合
-# cp cursor/mcp.json.template ~/.cursor/mcp.json
+# 3. シンボリックリンクをセットアップ
+make setup-config-mcp-tools
 ```
 
-**⚠️ 注意**: 生成された `~/.cursor/mcp.json` には、環境変数が展開された後の機密情報が含まれる可能性があるため、絶対にリポジトリにコミットしないでください（`.gitignore` で除外済みです）。設定を変更する場合は、テンプレート側（`cursor/mcp.json.template`）を編集することを推奨します。
+**⚠️ 注意**: 実設定ファイル `cursor/mcp.json` およびリンク先の `~/.cursor/mcp.json` には機密情報が含まれるため、絶対にリポジトリにコミットしないでください（`.gitignore` で除外済みです）。設定の雛形を更新する場合は、テンプレート側（`cursor/mcp.json.template`）を編集してください。
 
 **前提条件**:
 - **uvx (uv runtime)**: Python ベースの MCP サーバー（SkillPort 等）の実行に必要です。
