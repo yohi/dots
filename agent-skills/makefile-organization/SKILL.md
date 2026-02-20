@@ -11,6 +11,9 @@ description: Guidelines for organizing and maintaining modular Makefiles. Use wh
 ## Instructions
 <instructions>
 
+> [!IMPORTANT]
+> Makefile の詳細な分類、マクロ仕様、エラーハンドリング、テスト構造、および新機能追加時のチェックリストについては、[REFERENCE.md](./REFERENCE.md) を必ず参照してください。
+
 ### 1. Makefileの構造化
 - 大きなMakefile（1000行以上）は機能別に分割する
 - メインMakefileはincludeディレクティブと最小限のターゲットのみを含む
