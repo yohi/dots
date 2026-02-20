@@ -34,6 +34,7 @@ include mk/gemini.mk
 include mk/codex.mk
 include mk/opencode.mk
 include mk/superclaude.mk
+include mk/skillport.mk
 include mk/cc-sdd.mk
 include mk/test.mk
 

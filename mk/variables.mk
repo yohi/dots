@@ -22,4 +22,5 @@ EMAIL := $(shell git config --global user.email 2>/dev/null || echo "")
         install-gemini-cli install-supergemini install-gemini-ecosystem install-playwright install-packages-ccusage install-ccusage \
 	install-superclaude check-superclaude update-superclaude uninstall-superclaude info-superclaude fix-superclaude \
 	opencode install-packages-opencode install-opencode opencode-update setup-opencode check-opencode \
+	skillport install-skillport setup-skillport check-skillport \
 	codex install-packages-codex install-codex codex-update codex-setup
